@@ -10,8 +10,7 @@ Drupal.behaviors.brightcove_cck_buttons = function(context) {
   $('.brightcove-cck-browse-button', context).click(Drupal.brightcove_cck.actions.browse);
   $('.brightcove-cck-upload-button', context).click(Drupal.brightcove_cck.actions.upload);
   $('.brightcove-cck-remove-button', context).click(Drupal.brightcove_cck.actions.remove);
-  // TODO: There should be a better selector for this - how do we add a class to cck element? (attributes didn't work)
-  $('.form-text.form-autocomplete').change(Drupal.brightcove_cck.actions.change);
+  $('.form-text.brightcove-video-field').change(Drupal.brightcove_cck.actions.change);
 };
 
 Drupal.brightcove_cck.actions.change = function() {
@@ -24,14 +23,14 @@ Drupal.brightcove_cck.actions.remove = function() {
 Drupal.brightcove_cck.actions.browse = function() {
   var id = $(this).attr('rel');
   var field_name = $('#' + id).attr('rel');
-  Drupal.modalFrame.open({onSubmit: Drupal.brightcove_cck.submit(id), url: Drupal.settings.basePath + 'brightcove_cck/browse/' + Drupal.settings.brightcove_cck[field_name].node_type + '/' + Drupal.settings.brightcove_cck[field_name].field_name + '/' + Drupal.settings.brightcove_cck[field_name].nid, width: 800, height: 600, autoFit: false});
+  Drupal.modalFrame.open({onSubmit: Drupal.brightcove_cck.submit(id), url: Drupal.settings.basePath + 'brightcove_cck/browse/' + Drupal.settings.brightcove_cck[field_name].node_type + '/' + Drupal.settings.brightcove_cck[field_name].field_name + '/' + Drupal.settings.brightcove_cck[field_name].nid, width: 950, height: 600, autoFit: false});
   return false;
 }
 
 Drupal.brightcove_cck.actions.upload = function() {
   var id = $(this).attr('rel');
   var field_name = $('#' + id).attr('rel');
-  Drupal.modalFrame.open({onSubmit: Drupal.brightcove_cck.submit(id), url: Drupal.settings.basePath + 'brightcove_cck/upload/' + Drupal.settings.brightcove_cck[field_name].node_type + '/' + Drupal.settings.brightcove_cck[field_name].field_name + '/' + Drupal.settings.brightcove_cck[field_name].nid, width: 800, height: 600, autoFit: false});
+  Drupal.modalFrame.open({onSubmit: Drupal.brightcove_cck.submit(id), url: Drupal.settings.basePath + 'brightcove_cck/upload/' + Drupal.settings.brightcove_cck[field_name].node_type + '/' + Drupal.settings.brightcove_cck[field_name].field_name + '/' + Drupal.settings.brightcove_cck[field_name].nid, width: 950, height: 600, autoFit: false});
   return false;
 }
 

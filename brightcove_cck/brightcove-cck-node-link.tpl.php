@@ -8,7 +8,7 @@
  * This template is used when viewing a Brightcove video with a thumbnail or videoStill image linking to node.
  *
  * Available variables:
- *   - $output: Formatted image with a link to Lightbox2, ready for printing.
+ *   - $output: Formatted image with a link to node, ready for printing.
  *   - $image_field: The name of the image field used from Media API. Can be thumbnailURL or videoStillURL.
  *   - $destination: URL for the Brightcove video player.
  *   - $video_id: Video ID from Media API.
@@ -23,4 +23,3 @@
 <?php if ($output): ?>
 <?php echo $output; ?>
 <?php endif; ?>
-<?php
