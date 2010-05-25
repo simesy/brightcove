@@ -10,7 +10,7 @@ Requirements
 ------------
 
 CCK: http://drupal.org/project/cck
-ModalFrame API: http://drupal.org/project/modalframe
+ModalFrame API: http://drupal.org/project/modalframe - It is currently recommended to use ModalFrame 6.x-1.6 with the Brightcove module.. It is possible to use with ModalFrame 6.x-1.7 (which requires jQuery UI 1.7.x and jQuery Update 6.x-2.x) however this version breaks Lightbox2 (as of 25.05.2010). 
 jQuery UI: http://drupal.org/project/jquery_ui
 External libraries: Echove Brightcove Framework, http://echove.net
 
