@@ -842,6 +842,7 @@ function brightcove_cck_upload_form_submit($form, &$form_state) {
     }
     // Do something with $file here.
 
+
     $meta = array(
         'name' => $form_state['values']['title'],
         'shortDescription' => $form_state['values']['short'],
@@ -849,8 +850,10 @@ function brightcove_cck_upload_form_submit($form, &$form_state) {
         'linkText' => $form_state['values']['linktext'],
         'linkURL' => $form_state['values']['linkurl'],
         'referenceId' => brightcove_generate_reference(),
-        'tags' => split(',', $form_state['values']['tags']),
         );
+    if (!empty($form_state['values']['tags'])) {
+      $meta['tags'] = split(',', $form_state['values']['tags']);
+    }
     $id = brightcove_upload_video($file->filepath, $meta);
 
     // Construct Video object with ID - we need to cache it and save to session.
