@@ -132,5 +132,6 @@ function brightcove_mm_complete_video($file, $configuration) {
     node_save($node);
     watchdog('brightcove_mediamover', 'Attached a video %video to node %node (%nid)', array('%video' => $video, '%node' => $node->title, '%nid' => $node->nid), WATCHDOG_NOTICE);
   }
+  return TRUE;
 }
 
