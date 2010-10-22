@@ -8,7 +8,7 @@
  *
  * @author
  * Jakub Suchy <jakub@dynamiteheads.com>, Andrew Burcin <andrew@dynamiteheads.com>
- * 
+ *
  * Module development sponsored by Brightcove, Inc.
  */
 
@@ -676,7 +676,7 @@ function brightcove_cck_filter_form_submit($form, &$form_state) {
 
 /**
  * Browse form. Will return a form for one video item.
- * 
+ *
  * @see brightcove_cck_forms().
  */
 function brightcove_cck_browser_form(&$form_state, $item) {
@@ -715,15 +715,15 @@ function brightcove_cck_browser_form_submit($form, &$form_state) {
   $return['selected'] = $form_state['values']['title'] . ' [id:' . $form_state['values']['id'] . ']';
   modalframe_close_dialog($return);
 }
+
 /**
  * Implementation of hook_forms().
  *
  * Needed to help Drupal determine which form to render - every video item in
  * the browser is a separate form.
  */
-function brightcove_cck_forms() {
-  $args = func_get_args();
-  $form_id = $args[0];
+function brightcove_cck_forms($form_id, $args) {
+  $forms = array();
   if (strpos($form_id, "brightcove_cck_browser_form") === 0) {
     $forms[$form_id] = array('callback' => 'brightcove_cck_browser_form');
   }
@@ -896,5 +896,3 @@ function brightcove_cck_imagecache_default_presets() {
       );
   return $presets;
 }
-
-
