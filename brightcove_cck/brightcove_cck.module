@@ -494,30 +494,30 @@ function brightcove_cck_theme() {
       'brightcove_cck_player' => array(
         'arguments' => array('player' => NULL, 'video_id' => NULL),
         'template' => 'brightcove-cck-player',
-        'patern' => 'brightcove-cck-player',
+        'pattern' => 'brightcove-cck-player',
         ),
       'brightcove_cck_lightbox2' => array(
         'arguments' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'lightbox2_width' => NULL, 'lightbox2_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL, 'preset' => NULL),
         'template' => 'brightcove-cck-lightbox2',
-        'patern' => 'brightcove_cck_lightbox2__',
+        'pattern' => 'brightcove_cck_lightbox2__',
         'preprocess functions' => array('template_preprocess_brightcove_cck_lightbox2'),
         ),
       'brightcove_cck_node_link' => array(
         'arguments' => array('output' => NULL, 'video_id' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL, 'preset' => NULL),
         'template' => 'brightcove-cck-node-link',
-        'patern' => 'brightcove_cck_node_link__',
+        'pattern' => 'brightcove_cck_node_link__',
         'preprocess functions' => array('template_preprocess_brightcove_cck_node_link'),
         ),
       'brightcove_cck_node_image' => array(
         'arguments' => array('output' => NULL, 'video_id' => NULL, 'nid' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL),
         'template' => 'brightcove-cck-node-image',
-        'patern' => 'brightcove_cck_node_image__',
+        'pattern' => 'brightcove_cck_node_image__',
         'preprocess functions' => array('template_preprocess_brightcove_cck_node_image'),
         ),
       'brightcove_cck_lightbox2_imagecache' => array(
           'arguments' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'lightbox2_width' => NULL, 'lightbox2_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL),
           'template' => 'brightcove-cck-lightbox2-imagecache',
-          'patern' => 'brightcove_cck_lightbox2_imagecache__',
+          'pattern' => 'brightcove_cck_lightbox2_imagecache__',
           'preprocess functions' => array('template_preprocess_brightcove_cck_lightbox2_imagecache'),
           ),
 
