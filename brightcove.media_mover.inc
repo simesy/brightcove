@@ -97,7 +97,7 @@ function brightcove_mm_complete_config($configuration) {
   $fields = array();
   foreach (content_fields() as $field) {
     if ($field['type'] == 'brightcove_video') {
-      $fields[$field['field_name']] = $field['widget']['label'] . " (" . $field['type_name'] . ')';
+      $fields[$field['field_name']] = $field['widget']['label'] . " (" . $field['field_name'] . ')';
     }
   }
   $form['brightcove_mm_complete_config']['brightcove_mm_config_complete_field'] = array(
@@ -134,4 +134,3 @@ function brightcove_mm_complete_video($file, $configuration) {
   }
   return TRUE;
 }
-
