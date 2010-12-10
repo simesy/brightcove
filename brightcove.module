@@ -395,5 +395,5 @@ function brightcove_generate_reference($account = NULL) {
   if (!isset($account)) {
     $account = $user->uid;
   }
-  return "drupal:" . DRUPAL_CORE_COMPATIBILITY . ":" . $account . ":" . $_SERVER['REQUEST_TIME'];
+  return "drupal:" . DRUPAL_CORE_COMPATIBILITY . ":" . $account . ":" . md5(microtime());
 }
