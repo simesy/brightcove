@@ -120,9 +120,13 @@ function theme_brightcove_cck_formatter_default($element) {
     $bc = _brightcove_initialize();
     // We need to write a BC JavaScript to the page, which is not possible
     // with a simple drupal_add_js(), inline is needed.
-    $script = 'document.write(unescape("%3Cscript src=\'http://admin.brightcove.com/js/BrightcoveExperiences.js\' type=\'text/javascript\'%3E%3C/script%3E"));';
-    drupal_add_js($script, 'inline', 'header');
+    static $vidcount = 1;
+    if ($vidcount == 1) {
+      drupal_set_html_head('<script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script>');
+    }
+    $params['id'] = 'myExperience'.$vidcount;
     $player = $bc->embed('video', variable_get('brightcove_player', ''),  $element['#item']['video_id'], $params);
+    $vidcount++;
   }
   if ($player) {
     return theme('brightcove_cck_player', $player, $element['#item']['video_id']);
