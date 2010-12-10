@@ -80,7 +80,12 @@ function brightcove_cck_browse_access($node_type, $field_name) {
     return FALSE;
   }
 
-  if (node_access('create', $node_type) && content_access('edit', $field_name)) {
+  // FIX: this used to pass $field_name to content_access(), but it needs a field array
+  // I'm not sure which function is supposed to load the whole field array (b/c we have no $node to work with),
+  // so I'm shortcutting it w/ this array, which works for content_permissions
+  $field = array('field_name' => $field_name);
+
+  if (node_access('create', $node_type) && content_access('edit', $field)) {
     return TRUE;
   }
   return FALSE;
