@@ -828,7 +828,7 @@ function brightcove_cck_upload_form(&$form_state) {
  */
 function brightcove_cck_upload_form_submit($form, &$form_state) {
 
-  $limits['extensions'] = array('3g2', '3gp', 'asf', 'avi', 'dv', 'flv', 'f4v', 'm4v', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'm2ts', 'qt', 'wmv');
+  $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
   $validators = array(
       'file_validate_extensions' => array($limits['extensions']),
       );
