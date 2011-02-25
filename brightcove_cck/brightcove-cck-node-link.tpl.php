@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file brightcove-cck-node-link.tpl.php

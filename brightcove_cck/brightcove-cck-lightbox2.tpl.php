@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file brightcove-cck-lightbox2.tpl.php

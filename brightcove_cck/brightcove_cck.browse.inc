@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
   * @file brightcove_cck.browse.inc
