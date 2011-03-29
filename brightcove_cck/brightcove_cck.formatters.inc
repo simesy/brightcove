@@ -19,12 +19,13 @@ function theme_brightcove_cck_lightbox2_imagecache($element) {
   if (isset($element['#item']['video_id'])) {  
 
     $video = brightcove_video_load($element['#item']['video_id']);
+    /* Temporary turned off, because getting of status in BC API throws error for users without write api key
     $status = brightcove_status($element['#item']['video_id']);
     if ($status != BRIGHTCOVE_STATUS_COMPLETE && ($message = brightcove_expose_unavailable($status))) {
       return $message;
     } else if ($status != BRIGHTCOVE_STATUS_COMPLETE) {
       return FALSE;
-    }
+    }*/
 
     if (!empty($video->thumbnailURL)) {
       $image = theme('imagecache', $preset, brightcove_remote_image($video->{$field}));
@@ -50,12 +51,13 @@ function theme_brightcove_cck_lightbox2_player($element, $image = NULL, $preset 
     $field = str_replace('lightbox2_player_', '', $element['#formatter']);
 
     $video = brightcove_video_load($element['#item']['video_id']);
+    /* Temporary turned off, because getting of status in BC API throws error for users without write api key
     $status = brightcove_status($element['#item']['video_id']);
     if ($status != BRIGHTCOVE_STATUS_COMPLETE && ($message = brightcove_expose_unavailable($status))) {
       return $message;
     } else if ($status != BRIGHTCOVE_STATUS_COMPLETE) {
       return FALSE;
-    }
+    }*/
 
     $video_name = check_plain($video->name);
 
@@ -145,12 +147,13 @@ function theme_brightcove_cck_node_link($element, $image = NULL) {
     $field = str_replace('node_link_', '', $element['#formatter']);
 
     $video = brightcove_video_load($element['#item']['video_id']);
+    /* Temporary turned off, because getting of status in BC API throws error for users without write api key
     $status = brightcove_status($element['#item']['video_id']);
     if ($status != BRIGHTCOVE_STATUS_COMPLETE && ($message = brightcove_expose_unavailable($status))) {
       return $message;
     } else if ($status != BRIGHTCOVE_STATUS_COMPLETE) {
       return FALSE;
-    }
+    }*/
 
     if (!$image) {
       if (!empty($video->{$field})) {
@@ -200,12 +203,13 @@ function theme_brightcove_cck_node_link_imagecache($element) {
   if (isset($element['#item']['video_id'])) {  
 
     $video = brightcove_video_load($element['#item']['video_id']);
+    /* Temporary turned off, because getting of status in BC API throws error for users without write api key
     $status = brightcove_status($element['#item']['video_id']);
     if ($status != BRIGHTCOVE_STATUS_COMPLETE && ($message = brightcove_expose_unavailable($status))) {
       return $message;
     } else if ($status != BRIGHTCOVE_STATUS_COMPLETE) {
       return FALSE;
-    }
+    }*/
 
     if (!empty($video->{$field})) {
       $image = theme('imagecache', $preset, brightcove_remote_image($video->{$field}));
@@ -230,12 +234,13 @@ function theme_brightcove_cck_node_image($element, $image = NULL) {
     $field = str_replace('node_image_', '', $element['#formatter']);
 
     $video = brightcove_video_load($element['#item']['video_id']);
+    /* Temporary turned off, because getting of status in BC API throws error for users without write api key
     $status = brightcove_status($element['#item']['video_id']);
     if ($status != BRIGHTCOVE_STATUS_COMPLETE && ($message = brightcove_expose_unavailable($status))) {
       return $message;
     } else if ($status != BRIGHTCOVE_STATUS_COMPLETE) {
       return FALSE;
-    }
+    }*/
 
     if (!$image) {
       if (!empty($video->{$field})) {
@@ -284,12 +289,13 @@ function theme_brightcove_cck_node_image_imagecache($element) {
   if (isset($element['#item']['video_id'])) {  
 
     $video = brightcove_video_load($element['#item']['video_id']);
+    /* Temporary turned off, because getting of status in BC API throws error for users without write api key
     $status = brightcove_status($element['#item']['video_id']);
     if ($status != BRIGHTCOVE_STATUS_COMPLETE && ($message = brightcove_expose_unavailable($status))) {
       return $message;
     } else if ($status != BRIGHTCOVE_STATUS_COMPLETE) {
       return FALSE;
-    }
+    }*/
 
     if (!empty($video->{$field})) {
       $image = theme('imagecache', $preset, brightcove_remote_image($video->{$field}));
