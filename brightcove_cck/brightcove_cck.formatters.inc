@@ -68,9 +68,8 @@ function theme_brightcove_cck_lightbox2_player($element, $image = NULL, $preset 
     }
     $destination = 'brightcove_cck_player/' . $element['#node']->nid . '/' . $element['#field_name'] . '/' . $element['#item']['#delta'];
 
-    $bc = _brightcove_initialize();
     // Ugly hack to support width and height of a video - get a BC player and check it's dimensions.
-    $player = $bc->embed('video', variable_get('brightcove_player', ''),  $element['#item']['video_id'], $params);
+    $player = theme('brightcove_cck_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''),  $element['#item']['video_id'], $params);
     //<param name="width" value="486" />
     preg_match('/<param name="width" value="(\d{1,5})" \/>/', $player, $width);
     preg_match('/<param name="height" value="(\d{1,5})" \/>/', $player, $height);
@@ -91,7 +90,6 @@ function theme_brightcove_cck_lightbox2_player($element, $image = NULL, $preset 
   if ($output) {
     return theme('brightcove_cck_lightbox2', $output, $video_id, $video_width, $video_height, $lightbox2_width, $lightbox2_height, $destination, $field, $element['#field_name'], $element['#type_name'], $preset);
   }
-
 }
 
 /**
@@ -117,7 +115,6 @@ function template_preprocess_brightcove_cck_lightbox2(&$vars) {
   */
 function theme_brightcove_cck_formatter_default($element) {
   if (isset($element['#item']['video_id'])) {
-    $bc = _brightcove_initialize();
     // We need to write a BC JavaScript to the page, which is not possible
     // with a simple drupal_add_js(), inline is needed.
     static $vidcount = 1;
@@ -125,7 +122,7 @@ function theme_brightcove_cck_formatter_default($element) {
       drupal_set_html_head('<script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script>');
     }
     $params['id'] = 'myExperience'.$vidcount;
-    $player = $bc->embed('video', variable_get('brightcove_player', ''),  $element['#item']['video_id'], $params);
+    $player = theme('brightcove_cck_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''),  $element['#item']['video_id'], $params);
     $vidcount++;
   }
   if ($player) {

@@ -13,30 +13,30 @@ function brightcove_requirements($phase) {
   $requirements = array();
   $t = get_t();
 
-  if (!($path = variable_get('brightcove_echove_path', FALSe)) || $reset) {
-    $files = drupal_system_listing('^echove\.php$', 'libraries', 'basename', 0);
-    if (isset($files['echove.php'])) {
-      $path = dirname($files['echove.php']->filename);
-      variable_set('brightcove_echove_path', $path);
+  if (!($path = variable_get('brightcove_mapi_path', FALSE)) || $reset) {
+    $files = drupal_system_listing('^bc-mapi\.php$', 'libraries', 'basename', 0);
+    if (isset($files['bc-mapi.php'])) {
+      $path = dirname($files['bc-mapi.php']->filename);
+      variable_set('brightcove_mapi_path', $path);
     }
   }
 
   if (!function_exists('curl_init')) {
     $requirements['curl']['title'] = $t('cURL');
-    $requirements['curl']['description'] = $t('Echove SDK requires a cURL library. You should install it on your server.');
+    $requirements['curl']['description'] = $t('Brightcove MAPI SDK requires a cURL library. You should install it on your server.');
     $requirements['curl']['severity'] = REQUIREMENT_ERROR;
     $requirements['curl']['value'] = $t(': missing');
   }
 
   if (!$path) {
-    $requirements['echove']['title'] = $t('Echove SDK');
-    $requirements['echove']['description'] = $t('Echove SDK is missing. Please install it from !url.', array('!url' => l('Echove.net', 'http://www.echove.net')));
-    $requirements['echove']['severity'] = REQUIREMENT_ERROR;
-    $requirements['echove']['value'] = $t('Missing');
+    $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
+    $requirements['bc_mapi']['description'] = $t('Brightcove MAPI SDK is missing. Please install it from !url.', array('!url' => l('http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/', 'http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/')));
+    $requirements['bc_mapi']['severity'] = REQUIREMENT_ERROR;
+    $requirements['bc_mapi']['value'] = $t('Missing');
   } else {
-    $requirements['echove']['title'] = $t('Echove SDK');
-    $requirements['echove']['severity'] = REQUIREMENT_OK;
-    $requirements['echove']['value'] = $t('Installed');
+    $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
+    $requirements['bc_mapi']['severity'] = REQUIREMENT_OK;
+    $requirements['bc_mapi']['value'] = $t('Installed');
   }
   return $requirements;
 }

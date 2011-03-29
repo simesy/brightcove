@@ -108,7 +108,7 @@ function brightcove_cck_player($node, $field_name, $delta) {
     $field = $node->{$field_name}[$delta]['video_id'];
     $output = '<script src="http://admin.brightcove.com/js/BrightcoveExperiences.js" type="text/javascript"></script>';
     $bc = _brightcove_initialize();
-    $output .= $bc->embed('video', variable_get('brightcove_player', ''), $field, array());
+    $output .= theme('brightcove_cck_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''), $field, array());
 
     print $output;
   }
@@ -525,7 +525,6 @@ function brightcove_cck_theme() {
           'pattern' => 'brightcove_cck_lightbox2_imagecache__',
           'preprocess functions' => array('template_preprocess_brightcove_cck_lightbox2_imagecache'),
           ),
-
       'brightcove_cck_browse_button' => array(
           'arguments' => array('element' => NULL),
           'function' => 'theme_brightcove_cck_browse_button',
@@ -537,6 +536,11 @@ function brightcove_cck_theme() {
           ),
       'brightcove_cck_browse_items' => array(
           'arguments' => array('item' => NULL),
+          'file' => 'theme.inc',
+          ),
+      'brightcove_cck_embed' => array(
+          'arguments' => array('type' => NULL, 'player' => NULL, 'player_key' => NULL, 'video_id' => NULL, 'params' => NULL),
+          'function' => 'theme_brightcove_cck_embed',
           'file' => 'theme.inc',
           ),
       );

@@ -51,43 +51,43 @@ function brightcove_perm() {
 }
 
 function brightcove_init() {
-  // Autoload the Echove class when needed.
+  // Autoload the BCMAPI class when needed.
   spl_autoload_register('brightcove_autoload');
 } 
 
 /**
- * Autoload the Echove class when needed.
- */ 
+ * Autoload the BCMAPI class when needed.
+ */
 function brightcove_autoload($class_name) {
-  if (in_array($class_name, array('Echove', 'EchoveException'))) {
-    include_once(brightcove_echove_path() . '/echove.php');
+  if (in_array($class_name, array('BCMAPI', 'BCMAPIException'))) {
+    include_once(brightcove_mapi_path() . '/bc-mapi.php');
   }
 }
 
 /**
- * Return the path to the Echove library.
+ * Return the path to the Brightcove MAPI library.
  *
- * If brightcove_variable_get('echove_path') has not yet been set, then
- * this will attempt to autodiscover the path if the echove.php file exists
+ * If brightcove_variable_get('brightcove_mapi_path') has not yet been set, then
+ * this will attempt to autodiscover the path if the bc-mapi.php file exists
  * within sites/all/libraries/* or sites/example.com/libraries/*. It will also
- * set the path to media_brightcove_variable_get('echove_path').
+ * set the path to media_brightcove_variable_get('brightcove_mapi_path').
  *
- * The library is available from http://echove.net/.
+ * The library is available from http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/.
  *
  * @param boolean $reset
  *  (Optional) If TRUE, then reset the variable and attempt a new autodiscovery.
  * @return string
- *  The path to the echove.php file.
+ *  The path to the bc-mapi.php file.
  */
-function brightcove_echove_path($reset = FALSE) {
+function brightcove_mapi_path($reset = FALSE) {
   static $path;
 
   if (!isset($path) || $reset) {
-    if (!($path = variable_get('brightcove_echove_path', FALSe)) || $reset) {
-      $files = drupal_system_listing('^echove\.php$', 'libraries', 'basename', 0);
-      if (isset($files['echove.php'])) {
-        $path = dirname($files['echove.php']->filename);
-        variable_set('brightcove_echove_path', $path);
+    if (!($path = variable_get('brightcove_mapi_path', FALSE)) || $reset) {
+      $files = drupal_system_listing('^bc-mapi.php$', 'libraries', 'basename', 0);
+      if (isset($files['bc-mapi.php'])) {
+        $path = dirname($files['bc-mapi.php']->filename);
+        variable_set('brightcove_mapi_path', $path);
       }
     }
   }
@@ -97,7 +97,7 @@ function brightcove_echove_path($reset = FALSE) {
 
 
 /**
-  * Include all Echove SDK files.
+  * Include all BC MAPI SDK files.
   */
 function _brightcove_initialize() {
 
@@ -106,11 +106,11 @@ function _brightcove_initialize() {
 
   if (empty($read_token)) { 
     drupal_set_message(t('Cannot initialize Brightcove API. Contact site administrators.'));
-    watchdog('brightcove', 'Brightcove Read API keys not found, cannot initialize Echove SDK.', array(), WATCHDOG_ERROR);
+    watchdog('brightcove', 'Brightcove Read API keys not found, cannot initialize Brightcove MAPI SDK.', array(), WATCHDOG_ERROR);
     return FALSE;
   }
 
-  $bc = new Echove($read_token, $write_token);
+  $bc = new BCMAPI($read_token, $write_token);
 
   return $bc;
 }
@@ -256,7 +256,7 @@ function brightcove_status($code, $reset = FALSE) {
         // Get the status of the desired status.
         $status[$code] = $bc->getStatus('video', $code);
       }
-      catch (EchoveException $error) {
+      catch (BCMAPIException $error) {
         watchdog('brightcove', 'Unhandled error from Brightcove when retrieving the status of video ID %video: %error', array('%video' => $code, '%error' => $error->getMessage()), WATCHDOG_ERROR);
         $status[$code] = 'ERROR';
       }
