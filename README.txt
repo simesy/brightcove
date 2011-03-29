@@ -14,7 +14,6 @@ ModalFrame API: http://drupal.org/project/modalframe - It is currently recommend
 jQuery UI: http://drupal.org/project/jquery_ui
 External libraries: Echove Brightcove Framework, http://echove.net
 
-
 Installation instructions
 -------------------------
 
@@ -34,8 +33,16 @@ Create a new CCK field called of type Brightcove video.
 
 Play.
 
+Brightcove PlayerKEY
+-----------------------------------------
 
-Brightcove Keys
+On admin settings page (admin/settings/brightcove) you must enter the Brightcove PlayerKEY. Here's the process how to find it:
+1 - Sign in to the Brightcove Studio,
+2 - Go to the Publishing module and select the player,
+3 - Click Get Code to copy the player publishing code to your clipboard,
+4 - Find, copy and paste the playerKey value to your own embed code.
+
+Other Brightcove Keys
 ---------------
 
 To be written, target version: Release Candidate.
