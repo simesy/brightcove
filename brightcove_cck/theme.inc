@@ -55,11 +55,11 @@ function theme_brightcove_cck_browse_items($items) {
 
 function theme_brightcove_cck_embed($type, $playerId, $playerKey, $assetIds, $params) {
   if(!isset($playerId)) {
-    drupal_set_message(t('Video Player ID is missing.'), 'warning');
+    watchdog('brightcove', 'Video Player ID is missing.', array(), WATCHDOG_ERROR);
   }
 
     if(!isset($playerKey)) {
-    drupal_set_message(t('Video Player KEY is missing.'), 'warning');
+    watchdog('brightcove', 'Video Player KEY is missing.', array(), WATCHDOG_ERROR);
   }
 
   $values = array('id' => 'myExperience', 'bgcolor' => 'FFFFFF', 'width' => 486, 'height' => 412);
