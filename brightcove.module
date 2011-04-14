@@ -36,7 +36,7 @@ function brightcove_menu() {
     'title' => 'Brightcove settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_admin_settings'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('administer brightcove settings'),
     'file' => 'brightcove.admin.inc',
   );
@@ -396,4 +396,44 @@ function brightcove_generate_reference($account = NULL) {
     $account = $user->uid;
   }
   return "drupal:" . DRUPAL_CORE_COMPATIBILITY . ":" . $account . ":" . md5(microtime());
+}
+
+/**
+ * Caches the status of a video for faster validation.
+ *
+ * This function also helps work around the lag in Brightcove API when
+ * videos are uploaded.
+ *
+ * @param $id
+ *  The Brightcove identifier for the video.
+ *
+ * @param $video
+ *  The video object to be cached.
+ */
+function brightcove_video_cache_set($id, $video) {
+  if (!isset($_SESSION['brightcove'])) {
+    $_SESSION['brightcove'] = array();
+  }
+
+  $id = (int) $id;
+  $_SESSION['brightcove']["video_{$id}"] = $video;
+}
+
+/**
+ * Fetches a brighcove video object from the cache, if available.
+ *
+ * @param
+ *  The Brightcove identifier for the video.
+ *
+ * @return
+ *  Object the Brightcove video object.
+ */
+function brightcove_video_cache_get($id) {
+  $id = (int) $id;
+  $key = "video_{$id}"; 
+  if ($id && isset($_SESSION['brightcove'][$key])) {
+    return $_SESSION['brightcove'][$key];
+  }
+
+  return NULL;
 }
