@@ -352,14 +352,19 @@ function brightcove_cck_widget_info() {
  * Implementation of hook_elements().
  */
 function brightcove_cck_elements() {
-  return array(
-      'brightcove_cck_browser' => array(
-        '#input' => TRUE,
-        '#columns' => array('video_id'), '#delta' => 0,
-        '#process' => array('brightcove_cck_browser_process'),
-        '#autocomplete_path' => FALSE,
-        ),
-      );
+  $elements = array(
+    'brightcove_cck_browser' => array(
+      '#input' => TRUE,
+      '#columns' => array('video_id'),
+      '#delta' => 0,
+      '#process' => array('brightcove_cck_browser_process'),
+      '#autocomplete_path' => FALSE,
+    ),
+    'brightcove_cck_browse_button' => array(
+      '#input' => FALSE,
+    ),
+  );
+  return $elements;
 }
 
 /**
