@@ -47,7 +47,11 @@ function brightcove_menu() {
   * Implementation of hook_perm().
   */
 function brightcove_perm() {
-  return array('administer brightcove settings');
+  return array(
+    'administer brightcove settings',
+    'browse videos',
+    'upload videos'
+  );
 }
 
 function brightcove_init() {

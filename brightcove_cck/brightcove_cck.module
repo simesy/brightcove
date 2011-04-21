@@ -84,7 +84,6 @@ function brightcove_cck_browse_access($node_type, $field_name) {
   // I'm not sure which function is supposed to load the whole field array (b/c we have no $node to work with),
   // so I'm shortcutting it w/ this array, which works for content_permissions
   $field = array('field_name' => $field_name);
-
   if (node_access('create', $node_type) && content_access('edit', $field)) {
     return TRUE;
   }
@@ -392,14 +391,18 @@ function brightcove_cck_browser_process($element, $edit, $form_state, $form) {
       '#columns' => $element['#columns'],
       '#attributes' => array('rel' => $element['#field_name'], 'class' => 'brightcove-video-field'),
       );
-  // Button to browse videos.
-  $element['actions']['browse'] = array(
-      '#type' => 'brightcove_cck_browse_button',
-      '#id' => $element['#id'] . '-browse',
-      '#attributes' => array('class' => 'brightcove-cck-browse-button', 'rel' => $element['#id'] . '-video-id'),
-      '#value' => t('Browse'),
-      );
-  if ($field_info['allow_upload']) {
+  
+  if (user_access('browse videos')) {
+    // Button to browse videos.
+    $element['actions']['browse'] = array(
+        '#type' => 'brightcove_cck_browse_button',
+        '#id' => $element['#id'] . '-browse',
+        '#attributes' => array('class' => 'brightcove-cck-browse-button', 'rel' => $element['#id'] . '-video-id'),
+        '#value' => t('Browse'),
+        );
+  }
+
+  if ((user_access('upload videos')) && ($field_info['allow_upload'])) {
     $element['actions']['upload'] = array(
         '#type' => 'brightcove_cck_browse_button',
         '#id' => $element['#id'] . '-upload',
@@ -412,8 +415,9 @@ function brightcove_cck_browser_process($element, $edit, $form_state, $form) {
       '#type' => 'brightcove_cck_browse_button',
       '#id' => $element['#id'] . '-remove',
       '#attributes' => array('class' => 'brightcove-cck-remove-button', 'rel' => $element['#id'] . '-video-id'),
-      '#value' => t('Detach'),
+      '#value' => t('Remove'),
       );
+      
   if (!isset($element['#default_value'][$field_key])) {
     $element['actions']['remove']['#attributes']['disabled'] = 'disabled';
   }
