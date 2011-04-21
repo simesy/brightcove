@@ -17,6 +17,7 @@ function brightcove_admin_settings() {
     '#type' => 'textfield',
     '#title' => t('Brightcove Read API key'),
     '#maxlength' => 255,
+    '#required' => TRUE,
     '#default_value' => variable_get('brightcove_read_api_key', ''),
     '#description' => t('A Brightcove Read API key according to your account at Brightcove Studio. Please check at <a href="http://my.brightcove.com">Brightcove studio</a> page.'),
   );
@@ -27,12 +28,19 @@ function brightcove_admin_settings() {
     '#default_value' => variable_get('brightcove_write_api_key', ''),
     '#description' => t('A Brightcove Write API key according to your account at Brightcove Studio. Please check at <a href="http://my.brightcove.com">Brightcove studio</a> page. <strong>Requires at least a Professional account</strong>.'),
   );
-
   $form['brightcove_player'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Player ID'),
+    '#required' => TRUE,
     '#default_value' => variable_get('brightcove_player', ''),
     '#description' => t('A Brightcove Player ID from BC Studio. Will be used to play all videos.'),
+  );
+  $form['brightcove_player_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Brightcove Player KEY'),
+    '#required' => TRUE,
+    '#default_value' => variable_get('brightcove_player_key', ''),
+    '#description' => t('A Brightcove Player KEY from BC Studio. Will be used to play all videos.'),
   );
 
 /*  $form['brightcove_allow_public'] = array(

@@ -10,10 +10,9 @@ Requirements
 ------------
 
 CCK: http://drupal.org/project/cck
-ModalFrame API: http://drupal.org/project/modalframe
+ModalFrame API: http://drupal.org/project/modalframe - It is currently recommended to use ModalFrame 6.x-1.6 with the Brightcove module.. It is possible to use with ModalFrame 6.x-1.7 (which requires jQuery UI 1.7.x and jQuery Update 6.x-2.x) however this version breaks Lightbox2 (as of 25.05.2010). 
 jQuery UI: http://drupal.org/project/jquery_ui
-External libraries: Echove Brightcove Framework, http://echove.net
-
+External libraries: Brightcove PHP MAPI Wrapper, http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/
 
 Installation instructions
 -------------------------
@@ -22,9 +21,9 @@ Get Read and/or Write API keys from Brightcove support. Refer to section Brightc
 
 Download module from http://drupal.org/project/brightcove, untar to sites/all/modules or sites/sitename.com/modules
 
-Download Echove framework from http://echove.net/, module is tested with Echove 1.0.9 and later.
+Download Brightcove PHP MAPI Wrapper from http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/, module is tested with PHP MAPI Wrapper 2.0.4 and later.
 
-Unzip framework to sites/all/libraries/echove. After unzipping, there needs to be a file at sites/all/libraries/echove/echove.php.
+Unzip framework to sites/all/libraries/*. After unzipping, there needs to be a file at sites/all/libraries/*/bc-mapi.php.
 
 Enable Brightcove module and Brightcove CCK Field module at your site.
 
@@ -34,8 +33,16 @@ Create a new CCK field called of type Brightcove video.
 
 Play.
 
+Brightcove PlayerKEY
+-----------------------------------------
 
-Brightcove Keys
+On admin settings page (admin/settings/brightcove) you must enter the Brightcove PlayerKEY. Here's the process how to find it:
+1 - Sign in to the Brightcove Studio,
+2 - Go to the Publishing module and select the player,
+3 - Click Get Code to copy the player publishing code to your clipboard,
+4 - Find, copy and paste the playerKey value to your own embed code.
+
+Other Brightcove Keys
 ---------------
 
 To be written, target version: Release Candidate.
