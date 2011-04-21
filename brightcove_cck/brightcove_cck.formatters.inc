@@ -116,6 +116,8 @@ function template_preprocess_brightcove_cck_lightbox2(&$vars) {
   *  Player HTML code.
   */
 function theme_brightcove_cck_formatter_default($element) {
+  $player = '';
+
   if (isset($element['#item']['video_id'])) {
     // We need to write a BC JavaScript to the page, which is not possible
     // with a simple drupal_add_js(), inline is needed.
