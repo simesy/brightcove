@@ -637,11 +637,15 @@ function brightcove_cck_filter_form(&$form_state) {
       '#collapsible' => TRUE,
       '#collapsed' => empty($_SESSION['brightcove_cck_filter']) ? TRUE : FALSE,
       );
+  $keywords = '';
+  if (!empty($_SESSION['brightcove_cck_filter']['keywords'])) {
+    $keywords = $_SESSION['brightcove_cck_filter']['keywords'];
+  }
   $form['search']['keywords'] = array(
       '#type' => 'textfield',
       '#title' => t('Keywords'),
       '#size' => 25,
-      '#default_value' => $_SESSION['brightcove_cck_filter']['keywords'],
+      '#default_value' => $keywords,
       '#description' => t('Comma separated keywords to search for.'),
       );
 
