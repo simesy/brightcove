@@ -11,6 +11,7 @@
   */
 function theme_brightcove_cck_browse_button($element) {
   drupal_add_js(drupal_get_path('module', 'brightcove_cck') . '/js/browse.js');
+  $element['#button_type'] = 'button';
   $button = theme('button', $element);
   return str_ireplace('type="submit"', 'type="button"', $button);
 }
