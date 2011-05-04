@@ -101,9 +101,26 @@ function brightcove_mapi_path($reset = FALSE) {
 
 
 /**
-  * Include all BC MAPI SDK files.
-  */
+ * Initializes the Brightcove Media API and returns an instance of the object.
+ *
+ * @return BCMAPI
+ *   Instance of the Brightcove Media API.
+ *
+ * @deprecated Now public.
+ *
+ * @see brightcove_initialize
+ */
 function _brightcove_initialize() {
+  return brightcove_initialize();
+}
+
+/**
+ * Initializes the Brightcove Media API and returns an instance of the object.
+ *
+ * @return BCMAPI
+ *   Instance of the Brightcove Media API or FALSE if fails to initialize.
+ */
+function brightcove_initialize() {
 
   $read_token = variable_get('brightcove_read_api_key', '');
   $write_token = variable_get('brightcove_write_api_key', '');
@@ -153,7 +170,7 @@ function brightcove_video_load($video_id, $cache = TRUE) {
   if (!empty($video->id)) {
     return $video;
   } else {
-    $bc = _brightcove_initialize();
+    $bc = brightcove_initialize();
     try {
       $video = $bc->find('find_video_by_id', $video_id);
     } catch (Exception $error) {
@@ -255,7 +272,7 @@ function brightcove_status($code, $reset = FALSE) {
       $status[$code] = $cache->data;
     }
     else {
-      $bc = _brightcove_initialize();
+      $bc = brightcove_initialize();
       try {
         // Get the status of the desired status.
         $status[$code] = $bc->getStatus('video', $code);
@@ -365,7 +382,7 @@ function brightcove_upload_video($path, $meta) {
   if (empty($meta['shortDescription'])) {
     $meta['shortDescription'] = t('Short Description');
   }
-  $bc = _brightcove_initialize();
+  $bc = brightcove_initialize();
   try {
     $id = $bc->createMedia('video', $path, $meta);
   } catch (Exception $error) {
