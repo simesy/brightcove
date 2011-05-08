@@ -166,9 +166,8 @@ function brightcove_write_api_access() {
   */
 function brightcove_video_load($video_id, $cache = TRUE) {
   $cache = cache_get('bc:video:' . $video_id, 'cache');
-  $video = $cache->data;
-  if (!empty($video->id)) {
-    return $video;
+  if (!empty($cache->data->id)) {
+    return $cache->data;
   } else {
     $bc = brightcove_initialize();
     try {

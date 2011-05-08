@@ -218,7 +218,7 @@ function brightcove_cck_browser_validate($element, &$form_state) {
     if (is_numeric($id)) {
       // Matched ID, check if the video exists.
       $video = brightcove_video_load($id);
-      if ($video->id != $id && is_null(brightcove_video_cache_get($id))) {
+      if (is_null(brightcove_video_cache_get($id)) && $video->id != $id) {
         form_error($element, t('%name: Found no valid video with that name. Please note that it might take several minutes after the video has been uploaded in Brightcove Studio to appear in the API.', array('%name' => t($field['widget']['label']))));
       }
     } else {
@@ -373,6 +373,11 @@ function brightcove_cck_elements() {
 function brightcove_cck_browser_process($element, $edit, $form_state, $form) {
   global $brightcove_cck_settings;
   $field_key  = $element['#columns'][0];
+
+  $nid = NULL;
+  if (!empty($form['nid']['#value'])) {
+    $nid = $form['nid']['#value'];
+  }
 
   $field_info = content_fields($element['#field_name'], $element['#type_name']);
   modalframe_parent_js(); //dialog internal area
@@ -776,7 +781,7 @@ function brightcove_cck_upload_form(&$form_state) {
       '#title' => t('Title'),
       '#description' => t('Video name or title.'),
       '#required' => TRUE,
-      '#default_value' => $form_state['values']['title'],
+      '#default_value' => !empty($form_state['values']['title']) ? $form_state['values']['title'] : '',
       );
   $form['file_upload'] = array(
       '#type' => 'file',

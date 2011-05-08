@@ -56,6 +56,7 @@ function brightcove_cck_browse() {
     $method = 'find_all_videos';
   }
 
+  $result = NULL;
   try {
     $params['page_size'] = $items_per_page;
     $params['page_number'] = $page;
