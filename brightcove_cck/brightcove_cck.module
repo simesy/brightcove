@@ -384,7 +384,7 @@ function brightcove_cck_browser_process($element, $edit, $form_state, $form) {
   $element[$field_key] = array(
       '#type' => 'textfield',
       '#default_value' => isset($element['#value'][$field_key]) ? $element['#value'][$field_key] : '',
-      '#autocomplete_path' => 'brightcove_cck/autocomplete/'. $element['#field_name'] . '/' . $element['#type_name'] . '/' . $form['nid']['#value'],
+      '#autocomplete_path' => 'brightcove_cck/autocomplete/'. $element['#field_name'] . '/' . $element['#type_name'] . '/' . $nid,
       // The following values were set by the content module and need
       // to be passed down to the nested element.
       '#title' => $element['#title'],
@@ -433,7 +433,7 @@ function brightcove_cck_browser_process($element, $edit, $form_state, $form) {
         'brightcove_cck' => array($element['#field_name'] => array(
             'node_type' => $element['#type_name'],
             'field_name' => $element['#field_name'],
-            'nid' => $nid = $form['nid']['#value'],
+            'nid' => $nid,
             )),
         );
     drupal_add_js($brightcove_cck_settings[$element['#field_name']], 'setting');
