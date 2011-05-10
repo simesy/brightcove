@@ -481,7 +481,7 @@ function brightcove_cck_browser_value($element, $edit = FALSE) {
   $id = $element['#default_value'][$field_key];
   if ((int) $id > 1) {
     $video = brightcove_video_load($id);
-    if ($video->id) {
+    if (!empty($video->id)) {
       return array($field_key => check_plain($video->name) . ' [id:' . $video->id . ']');
     } else if (!is_null(brightcove_video_cache_get($id))) {
       return array($field_key => check_plain(brightcove_video_cache_get($id)->name) . ' [id:' . $id . ']');
