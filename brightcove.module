@@ -397,11 +397,14 @@ function brightcove_upload_video($path, $meta) {
   * @param $id
   *  Video ID in form of "title [id:123]".
   * @return
-  *  Int value of the ID.
+  *  Int value of the ID or NULL if not found.
   */
 function brightcove_parse_id($id) {
-    preg_match('/\[id:([^\[]*)\]$/', $id, $matches);
+  preg_match('/\[id:([^\[]*)\]$/', $id, $matches);
+  if (count($matches) == 2) {
     return $matches[1];
+  }
+  return NULL;
 }
 
 /**
