@@ -71,6 +71,47 @@ function brightcove_admin_settings() {
     '#description' => t("In case a video doesn't have a thumbnail or still image, display an image from this path"),
     '#default_value' => variable_get('brightcove_default_thumbnail', brightcove_get_default_image()),
   );
+  //see: http://support.brightcove.com/en/docs/creating-videos-multi-bitrate-streaming-media-api
+  $form['upload'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Upload Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['upload']['renditions_open'] = array(
+    '#type' => 'markup',
+    '#value' => '<div class="container-inline">',
+  );
+  $form['upload']['brightcove_create_multiple_renditions'] = array(
+    '#type' => 'select',
+    '#default_value' => variable_get('brightcove_create_multiple_renditions', TRUE),
+    '#options' => array(
+      TRUE => t('multiple renditions'), 
+      FALSE => t('a single rendition'), 
+    ),
+    '#prefix' => 'Automatically create ', 
+    '#suffix' => 'for uploading videos from Drupal.', 
+  );
+  $form['upload']['renditions_close'] = array(
+    '#type' => 'markup',
+    '#value' => '</div>',
+  );
+  $form['upload']['brightcove_encode_to'] = array(
+    '#type' => 'radios',
+    '#title' => t('Output rendition encoding'),
+    '#default_value' => variable_get('brightcove_encode_to', 'MP4'),
+    '#options' => array(
+      'MP4' => t('H.264 (MP4)'), 
+      'FLV' => t('VP6 (FLV)')
+    ),
+    '#description' => t(''),
+  );
+  $form['upload']['brightcove_preserve_source_rendition'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Add H.264 source as a rendition.'),
+    '#return_value' => 1, 
+    '#default_value' => variable_get('brightcove_preserve_source_rendition', 0), 
+  );
   $form['status'] = array(
       '#type' => 'fieldset',
       '#title' => t('Status settings'),
