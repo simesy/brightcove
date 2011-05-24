@@ -19,14 +19,14 @@ function brightcove_admin_settings() {
     '#maxlength' => 255,
     '#required' => TRUE,
     '#default_value' => variable_get('brightcove_read_api_key', ''),
-    '#description' => t('A Brightcove Read API key according to your account at Brightcove Studio. Please check at <a href="http://my.brightcove.com">Brightcove studio</a> page.'),
+    '#description' => t('A Brightcove Read API key from your account at Brightcove Studio. Please check at <a href="http://my.brightcove.com">Brightcove studio</a> page.'),
   );
   $form['brightcove_write_api_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Write API key'),
     '#maxlength' => 255,
     '#default_value' => variable_get('brightcove_write_api_key', ''),
-    '#description' => t('A Brightcove Write API key according to your account at Brightcove Studio. Please check at <a href="http://my.brightcove.com">Brightcove studio</a> page. <strong>Requires at least a Professional account</strong>.'),
+    '#description' => t('A Brightcove Write API key from your account at Brightcove Studio. Please check at <a href="http://my.brightcove.com">Brightcove studio</a> page. <strong>Requires at least a Professional account</strong>.'),
   );
   $form['brightcove_player'] = array(
     '#type' => 'textfield',
@@ -41,6 +41,13 @@ function brightcove_admin_settings() {
     '#required' => TRUE,
     '#default_value' => variable_get('brightcove_player_key', ''),
     '#description' => t('A Brightcove Player KEY from BC Studio. Will be used to play all videos.'),
+  );
+  
+  $form['brightcove_user_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Brightcove Drupal User Custom Field'),
+    '#default_value' => variable_get('brightcove_user_field', ''),
+    '#description' => t('A Brightcove Custom Field to store the Drupal username of the user who uploaded a video, which is useful to determine which Drupal user uploaded a given video in BC Studio. <br/>Read more about <a href="http://support.brightcove.com/en/docs/setting-custom-metadata">Brightcove custom metadata</a>. <strong>Requires at least a Professional account</strong>'),
   );
 
 /*  $form['brightcove_allow_public'] = array(

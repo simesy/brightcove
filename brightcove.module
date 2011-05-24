@@ -375,11 +375,16 @@ function brightcove_media_mover($op = NULL, $action = NULL, $configuration = NUL
   * @see http://support.brightcove.com/en/docs/media-api-objects-reference#Video
   */
 function brightcove_upload_video($path, $meta) {
+  global $user;
   if (empty($meta['name'])) {
     $meta['name'] = t('Video');
   }
   if (empty($meta['shortDescription'])) {
     $meta['shortDescription'] = t('Short Description');
+  }
+  $user_attribute = variable_get('brightcove_user_field', '');
+  if (!empty($user_attribute)) {
+    $meta['customFields'] = array($user_attribute => $user->name);
   }
   $bc = brightcove_initialize();
   try {
