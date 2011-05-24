@@ -40,3 +40,27 @@ function brightcove_requirements($phase) {
   }
   return $requirements;
 }
+
+/**
+ * Implements hook_uninstall().
+ */
+function brightcove_uninstall() {
+  variable_del('brightcove_allow_public');
+  variable_del('brightcove_check_for_unavailable');
+  variable_del('brightcove_create_multiple_renditions');
+  variable_del('brightcove_default_image');
+  variable_del('brightcove_default_thumbnail');
+  // Remove legacy library path too.
+  variable_del('brightcove_echove_path');
+  variable_del('brightcove_encode_to');
+  variable_del('brightcove_mapi_path');
+  variable_del('brightcove_player');
+  variable_del('brightcove_player_key');
+  variable_del('brightcove_player_key');
+  variable_del('brightcove_player_key');
+  variable_del('brightcove_preserve_source_rendition');
+  variable_del('brightcove_read_api_key');
+  variable_del('brightcove_status_display_unavailable');
+  variable_del('brightcove_user_field');
+  variable_del('brightcove_write_api_key');
+}
