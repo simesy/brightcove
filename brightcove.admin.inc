@@ -12,8 +12,13 @@
  * @see system_settings_form()
  */
 function brightcove_admin_settings() {
-
-  $form['brightcove_read_api_key'] = array(
+  $form['account'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Account Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['account']['brightcove_read_api_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Read API key'),
     '#maxlength' => 255,
@@ -21,42 +26,46 @@ function brightcove_admin_settings() {
     '#default_value' => variable_get('brightcove_read_api_key', ''),
     '#description' => t('A Brightcove Read API key from your account at Brightcove Studio. Please check at <a href="http://my.brightcove.com">Brightcove studio</a> page.'),
   );
-  $form['brightcove_write_api_key'] = array(
+  $form['account']['brightcove_write_api_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Write API key'),
     '#maxlength' => 255,
     '#default_value' => variable_get('brightcove_write_api_key', ''),
     '#description' => t('A Brightcove Write API key from your account at Brightcove Studio. Please check at <a href="http://my.brightcove.com">Brightcove studio</a> page. <strong>Requires at least a Professional account</strong>.'),
   );
-  $form['brightcove_player'] = array(
+  $form['account']['brightcove_user_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Brightcove Drupal User Custom Field'),
+    '#default_value' => variable_get('brightcove_user_field', ''),
+    '#description' => t('A Brightcove Custom Field to store the Drupal username of the user who uploaded a video - useful to determine which Drupal user uploaded a given video in BC Studio. This field must be created in BC Studio first. Read more about <a href="http://support.brightcove.com/en/docs/setting-custom-metadata">Brightcove custom metadata</a>. <strong>Requires at least a Professional account</strong>'),
+  );
+  $form['player'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Player Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['player']['brightcove_player'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Player ID'),
     '#required' => TRUE,
     '#default_value' => variable_get('brightcove_player', ''),
     '#description' => t('A Brightcove Player ID from BC Studio. Will be used to play all videos.'),
   );
-  $form['brightcove_player_key'] = array(
+  $form['player']['brightcove_player_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Player KEY'),
     '#required' => TRUE,
     '#default_value' => variable_get('brightcove_player_key', ''),
     '#description' => t('A Brightcove Player KEY from BC Studio. Will be used to play all videos.'),
   );
-  
-  $form['brightcove_user_field'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Brightcove Drupal User Custom Field'),
-    '#default_value' => variable_get('brightcove_user_field', ''),
-    '#description' => t('A Brightcove Custom Field to store the Drupal username of the user who uploaded a video, which is useful to determine which Drupal user uploaded a given video in BC Studio. <br/>Read more about <a href="http://support.brightcove.com/en/docs/setting-custom-metadata">Brightcove custom metadata</a>. <strong>Requires at least a Professional account</strong>'),
-  );
-
 /*  $form['brightcove_allow_public'] = array(
     '#type' => 'checkbox',
     '#title' => t('Allow public videos'),
     '#default_value' => variable_get('brightcove_allow_public', FALSE),
     '#description' => t('If public videos are allowed, users will be able to mark videos public. Public videos can be seen by anybody in the video browser.'),
     );*/
-  $form['brightcove_default_image'] = array(
+  $form['player']['brightcove_default_image'] = array(
     '#type' => 'textfield',
     '#title' => t('Default image'),
     '#description' => t("In case a video doesn't have a thumbnail or still image, display an image from this path"),

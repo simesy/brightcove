@@ -388,7 +388,18 @@ function brightcove_upload_video($path, $meta) {
   }
   $bc = brightcove_initialize();
   try {
-    $id = $bc->createMedia('video', $path, $meta);
+    // retrieve upload settings 
+    $create_multiple_renditions = (bool) variable_get('brightcove_create_multiple_renditions', TRUE);
+    $preserve_source_rendition = (bool) variable_get('brightcove_preserve_source_rendition', 0);
+    $encode_to = variable_get('brightcove_encode_to', 'MP4');
+    
+    $options = array(
+      'create_multiple_renditions' => $create_multiple_renditions,
+      'encode_to' => $encode_to,
+      'preserve_source_rendition' => $preserve_source_rendition,
+    );
+    
+    $id = $bc->createMedia('video', $path, $meta, $options);
   } catch (Exception $error) {
     drupal_set_message(t('Video upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
     return;
