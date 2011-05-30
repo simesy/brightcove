@@ -14,7 +14,7 @@
 function brightcove_admin_settings() {
   $form['account'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Account Settings'),
+    '#title' => t('Account settings'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
@@ -41,7 +41,7 @@ function brightcove_admin_settings() {
   );
   $form['player'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Player Settings'),
+    '#title' => t('Player settings'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
@@ -74,9 +74,10 @@ function brightcove_admin_settings() {
   //see: http://support.brightcove.com/en/docs/creating-videos-multi-bitrate-streaming-media-api
   $form['upload'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Upload Settings'),
+    '#title' => t('Upload settings for non-FLV videos'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
+  '#description' => t("Note that these settings apply only to non-FLV videos (MP4, AVI, QT, etc.)."),
   );
   $form['upload']['renditions_open'] = array(
     '#type' => 'markup',
@@ -90,7 +91,7 @@ function brightcove_admin_settings() {
       FALSE => t('a single rendition'), 
     ),
     '#prefix' => 'Automatically create ', 
-    '#suffix' => 'for uploading videos from Drupal.', 
+    '#suffix' => 'for uploading videos from Drupal.',
   );
   $form['upload']['renditions_close'] = array(
     '#type' => 'markup',
@@ -111,6 +112,7 @@ function brightcove_admin_settings() {
     '#title' => t('Add H.264 source as a rendition.'),
     '#return_value' => 1, 
     '#default_value' => variable_get('brightcove_preserve_source_rendition', 0), 
+    '#disabled' => !variable_get('brightcove_create_multiple_renditions', TRUE)
   );
   $form['status'] = array(
       '#type' => 'fieldset',
