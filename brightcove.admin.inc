@@ -81,10 +81,10 @@ function brightcove_admin_settings() {
     '#type' => 'select',
     '#default_value' => variable_get('brightcove_create_multiple_renditions', TRUE),
     '#options' => array(
-      TRUE => t('multiple renditions'), 
-      FALSE => t('a single rendition'), 
+      TRUE => t('multiple renditions'),
+      FALSE => t('a single rendition'),
     ),
-    '#prefix' => 'Automatically create ', 
+    '#prefix' => 'Automatically create ',
     '#suffix' => 'for uploading videos from Drupal.',
   );
   $form['upload']['renditions_close'] = array(
@@ -96,7 +96,7 @@ function brightcove_admin_settings() {
     '#title' => t('Output rendition encoding'),
     '#default_value' => variable_get('brightcove_encode_to', 'MP4'),
     '#options' => array(
-      'MP4' => t('H.264 (MP4)'), 
+      'MP4' => t('H.264 (MP4)'),
       'FLV' => t('VP6 (FLV)')
     ),
     '#description' => t(''),
@@ -104,8 +104,8 @@ function brightcove_admin_settings() {
   $form['upload']['brightcove_preserve_source_rendition'] = array(
     '#type' => 'checkbox',
     '#title' => t('Add H.264 source as a rendition.'),
-    '#return_value' => 1, 
-    '#default_value' => variable_get('brightcove_preserve_source_rendition', 0), 
+    '#return_value' => 1,
+    '#default_value' => variable_get('brightcove_preserve_source_rendition', 0),
     '#disabled' => !variable_get('brightcove_create_multiple_renditions', TRUE)
   );
   $form['status'] = array(

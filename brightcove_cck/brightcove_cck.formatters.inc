@@ -16,7 +16,7 @@ function theme_brightcove_cck_lightbox2_imagecache($element) {
   $preset_data = str_replace('lightbox2_imagecache_', '', $element['#formatter']);
   list($preset, $field) = split('__', $preset_data);
 
-  if (isset($element['#item']['video_id'])) {  
+  if (isset($element['#item']['video_id'])) {
 
     $video = brightcove_video_load($element['#item']['video_id']);
     /* Temporary turned off, because getting of status in BC API throws error for users without write api key
@@ -192,7 +192,7 @@ function template_preprocess_brightcove_cck_node_link(&$vars) {
 
 /**
   * Theme callback for imagecache image linking to node
-  * 
+  *
   * @param $element
   *  Element with the Video ID.
   * @return
@@ -202,7 +202,7 @@ function theme_brightcove_cck_node_link_imagecache($element) {
   $preset_data = str_replace('node_link_imagecache_', '', $element['#formatter']);
   list($preset, $field) = split('__', $preset_data);
 
-  if (isset($element['#item']['video_id'])) {  
+  if (isset($element['#item']['video_id'])) {
 
     $video = brightcove_video_load($element['#item']['video_id']);
     /* Temporary turned off, because getting of status in BC API throws error for users without write api key
@@ -278,7 +278,7 @@ function template_preprocess_brightcove_cck_node_image(&$vars) {
 
 /**
   * Theme callback for imagecache image
-  * 
+  *
   * @param $element
   *  Element with the Video ID.
   * @return
@@ -288,7 +288,7 @@ function theme_brightcove_cck_node_image_imagecache($element) {
   $preset_data = str_replace('node_image_imagecache_', '', $element['#formatter']);
   list($preset, $field) = split('__', $preset_data);
 
-  if (isset($element['#item']['video_id'])) {  
+  if (isset($element['#item']['video_id'])) {
 
     $video = brightcove_video_load($element['#item']['video_id']);
     /* Temporary turned off, because getting of status in BC API throws error for users without write api key

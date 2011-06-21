@@ -15,7 +15,7 @@
   * @author
   * Jakub Suchy <jakub@dynamiteheads.com>
   * Parts of code taken from Media Brightcove module by Aaron Winborn - http://advomatic.com
-  * 
+  *
   * Module development sponsored by Brightcove, Inc.
   */
 
@@ -57,7 +57,7 @@ function brightcove_perm() {
 function brightcove_init() {
   // Autoload the BCMAPI class when needed.
   spl_autoload_register('brightcove_autoload');
-} 
+}
 
 /**
  * Autoload the BCMAPI class when needed.
@@ -125,7 +125,7 @@ function brightcove_initialize() {
   $read_token = variable_get('brightcove_read_api_key', '');
   $write_token = variable_get('brightcove_write_api_key', '');
 
-  if (empty($read_token)) { 
+  if (empty($read_token)) {
     drupal_set_message(t('Cannot initialize Brightcove API. Contact site administrators.'));
     watchdog('brightcove', 'Brightcove Read API keys not found, cannot initialize Brightcove MAPI SDK.', array(), WATCHDOG_ERROR);
     return FALSE;
@@ -238,7 +238,7 @@ function brightcove_theme($existing, $type, $theme, $path) {
       'arguments' => array('message' => NULL),
       ),
     );
-} 
+}
 
 function theme_brightcove_unavailable_message($message) {
   return '<div class="video-unavailable">' . $message . '</div>';
@@ -284,7 +284,7 @@ function brightcove_status($code, $reset = FALSE) {
     }
   }
   return $status[$code];
-} 
+}
 
 /**
   * Check if expose unavailability message in case the video is not available.
@@ -392,18 +392,18 @@ function brightcove_upload_video($path, $meta) {
     $options = array();
     preg_match('/\.(f4a|f4b|f4v|f4p|flv)$/i', $path, $invalid_extensions);
     if (!isset($invalid_extensions[1])) {
-      // retrieve upload settings 
+      // retrieve upload settings
       $create_multiple_renditions = (bool) variable_get('brightcove_create_multiple_renditions', TRUE);
       $preserve_source_rendition = (bool) variable_get('brightcove_preserve_source_rendition', 0);
       $encode_to = variable_get('brightcove_encode_to', 'MP4');
-    
+
       $options = array(
         'create_multiple_renditions' => $create_multiple_renditions,
         'encode_to' => $encode_to,
         'preserve_source_rendition' => $preserve_source_rendition,
       );
     }
-    
+
     $id = $bc->createMedia('video', $path, $meta, $options);
   } catch (Exception $error) {
     drupal_set_message(t('Video upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
@@ -474,7 +474,7 @@ function brightcove_video_cache_set($id, $video) {
  */
 function brightcove_video_cache_get($id) {
   $id = (int) $id;
-  $key = "video_{$id}"; 
+  $key = "video_{$id}";
   if ($id && isset($_SESSION['brightcove'][$key])) {
     return $_SESSION['brightcove'][$key];
   }

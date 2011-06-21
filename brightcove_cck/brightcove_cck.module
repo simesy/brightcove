@@ -397,7 +397,7 @@ function brightcove_cck_browser_process($element, $edit, $form_state, $form) {
       '#columns' => $element['#columns'],
       '#attributes' => array('rel' => $element['#field_name'], 'class' => 'brightcove-video-field'),
       );
-  
+
   if (user_access('browse videos')) {
     // Button to browse videos.
     $element['actions']['browse'] = array(
@@ -423,7 +423,7 @@ function brightcove_cck_browser_process($element, $edit, $form_state, $form) {
       '#attributes' => array('class' => 'brightcove-cck-remove-button', 'rel' => $element['#id'] . '-video-id'),
       '#value' => t('Remove'),
       );
-      
+
   if (!isset($element['#default_value'][$field_key])) {
     $element['actions']['remove']['#attributes']['disabled'] = 'disabled';
   }

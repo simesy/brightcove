@@ -78,7 +78,7 @@ function theme_brightcove_cck_embed($type, $playerId, $playerKey, $assetIds, $pa
       if(strtolower($type) == 'video') {
         $assetCode = '<param name="@videoPlayer" value="';
       } else {
-        // TODO: Add different types than video. 
+        // TODO: Add different types than video.
       }
 
       foreach($assetIds as $assetId) {
@@ -107,6 +107,6 @@ function theme_brightcove_cck_embed($type, $playerId, $playerKey, $assetIds, $pa
     <param name="isUI" value="true" />
     <param name="playerKey" value="' . $playerKey . '" />
     </object>';
-  
+
   return $code;
 }
