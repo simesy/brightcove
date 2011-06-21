@@ -15,7 +15,7 @@
   * @author
   * Jakub Suchy <jakub@dynamiteheads.com>
   * Parts of code taken from Media Brightcove module by Aaron Winborn - http://advomatic.com
-  * 
+  *
   * Module development sponsored by Brightcove, Inc.
   */
 
@@ -29,10 +29,10 @@ define('BRIGHTCOVE_STATUS_ERROR', 'ERROR');
   */
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function brightcove_menu() {
-  $items['admin/settings/brightcove'] = array(
+  $items['admin/config/media/brightcove'] = array(
     'title' => 'Brightcove settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_admin_settings'),
@@ -44,20 +44,26 @@ function brightcove_menu() {
 }
 
 /**
-  * Implementation of hook_perm().
+  * Implements hook_permission().
   */
-function brightcove_perm() {
+function brightcove_permission() {
   return array(
-    'administer brightcove settings',
-    'browse videos',
-    'upload videos'
+    'administer brightcove settings' => array(
+      'title' => t('Administer brightcove'),
+    ),
+    'browse videos' => array(
+      'title' => t('Browse videos'),
+    ),
+    'upload videos' => array(
+      'title' => t('Upload videos'),
+    ),
   );
 }
 
 function brightcove_init() {
   // Autoload the BCMAPI class when needed.
   spl_autoload_register('brightcove_autoload');
-} 
+}
 
 /**
  * Autoload the BCMAPI class when needed.
@@ -78,17 +84,16 @@ function brightcove_autoload($class_name) {
  *
  * The library is available from http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/.
  *
- * @param boolean $reset
- *  (Optional) If TRUE, then reset the variable and attempt a new autodiscovery.
  * @return string
  *  The path to the bc-mapi.php file.
  */
-function brightcove_mapi_path($reset = FALSE) {
-  static $path;
+function brightcove_mapi_path() {
+  $path = &drupal_static(__FUNCTION__);
 
-  if (!isset($path) || $reset) {
-    if (!($path = variable_get('brightcove_mapi_path', FALSE)) || $reset) {
-      $files = drupal_system_listing('^bc-mapi.php$', 'libraries', 'basename', 0);
+  if (!isset($path)) {
+    if (!($path = variable_get('brightcove_mapi_path', FALSE))) {
+      $files = drupal_system_listing('/^bc-mapi.php$/', 'libraries',
+                                     'filename', 0);
       if (isset($files['bc-mapi.php'])) {
         $path = dirname($files['bc-mapi.php']->filename);
         variable_set('brightcove_mapi_path', $path);
@@ -97,21 +102,6 @@ function brightcove_mapi_path($reset = FALSE) {
   }
 
   return $path;
-}
-
-
-/**
- * Initializes the Brightcove Media API and returns an instance of the object.
- *
- * @return BCMAPI
- *   Instance of the Brightcove Media API.
- *
- * @deprecated Now public.
- *
- * @see brightcove_initialize
- */
-function _brightcove_initialize() {
-  return brightcove_initialize();
 }
 
 /**
@@ -125,7 +115,7 @@ function brightcove_initialize() {
   $read_token = variable_get('brightcove_read_api_key', '');
   $write_token = variable_get('brightcove_write_api_key', '');
 
-  if (empty($read_token)) { 
+  if (empty($read_token)) {
     drupal_set_message(t('Cannot initialize Brightcove API. Contact site administrators.'));
     watchdog('brightcove', 'Brightcove Read API keys not found, cannot initialize Brightcove MAPI SDK.', array(), WATCHDOG_ERROR);
     return FALSE;
@@ -141,34 +131,28 @@ function brightcove_initialize() {
   * Check a set of API keys to determine write access to Brightcove Studio.
   * Only customers with Professional and higher accounts have write access.
   *
-  * @return
+  * @return bool
   *  TRUE for write access allowed.
   *  FALSE for write access forbidden.
   */
 function brightcove_write_api_access() {
-  if (variable_get('brightcove_write_api_key', '')) {
-    return TRUE;
-  } else {
-    return FALSE;
-  }
+  return (bool) variable_get('brightcove_write_api_key', '');
 }
 
 /**
   * Loads Brightcove video from BC Media API. Uses a 5 minutes cache to speed up lookups.
   *
   * @param $video_id
-  * Brightcove Studio video ID.
-  * @param $cache
-  * TRUE or FALSE. Whether to return a video from cache, if present.
   *
   * @return $video
   * Video object or FALSE if video not found.
   */
-function brightcove_video_load($video_id, $cache = TRUE) {
+function brightcove_video_load($video_id) {
   $cache = cache_get('bc:video:' . $video_id, 'cache');
   if (!empty($cache->data->id)) {
     return $cache->data;
-  } else {
+  }
+  else {
     $bc = brightcove_initialize();
     try {
       $video = $bc->find('find_video_by_id', $video_id);
@@ -198,7 +182,8 @@ function brightcove_remote_image($url) {
   $parse = parse_url($url);
   $path = pathinfo($parse['path']);
 
-  $fullpath = file_directory_path() . '/brightcove_thumbnail';
+  $fullpath = drupal_realpath(file_default_scheme() . ':/') .
+              '/brightcove_thumbnail';
 
   $final_file = $fullpath . '/' . $path['basename'];
 
@@ -211,7 +196,7 @@ function brightcove_remote_image($url) {
     return FALSE;
   }
 
-  if (!file_check_directory($fullpath, FILE_CREATE_DIRECTORY)) {
+  if (!file_prepare_directory($fullpath, FILE_CREATE_DIRECTORY|FILE_MODIFY_PERMISSIONS)) {
     return FALSE;
   }
 
@@ -232,13 +217,13 @@ function brightcove_remote_image($url) {
 /**
  * Implementation of hook_theme().
  */
-function brightcove_theme($existing, $type, $theme, $path) {
+function brightcove_theme() {
   return array(
     'brightcove_unavailable_message' => array(
-      'arguments' => array('message' => NULL),
+      'variables' => array('message' => NULL),
       ),
     );
-} 
+}
 
 function theme_brightcove_unavailable_message($message) {
   return '<div class="video-unavailable">' . $message . '</div>';
@@ -284,7 +269,7 @@ function brightcove_status($code, $reset = FALSE) {
     }
   }
   return $status[$code];
-} 
+}
 
 /**
   * Check if expose unavailability message in case the video is not available.
@@ -295,70 +280,11 @@ function brightcove_status($code, $reset = FALSE) {
 function brightcove_expose_unavailable() {
   if (variable_get('brightcove_check_for_unavailable', TRUE) &&
      ($unavailable_message = variable_get('brightcove_status_display_unavailable', 'This video is unavailable for the moment.'))) {
-    return theme('brightcove_unavailable_message', $unavailable_message, $status);
+    return theme('brightcove_unavailable_message',
+                 array('message' => $unavailable_message));
   }
-}
 
-
-
-/**
- * Implementation of hook_media_mover().
- *
- * Taken from Media Brightcove module by Aaron Winborn - http:/advomatic.com
- * http://drupalcode.org/viewvc/drupal/contributions/modules/media_brightcove/media_brightcove.module?revision=1.1.2.14&content-type=text%2Fplain&view=co&pathrev=DRUPAL-6--1
- *
- * @param $op is the operator to return
- * @param $action is which action is being called
- * @param $verb is the verb being run
- * @param $configuration is the specific configuration saved for the action for this configuration
- * @param $file is the file in use
- * @param $job is the full configuration data currently running
- */
-function brightcove_media_mover($op = NULL, $action = NULL, $configuration = NULL, &$file=array(), $job = NULL, $nid = NULL) {
-  switch ($op) {
-    case 'name':
-      return t('Brightcove');
-      break;
-
-    case 'actions':
-      return array(
-          'process' => array(
-            1 => t('Upload video to Brightcove.'),
-            ),
-          'storage' => array(
-            2 => t('Upload video to Brightcove.'),
-            ),
-          'complete' => array(
-            3 => t('Attach Brightcove video to a CCK video field'),
-            ),
-          );
-      break;
-
-    case 'complete':
-      module_load_include('inc', 'brightcove', 'brightcove.media_mover');
-      return brightcove_mm_complete_video($file, $configuration);
-      break;
-
-    case 'process':
-    case 'storage':
-      module_load_include('inc', 'brightcove', 'brightcove.media_mover');
-      return brightcove_mm_upload_video($file, $configuration);
-      break;
-
-    case 'config':
-      switch ($action) {
-        case '1':
-        case '2':
-          module_load_include('inc', 'brightcove', 'brightcove.media_mover');
-          return brightcove_mm_config($configuration);
-          break;
-        case '3':
-          module_load_include('inc', 'brightcove', 'brightcove.media_mover');
-          return brightcove_mm_complete_config($configuration);
-          break;
-      }
-      break;
-  }
+  return '';
 }
 
 /**
@@ -392,22 +318,22 @@ function brightcove_upload_video($path, $meta) {
     $options = array();
     preg_match('/\.(f4a|f4b|f4v|f4p|flv)$/i', $path, $invalid_extensions);
     if (!isset($invalid_extensions[1])) {
-      // retrieve upload settings 
+      // retrieve upload settings
       $create_multiple_renditions = (bool) variable_get('brightcove_create_multiple_renditions', TRUE);
       $preserve_source_rendition = (bool) variable_get('brightcove_preserve_source_rendition', 0);
       $encode_to = variable_get('brightcove_encode_to', 'MP4');
-    
+
       $options = array(
         'create_multiple_renditions' => $create_multiple_renditions,
         'encode_to' => $encode_to,
         'preserve_source_rendition' => $preserve_source_rendition,
       );
     }
-    
+
     $id = $bc->createMedia('video', $path, $meta, $options);
   } catch (Exception $error) {
     drupal_set_message(t('Video upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
-    return;
+    return NULL;
   }
   return $id;
 }
@@ -474,7 +400,7 @@ function brightcove_video_cache_set($id, $video) {
  */
 function brightcove_video_cache_get($id) {
   $id = (int) $id;
-  $key = "video_{$id}"; 
+  $key = "video_{$id}";
   if ($id && isset($_SESSION['brightcove'][$key])) {
     return $_SESSION['brightcove'][$key];
   }
