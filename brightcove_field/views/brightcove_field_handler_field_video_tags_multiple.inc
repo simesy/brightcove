@@ -7,7 +7,7 @@
  * Fields that want multiple value grouping options in addition to basic
  * field and formatter handling can extend this class.
  */
-class brightcove_cck_handler_field_video_tags_multiple extends brightcove_cck_handler_field_video_tags {
+class brightcove_field_handler_field_video_tags_multiple extends brightcove_field_handler_field_video_tags {
   var $defer_query;
 
   function init(&$view, $options) {

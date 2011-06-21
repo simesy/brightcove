@@ -9,7 +9,7 @@
  * but don't want the multiple value grouping options created by
  * content_handler_field_multiple.
  */
-class brightcove_cck_handler_field_video_tags extends content_handler_field_multiple {
+class brightcove_field_handler_field_video_tags extends content_handler_field_multiple {
   var $content_field;
 
   function construct() {
@@ -60,13 +60,13 @@ class brightcove_cck_handler_field_video_tags extends content_handler_field_mult
 
     $field = $this->content_field;
     $options = $this->options;
-      
+
     unset($form['format']);
     unset($form['label_type']);
-    $form['label'] = array( 
-      '#type' => 'textfield', 
-      '#title' => t('Label'), 
-      '#default_value' => isset($this->options['label']) ? $this->options['label'] : '', 
+    $form['label'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Label'),
+      '#default_value' => isset($this->options['label']) ? $this->options['label'] : '',
       '#description' => t('The label for this field that will be displayed to end users if the style requires it.'),
     );
     $time = time();

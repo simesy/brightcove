@@ -3,28 +3,28 @@
 /**
  * Implementation of hook_views_handlers().
  */
-function brightcove_cck_views_handlers() {
+function brightcove_field_views_handlers() {
   return array(
       'info' => array(
-        'path' => drupal_get_path('module', 'brightcove_cck') .'/views',
+        'path' => drupal_get_path('module', 'brightcove_field') .'/views',
         ),
       'handlers' => array(
-        'brightcove_cck_handler_field_video_multiple' => array(
-          'parent' => 'brightcove_cck_handler_field_video',
+        'brightcove_field_handler_field_video_multiple' => array(
+          'parent' => 'brightcove_field_handler_field_video',
           ),
-        'brightcove_cck_handler_field_video' => array(
+        'brightcove_field_handler_field_video' => array(
           'parent' => 'content_handler_field_multiple',
           ),
-        'brightcove_cck_handler_field_video_date_multiple' => array(
-          'parent' => 'brightcove_cck_handler_field_video_date',
+        'brightcove_field_handler_field_video_date_multiple' => array(
+          'parent' => 'brightcove_field_handler_field_video_date',
           ),
-        'brightcove_cck_handler_field_video_date' => array(
+        'brightcove_field_handler_field_video_date' => array(
           'parent' => 'content_handler_field_multiple',
           ),
-        'brightcove_cck_handler_field_video_tags_multiple' => array(
-          'parent' => 'brightcove_cck_handler_field_video_tags',
+        'brightcove_field_handler_field_video_tags_multiple' => array(
+          'parent' => 'brightcove_field_handler_field_video_tags',
           ),
-        'brightcove_cck_handler_field_video_tags' => array(
+        'brightcove_field_handler_field_video_tags' => array(
           'parent' => 'content_handler_field_multiple',
           ),
 
@@ -36,7 +36,7 @@ function brightcove_cck_views_handlers() {
   * This is NOT implementation of hook_views_data().
   * This is a helper function for hook_field_settings op = 'views data'.
   */
-function _brightcove_cck_views_data($field) {
+function _brightcove_field_views_data($field) {
   $data = content_views_field_views_data($field);
   $db_info = content_database_info($field);
   $table_alias = content_views_tablename($field);
@@ -53,7 +53,7 @@ function _brightcove_cck_views_data($field) {
   foreach ($text_fields as $bc_field => $text) {
     $data[$table_alias][$field['field_name'] .'_video_id_' . $bc_field]['title'] = t('Video: name');
     $data[$table_alias][$field['field_name'] .'_video_id_' . $bc_field]['field'] = array(
-      'handler' => 'brightcove_cck_handler_field_video_multiple',
+      'handler' => 'brightcove_field_handler_field_video_multiple',
       'additional fields' => array($field['field_name'] . '_video_id' => $field['field_name'] . '_video_id'),
       'real field' => $field['field_name'] . '_video_id',
       'content_field_name' => $field['field_name'],
@@ -74,7 +74,7 @@ function _brightcove_cck_views_data($field) {
   foreach ($date_fields as $bc_field => $text) {
     $data[$table_alias][$field['field_name'] .'_video_id_' . $bc_field]['title'] = t('Video: name');
     $data[$table_alias][$field['field_name'] .'_video_id_' . $bc_field]['field'] = array(
-      'handler' => 'brightcove_cck_handler_field_video_date_multiple',
+      'handler' => 'brightcove_field_handler_field_video_date_multiple',
       'additional fields' => array($field['field_name'] . '_video_id' => $field['field_name'] . '_video_id'),
       'real field' => $field['field_name'] . '_video_id',
       'content_field_name' => $field['field_name'],
@@ -93,7 +93,7 @@ function _brightcove_cck_views_data($field) {
   foreach ($tag_fields as $bc_field => $text) {
     $data[$table_alias][$field['field_name'] .'_video_id_' . $bc_field]['title'] = t('Video: name');
     $data[$table_alias][$field['field_name'] .'_video_id_' . $bc_field]['field'] = array(
-      'handler' => 'brightcove_cck_handler_field_video_tags_multiple',
+      'handler' => 'brightcove_field_handler_field_video_tags_multiple',
       'additional fields' => array($field['field_name'] . '_video_id' => $field['field_name'] . '_video_id'),
       'real field' => $field['field_name'] . '_video_id',
       'content_field_name' => $field['field_name'],

@@ -3,13 +3,13 @@
   * Handles submitting upload form - making a throbber.
   */
 
-Drupal.brightcove_cck = {};
+Drupal.brightcove_field = {};
 
-Drupal.behaviors.brightcove_cck_upload = function(context) {
-  $('#brightcove-cck-upload-form').submit(Drupal.brightcove_cck.upload);
+Drupal.behaviors.brightcove_field_upload = function(context) {
+  $('#brightcove-field-upload-form').submit(Drupal.brightcove_field.upload);
  //  <div class="ahah-progress ahah-progress-throbber"><div class="throbber">&nbsp;</div></div>
 };
 
-Drupal.brightcove_cck.upload = function() {
-  $('#brightcove-cck-upload-form #edit-submit').replaceWith('<div class="ahah-progress ahah-progress-throbber"><div class="throbber">&nbsp;</div><div>' + Drupal.t('The video is being created, please wait.') + '</div></div>');
+Drupal.brightcove_field.upload = function() {
+  $('#brightcove-field-upload-form #edit-submit').replaceWith('<div class="ahah-progress ahah-progress-throbber"><div class="throbber">&nbsp;</div><div>' + Drupal.t('The video is being created, please wait.') + '</div></div>');
 };

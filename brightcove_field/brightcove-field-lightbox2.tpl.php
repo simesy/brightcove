@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file brightcove-cck-lightbox2.tpl.php
+ * @file brightcove-field-lightbox2.tpl.php
  * Image -> Lightbox2 player theme implementation.
  *
  * This template is used when viewing a Brightcove video with a thumbnail or videoStill image linking to Lightbox2.
@@ -15,11 +15,11 @@
  *   - $image_field: The name of the image field used from Media API. Can be thumbnailURL or videoStillURL.
  *   - $destination: URL for the Brightcove video player.
  *   - $video_id: Video ID from Media API.
- *   - $field_name: CCK Field name.
+ *   - $field_name: Field name.
  *   - $type_name: Node type.
  *   - $preset: If printed with imagecache, Imagecache preset name.
  *
- * @see theme_brightcove_cck_lightbox2_player()
+ * @see theme_brightcove_field_lightbox2_player()
  */
 ?>
 

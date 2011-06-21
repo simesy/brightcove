@@ -1,14 +1,14 @@
 <?php
 
 /**
-  * @file brightcove_cck.browse.inc
+  * @file brightcove_field.browse.inc
   *       Holds a method to list all BC videos that are attachable to a field.
   */
 
 /**
   * This function is a callback for modalframe window, providing an access to browse videos.
   *
-  * @see brightcove_cck_menu()
+  * @see brightcove_field_menu()
   *
   * @param none
   *
@@ -18,14 +18,14 @@
   * TODO: Interesting feature would be to detect multiple values allowed in the
   *       parent field and allow attaching all videos at once.
   */
-function brightcove_cck_browse() {
+function brightcove_field_browse() {
   global $pager_from_array, $pager_total, $pager_page_array;
 
   $items_per_page = 20;
 
   modalframe_child_js(); //dialog internal area
-  drupal_add_css(drupal_get_path('module', 'brightcove_cck') . '/styles/browse.css');
-  drupal_add_js(drupal_get_path('module', 'brightcove_cck') . '/js/attach.js');
+  drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/browse.css');
+  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/attach.js');
   // Issue a BC request to list videos
   // For all videos, get a thumbnail URL
   // Theme a table with videos and a button to attach.
@@ -35,21 +35,21 @@ function brightcove_cck_browse() {
   $page = isset($_GET['page']) ? intval($_GET['page']) : '0';
 
   $params = array();
-  if (isset($_SESSION['brightcove_cck_filter'])) {
-    switch ($_SESSION['brightcove_cck_filter']['search']) {
+  if (isset($_SESSION['brightcove_field_filter'])) {
+    switch ($_SESSION['brightcove_field_filter']['search']) {
       case 'tags':
         $method = 'find_videos_by_tags';
-        $params = array('or_tags' => $_SESSION['brightcove_cck_filter']['keywords']);
+        $params = array('or_tags' => $_SESSION['brightcove_field_filter']['keywords']);
         break;
       case 'and_tags':
         $method = 'find_videos_by_tags';
-        $params = array('and_tags' => $_SESSION['brightcove_cck_filter']['keywords']);
+        $params = array('and_tags' => $_SESSION['brightcove_field_filter']['keywords']);
         break;
 
       case 'name':
       default:
         $method = 'find_videos_by_text';
-        $params = array('text' => join(' ', split(',', $_SESSION['brightcove_cck_filter']['keywords'])));
+        $params = array('text' => join(' ', split(',', $_SESSION['brightcove_field_filter']['keywords'])));
         break;
     }
   } else {
@@ -94,22 +94,22 @@ function brightcove_cck_browse() {
     }
   }
   $pager = theme('pager', NULL, $items_per_page, 0);
-  $filter_form = drupal_get_form('brightcove_cck_filter_form');
+  $filter_form = drupal_get_form('brightcove_field_filter_form');
 
-  return '<div class="brightcove-browse-table">' . $filter_form . $pager . theme('brightcove_cck_browse_items', $items) . $pager . '</div>';
+  return '<div class="brightcove-browse-table">' . $filter_form . $pager . theme('brightcove_field_browse_items', $items) . $pager . '</div>';
 }
 
 /**
-  * Menu callback for brightcove_cck/autocomplete.
+  * Menu callback for brightcove_field/autocomplete.
   *
   * @param $field_name
-  *  Field name - CCK field name that is requesting autocomplete. Unused, will be utilized to limit access to certain videos for certain fields.
+  *  Field name - field name that is requesting autocomplete. Unused, will be utilized to limit access to certain videos for certain fields.
   * @param $string
   *  String to search for - will match videos by this text.
   * @return
   *  JSON object with matched videos.
   */
-function brightcove_cck_autocomplete($field_name, $string = '') {
+function brightcove_field_autocomplete($field_name, $string = '') {
   $bc = _brightcove_initialize();
   $matches = array();
 
@@ -128,11 +128,11 @@ function brightcove_cck_autocomplete($field_name, $string = '') {
 
 
 
-function brightcove_cck_upload() {
+function brightcove_field_upload() {
   modalframe_child_js(); //dialog internal area
-  drupal_add_css(drupal_get_path('module', 'brightcove_cck') . '/brightcove_cck.upload.css');
-//  drupal_add_js(drupal_get_path('module', 'brightcove_cck') . '/js/attach.js');
+  drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css');
+//  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/attach.js');
 
-  return drupal_get_form('brightcove_cck_upload_form');
+  return drupal_get_form('brightcove_field_upload_form');
 }
 

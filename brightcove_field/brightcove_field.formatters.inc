@@ -2,7 +2,7 @@
 
 /**
   * @file
-  * Formatters for video CCK field.
+  * Formatters for video field.
   */
 
 /**
@@ -12,11 +12,11 @@
   * @return
   *  Player HTML code.
   */
-function theme_brightcove_cck_lightbox2_imagecache($element) {
+function theme_brightcove_field_lightbox2_imagecache($element) {
   $preset_data = str_replace('lightbox2_imagecache_', '', $element['#formatter']);
   list($preset, $field) = split('__', $preset_data);
 
-  if (isset($element['#item']['video_id'])) {  
+  if (isset($element['#item']['video_id'])) {
 
     $video = brightcove_video_load($element['#item']['video_id']);
     /* Temporary turned off, because getting of status in BC API throws error for users without write api key
@@ -32,7 +32,7 @@ function theme_brightcove_cck_lightbox2_imagecache($element) {
     } else {
       $image = theme('imagecache', $preset, brightcove_get_default_image());
     }
-    return theme('brightcove_cck_formatter_lightbox2_player_' . $field, $element, $image, $preset);
+    return theme('brightcove_field_formatter_lightbox2_player_' . $field, $element, $image, $preset);
   }
 }
 
@@ -44,7 +44,7 @@ function theme_brightcove_cck_lightbox2_imagecache($element) {
   * @return
   *  Player HTML code.
   */
-function theme_brightcove_cck_lightbox2_player($element, $image = NULL, $preset = NULL) {
+function theme_brightcove_field_lightbox2_player($element, $image = NULL, $preset = NULL) {
   if (!empty($element['#item']['video_id'])) {
 
 
@@ -68,10 +68,10 @@ function theme_brightcove_cck_lightbox2_player($element, $image = NULL, $preset 
         $image = theme('image', brightcove_get_default_image(), $video_name, $video_name, array('width' => 120, 'height' => 120), FALSE);
       }
     }
-    $destination = 'brightcove_cck_player/' . $element['#node']->nid . '/' . $element['#field_name'] . '/' . $element['#item']['#delta'];
+    $destination = 'brightcove_field_player/' . $element['#node']->nid . '/' . $element['#field_name'] . '/' . $element['#item']['#delta'];
 
     // Ugly hack to support width and height of a video - get a BC player and check it's dimensions.
-    $player = theme('brightcove_cck_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''),  $element['#item']['video_id'], $params);
+    $player = theme('brightcove_field_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''),  $element['#item']['video_id'], $params);
     //<param name="width" value="486" />
     preg_match('/<param name="width" value="(\d{1,5})" \/>/', $player, $width);
     preg_match('/<param name="height" value="(\d{1,5})" \/>/', $player, $height);
@@ -90,24 +90,24 @@ function theme_brightcove_cck_lightbox2_player($element, $image = NULL, $preset 
 
   }
   if ($output) {
-    return theme('brightcove_cck_lightbox2', $output, $video_id, $video_width, $video_height, $lightbox2_width, $lightbox2_height, $destination, $field, $element['#field_name'], $element['#type_name'], $preset);
+    return theme('brightcove_field_lightbox2', $output, $video_id, $video_width, $video_height, $lightbox2_width, $lightbox2_height, $destination, $field, $element['#field_name'], $element['#type_name'], $preset);
   }
 }
 
 /**
-  * Template preprocess for brightcove_cck_lightbox2 theme file.
+  * Template preprocess for brightcove_field_lightbox2 theme file.
   * Suggest templates based on a field and type name.
   */
-function template_preprocess_brightcove_cck_lightbox2(&$vars) {
+function template_preprocess_brightcove_field_lightbox2(&$vars) {
   $vars['template_files'] = array(
-      'brightcove-cck-lightbox2--' . $vars['image_field'],
-      'brightcove-cck-lightbox2--' . $vars['field_name'] . '--' . $vars['image_field'],
-      'brightcove-cck-lightbox2--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
+      'brightcove-field-lightbox2--' . $vars['image_field'],
+      'brightcove-field-lightbox2--' . $vars['field_name'] . '--' . $vars['image_field'],
+      'brightcove-field-lightbox2--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
       );
 }
 
 /**
-  * Theme callback for Brightcove CCK formatter.
+  * Theme callback for Brightcove field formatter.
   * Returns an embedded player with default site player.
   *
   * @param $element
@@ -115,7 +115,7 @@ function template_preprocess_brightcove_cck_lightbox2(&$vars) {
   * @return
   *  Player HTML code.
   */
-function theme_brightcove_cck_formatter_default($element) {
+function theme_brightcove_field_formatter_default($element) {
   $player = '';
 
   if (isset($element['#item']['video_id'])) {
@@ -126,11 +126,11 @@ function theme_brightcove_cck_formatter_default($element) {
       drupal_set_html_head('<script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script>');
     }
     $params['id'] = 'myExperience'.$vidcount;
-    $player = theme('brightcove_cck_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''),  $element['#item']['video_id'], $params);
+    $player = theme('brightcove_field_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''),  $element['#item']['video_id'], $params);
     $vidcount++;
   }
   if ($player) {
-    return theme('brightcove_cck_player', $player, $element['#item']['video_id']);
+    return theme('brightcove_field_player', $player, $element['#item']['video_id']);
   }
 }
 
@@ -143,7 +143,7 @@ function theme_brightcove_cck_formatter_default($element) {
   * @return
   *  Link HTML code.
   */
-function theme_brightcove_cck_node_link($element, $image = NULL) {
+function theme_brightcove_field_node_link($element, $image = NULL) {
   if (!empty($element['#item']['video_id'])) {
 
     $field = str_replace('node_link_', '', $element['#formatter']);
@@ -173,36 +173,36 @@ function theme_brightcove_cck_node_link($element, $image = NULL) {
 
   }
   if ($output) {
-    return theme('brightcove_cck_node_link', $output, $video_id, url($destination), $field, $element['#field_name'], $element['#type_name'], $preset);
+    return theme('brightcove_field_node_link', $output, $video_id, url($destination), $field, $element['#field_name'], $element['#type_name'], $preset);
   }
 
 }
 
 /**
-  * Template preprocess for brightcove_cck_node_link theme file.
+  * Template preprocess for brightcove_field_node_link theme file.
   * Suggest templates based on a field and type name.
   */
-function template_preprocess_brightcove_cck_node_link(&$vars) {
+function template_preprocess_brightcove_field_node_link(&$vars) {
   $vars['template_files'] = array(
-      'brightcove-cck-node-link--' . $vars['image_field'],
-      'brightcove-cck-node-link--' . $vars['field_name'] . '--' . $vars['image_field'],
-      'brightcove-cck-node-link--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
+      'brightcove-field-node-link--' . $vars['image_field'],
+      'brightcove-field-node-link--' . $vars['field_name'] . '--' . $vars['image_field'],
+      'brightcove-field-node-link--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
       );
 }
 
 /**
   * Theme callback for imagecache image linking to node
-  * 
+  *
   * @param $element
   *  Element with the Video ID.
   * @return
   *  Link HTML code.
   */
-function theme_brightcove_cck_node_link_imagecache($element) {
+function theme_brightcove_field_node_link_imagecache($element) {
   $preset_data = str_replace('node_link_imagecache_', '', $element['#formatter']);
   list($preset, $field) = split('__', $preset_data);
 
-  if (isset($element['#item']['video_id'])) {  
+  if (isset($element['#item']['video_id'])) {
 
     $video = brightcove_video_load($element['#item']['video_id']);
     /* Temporary turned off, because getting of status in BC API throws error for users without write api key
@@ -218,7 +218,7 @@ function theme_brightcove_cck_node_link_imagecache($element) {
     } else {
       $image = theme('imagecache', $preset, brightcove_get_default_image());
     }
-    return theme('brightcove_cck_formatter_node_link_' . $field, $element, $image, $preset);
+    return theme('brightcove_field_formatter_node_link_' . $field, $element, $image, $preset);
   }
 }
 
@@ -230,7 +230,7 @@ function theme_brightcove_cck_node_link_imagecache($element) {
   * @return
   *  Link HTML code.
   */
-function theme_brightcove_cck_node_image($element, $image = NULL) {
+function theme_brightcove_field_node_image($element, $image = NULL) {
   if (!empty($element['#item']['video_id'])) {
 
     $field = str_replace('node_image_', '', $element['#formatter']);
@@ -259,36 +259,36 @@ function theme_brightcove_cck_node_image($element, $image = NULL) {
 
   }
   if ($output) {
-    return theme('brightcove_cck_node_image', $output, $video_id, $nid, $field, $element['#field_name'], $element['#type_name']);
+    return theme('brightcove_field_node_image', $output, $video_id, $nid, $field, $element['#field_name'], $element['#type_name']);
   }
 
 }
 
 /**
-  * Template preprocess for brightcove_cck_node_image theme file.
+  * Template preprocess for brightcove_field_node_image theme file.
   * Suggest templates based on a field and type name.
   */
-function template_preprocess_brightcove_cck_node_image(&$vars) {
+function template_preprocess_brightcove_field_node_image(&$vars) {
   $vars['template_files'] = array(
-      'brightcove-cck-node-image--' . $vars['image_field'],
-      'brightcove-cck-node-image--' . $vars['field_name'] . '--' . $vars['image_field'],
-      'brightcove-cck-node-image--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
+      'brightcove-field-node-image--' . $vars['image_field'],
+      'brightcove-field-node-image--' . $vars['field_name'] . '--' . $vars['image_field'],
+      'brightcove-field-node-image--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
       );
 }
 
 /**
   * Theme callback for imagecache image
-  * 
+  *
   * @param $element
   *  Element with the Video ID.
   * @return
   *  Link HTML code.
   */
-function theme_brightcove_cck_node_image_imagecache($element) {
+function theme_brightcove_field_node_image_imagecache($element) {
   $preset_data = str_replace('node_image_imagecache_', '', $element['#formatter']);
   list($preset, $field) = split('__', $preset_data);
 
-  if (isset($element['#item']['video_id'])) {  
+  if (isset($element['#item']['video_id'])) {
 
     $video = brightcove_video_load($element['#item']['video_id']);
     /* Temporary turned off, because getting of status in BC API throws error for users without write api key
@@ -304,7 +304,7 @@ function theme_brightcove_cck_node_image_imagecache($element) {
     } else {
       $image = theme('imagecache', $preset, brightcove_get_default_image());
     }
-    return theme('brightcove_cck_formatter_node_image_' . $field, $element, $image);
+    return theme('brightcove_field_formatter_node_image_' . $field, $element, $image);
   }
 }
 

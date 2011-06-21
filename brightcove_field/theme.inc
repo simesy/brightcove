@@ -9,8 +9,8 @@
   *
   * @see nodereference_explorer.module
   */
-function theme_brightcove_cck_browse_button($element) {
-  drupal_add_js(drupal_get_path('module', 'brightcove_cck') . '/js/browse.js');
+function theme_brightcove_field_browse_button($element) {
+  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/browse.js');
   $element['#button_type'] = 'button';
   $button = theme('button', $element);
   return str_ireplace('type="submit"', 'type="button"', $button);
@@ -25,8 +25,8 @@ function theme_brightcove_cck_browse_button($element) {
   * @return
   * Themed item form.
   */
-function theme_brightcove_cck_browse_item($item) {
-  return drupal_get_form('brightcove_cck_browser_form' . $item['video_id'], $item);
+function theme_brightcove_field_browse_item($item) {
+  return drupal_get_form('brightcove_field_browser_form' . $item['video_id'], $item);
 }
 
 /**
@@ -38,12 +38,12 @@ function theme_brightcove_cck_browse_item($item) {
   * @return
   * Themed browse table.
   */
-function theme_brightcove_cck_browse_items($items) {
+function theme_brightcove_field_browse_items($items) {
   $rowcount = 0;
   $activerow = 0;
   $rows = array();
   foreach($items as $item) {
-    $themed = theme('brightcove_cck_browse_item', $item);
+    $themed = theme('brightcove_field_browse_item', $item);
     $rowcount++;
     if ($rowcount == 4) {
       $activerow++;
@@ -54,7 +54,7 @@ function theme_brightcove_cck_browse_items($items) {
   return theme('table', array(), $rows);
 }
 
-function theme_brightcove_cck_embed($type, $playerId, $playerKey, $assetIds, $params) {
+function theme_brightcove_field_embed($type, $playerId, $playerKey, $assetIds, $params) {
   if(!isset($playerId)) {
     watchdog('brightcove', 'Video Player ID is missing.', array(), WATCHDOG_ERROR);
   }
@@ -78,7 +78,7 @@ function theme_brightcove_cck_embed($type, $playerId, $playerKey, $assetIds, $pa
       if(strtolower($type) == 'video') {
         $assetCode = '<param name="@videoPlayer" value="';
       } else {
-        // TODO: Add different types than video. 
+        // TODO: Add different types than video.
       }
 
       foreach($assetIds as $assetId) {
@@ -107,6 +107,6 @@ function theme_brightcove_cck_embed($type, $playerId, $playerKey, $assetIds, $pa
     <param name="isUI" value="true" />
     <param name="playerKey" value="' . $playerKey . '" />
     </object>';
-  
+
   return $code;
 }

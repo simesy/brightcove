@@ -1,12 +1,12 @@
-Drupal.brightcove_cck = {};
+Drupal.brightcove_field = {};
 
-Drupal.behaviors.brightcove_cck_attach = function(context) {
-  $('.brightcove-cck-attach-button', context).click(function() {
+Drupal.behaviors.brightcove_field_attach = function(context) {
+  $('.brightcove-field-attach-button', context).click(function() {
       });
 };
 
 
-Drupal.brightcove_cck.submit = function(settings) {
+Drupal.brightcove_field.submit = function(settings) {
   return function(args) {
           alert(args);
   };

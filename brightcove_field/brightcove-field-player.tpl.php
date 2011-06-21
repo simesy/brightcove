@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file brightcove-cck-player.tpl.php
+ * @file brightcove-field-player.tpl.php
  * Default theme implementation to play Brightcove video.
  *
  * This template is used when viewing a Brightcove video with a default
@@ -11,7 +11,7 @@
  *   - $player: Video player HTML code.
  *   - $video_id: Video ID from Media API.
  *
- * @see theme_brightcove_cck_formatter_default()
+ * @see theme_brightcove_field_formatter_default()
  */
 ?>
 

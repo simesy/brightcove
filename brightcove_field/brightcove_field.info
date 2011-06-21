@@ -1,8 +1,7 @@
-name = Brightcove CCK Field
-description = A CCK field allowing to attach videos to nodes.
-core = 6.x
-package = CCK
+name = Brightcove Field
+description = A field allowing to attach videos to nodes.
+core = 7.x
+package = Fields
 
 dependencies[] = brightcove
-dependencies[] = content
-dependencies[] = modalframe
+dependencies[] = field

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file brightcove-cck-node-image.tpl.php
+ * @file brightcove-field-node-image.tpl.php
  * Image theme implementation.
  *
  * This template is used when viewing a Brightcove video with a thumbnail or videoStill image without a link.
@@ -11,10 +11,10 @@
  *   - $image_field: The name of the image field used from Media API. Can be thumbnailURL or videoStillURL.
  *   - $nid: Node NID.
  *   - $video_id: Video ID from Media API.
- *   - $field_name: CCK Field name.
+ *   - $field_name: Field name.
  *   - $type_name: Node type.
  *
- * @see theme_brightcove_cck_node_image()
+ * @see theme_brightcove_field_node_image()
  */
 ?>
 
