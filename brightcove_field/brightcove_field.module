@@ -372,49 +372,61 @@ function brightcove_field_browser_process($element, $form_state, $form) {
   //modalframe_parent_js(); //dialog internal area
   $field_info = field_info_field($element['#field_name']);
   $element[$field_key] = array(
-      '#type' => 'textfield',
-      '#default_value' => isset($element['#value'][$field_key]) ? $element['#value'][$field_key] : '',
-      '#autocomplete_path' => 'brightcove_field/autocomplete/'.
-                              $element['#field_name'] . '/' .
-                              $element['#entity_type']. '/' . $eid,
-      // The following values were set by the content module and need
-      // to be passed down to the nested element.
-      '#title' => $element['#title'],
-      '#required' => $element['#required'],
-      '#description' => $element['#description'],
-      '#field_name' => $element['#field_name'],
-      '#type_name' => $element['#type_name'],
-      '#delta' => $element['#delta'],
-      '#columns' => $element['#columns'],
-      '#attributes' => array('rel' => $element['#field_name'], 'class' => 'brightcove-video-field'),
-      );
+    '#type' => 'textfield',
+    '#default_value' => isset($element['#value'][$field_key]) ? $element['#value'][$field_key] : '',
+    '#autocomplete_path' => 'brightcove_field/autocomplete/'.
+                            $element['#field_name'] . '/' .
+                            $element['#entity_type']. '/' . $eid,
+    // The following values were set by the content module and need
+    // to be passed down to the nested element.
+    '#title' => $element['#title'],
+    '#required' => $element['#required'],
+    '#description' => $element['#description'],
+    '#field_name' => $element['#field_name'],
+    '#type_name' => $element['#type_name'],
+    '#delta' => $element['#delta'],
+    '#columns' => $element['#columns'],
+    '#attributes' => array(
+      'rel' => $element['#field_name'],
+      'class' => array('brightcove-video-field'),
+    ),
+  );
 
   if (user_access('browse videos')) {
     // Button to browse videos.
     $element['actions']['browse'] = array(
-        '#type' => 'brightcove_field_browse_button',
-        '#id' => $element['#id'] . '-browse',
-        '#attributes' => array('class' => 'brightcove-field-browse-button', 'rel' => $element['#id'] . '-video-id'),
-        '#value' => t('Browse'),
-        );
+      '#type' => 'brightcove_field_browse_button',
+      '#id' => $element['#id'] . '-browse',
+      '#attributes' => array(
+        'class' => array('brightcove-field-browse-button'),
+        'rel' => $element['#id'] . '-video-id'
+      ),
+      '#value' => t('Browse'),
+    );
   }
 
   if ((user_access('upload videos')) &&
       ($field_info['settings']['allow_upload'])) {
     $element['actions']['upload'] = array(
-        '#type' => 'brightcove_field_browse_button',
-        '#id' => $element['#id'] . '-upload',
-        '#attributes' => array('class' => 'brightcove-field-upload-button', 'rel' => $element['#id'] . '-video-id'),
-        '#value' => t('Upload'),
-        );
+      '#type' => 'brightcove_field_browse_button',
+      '#id' => $element['#id'] . '-upload',
+      '#attributes' => array(
+        'class' => array('brightcove-field-upload-button'),
+        'rel' => $element['#id'] . '-video-id'
+      ),
+      '#value' => t('Upload'),
+    );
   }
 
   $element['actions']['remove'] = array(
-      '#type' => 'brightcove_field_browse_button',
-      '#id' => $element['#id'] . '-remove',
-      '#attributes' => array('class' => 'brightcove-field-remove-button', 'rel' => $element['#id'] . '-video-id'),
-      '#value' => t('Remove'),
-      );
+    '#type' => 'brightcove_field_browse_button',
+    '#id' => $element['#id'] . '-remove',
+    '#attributes' => array(
+      'class' => array('brightcove-field-remove-button'),
+      'rel' => $element['#id'] . '-video-id'
+    ),
+    '#value' => t('Remove'),
+  );
 
   if (!isset($element['#default_value'][$field_key])) {
     $element['actions']['remove']['#attributes']['disabled'] = 'disabled';
@@ -643,13 +655,15 @@ function brightcove_field_filter_form(&$form_state) {
       );
 
   $form['search']['search'] = array(
-      '#type' => 'radios',
-      '#title' => t('Search in'),
-      '#options' => array('name' => t('Names and descriptions'), 'tags' => t('Tags: at least one of these'), 'and_tags' => t('Tags: all of these')),
-      '#default_value' => isset($_SESSION['brightcove_field_filter']['search']) ? $_SESSION['brightcove_field_filter']['search'] : 'name',
-      '#attributes' => array('class' => 'search-radio'),
-      '#description' => t('"Names and descriptions" searches in Video name, short and long descriptions. Tags searches in Video associated tags.'),
-      );
+    '#type' => 'radios',
+    '#title' => t('Search in'),
+    '#options' => array('name' => t('Names and descriptions'), 'tags' => t('Tags: at least one of these'), 'and_tags' => t('Tags: all of these')),
+    '#default_value' => isset($_SESSION['brightcove_field_filter']['search']) ? $_SESSION['brightcove_field_filter']['search'] : 'name',
+    '#attributes' => array(
+      'class' => array('search-radio'),
+    ),
+    '#description' => t('"Names and descriptions" searches in Video name, short and long descriptions. Tags searches in Video associated tags.'),
+  );
 
   $form['search']['submit'] = array(
       '#type' => 'submit',
