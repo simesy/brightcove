@@ -26,31 +26,31 @@ function brightcove_field_menu() {
       'file' => 'brightcove_field.browse.inc',
       'type' => MENU_CALLBACK,
       );
-  $items['brightcove_field/browse/%/%'] = array(
+  $items['brightcove_field/browse/%/%/%'] = array(
       'title' => 'Brightcove Videos Browser',
-      'page arguments' => array(2, 3),
+      'page arguments' => array(2, 3, 4),
       'page callback' => 'brightcove_field_browse',
       'access callback' => 'brightcove_field_browse_access',
-      'access arguments' => array(2, 3),
+      'access arguments' => array(2, 3, 4),
       'file' => 'brightcove_field.browse.inc',
       'type' => MENU_CALLBACK,
       );
-  $items['brightcove_field/upload/%/%'] = array(
+  $items['brightcove_field/upload/%/%/%'] = array(
       'title' => 'Upload video to Brightcove',
-      'page arguments' => array(2, 3),
+      'page arguments' => array(2, 3, 4),
       'page callback' => 'brightcove_field_upload',
       'access callback' => 'brightcove_field_browse_access',
-      'access arguments' => array(2, 3),
+      'access arguments' => array(2, 3, 4),
       'file' => 'brightcove_field.browse.inc',
       'type' => MENU_CALLBACK,
       );
 
-  $items['brightcove_field_player/%node/%/%'] = array(
+  $items['brightcove_field_player/%/%/%/%'] = array(
       'title' => 'Brightcove Videos Window Player',
       'page callback' => 'brightcove_field_player',
-      'page arguments' => array(1, 2, 3),
-      'access callback' => 'node_access',
-      'access arguments' => array('view', 1),
+      'page arguments' => array(1, 2, 3, 4),
+      'access callback' => 'entity_access',
+      'access arguments' => array('view', 1, 2),
       'type' => MENU_CALLBACK,
       );
 
@@ -70,24 +70,22 @@ function brightcove_field_menu() {
  * @return
  * TRUE if access is allowed, FALSE if access is forbidden.
  */
-function brightcove_field_browse_access($node_type, $field_name) {
+function brightcove_field_browse_access($entity_type, $bundle,
+  $field_name, $entity_id = NULL) {
 
-  if (is_int(arg(4))) {
-    $node = node_load(arg(4));
-    if (node_access('update', $node) && content_access('edit', $field_name)) {
-      return TRUE;
+  $field = field_info_field($field_name);
+
+  if (isset($entity_id)) {
+    $entity = entity_load($entity_type, array($entity_id));
+    if (count($entity)) {
+      $entity = array_shift($entity);
     }
-    return FALSE;
+    return (entity_access('update', $entity_type, $entity) &&
+        field_access('edit', $entity_type, $field));
   }
 
-  // FIX: this used to pass $field_name to content_access(), but it needs a field array
-  // I'm not sure which function is supposed to load the whole field array (b/c we have no $node to work with),
-  // so I'm shortcutting it w/ this array, which works for content_permissions
-  $field = array('field_name' => $field_name);
-  if (node_access('create', $node_type) && content_access('edit', $field)) {
-    return TRUE;
-  }
-  return FALSE;
+  return (entity_access('create', $entity_type, $bundle) &&
+          field_access('edit', $field, $entity_type));
 }
 
 /**
@@ -102,11 +100,16 @@ function brightcove_field_browse_access($node_type, $field_name) {
  *
  * @return none
  */
-function brightcove_field_player($node, $field_name, $delta) {
-  if (node_access('view', $node) && content_access('view', $field_name)) {
-    $field = $node->{$field_name}[$delta]['video_id'];
+function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) {
+  $entities = entity_load($entity_type, array($entity_id));
+  $entity = array_shift($entities);
+  if (entity_access('view', $entity_type, $entity) &&
+      field_access('view', field_info_field($field_name),
+                   $entity_type, $entity)) {
+    $field = $entity->{$field_name}[isset($entity->language) ?
+      $entity->language : 'und'][$delta]['video_id'];
     $output = '<script src="http://admin.brightcove.com/js/BrightcoveExperiences.js" type="text/javascript"></script>';
-    $bc = _brightcove_initialize();
+    brightcove_initialize();
     $output .= theme('brightcove_field_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''), $field, array());
 
     print $output;
@@ -119,86 +122,78 @@ function brightcove_field_player($node, $field_name, $delta) {
  */
 function brightcove_field_field_info() {
   return array(
-      'brightcove_video' => array(
-        'label' => t('Brightcove Video'),
-        'description' => t('Browse and upload videos at Brightcove.'),
-        ),
-      );
+   'brightcove_video' => array(
+     'label' => t('Brightcove Video'),
+     'description' => t('Browse and upload videos at Brightcove.'),
+     'settings' => array(),
+     'instance_settings' => array(
+       'allow_upload' => FALSE,
+     ),
+     'default_widget' => array(),
+     'default_formatter' => array(),
+    ),
+  );
 }
 
 /**
- * Implementation of hook_field_settings().
+ * Implements hook_field_settings_form().
  */
-function brightcove_field_field_settings($op, $field) {
-  switch ($op) {
-    case 'form':
-      $form = array();
+function brightcove_field_field_settings_form($field, $instance, $has_data) {
+  $form = array();
 
-      // Only allow Upload if this site has Write API keys.
-      if (brightcove_write_api_access()) {
-        $form['allow_upload'] = array(
-            '#type' => 'checkbox',
-            '#title' => t('Allow upload'),
-            '#description' => t('Whether to allow uploading new videos to Brightcove Studio from this field. Requires Write API keys with at least a <a href="http://www.brightcove.com/en/video-platform/editions-and-pricing">Professional account</a>.'),
-            '#default_value' => $field['allow_upload'],
-            );
+  // Only allow Upload if this site has Write API keys.
+  if (brightcove_write_api_access()) {
+    $form['allow_upload'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Allow upload'),
+      '#description' => t('Whether to allow uploading new videos to ' .
+                          'Brightcove Studio from this field. ' .
+                          'Requires Write API keys with at least a ' .
+                          '!link-to-editions-and-pricing',
+                          array(
+                            '!link-to-editions-and-pricing' => l(
+                              t('Professional account'),
+              'http://www.brightcove.com/en/video-platform/editions-and-pricing'
+                            ),
+                          )),
+      '#default_value' => $instance['settings']['allow_upload'],
+    );
+  }
+  else {
+    $form['allow_upload'] = array(
+      '#type' => 'value',
+      '#value' => $instance['settings']['allow_upload'],
+    );
+  }
+  return $form;
+}
+
+/**
+ * Implements hook_field_validate().
+ */
+function brightcove_field_field_validate($entity_type, $entity,
+                                         $field, $instance,
+                                         $langcode, $items, &$errors) {
+  foreach ($items as $delta => $item) {
+    $video = brightcove_video_load($item['video_id']);
+    if (empty($video->id)) {
+      if (brightcove_video_cache_get($item['video_id']) === NULL) {
+        $errors[$field['field_name']][$langcode][$delta][] = array(
+          'error' => 'brightcove_field', // TODO fix
+          'message' => t('%name: invalid video.', array(
+            '%name' => t($field['widget']['label']),
+          )),
+        );
       }
-      return $form;
-
-    case 'save':
-      $settings = array('allow_upload');
-      return $settings;
-
-    case 'database columns':
-      // We only save video_id as it's the only stable value in the video -
-      // anything else might change and we won't be able to easily detect it.
-      $columns = array(
-          'video_id' => array('type' => 'varchar', 'length' => 15, 'not null' => FALSE, 'index' => TRUE),
-          );
-      return $columns;
-
-    case 'views data':
-      include_once(drupal_get_path('module', 'brightcove_field') . '/views/brightcove_field.views.inc');
-
-      $data = _brightcove_field_views_data($field);
-
-      return $data;
+    }
   }
 }
 
 /**
- * Implementation of hook_field().
+ * Implements hook_field_is_empty().
  */
-function brightcove_field_field($op, &$node, $field, &$items, $teaser, $page) {
-  switch ($op) {
-    case 'validate':
-      foreach ($items as $delta => $item) {
-        if (is_array($item)) {
-          $error_element = isset($item['_error_element']) ? $item['_error_element'] : '';
-          if (is_array($item) && isset($item['_error_element'])) unset($item['_error_element']);
-          if (!empty($item['video_id'])) {
-            $video = brightcove_video_load($item['video_id']);
-            if (empty($video->id)) {
-              // Check for video in session - uploaded file.
-              if (is_null(brightcove_video_cache_get($item['video_id']))) {
-                form_set_error($error_element, t('%name: invalid video.', array('%name' => t($field['widget']['label']))));
-              }
-            }
-          }
-        }
-      }
-      return $items;
-  }
-}
-
-/**
- * Implementation fo hook_content_is_empty().
- */
-function brightcove_field_content_is_empty($item, $field) {
-  if (!empty($item['video_id'])) {
-    return FALSE;
-  }
-  return TRUE;
+function brightcove_field_field_is_empty($item, $field) {
+  return empty($item['video_id']);
 }
 
 /**
@@ -208,7 +203,8 @@ function brightcove_field_browser_validate($element, &$form_state) {
   $id = '';
   $field_name = $element['#field_name'];
   $type_name = $element['#type_name'];
-  $field = content_fields($field_name, $type_name);
+  //$field = content_fields($field_name, $type_name);
+  $field = field_info_field($field_name);
   $field_key = $element['#columns'][0];
   $value = $element['#value'];
   if (!empty($value)) {
@@ -224,7 +220,8 @@ function brightcove_field_browser_validate($element, &$form_state) {
       }
     } else {
       // Didn't match ID, try looking up the video text at BC.
-      $bc = _brightcove_initialize();
+      $bc = brightcove_initialize();
+      $result = NULL;
       try {
         $result = $bc->find('find_videos_by_text', array('text' => $value));
       } catch (Exception $error) {
@@ -253,81 +250,76 @@ function brightcove_field_field_formatter_info() {
       'default' => array(
         'label' => t('Standard video player'),
         'field types' => array('brightcove_video'),
-        'multiple values' => CONTENT_HANDLE_CORE,
         ),
       );
   $formatters['node_link_videoStillURL'] = array(
       'label' => t('Default still image linked to node'),
       'field types' => array('brightcove_video'),
-      'multiple values' => CONTENT_HANDLE_CORE,
       );
   $formatters['node_link_thumbnailURL'] = array(
       'label' => t('Default thumbnail linked to node'),
       'field types' => array('brightcove_video'),
-      'multiple values' => CONTENT_HANDLE_CORE,
       );
   $formatters['node_image_videoStillURL'] = array(
       'label' => t('Default still image'),
       'field types' => array('brightcove_video'),
-      'multiple values' => CONTENT_HANDLE_CORE,
       );
   $formatters['node_image_thumbnailURL'] = array(
       'label' => t('Default thumbnail'),
       'field types' => array('brightcove_video'),
-      'multiple values' => CONTENT_HANDLE_CORE,
       );
 
-  if (module_exists('lightbox2')) {
-    $formatters['lightbox2_player_videoStillURL'] = array(
-        'label' => t('Default still image -> Lightbox2 player'),
-        'field types' => array('brightcove_video'),
-        'multiple values' => CONTENT_HANDLE_CORE,
-        );
-
-    $formatters['lightbox2_player_thumbnailURL'] = array(
-        'label' => t('Default thumbnail -> Lightbox2 player'),
-        'field types' => array('brightcove_video'),
-        'multiple values' => CONTENT_HANDLE_CORE,
-        );
-  }
-  if (module_exists('imagecache')) {
-    $presets = imagecache_presets();
-    foreach($presets as $preset_id => $preset) {
-      if (module_exists('lightbox2')) {
-        $formatters['lightbox2_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-            'label' => t('Imagecache @preset thumbnail -> Lightbox2 player', array('@preset' => $preset['presetname'])),
-            'field types' => array('brightcove_video'),
-            'multiple values' => CONTENT_HANDLE_CORE,
-            );
-        $formatters['lightbox2_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-            'label' => t('Imagecache @preset still image -> Lightbox2 player', array('@preset' => $preset['presetname'])),
-            'field types' => array('brightcove_video'),
-            'multiple values' => CONTENT_HANDLE_CORE,
-            );
-      }
-      $formatters['node_link_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-          'label' => t('Imagecache @preset still image linked to node', array('@preset' => $preset['presetname'])),
-          'field types' => array('brightcove_video'),
-          'multiple values' => CONTENT_HANDLE_CORE,
-          );
-      $formatters['node_link_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-          'label' => t('Imagecache @preset thumbnail linked to node', array('@preset' => $preset['presetname'])),
-          'field types' => array('brightcove_video'),
-          'multiple values' => CONTENT_HANDLE_CORE,
-          );
-      $formatters['node_image_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-          'label' => t('Imagecache @preset still image', array('@preset' => $preset['presetname'])),
-          'field types' => array('brightcove_video'),
-          'multiple values' => CONTENT_HANDLE_CORE,
-          );
-      $formatters['node_image_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-          'label' => t('Imagecache @preset thumbnail', array('@preset' => $preset['presetname'])),
-          'field types' => array('brightcove_video'),
-          'multiple values' => CONTENT_HANDLE_CORE,
-          );
-
-    }
-  }
+//  if (module_exists('lightbox2')) {
+//    $formatters['lightbox2_player_videoStillURL'] = array(
+//        'label' => t('Default still image -> Lightbox2 player'),
+//        'field types' => array('brightcove_video'),
+//        'multiple values' => CONTENT_HANDLE_CORE,
+//        );
+//
+//    $formatters['lightbox2_player_thumbnailURL'] = array(
+//        'label' => t('Default thumbnail -> Lightbox2 player'),
+//        'field types' => array('brightcove_video'),
+//        'multiple values' => CONTENT_HANDLE_CORE,
+//        );
+//  }
+//  if (module_exists('imagecache')) {
+//    $presets = imagecache_presets();
+//    foreach($presets as $preset_id => $preset) {
+//      if (module_exists('lightbox2')) {
+//        $formatters['lightbox2_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
+//            'label' => t('Imagecache @preset thumbnail -> Lightbox2 player', array('@preset' => $preset['presetname'])),
+//            'field types' => array('brightcove_video'),
+//            'multiple values' => CONTENT_HANDLE_CORE,
+//            );
+//        $formatters['lightbox2_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
+//            'label' => t('Imagecache @preset still image -> Lightbox2 player', array('@preset' => $preset['presetname'])),
+//            'field types' => array('brightcove_video'),
+//            'multiple values' => CONTENT_HANDLE_CORE,
+//            );
+//      }
+//      $formatters['node_link_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
+//          'label' => t('Imagecache @preset still image linked to node', array('@preset' => $preset['presetname'])),
+//          'field types' => array('brightcove_video'),
+//          'multiple values' => CONTENT_HANDLE_CORE,
+//          );
+//      $formatters['node_link_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
+//          'label' => t('Imagecache @preset thumbnail linked to node', array('@preset' => $preset['presetname'])),
+//          'field types' => array('brightcove_video'),
+//          'multiple values' => CONTENT_HANDLE_CORE,
+//          );
+//      $formatters['node_image_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
+//          'label' => t('Imagecache @preset still image', array('@preset' => $preset['presetname'])),
+//          'field types' => array('brightcove_video'),
+//          'multiple values' => CONTENT_HANDLE_CORE,
+//          );
+//      $formatters['node_image_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
+//          'label' => t('Imagecache @preset thumbnail', array('@preset' => $preset['presetname'])),
+//          'field types' => array('brightcove_video'),
+//          'multiple values' => CONTENT_HANDLE_CORE,
+//          );
+//
+//    }
+//  }
   return $formatters;
 }
 
@@ -337,21 +329,17 @@ function brightcove_field_field_formatter_info() {
  */
 function brightcove_field_widget_info() {
   return array(
-      'brightcove_field_browser' => array(
-        'label' => t('Video browser & upload'),
-        'field types' => array('brightcove_video'),
-        'multiple values' => CONTENT_HANDLE_CORE,
-        'callbacks' => array(
-          'default value' => CONTENT_CALLBACK_DEFAULT,
-          ),
-        ),
-      );
+    'brightcove_field_browser' => array(
+      'label' => t('Video browser & upload'),
+      'field types' => array('brightcove_video'),
+    ),
+  );
 }
 
 /**
- * Implementation of hook_elements().
+ * Implements hook_element_info().
  */
-function brightcove_field_elements() {
+function brightcove_field_element_info() {
   $elements = array(
     'brightcove_field_browser' => array(
       '#input' => TRUE,
@@ -371,7 +359,7 @@ function brightcove_field_elements() {
  * Brightcove field form that returns the actual field to the user.
  * Parts of this and subsequent JS taken from Nodereference Explorer. Thanks!
  */
-function brightcove_field_browser_process($element, $edit, $form_state, $form) {
+function brightcove_field_browser_process($element, $form_state, $form) {
   global $brightcove_field_settings;
   $field_key  = $element['#columns'][0];
 
@@ -380,8 +368,10 @@ function brightcove_field_browser_process($element, $edit, $form_state, $form) {
     $nid = $form['nid']['#value'];
   }
 
-  $field_info = content_fields($element['#field_name'], $element['#type_name']);
-  modalframe_parent_js(); //dialog internal area
+  //$field_info = content_fields($element['#field_name'],
+  //                              $element['#type_name']);
+  //modalframe_parent_js(); //dialog internal area
+  $field_info = field_info_field($element['#field_name']);
   $element[$field_key] = array(
       '#type' => 'textfield',
       '#default_value' => isset($element['#value'][$field_key]) ? $element['#value'][$field_key] : '',
@@ -408,7 +398,8 @@ function brightcove_field_browser_process($element, $edit, $form_state, $form) {
         );
   }
 
-  if ((user_access('upload videos')) && ($field_info['allow_upload'])) {
+  if ((user_access('upload videos')) &&
+      ($field_info['settings']['allow_upload'])) {
     $element['actions']['upload'] = array(
         '#type' => 'brightcove_field_browse_button',
         '#id' => $element['#id'] . '-upload',
@@ -437,7 +428,8 @@ function brightcove_field_browser_process($element, $edit, $form_state, $form) {
             'nid' => $nid,
             )),
         );
-    drupal_add_js($brightcove_field_settings[$element['#field_name']], 'setting');
+    drupal_add_js($brightcove_field_settings[$element['#field_name']],
+                  array('type' => 'setting'));
   }
 
 
@@ -446,29 +438,35 @@ function brightcove_field_browser_process($element, $edit, $form_state, $form) {
   }
   array_unshift($element[$field_key]['#element_validate'], 'brightcove_field_browser_validate');
 
-  // Used so that hook_field('validate') knows where to flag an error.
-  // @see userreference.module
-  $element['_error_element'] = array(
-      '#type' => 'value',
-      '#value' => implode('][', array_merge($element['#parents'], array($field_key, $field_key))),
-      );
   return $element;
 
 }
 
 /**
- * Implementation of hook_widget().
+ * Implements hook_field_widget_info().
  */
-function brightcove_field_widget(&$form, &$form_state, $field, $items, $delta = 0) {
-  switch ($field['widget']['type']) {
-    case 'brightcove_field_browser':
-      $element = array(
-          '#type' => 'brightcove_field_browser',
-          '#default_value' => isset($items[$delta]) ? $items[$delta] : NULL,
-          '#value_callback' => 'brightcove_field_browser_value',
-          );
-      break;
-  }
+function brightcove_field_field_widget_info() {
+  return array(
+    'brightcove_field_widget' => array(
+      'title' => t('Brightcove field widget'),
+      'field types' => array('brightcove_field'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function brightcove_field_field_widget_form(&$form, &$form_state,
+                                            $field, $instance,
+                                            $langcode, $items, $delta,
+                                            $element) {
+  $element += array(
+    '#type' => 'brightcove_field_browser',
+    '#default_value' => isset($items[$delta]) ? $items[$delta] : NULL,
+    '#value_callback' => 'brightcove_field_browser_value',
+  );
+
   return $element;
 }
 
@@ -477,7 +475,7 @@ function brightcove_field_widget(&$form, &$form_state, $field, $items, $delta = 
  * Will return a field value in "video-name [id:videoId]" format.
  *
  */
-function brightcove_field_browser_value($element, $edit = FALSE) {
+function brightcove_field_browser_value($element) {
   $field_key  = $element['#columns'][0];
   $id = $element['#default_value'][$field_key];
   if ((int) $id > 1) {
@@ -505,131 +503,131 @@ function theme_brightcove_field_browser($element) {
 function brightcove_field_theme() {
   $theme = array(
       'brightcove_field_browser' => array(
-        'arguments' => array('element' => NULL),
+        'variables' => array('element' => NULL),
         ),
       'brightcove_field_formatter_default' => array(
-        'arguments' => array('element'),
+        'variables' => array('element' => NULL),
         'file' => 'brightcove_field.formatters.inc',
         ),
       'brightcove_field_player' => array(
-        'arguments' => array('player' => NULL, 'video_id' => NULL),
+        'variables' => array('player' => NULL, 'video_id' => NULL),
         'template' => 'brightcove-field-player',
         'pattern' => 'brightcove-field-player',
         ),
       'brightcove_field_lightbox2' => array(
-        'arguments' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'lightbox2_width' => NULL, 'lightbox2_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL, 'preset' => NULL),
+        'variables' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'lightbox2_width' => NULL, 'lightbox2_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL, 'preset' => NULL),
         'template' => 'brightcove-field-lightbox2',
         'pattern' => 'brightcove_field_lightbox2__',
         'preprocess functions' => array('template_preprocess_brightcove_field_lightbox2'),
         ),
       'brightcove_field_node_link' => array(
-        'arguments' => array('output' => NULL, 'video_id' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL, 'preset' => NULL),
+        'variables' => array('output' => NULL, 'video_id' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL, 'preset' => NULL),
         'template' => 'brightcove-field-node-link',
         'pattern' => 'brightcove_field_node_link__',
         'preprocess functions' => array('template_preprocess_brightcove_field_node_link'),
         ),
       'brightcove_field_node_image' => array(
-        'arguments' => array('output' => NULL, 'video_id' => NULL, 'nid' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL),
+        'variables' => array('output' => NULL, 'video_id' => NULL, 'nid' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL),
         'template' => 'brightcove-field-node-image',
         'pattern' => 'brightcove_field_node_image__',
         'preprocess functions' => array('template_preprocess_brightcove_field_node_image'),
         ),
       'brightcove_field_lightbox2_imagecache' => array(
-          'arguments' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'lightbox2_width' => NULL, 'lightbox2_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL),
+          'variables' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'lightbox2_width' => NULL, 'lightbox2_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL),
           'template' => 'brightcove-field-lightbox2-imagecache',
           'pattern' => 'brightcove_field_lightbox2_imagecache__',
           'preprocess functions' => array('template_preprocess_brightcove_field_lightbox2_imagecache'),
           ),
       'brightcove_field_browse_button' => array(
-          'arguments' => array('element' => NULL),
+          'variables' => array('element' => NULL),
           'function' => 'theme_brightcove_field_browse_button',
           'file' => 'theme.inc',
           ),
       'brightcove_field_browse_item' => array(
-          'arguments' => array('item' => NULL),
+          'variables' => array('item' => NULL),
           'file' => 'theme.inc',
           ),
       'brightcove_field_browse_items' => array(
-          'arguments' => array('item' => NULL),
+          'variables' => array('item' => NULL),
           'file' => 'theme.inc',
           ),
       'brightcove_field_embed' => array(
-          'arguments' => array('type' => NULL, 'player' => NULL, 'player_key' => NULL, 'video_id' => NULL, 'params' => NULL),
+          'variables' => array('type' => NULL, 'player' => NULL, 'player_key' => NULL, 'video_id' => NULL, 'params' => NULL),
           'function' => 'theme_brightcove_field_embed',
           'file' => 'theme.inc',
           ),
       );
   $theme['brightcove_field_formatter_node_link_thumbnailURL'] = array(
-      'arguments' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
+      'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
       'function' => 'theme_brightcove_field_node_link',
       'file' => 'brightcove_field.formatters.inc',
       );
   $theme['brightcove_field_formatter_node_link_videoStillURL'] = array(
-      'arguments' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
+      'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
       'function' => 'theme_brightcove_field_node_link',
       'file' => 'brightcove_field.formatters.inc',
       );
   $theme['brightcove_field_formatter_node_image_thumbnailURL'] = array(
-      'arguments' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
+      'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
       'function' => 'theme_brightcove_field_node_image',
       'file' => 'brightcove_field.formatters.inc',
       );
   $theme['brightcove_field_formatter_node_image_videoStillURL'] = array(
-      'arguments' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
+      'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
       'function' => 'theme_brightcove_field_node_image',
       'file' => 'brightcove_field.formatters.inc',
       );
 
   if (module_exists('lightbox2')) {
     $theme['brightcove_field_formatter_lightbox2_player_thumbnailURL'] = array(
-        'arguments' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
+        'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
         'function' => 'theme_brightcove_field_lightbox2_player',
         'file' => 'brightcove_field.formatters.inc',
         );
     $theme['brightcove_field_formatter_lightbox2_player_videoStillURL'] = array(
-        'arguments' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
+        'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
         'function' => 'theme_brightcove_field_lightbox2_player',
         'file' => 'brightcove_field.formatters.inc',
         );
   }
-  if (module_exists('imagecache')) {
-    $presets = imagecache_presets();
-    foreach($presets as $preset_id => $preset) {
-      if (module_exists('lightbox2')) {
-        $theme['brightcove_field_formatter_lightbox2_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-            'arguments' => array('element'),
-            'function' => 'theme_brightcove_field_lightbox2_imagecache',
-            'file' => 'brightcove_field.formatters.inc',
-            );
-        $theme['brightcove_field_formatter_lightbox2_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-            'arguments' => array('element'),
-            'function' => 'theme_brightcove_field_lightbox2_imagecache',
-            'file' => 'brightcove_field.formatters.inc',
-            );
-      }
-      $theme['brightcove_field_formatter_node_link_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-          'arguments' => array('element'),
-          'function' => 'theme_brightcove_field_node_link_imagecache',
-          'file' => 'brightcove_field.formatters.inc',
-          );
-      $theme['brightcove_field_formatter_node_link_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-          'arguments' => array('element'),
-          'function' => 'theme_brightcove_field_node_link_imagecache',
-          'file' => 'brightcove_field.formatters.inc',
-          );
-      $theme['brightcove_field_formatter_node_image_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-          'arguments' => array('element'),
-          'function' => 'theme_brightcove_field_node_image_imagecache',
-          'file' => 'brightcove_field.formatters.inc',
-          );
-      $theme['brightcove_field_formatter_node_image_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-          'arguments' => array('element'),
-          'function' => 'theme_brightcove_field_node_image_imagecache',
-          'file' => 'brightcove_field.formatters.inc',
-          );
-
-    }
-  }
+//  if (module_exists('image')) {
+//    $presets = imagecache_presets();
+//    foreach($presets as $preset_id => $preset) {
+//      if (module_exists('lightbox2')) {
+//        $theme['brightcove_field_formatter_lightbox2_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
+//            'variables' => array('element'),
+//            'function' => 'theme_brightcove_field_lightbox2_imagecache',
+//            'file' => 'brightcove_field.formatters.inc',
+//            );
+//        $theme['brightcove_field_formatter_lightbox2_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
+//            'variables' => array('element'),
+//            'function' => 'theme_brightcove_field_lightbox2_imagecache',
+//            'file' => 'brightcove_field.formatters.inc',
+//            );
+//      }
+//      $theme['brightcove_field_formatter_node_link_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
+//          'variables' => array('element'),
+//          'function' => 'theme_brightcove_field_node_link_imagecache',
+//          'file' => 'brightcove_field.formatters.inc',
+//          );
+//      $theme['brightcove_field_formatter_node_link_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
+//          'variables' => array('element'),
+//          'function' => 'theme_brightcove_field_node_link_imagecache',
+//          'file' => 'brightcove_field.formatters.inc',
+//          );
+//      $theme['brightcove_field_formatter_node_image_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
+//          'variables' => array('element'),
+//          'function' => 'theme_brightcove_field_node_image_imagecache',
+//          'file' => 'brightcove_field.formatters.inc',
+//          );
+//      $theme['brightcove_field_formatter_node_image_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
+//          'variables' => array('element'),
+//          'function' => 'theme_brightcove_field_node_image_imagecache',
+//          'file' => 'brightcove_field.formatters.inc',
+//          );
+//
+//    }
+//  }
   return $theme;
 }
 
@@ -741,7 +739,7 @@ function brightcove_field_browser_form(&$form_state, $item) {
 function brightcove_field_browser_form_submit($form, &$form_state) {
   // The value is "title [id:ID]" - recognised by validating element.
   $return['selected'] = $form_state['values']['title'] . ' [id:' . $form_state['values']['id'] . ']';
-  modalframe_close_dialog($return);
+  //modalframe_close_dialog($return);
 }
 
 /**
@@ -765,7 +763,7 @@ function brightcove_field_forms($form_id, $args) {
  */
 function brightcove_field_views_api() {
   return array(
-      'api' => 2,
+      'api' => 3,
       'path' => drupal_get_path('module', 'brightcove_field') .'/views',
       );
 }
@@ -840,7 +838,7 @@ function brightcove_field_upload_form(&$form_state) {
       ),*/
   $form['submit'] = array(
       '#type' => 'submit',
-      '#name' => 'submit-' . $item['video_id'],
+      //'#name' => 'submit-' . $item['video_id'],
       '#value' => t('Attach'),
       );
 
@@ -862,7 +860,8 @@ function brightcove_field_upload_form_submit($form, &$form_state) {
       );
 
   // Save new file uploads.
-  if ($file = file_save_upload('file_upload', $validators, file_directory_path())) {
+  if ($file = file_save_upload('file_upload', $validators,
+        drupal_realpath(file_default_scheme() . ':/'))) {
     if ($file->filesize <= 0) {
       // Some uploaded files had zero size, that's an error.
       drupal_set_message(t('Uploaded file not found. Are you sure that you uploaded an existing file?'), 'error');
@@ -880,7 +879,7 @@ function brightcove_field_upload_form_submit($form, &$form_state) {
         'referenceId' => brightcove_generate_reference(),
         );
     if (!empty($form_state['values']['tags'])) {
-      $meta['tags'] = split(',', $form_state['values']['tags']);
+      $meta['tags'] = explode(',', $form_state['values']['tags']);
     }
     $id = brightcove_upload_video($file->filepath, $meta);
 
@@ -896,7 +895,7 @@ function brightcove_field_upload_form_submit($form, &$form_state) {
     unlink($file->filepath);
 
     $return['selected'] = $form_state['values']['title'] . ' [id:' . $id . ']';
-    modalframe_close_dialog($return);
+    //modalframe_close_dialog($return);
 
   } else {
     drupal_set_message(t('Only Video files are allowed here.'), 'error');

@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * Implements hook_field_schema().
+ */
+function brightcove_field_field_schema() {
+  return array(
+    'columns' => array(
+      'video_id' => array(
+        'type' => 'varchar',
+        'length' => 15,
+        'not null' => FALSE
+      ),
+    ),
+    'indexes' => array(
+      'video_id' => array('video_id'),
+    ),
+  );
+}
