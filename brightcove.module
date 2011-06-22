@@ -116,7 +116,7 @@ function brightcove_initialize() {
   $write_token = variable_get('brightcove_write_api_key', '');
 
   if (empty($read_token)) {
-    drupal_set_message(t('Cannot initialize Brightcove API. Contact site administrators.'));
+    drupal_set_message(t('Cannot initialize Brightcove API. Contact site administrators.'), 'error');
     watchdog('brightcove', 'Brightcove Read API keys not found, cannot initialize Brightcove MAPI SDK.', array(), WATCHDOG_ERROR);
     return FALSE;
   }
@@ -155,7 +155,7 @@ function brightcove_video_load($video_id) {
   else {
     $bc = brightcove_initialize();
     try {
-      $video = $bc->find('find_video_by_id', $video_id);
+      $video = $bc ? $bc->find('find_video_by_id', $video_id) : NULL;
     } catch (Exception $error) {
       watchdog('brightcove', 'Loading Brightcove video failed.', array(), WATCHDOG_ERROR);
       return FALSE;
