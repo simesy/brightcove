@@ -1,8 +1,9 @@
 Drupal.brightcove_field = {};
 
-Drupal.behaviors.brightcove_field_attach = function(context) {
-  $('.brightcove-field-attach-button', context).click(function() {
-      });
+Drupal.behaviors.brightcove_field_attach = {
+  attach: function(context) {
+    $('.brightcove-field-attach-button', context).click(function() {});
+  }
 };
 
 

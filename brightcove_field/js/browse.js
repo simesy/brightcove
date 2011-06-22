@@ -6,11 +6,13 @@
 Drupal.brightcove_field = {};
 Drupal.brightcove_field.actions = {};
 
-Drupal.behaviors.brightcove_field_buttons = function(context) {
-  $('.brightcove-field-browse-button', context).click(Drupal.brightcove_field.actions.browse);
-  $('.brightcove-field-upload-button', context).click(Drupal.brightcove_field.actions.upload);
-  $('.brightcove-field-remove-button', context).click(Drupal.brightcove_field.actions.remove);
-  $('.form-text.brightcove-video-field').change(Drupal.brightcove_field.actions.change);
+Drupal.behaviors.brightcove_field_buttons = {
+  attach: function(context) {
+    $('.brightcove-field-browse-button', context).click(Drupal.brightcove_field.actions.browse);
+    $('.brightcove-field-upload-button', context).click(Drupal.brightcove_field.actions.upload);
+    $('.brightcove-field-remove-button', context).click(Drupal.brightcove_field.actions.remove);
+    $('.form-text.brightcove-video-field').change(Drupal.brightcove_field.actions.change);
+  }
 };
 
 Drupal.brightcove_field.actions.change = function() {

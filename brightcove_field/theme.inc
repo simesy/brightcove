@@ -12,7 +12,8 @@
 function theme_brightcove_field_browse_button($element) {
   drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/browse.js');
   $element['#button_type'] = 'button';
-  $button = theme('button', $element);
+  // TODO: review after the field part is stable
+  $button = theme('button', array('element' => $element));
   return str_ireplace('type="submit"', 'type="button"', $button);
 }
 
@@ -43,7 +44,8 @@ function theme_brightcove_field_browse_items($items) {
   $activerow = 0;
   $rows = array();
   foreach($items as $item) {
-    $themed = theme('brightcove_field_browse_item', $item);
+    // TODO test these after field port is stable
+    $themed = theme('brightcove_field_browse_item', array('item' => $item));
     $rowcount++;
     if ($rowcount == 4) {
       $activerow++;
@@ -51,7 +53,8 @@ function theme_brightcove_field_browse_items($items) {
     }
     $rows[$activerow][] = $themed;
   }
-  return theme('table', array(), $rows);
+  // TODO test these after field port is stable
+  return theme('table', array('header' => array(), 'rows' => $rows));
 }
 
 function theme_brightcove_field_embed($type, $playerId, $playerKey, $assetIds, $params) {
