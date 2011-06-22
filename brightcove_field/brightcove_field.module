@@ -383,7 +383,6 @@ function brightcove_field_browser_process($element, $form_state, $form) {
     '#required' => $element['#required'],
     '#description' => $element['#description'],
     '#field_name' => $element['#field_name'],
-    '#type_name' => $element['#type_name'],
     '#delta' => $element['#delta'],
     '#columns' => $element['#columns'],
     '#attributes' => array(
