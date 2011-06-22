@@ -327,7 +327,7 @@ function brightcove_field_field_formatter_info() {
 /**
  * Implementation of hook_widget_info().
  */
-function brightcove_field_widget_info() {
+function brightcove_field_field_widget_info() {
   return array(
     'brightcove_field_browser' => array(
       'label' => t('Video browser & upload'),
@@ -363,10 +363,9 @@ function brightcove_field_browser_process($element, $form_state, $form) {
   global $brightcove_field_settings;
   $field_key  = $element['#columns'][0];
 
-  $nid = NULL;
-  if (!empty($form['nid']['#value'])) {
-    $nid = $form['nid']['#value'];
-  }
+  $entity_type = $form['#entity_type'];
+  $entity_info = entity_get_info($entity_type);
+  $eid = $form[$entity_info['entity keys']['id']]['#value'];
 
   //$field_info = content_fields($element['#field_name'],
   //                              $element['#type_name']);
@@ -375,7 +374,9 @@ function brightcove_field_browser_process($element, $form_state, $form) {
   $element[$field_key] = array(
       '#type' => 'textfield',
       '#default_value' => isset($element['#value'][$field_key]) ? $element['#value'][$field_key] : '',
-      '#autocomplete_path' => 'brightcove_field/autocomplete/'. $element['#field_name'] . '/' . $element['#type_name'] . '/' . $nid,
+      '#autocomplete_path' => 'brightcove_field/autocomplete/'.
+                              $element['#field_name'] . '/' .
+                              $element['#entity_type']. '/' . $eid,
       // The following values were set by the content module and need
       // to be passed down to the nested element.
       '#title' => $element['#title'],
@@ -423,9 +424,9 @@ function brightcove_field_browser_process($element, $form_state, $form) {
   if (empty($brightcove_field_settings[$element['#field_name']])) {
     $brightcove_field_settings[$element['#field_name']] = array(
         'brightcove_field' => array($element['#field_name'] => array(
-            'node_type' => $element['#type_name'],
+            'entity_type' => $entity_type,
             'field_name' => $element['#field_name'],
-            'nid' => $nid,
+            'entity_id' => $eid,
             )),
         );
     drupal_add_js($brightcove_field_settings[$element['#field_name']],
@@ -440,18 +441,6 @@ function brightcove_field_browser_process($element, $form_state, $form) {
 
   return $element;
 
-}
-
-/**
- * Implements hook_field_widget_info().
- */
-function brightcove_field_field_widget_info() {
-  return array(
-    'brightcove_field_widget' => array(
-      'title' => t('Brightcove field widget'),
-      'field types' => array('brightcove_field'),
-    ),
-  );
 }
 
 /**
