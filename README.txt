@@ -3,16 +3,26 @@ Brightcove integration API and CCK field. Features:
 * Browse videos coming from Brightcove Studio directly in Drupal with a possibility to search in videos by name or tags.
 * Upload a video for Brightcove customers with at least a Professional account (You need a Write API key).
 * Integrates with Views module - creates fields with a video player, all available metadata such as Plays count or Creation dates.
-* Provides various formatters including a Lightbox2 player and Imagecache integration for remote images. 
+* Provides various formatters including a Lightbox2 player and Imagecache integration for remote images.
 
 
 Requirements
 ------------
 
-CCK: http://drupal.org/project/cck
-ModalFrame API: http://drupal.org/project/modalframe - It is currently recommended to use ModalFrame 6.x-1.6 with the Brightcove module.. It is possible to use with ModalFrame 6.x-1.7 (which requires jQuery UI 1.7.x and jQuery Update 6.x-2.x) however this version breaks Lightbox2 (as of 25.05.2010). 
-jQuery UI: http://drupal.org/project/jquery_ui
-External libraries: Brightcove PHP MAPI Wrapper, http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/
+* CCK
+  http://drupal.org/project/cck
+
+* ModalFrame API
+  http://drupal.org/project/modalframe
+  (Modalframe requires jQuery update, which is not stated or checked due to a bug: http://drupal.org/node/1103244)
+
+* jQuery UI
+  http://drupal.org/project/jquery_ui
+  http://jqueryui.com/download
+  jQuery UI requires the "legacy" version
+
+* External libraries: Brightcove PHP MAPI Wrapper
+  http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/
 
 Installation instructions
 -------------------------
