@@ -130,7 +130,7 @@ function brightcove_field_autocomplete($field_name, $string = '') {
 
 
 function brightcove_field_upload() {
-  modalframe_child_js(); //dialog internal area
+  //modalframe_child_js(); //dialog internal area
   drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css');
 //  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/attach.js');
 
