@@ -20,7 +20,7 @@ function brightcove_field_menu() {
   $items['brightcove_field/autocomplete/%/%/%'] = array(
       'title' => 'Brightcove field autocomplete',
       'page callback' => 'brightcove_field_autocomplete',
-      'page arguments' => array(2, 4),
+      'page arguments' => array(2),
       'access callback' => 'brightcove_field_browse_access',
       'access arguments' => array(3, '', 2),
       'file' => 'brightcove_field.browse.inc',
@@ -81,11 +81,16 @@ function brightcove_field_browse_access($entity_type, $bundle,
       $entity = array_shift($entity);
     }
     return (entity_access('update', $entity_type, $entity) &&
-        field_access('edit', $entity_type, $field));
+        field_access('edit', $field, $entity_type));
   }
-
-  return (entity_access('create', $entity_type, $bundle) &&
-          field_access('edit', $field, $entity_type));
+  else if (!empty($bundle)) {
+    return (entity_access('create', $entity_type, $bundle) &&
+            field_access('edit', $field, $entity_type));
+  }
+  else {
+    return entity_access('create', $entity_type) &&
+           field_access('edit', $field, $entity_type);
+  }
 }
 
 /**
@@ -202,10 +207,7 @@ function brightcove_field_field_is_empty($item, $field) {
 function brightcove_field_browser_validate($element, &$form_state) {
   $id = '';
   $field_name = $element['#field_name'];
-  $type_name = $element['#type_name'];
-  //$field = content_fields($field_name, $type_name);
   $field = field_info_field($field_name);
-  $field_key = $element['#columns'][0];
   $value = $element['#value'];
   if (!empty($value)) {
     // Assign ID to the value.
@@ -360,7 +362,6 @@ function brightcove_field_element_info() {
  * Parts of this and subsequent JS taken from Nodereference Explorer. Thanks!
  */
 function brightcove_field_browser_process($element, $form_state, $form) {
-  global $brightcove_field_settings;
   $field_key  = $element['#columns'][0];
 
   $entity_type = $form['#entity_type'];
@@ -373,7 +374,8 @@ function brightcove_field_browser_process($element, $form_state, $form) {
   $field_info = field_info_field($element['#field_name']);
   $element[$field_key] = array(
     '#type' => 'textfield',
-    '#default_value' => isset($element['#value'][$field_key]) ? $element['#value'][$field_key] : '',
+    '#default_value' => isset($element['#value'][$field_key]) ?
+      $element['#value'][$field_key] : '',
     '#autocomplete_path' => 'brightcove_field/autocomplete/'.
                             $element['#field_name'] . '/' .
                             $element['#entity_type']. '/' . $eid,
@@ -461,11 +463,63 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
                                             $field, $instance,
                                             $langcode, $items, $delta,
                                             $element) {
+  $entity_type = $element['#entity_type'];
+  $entity_info = entity_get_info($entity_type);
+  $eid = $form[$entity_info['entity keys']['id']]['#value'];
   $element += array(
-    '#type' => 'brightcove_field_browser',
+    '#type' => 'textfield',
     '#default_value' => isset($items[$delta]) ? $items[$delta] : NULL,
     '#value_callback' => 'brightcove_field_browser_value',
+    '#autocomplete_path' => 'brightcove_field/autocomplete/'.
+                            $element['#field_name'] . '/' .
+                            $element['#entity_type']. '/' . ($eid ?: 0),
+    '#attributes' => array(
+      'rel' => $element['#field_name'],
+      'class' => array('brightcove-video-field'),
+    ),
+    '#element_validate' => array(
+      'brightcove_field_browser_validate',
+    ),
   );
+
+  $element['actions'] = array(
+    '#type' => 'fieldset',
+    '#title' => '',
+  );
+
+  if (user_access('browse videos')) {
+    // Button to browse videos.
+    $element['actions']['browse'] = array(
+      '#type' => 'button',
+      '#attributes' => array(
+        'class' => array('brightcove-field-browse-button'),
+      ),
+      '#value' => t('Browse'),
+    );
+  }
+
+  if ((user_access('upload videos')) &&
+      ($field['settings']['allow_upload'])) {
+    $element['actions']['upload'] = array(
+      '#type' => 'button',
+      '#attributes' => array(
+        'class' => array('brightcove-field-upload-button'),
+      ),
+      '#value' => t('Upload'),
+    );
+  }
+
+  $element['actions']['remove'] = array(
+    '#type' => 'button',
+    '#attributes' => array(
+      'class' => array('brightcove-field-remove-button'),
+    ),
+    '#value' => t('Remove'),
+  );
+
+  if (!isset($element['#default_value'])) {
+    $element['actions']['remove']['#attributes']['disabled'] = 'disabled';
+  }
 
   return $element;
 }
