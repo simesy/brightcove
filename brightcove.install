@@ -15,7 +15,7 @@ function brightcove_requirements() {
   if (!($path = variable_get('brightcove_mapi_path', FALSE))) {
     $files = drupal_system_listing('/^bc-mapi\.php$/', 'libraries',
                                    'filename', 0);
-    if (isset($files)) {
+    if (isset($files) && count($files)) {
       $path = dirname($files['bc-mapi.php']->filename);
       variable_set('brightcove_mapi_path', $path);
     }
