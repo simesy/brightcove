@@ -27,15 +27,21 @@ Requirements
 Installation instructions
 -------------------------
 
-Get Read and/or Write API keys from Brightcove support. Refer to section Brightcove Keys if you don't know how to do that.
+Download and enable jquery_update module (version > 2.0 will automatically download the right javascript files).
 
-Download module from http://drupal.org/project/brightcove, untar to sites/all/modules or sites/sitename.com/modules
+Download and enable jquery_ui module, with the "legacy" (1.7.*) jQuery ui library version.
+
+Download and enable modalframe module.
+
+Download Brightcove module (http://drupal.org/project/brightcove), untar to sites/all/modules or sites/sitename.com/modules
 
 Download Brightcove PHP MAPI Wrapper from http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/, module is tested with PHP MAPI Wrapper 2.0.4 and later.
 
 Unzip framework to sites/all/libraries/*. After unzipping, there needs to be a file at sites/all/libraries/*/bc-mapi.php.
 
 Enable Brightcove module and Brightcove CCK Field module at your site.
+
+Get Read and/or Write API keys from Brightcove support. Refer to section Brightcove Keys if you don't know how to do that.
 
 Navigate to admin/settings/brightcove and fill in your Read/Write key and default Player ID from Brightcove Studio (Refer to section Brightcove player if you don't know how to do that)
 
