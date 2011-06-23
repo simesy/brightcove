@@ -60,20 +60,6 @@ function brightcove_permission() {
   );
 }
 
-function brightcove_init() {
-  // Autoload the BCMAPI class when needed.
-  spl_autoload_register('brightcove_autoload');
-}
-
-/**
- * Autoload the BCMAPI class when needed.
- */
-function brightcove_autoload($class_name) {
-  if (in_array($class_name, array('BCMAPI', 'BCMAPIException'))) {
-    include_once(brightcove_mapi_path() . '/bc-mapi.php');
-  }
-}
-
 /**
  * Return the path to the Brightcove MAPI library.
  *
@@ -92,10 +78,10 @@ function brightcove_mapi_path() {
 
   if (!isset($path)) {
     if (!($path = variable_get('brightcove_mapi_path', FALSE))) {
-      $files = drupal_system_listing('/^bc-mapi.php$/', 'libraries',
+      $files = drupal_system_listing('/^bc-mapi\.php$/', 'libraries',
                                      'filename', 0);
       if (isset($files['bc-mapi.php'])) {
-        $path = dirname($files['bc-mapi.php']->filename);
+        $path = dirname($files['bc-mapi.php']->uri);
         variable_set('brightcove_mapi_path', $path);
       }
     }
@@ -120,6 +106,8 @@ function brightcove_initialize() {
     watchdog('brightcove', 'Brightcove Read API keys not found, cannot initialize Brightcove MAPI SDK.', array(), WATCHDOG_ERROR);
     return FALSE;
   }
+
+  include_once brightcove_mapi_path() . '/bc-mapi.php';
 
   $bc = new BCMAPI($read_token, $write_token);
 
