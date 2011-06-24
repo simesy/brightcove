@@ -184,7 +184,7 @@ function brightcove_field_field_validate($entity_type, $entity,
     if (empty($video->id)) {
       if (brightcove_video_cache_get($item['video_id']) === NULL) {
         $errors[$field['field_name']][$langcode][$delta][] = array(
-          'error' => 'brightcove_field', // TODO fix
+          'error' => 'brightcove_field',
           'message' => t('%name: invalid video.', array(
             '%name' => t($field['widget']['label']),
           )),
@@ -467,9 +467,10 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
   $entity_type = $element['#entity_type'];
   $entity_info = entity_get_info($entity_type);
   $eid = $form[$entity_info['entity keys']['id']]['#value'];
-  $element += array(
+  $element['video_id'] = array(
     '#type' => 'textfield',
-    '#default_value' => isset($items[$delta]) ? $items[$delta] : NULL,
+    '#default_value' => isset($items[$delta]['video_id']) ?
+      $items[$delta]['video_id'] : NULL,
     '#value_callback' => 'brightcove_field_browser_value',
     '#autocomplete_path' => 'brightcove_field/autocomplete/'.
                             $element['#field_name'] . '/' .
@@ -481,11 +482,7 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
     '#element_validate' => array(
       'brightcove_field_browser_validate',
     ),
-  );
-
-  $element['actions'] = array(
-    '#type' => 'fieldset',
-    '#title' => '',
+    '#field_name' => $element['#field_name'],
   );
 
   if (user_access('browse videos')) {
@@ -530,19 +527,19 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
  * Will return a field value in "video-name [id:videoId]" format.
  *
  */
-function brightcove_field_browser_value($element) {
-  $field_key  = $element['#columns'][0];
-  $id = $element['#default_value'][$field_key];
-  if ((int) $id > 1) {
-    $video = brightcove_video_load($id);
+function brightcove_field_browser_value($element, $value, $form_state) {
+  if (((int) $value) > 1) {
+    $video = brightcove_video_load($value);
     if (!empty($video->id)) {
-      return array($field_key => check_plain($video->name) . ' [id:' . $video->id . ']');
-    } else if (!is_null(brightcove_video_cache_get($id))) {
-      return array($field_key => check_plain(brightcove_video_cache_get($id)->name) . ' [id:' . $id . ']');
+      $value = check_plain($video->name) . " [id:{$video->id}]";
+    }
+    else if (!is_null(brightcove_video_cache_get($value))) {
+      $value = check_plain(brightcove_video_cache_get($value)->name) .
+        " [id:{$value}]";
     }
 
   }
-  return array($field_key => NULL);
+  return $value;
 }
 
 /**
