@@ -473,7 +473,7 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
     '#value_callback' => 'brightcove_field_browser_value',
     '#autocomplete_path' => 'brightcove_field/autocomplete/'.
                             $element['#field_name'] . '/' .
-                            $element['#entity_type']. '/' . ($eid ?: 0),
+                            $element['#entity_type']. '/' . ($eid ? $eid : 0),
     '#attributes' => array(
       'rel' => $element['#field_name'],
       'class' => array('brightcove-video-field'),
