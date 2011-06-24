@@ -993,3 +993,24 @@ function brightcove_field_imagecache_default_presets() {
       );
   return $presets;
 }
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function brightcove_field_field_formatter_view($entity_type, $entity, $field,
+                                      $instance, $langcode, $items, $display) {
+  $element = array();
+
+  switch ($display['type']) {
+    case 'default':
+      foreach ($items as $delta => $item) {
+        $element[$delta] = array(
+          '#theme' => 'brightcove_field_formatter_default',
+          '#element' => $item,
+        );
+      }
+      break;
+  }
+
+  return $element;
+}

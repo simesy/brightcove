@@ -115,23 +115,31 @@ function template_preprocess_brightcove_field_lightbox2(&$vars) {
   * @return
   *  Player HTML code.
   */
-function theme_brightcove_field_formatter_default($element) {
+function theme_brightcove_field_formatter_default($variables) {
   $player = '';
 
-  if (isset($element['#item']['video_id'])) {
-    // We need to write a BC JavaScript to the page, which is not possible
-    // with a simple drupal_add_js(), inline is needed.
+  if (isset($variables['element']['video_id'])) {
     static $vidcount = 1;
     if ($vidcount == 1) {
-      drupal_set_html_head('<script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script>');
+      drupal_add_js('http://admin.brightcove.com/js/BrightcoveExperiences.js');
     }
     $params['id'] = 'myExperience'.$vidcount;
-    $player = theme('brightcove_field_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''),  $element['#item']['video_id'], $params);
+    $player = theme('brightcove_field_embed', array(
+        'type' => 'video',
+        'player' => variable_get('brightcove_player'),
+        'player_key' => variable_get('brightcove_player_key'),
+        'video_id' => $variables['element']['video_id'],
+        'params' => $params,
+    ));
     $vidcount++;
   }
   if ($player) {
-    return theme('brightcove_field_player', $player, $element['#item']['video_id']);
+    return theme('brightcove_field_player', array(
+        'player' => $player,
+        'video_id' => $variables['element']['video_id'],
+    ));
   }
+  return '';
 }
 
 

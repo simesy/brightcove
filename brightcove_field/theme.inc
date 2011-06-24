@@ -57,42 +57,42 @@ function theme_brightcove_field_browse_items($items) {
   return theme('table', array('header' => array(), 'rows' => $rows));
 }
 
-function theme_brightcove_field_embed($type, $playerId, $playerKey, $assetIds, $params) {
-  if(!isset($playerId)) {
+function theme_brightcove_field_embed($variables) {
+  if(!isset($variables['player'])) {
     watchdog('brightcove', 'Video Player ID is missing.', array(), WATCHDOG_ERROR);
   }
 
-    if(!isset($playerKey)) {
+    if(!isset($variables['player_key'])) {
     watchdog('brightcove', 'Video Player KEY is missing.', array(), WATCHDOG_ERROR);
   }
 
   $values = array('id' => 'myExperience', 'bgcolor' => 'FFFFFF', 'width' => 486, 'height' => 412);
 
   foreach($values as $key => $value) {
-    if(isset($params[$key])) {
-      $values[$key] = $params[$key];
+    if(isset($variables['params'][$key])) {
+      $values[$key] = $variables['params'][$key];
     }
   }
 
   $assetCode = '';
 
-  if(isset($assetIds)) {
-    if(is_array($assetIds)) {
-      if(strtolower($type) == 'video') {
+  if(isset($variables['video_id'])) {
+    if(is_array($variables['video_id'])) {
+      if(strtolower($variables['type']) == 'video') {
         $assetCode = '<param name="@videoPlayer" value="';
       } else {
         // TODO: Add different types than video.
       }
 
-      foreach($assetIds as $assetId) {
+      foreach($variables['video_id'] as $assetId) {
         $assetCode .= $assetId . ',';
       }
 
       $assetCode = substr($assetCode, 0, -1);
       $assetCode .= '" />';
     } else {
-      if(strtolower($type) == 'video') {
-        $assetCode = '<param name="@videoPlayer" value="' . $assetIds . '" />';
+      if(strtolower($variables['type']) == 'video') {
+        $assetCode = '<param name="@videoPlayer" value="' . $variables['video_id'] . '" />';
       } else {
         // TODO: Add different types than video.
       }
@@ -104,11 +104,11 @@ function theme_brightcove_field_embed($type, $playerId, $playerKey, $assetIds, $
     <param name="bgcolor" value="#' . $values['bgcolor'] . '" />
     <param name="width" value="' . $values['width'] . '" />
     <param name="height" value="' . $values['height'] . '" />
-    <param name="playerID" value="' . $playerId . '" />'
+    <param name="playerID" value="' . $variables['player'] . '" />'
     . $assetCode . '
     <param name="isVid" value="true" />
     <param name="isUI" value="true" />
-    <param name="playerKey" value="' . $playerKey . '" />
+    <param name="playerKey" value="' . $variables['player_key'] . '" />
     </object>';
 
   return $code;
