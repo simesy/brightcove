@@ -187,7 +187,7 @@ class brightcove_field_handler_field_video_tags_multiple extends brightcove_fiel
       }
       if (count($rendered) > 1) {
         // TODO: could we use generic field display ?
-        return theme('content_view_multiple_field', $rendered, $field, $values);
+        return theme('content_view_multiple_field', array('rendered' => $rendered, 'field' => $field, 'values' => $values));
       }
       elseif ($rendered) {
         return $rendered[0];
