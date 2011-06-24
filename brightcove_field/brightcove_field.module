@@ -225,7 +225,8 @@ function brightcove_field_browser_validate($element, &$form_state) {
       $bc = brightcove_initialize();
       $result = NULL;
       try {
-        $result = $bc->find('find_videos_by_text', array('text' => $value));
+        $result = $bc ? $bc->find('find_videos_by_text',
+                                array('text' => $value)) : array();
       } catch (Exception $error) {
         form_error($element, t('There was a problem accessing Brightcove. Please try again'));
         watchdog('brightcove', 'Validating element with Brightcove failed', array(), WATCHDOG_ERROR);
