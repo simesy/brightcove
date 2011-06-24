@@ -213,8 +213,8 @@ function brightcove_theme() {
     );
 }
 
-function theme_brightcove_unavailable_message($message) {
-  return '<div class="video-unavailable">' . $message . '</div>';
+function theme_brightcove_unavailable_message($variables) {
+  return '<div class="video-unavailable">' . $variables['message'] . '</div>';
 }
 
 /**
