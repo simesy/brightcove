@@ -180,15 +180,17 @@ function brightcove_field_field_validate($entity_type, $entity,
                                          $field, $instance,
                                          $langcode, $items, &$errors) {
   foreach ($items as $delta => $item) {
+    if (!empty($item['video_id'])) {
     $video = brightcove_video_load($item['video_id']);
-    if (empty($video->id)) {
-      if (brightcove_video_cache_get($item['video_id']) === NULL) {
-        $errors[$field['field_name']][$langcode][$delta][] = array(
-          'error' => 'brightcove_field',
-          'message' => t('%name: invalid video.', array(
-            '%name' => t($field['widget']['label'])
-          )),
-        );
+      if (empty($video->id)) {
+        if (brightcove_video_cache_get($item['video_id']) === NULL) {
+          $errors[$field['field_name']][$langcode][$delta][] = array(
+            'error' => 'brightcove_field',
+            'message' => t('%name: invalid video.', array(
+              '%name' => t($field['widget']['label'])
+            )),
+          );
+        }
       }
     }
   }
