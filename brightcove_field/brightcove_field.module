@@ -540,6 +540,30 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
     $element['actions']['remove']['#attributes']['disabled'] = 'disabled';
   }
 
+  if (empty($brightcove_field_settings[$element['#field_name']])) {
+    $brightcove_field_settings[$element['#field_name']] = array(
+        'brightcove_field' => array($element['#field_name'] => array(
+            'entity_type' => $entity_type,
+            'field_name' => $element['#field_name'],
+            'entity_id' => is_null($eid) ? '0' : $eid,
+            )),
+        );
+  }
+
+  $element['video_id']['#attached']['js'] = array(
+    drupal_get_path('module', 'brightcove_field') . '/js/browse.js',
+  );
+
+
+  $element['video_id']['#attached']['js'][] = array(
+    'data' => $brightcove_field_settings[$element['#field_name']],
+    'type' => 'setting',
+  );
+
+  $element['video_id']['#attached']['library'] = array(
+    array('system', 'ui.dialog')
+  );
+
   return $element;
 }
 
