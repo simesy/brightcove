@@ -875,8 +875,6 @@ function brightcove_field_views_api() {
  */
 function brightcove_field_upload_form(&$form_state) {
 
-  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/upload.js');
-  drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/upload.css');
   $form['title'] = array(
       '#type' => 'textfield',
       '#title' => t('Title'),
@@ -946,6 +944,14 @@ function brightcove_field_upload_form(&$form_state) {
 
   $form['#attributes'] = array('enctype' => "multipart/form-data");
   $form['#submit'] = array("brightcove_field_upload_form_submit");
+  $form['#attached']['js'] = array(
+    drupal_get_path('module', 'brightcove_field') . '/js/upload.js',
+  );
+
+  $form['#attached']['css'] = array(
+    drupal_get_path('module', 'brightcove_field') . '/styles/upload.css',
+  );
+
   return $form;
 }
 
