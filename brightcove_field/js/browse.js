@@ -42,7 +42,10 @@
       autoOpen: false,
       modal: true,
       open: function() {
-        $(this).load(Drupal.settings.basePath + 'brightcove_field/browse/' + brightcove_field_settings.brightcove_field[field_name].entity_type + '/' + brightcove_field_settings.brightcove_field[field_name].field_name + '/' + brightcove_field_settings.brightcove_field[field_name].entity_id);
+        $(this).load(Drupal.settings.basePath + 'brightcove_field/browse/' +
+            brightcove_field_settings.brightcove_field[field_name].entity_type + '/' +
+            brightcove_field_settings.brightcove_field[field_name].field_name + '/' +
+            brightcove_field_settings.brightcove_field[field_name].entity_id);
         Drupal.attachBehaviors($(this));
       },
       height: 600,
@@ -68,8 +71,13 @@
       autoOpen: false,
       modal: true,
       open: function() {
-        $(this).load(Drupal.settings.basePath + 'brightcove_field/upload/' + brightcove_field_settings.brightcove_field[field_name].entity_type + '/' + brightcove_field_settings.brightcove_field[field_name].field_name + '/' + brightcove_field_settings.brightcove_field[field_name].entity_id + ' #brightcove-field-upload-form');
-        Drupal.attachBehaviors($(this));
+        $(this).load(Drupal.settings.basePath + 'brightcove_field/upload/' +
+            brightcove_field_settings.brightcove_field[field_name].entity_type + '/' +
+            brightcove_field_settings.brightcove_field[field_name].field_name + '/' +
+            brightcove_field_settings.brightcove_field[field_name].entity_id + ' #brightcove-field-upload-form',
+            function() {
+              Drupal.attachBehaviors($(this));
+            });
       },
       height: 600,
       width: 950,
