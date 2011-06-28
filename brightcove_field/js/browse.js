@@ -19,8 +19,8 @@
   };
 
   Drupal.brightcove_field.actions.change = function() {
-    var filt = $(this).attr('class').split(" ");
-    var button = $('.brightcove-field-remove-button[rel*=' + filt[1] + ']');
+    var filt = $(this).attr('rel');
+    var button = $('.brightcove-field-remove-button[rel*=' + filt + ']');
     button.attr('disabled', '');
     button.removeClass('form-button-disabled');
   }
@@ -36,7 +36,7 @@
     event.preventDefault();
     console.log(brightcove_field_settings);
     var id = $(this).attr('rel');
-    var field_name = $('.' + id).attr('rel');
+    var field_name = $('.' + id).attr('data-field-name');
 
     var dialog = $('<div>').dialog({
       autoOpen: false,
@@ -62,7 +62,7 @@
   Drupal.brightcove_field.actions.upload = function() {
     event.preventDefault();
     var id = $(this).attr('rel');
-    var field_name = $('.' + id).attr('rel');
+    var field_name = $('.' + id).attr('data-field-name');
 
     var dialog = $('<div>').dialog({
       autoOpen: false,

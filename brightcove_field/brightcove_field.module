@@ -491,8 +491,9 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
                             $element['#field_name'] . '/' .
                             $element['#entity_type']. '/' . ($eid ? $eid : 0),
     '#attributes' => array(
-      'rel' => $element['#field_name'],
+      'rel' => array($element['#field_name'] . '-' . $delta),
       'class' => array('brightcove-video-field', $element['#field_name'] . '-' . $delta),
+      'data-field-name' => $element['#field_name'],
     ),
     '#element_validate' => array(
       'brightcove_field_browser_validate',
