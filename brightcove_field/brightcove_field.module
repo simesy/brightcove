@@ -507,10 +507,16 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
       '#type' => 'button',
       '#attributes' => array(
         'class' => array('brightcove-field-browse-button'),
-        'rel' => array($element['#field_name'] . '-' . $delta),
+        'rel' => $element['#field_name'] . '-' . $delta,
+        'data-entity-type' => $entity_type,
+        'data-field-name' => $element['#field_name'],
+        'data-entity-id' => is_null($eid) ? '0' : $eid,
       ),
       '#value' => t('Browse'),
       '#value_callback' => 'brightcove_field_button_value_callback',
+      '#ajax' => array(
+        'callback' => 'ajax_browse_dialog_callback',
+      ),
     );
   }
 
@@ -520,10 +526,17 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
       '#type' => 'button',
       '#attributes' => array(
         'class' => array('brightcove-field-upload-button'),
-        'rel' => array($element['#field_name'] . '-' . $delta),
+        'rel' => $element['#field_name'] . '-' . $delta,
+        'data-entity-type' => $entity_type,
+        'data-field-name' => $element['#field_name'],
+        'data-entity-id' => is_null($eid) ? '0' : $eid,
       ),
       '#value' => t('Upload'),
       '#value_callback' => 'brightcove_field_button_value_callback',
+      '#submit' => array(),
+      '#ajax' => array(
+        'callback' => 'ajax_upload_dialog_callback',
+      ),
     );
   }
 
@@ -531,7 +544,10 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
     '#type' => 'button',
     '#attributes' => array(
       'class' => array('brightcove-field-remove-button'),
-      'rel' => array($element['#field_name'] . '-' . $delta),
+      'rel' => $element['#field_name'] . '-' . $delta,
+      'data-entity-type' => $entity_type,
+      'data-field-name' => $element['#field_name'],
+      'data-entity-id' => is_null($eid) ? '0' : $eid,
     ),
     '#value' => t('Remove'),
     '#value_callback' => 'brightcove_field_button_value_callback',
@@ -551,18 +567,17 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
         );
   }
 
+  $element['video_id']['#attached']['library'] = array(
+    array('system', 'ui.dialog')
+  );
+
   $element['video_id']['#attached']['js'] = array(
     drupal_get_path('module', 'brightcove_field') . '/js/browse.js',
   );
 
-
   $element['video_id']['#attached']['js'][] = array(
     'data' => $brightcove_field_settings[$element['#field_name']],
     'type' => 'setting',
-  );
-
-  $element['video_id']['#attached']['library'] = array(
-    array('system', 'ui.dialog')
   );
 
   return $element;
