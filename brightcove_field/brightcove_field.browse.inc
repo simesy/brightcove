@@ -108,6 +108,7 @@ function brightcove_field_browse() {
   $pager_vars = array(
     'tags' => NULL,
     'element' => 0,
+    'parameters' => array(),
     'quantity' => $items_per_page,
   );
 
