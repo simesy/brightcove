@@ -833,12 +833,10 @@ function brightcove_field_browser_form($form, &$form_state, $item) {
       '#value' => $item['title'],
       );
   $form['text_title'] = array(
-      '#type' => 'item',
-      '#value' => $item['title'],
+      '#markup  ' => $item['title'],
       );
   $form['text_image'] = array(
-      '#type' => 'item',
-      '#value' => $item['thumbnail'],
+      '#markup' => $item['thumbnail'],
       );
   $form['submit'] = array(
       '#type' => 'submit',
