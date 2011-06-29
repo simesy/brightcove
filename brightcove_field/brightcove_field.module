@@ -1025,25 +1025,58 @@ function brightcove_field_upload_form_submit($form, &$form_state) {
 }
 
 /**
-  * Implementation of hook_imagecache_default_presets().
-  */
-function brightcove_field_imagecache_default_presets() {
-  $presets = array();
-  $presets['brightcove_browser'] = array (
-      'presetname' => 'brightcove_browser',
-      'actions' => array (
-        0 => array (
-          'weight' => '0',
-          'module' => 'imagecache',
-          'action' => 'imagecache_scale_and_crop',
-          'data' => array (
-            'width' => '120',
-            'height' => '120',
-            ),
-          ),
+ * Implements hook_content_migrate_field_alter().
+ */
+function brightcove_field_content_migrate_field_alter(&$field_value,
+                                                      $instance_value) {
+  switch ($field_value['type']) {
+    case 'brightcove_video':
+      $field_value['module'] = 'brightcove_field';
+      break;
+  }
+}
+
+/**
+ * Implements hook_content_migrate_instance_alter().
+ */
+function brightcove_field_content_migrate_instance_alter(&$instance_value,
+                                                         $field_value) {
+  switch ($field_value['type']) {
+    case 'brightcove_video':
+      $instance_value['settings']['allow_upload'] =
+        $field_value['settings']['allow_upload'];
+      if ($instance_value['widget']['module'] == 'brightcove_cck') {
+        $instance_value['widget']['module'] = 'brightcove_field';
+        if (strpos($instance_value['widget']['type'],
+            'brightcove_cck') !== FALSE) {
+          $instance_value['widget']['type'] = str_replace('brightcove_cck',
+            'brightcove_field', $instance_value['widget']['type']);
+        }
+      }
+      break;
+  }
+}
+
+/**
+ * Implements hook_image_default_styles().
+ */
+function brightcove_field_image_default_styles() {
+  $styles = array();
+
+  $styles['brightcove_browser'] = array(
+    'effects' => array(
+      array(
+        'name' => 'image_scale_and_crop',
+        'data' => array(
+          'width' => 120,
+          'height' => 120,
         ),
-      );
-  return $presets;
+        'weight' => 0,
+      ),
+    ),
+  );
+
+  return $styles;
 }
 
 /**
