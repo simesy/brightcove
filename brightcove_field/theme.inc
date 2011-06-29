@@ -26,24 +26,24 @@ function theme_brightcove_field_browse_button($element) {
   * @return
   * Themed item form.
   */
-function theme_brightcove_field_browse_item($item) {
-  return drupal_get_form('brightcove_field_browser_form' . $item['video_id'], $item);
+function theme_brightcove_field_browse_item($variables) {
+  return drupal_render(drupal_get_form('brightcove_field_browser_form' . $variables['item']['video_id'], $variables['item']));
 }
 
 /**
   * Theme callback for Brightcove browse table.
   *
-  * @param $items
+  * @param $variables
   * Array of video items.
   *
   * @return
   * Themed browse table.
   */
-function theme_brightcove_field_browse_items($items) {
+function theme_brightcove_field_browse_items($variables) {
   $rowcount = 0;
   $activerow = 0;
   $rows = array();
-  foreach($items as $item) {
+  foreach($variables['items'] as $item) {
     // TODO test these after field port is stable
     $themed = theme('brightcove_field_browse_item', array('item' => $item));
     $rowcount++;
