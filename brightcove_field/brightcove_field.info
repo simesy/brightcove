@@ -6,3 +6,4 @@ package = Fields
 dependencies[] = brightcove
 dependencies[] = field
 dependencies[] = entity
+dependencies[] = image

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file brightcove-field-node-image.tpl.php
+ * @file brightcove-field-entity-image.tpl.php
  * Image theme implementation.
  *
  * This template is used when viewing a Brightcove video with a thumbnail or videoStill image without a link.
@@ -9,12 +9,12 @@
  * Available variables:
  *   - $output: Formatted image, ready for printing.
  *   - $image_field: The name of the image field used from Media API. Can be thumbnailURL or videoStillURL.
- *   - $nid: Node NID.
+ *   - $id: Entity ID.
  *   - $video_id: Video ID from Media API.
  *   - $field_name: Field name.
- *   - $type_name: Node type.
+ *   - $type_name: Entity type.
  *
- * @see theme_brightcove_field_node_image()
+ * @see theme_brightcove_field_entity_image()
  */
 ?>
 
