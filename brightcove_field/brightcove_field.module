@@ -77,9 +77,7 @@ function brightcove_field_browse_access($entity_type, $bundle,
 
   if (isset($entity_id)) {
     $entity = entity_load($entity_type, array($entity_id));
-    if (count($entity)) {
-      $entity = array_shift($entity);
-    }
+    $entity = count($entity) ? array_shift($entity) : NULL;
     return (entity_access('update', $entity_type, $entity) &&
         field_access('edit', $field, $entity_type));
   }
