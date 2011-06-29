@@ -25,7 +25,7 @@ function brightcove_field_browse() {
 
   //modalframe_child_js(); //dialog internal area
   drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/browse.css');
-  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/attach.js');
+  //drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/attach.js');
   // Issue a BC request to list videos
   // For all videos, get a thumbnail URL
   // Theme a table with videos and a button to attach.
@@ -82,21 +82,39 @@ function brightcove_field_browse() {
       $item['title'] = check_plain($video->name);
       $item['video_id'] = $video->id;
       if (!empty($video->thumbnailURL)) {
-        if (module_exists('imagecache')) {
+        /*if (module_exists('imagecache')) {
           $item['thumbnail'] = theme('imagecache', 'brightcove_browser', brightcove_remote_image($video->thumbnailURL));
-        } else {
-          $item['thumbnail'] = theme('image', $video->thumbnailURL, '', '', NULL, FALSE);
-        }
+        } else {*/
+          //$item['thumbnail'] = theme('image', $video->thumbnailURL, '', '', NULL, FALSE);
+          $image_vars = array('path' => $video->thumbnailURL, 'alt' => '', 'title' => '', 'attrinutes' => '');
+          $item['thumbnail'] = theme('image', $image_vars);
+          //$image_uri = file_build_uri($video->thumbnailURL);
+          //$item['thumbnail'] = theme('image_style', array('style_name' => 'thumbnail', 'path' => $image_uri));
+        //}
       } else {
-        $item['thumbnail'] = theme('image', brightcove_get_default_image(), '', '', array('width' => 120, 'height' => 120), FALSE);
+        //$item['thumbnail'] = theme('image', brightcove_get_default_image(), '', '', array('width' => 120, 'height' => 120), FALSE);
+        //$image_uri = file_build_uri(brightcove_get_default_image());
+        //$item['thumbnail'] = theme('image_style', array('style_name' => 'thumbnail', 'path' => $image_uri));
+        $image_vars = array('path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attrinutes' => '');
+        $item['thumbnail'] = theme('image', $image_vars);
       }
       $items[] = $item;
     }
   }
-  $pager = theme('pager', NULL, $items_per_page, 0);
-  $filter_form = drupal_get_form('brightcove_field_filter_form');
 
-  return '<div class="brightcove-browse-table">' . $filter_form . $pager . theme('brightcove_field_browse_items', $items) . $pager . '</div>';
+
+  //$pager = theme('pager', NULL, $items_per_page, 0);
+
+  $pager_vars = array(
+    'tags' => NULL,
+    'element' => 0,
+    'quantity' => $items_per_page,
+  );
+
+  $pager = theme_pager($pager_vars);
+  $filter_form = drupal_render(drupal_get_form('brightcove_field_filter_form'));
+
+  return '<div class="brightcove-browse-table">' . $filter_form . $pager . theme('brightcove_field_browse_items', array('items' => $items)) . $pager . '</div>';
 }
 
 /**
