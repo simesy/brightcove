@@ -1053,3 +1053,67 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
 
   return $element;
 }
+
+/**
+ * Creates a Drupal Ajax 'dialog' command.
+ *
+ * The 'dialog' command instructs the client to display a jQuery UI
+ * Dialog box.
+ *
+ * This command is implemented by Drupal.ajax.prototype.commands.ui()
+ * defined in brightcove/brightcove_field/browse.js.
+ *
+ * @param $selector
+ *   Selector of the element that should be made into a dialog.
+ * @param $data
+ *   Path if $iframe is TRUE.
+ *   Html if $iframe is FALSE.
+ * @param $field_rel
+ *   Rel attribute of the corresponding field.
+ * @param $settings
+ *   TODO
+ * @param $iframe
+ *   Boolean, if the dialog should contain an iframe or other html content
+ *
+ * @return
+ *   An array suitable for use with the ajax_render() function.
+ */
+function ajax_command_dialog($selector = '<div>', $data, $field_rel, $settings = NULL, $iframe = FALSE) {
+  return array(
+    'command' => 'ui',
+    'method' => 'dialog',
+    'selector' => $selector,
+    'data' => $data,
+    'field_rel' => $field_rel,
+    'settings' => $settings,
+    'iframe' => $iframe,
+  );
+}
+
+function ajax_browse_dialog_callback($form, $form_state) {
+  $et = $form_state['triggering_element']['#attributes']['data-entity-type'];
+  $fn = $form_state['triggering_element']['#attributes']['data-field-name'];
+  $eid = $form_state['triggering_element']['#attributes']['data-entity-id'];
+  $field_rel = $form_state['triggering_element']['#attributes']['rel'];
+
+  $selector = '<div id="browse-dialog">';
+  $path = base_path() . 'brightcove_field/browse/' . $et . '/' . $fn . '/' . $eid;
+
+  $commands = array();
+  $commands[] = ajax_command_dialog($selector, $path, $field_rel, NULL, TRUE);
+  return array('#type' => 'ajax', '#commands' => $commands);
+}
+
+function ajax_upload_dialog_callback($form, $form_state) {
+  $et = $form_state['triggering_element']['#attributes']['data-entity-type'];
+  $fn = $form_state['triggering_element']['#attributes']['data-field-name'];
+  $eid = $form_state['triggering_element']['#attributes']['data-entity-id'];
+  $field_rel = $form_state['triggering_element']['#attributes']['rel'];
+
+  $selector = '<div id="upload-dialog">';
+  $path = base_path() . 'brightcove_field/upload/' . $et . '/' . $fn . '/' . $eid;
+
+  $commands = array();
+  $commands[] = ajax_command_dialog($selector, $path, $field_rel, NULL, TRUE);
+  return array('#type' => 'ajax', '#commands' => $commands);
+}
