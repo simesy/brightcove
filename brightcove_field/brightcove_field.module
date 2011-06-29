@@ -251,80 +251,65 @@ function brightcove_field_browser_validate($element, &$form_state) {
  * Implementation of hook_formatter_info().
  */
 function brightcove_field_field_formatter_info() {
-  $formatters = array(
-      'default' => array(
-        'label' => t('Standard video player'),
-        'field types' => array('brightcove_video'),
-        ),
-      );
-  $formatters['node_link_videoStillURL'] = array(
-      'label' => t('Default still image linked to node'),
-      'field types' => array('brightcove_video'),
-      );
-  $formatters['node_link_thumbnailURL'] = array(
-      'label' => t('Default thumbnail linked to node'),
-      'field types' => array('brightcove_video'),
-      );
-  $formatters['node_image_videoStillURL'] = array(
-      'label' => t('Default still image'),
-      'field types' => array('brightcove_video'),
-      );
-  $formatters['node_image_thumbnailURL'] = array(
-      'label' => t('Default thumbnail'),
-      'field types' => array('brightcove_video'),
-      );
+  $formatters = array();
 
-//  if (module_exists('lightbox2')) {
-//    $formatters['lightbox2_player_videoStillURL'] = array(
-//        'label' => t('Default still image -> Lightbox2 player'),
-//        'field types' => array('brightcove_video'),
-//        'multiple values' => CONTENT_HANDLE_CORE,
-//        );
-//
-//    $formatters['lightbox2_player_thumbnailURL'] = array(
-//        'label' => t('Default thumbnail -> Lightbox2 player'),
-//        'field types' => array('brightcove_video'),
-//        'multiple values' => CONTENT_HANDLE_CORE,
-//        );
-//  }
-//  if (module_exists('imagecache')) {
-//    $presets = imagecache_presets();
-//    foreach($presets as $preset_id => $preset) {
-//      if (module_exists('lightbox2')) {
-//        $formatters['lightbox2_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-//            'label' => t('Imagecache @preset thumbnail -> Lightbox2 player', array('@preset' => $preset['presetname'])),
-//            'field types' => array('brightcove_video'),
-//            'multiple values' => CONTENT_HANDLE_CORE,
-//            );
-//        $formatters['lightbox2_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-//            'label' => t('Imagecache @preset still image -> Lightbox2 player', array('@preset' => $preset['presetname'])),
-//            'field types' => array('brightcove_video'),
-//            'multiple values' => CONTENT_HANDLE_CORE,
-//            );
-//      }
-//      $formatters['node_link_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-//          'label' => t('Imagecache @preset still image linked to node', array('@preset' => $preset['presetname'])),
-//          'field types' => array('brightcove_video'),
-//          'multiple values' => CONTENT_HANDLE_CORE,
-//          );
-//      $formatters['node_link_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-//          'label' => t('Imagecache @preset thumbnail linked to node', array('@preset' => $preset['presetname'])),
-//          'field types' => array('brightcove_video'),
-//          'multiple values' => CONTENT_HANDLE_CORE,
-//          );
-//      $formatters['node_image_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-//          'label' => t('Imagecache @preset still image', array('@preset' => $preset['presetname'])),
-//          'field types' => array('brightcove_video'),
-//          'multiple values' => CONTENT_HANDLE_CORE,
-//          );
-//      $formatters['node_image_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-//          'label' => t('Imagecache @preset thumbnail', array('@preset' => $preset['presetname'])),
-//          'field types' => array('brightcove_video'),
-//          'multiple values' => CONTENT_HANDLE_CORE,
-//          );
-//
-//    }
-//  }
+  $formatters['default'] = array(
+    'label' => t('Standard video player'),
+    'field types' => array('brightcove_video'),
+  );
+  $formatters['entity_link_videoStillURL'] = array(
+    'label' => t('Default still image linked to entity'),
+    'field types' => array('brightcove_video'),
+  );
+  $formatters['entity_link_thumbnailURL'] = array(
+    'label' => t('Default thumbnail linked to entity'),
+    'field types' => array('brightcove_video'),
+  );
+  $formatters['entity_image_videoStillURL'] = array(
+    'label' => t('Default still image'),
+    'field types' => array('brightcove_video'),
+  );
+  $formatters['entity_image_thumbnailURL'] = array(
+    'label' => t('Default thumbnail'),
+    'field types' => array('brightcove_video'),
+  );
+  $formatters['dialog_player_videoStillURL'] = array(
+    'label' => t('Default still image -> Dialog player'),
+    'field types' => array('brightcove_video'),
+  );
+  $formatters['dialog_player_thumbnailURL'] = array(
+    'label' => t('Default thumbnail -> Dialog player'),
+    'field types' => array('brightcove_video'),
+  );
+
+  $styles = image_styles();
+  foreach ($styles as $style) {
+    $formatters['dialog_' . $style['name'] . '__thumbnailURL'] = array(
+      'label' => t('Imagecache @style thumbnail -> Dialog player', array('@style' => $style['name'])),
+      'field types' => array('brightcove_video'),
+    );
+    $formatters['dialog_' . $style['name'] . '__videoStillURL'] = array(
+      'label' => t('Imagecache @style still image -> Dialog player', array('@style' => $style['name'])),
+      'field types' => array('brightcove_video'),
+    );
+    $formatters['entity_link_' . $style['name'] . '__videoStillURL'] = array(
+      'label' => t('Imagecache @style still image linked to entity', array('@style' => $style['name'])),
+      'field types' => array('brightcove_video'),
+    );
+    $formatters['entity_link_' . $style['name'] . '__thumbnailURL'] = array(
+      'label' => t('Imagecache @style thumbnail linked to entity', array('@style' => $style['name'])),
+      'field types' => array('brightcove_video'),
+    );
+    $formatters['entity_image_' . $style['name'] . '__videoStillURL'] = array(
+      'label' => t('Imagecache @style still image', array('@style' => $style['name'])),
+      'field types' => array('brightcove_video'),
+    );
+    $formatters['entity_image_' . $style['name'] . '__thumbnailURL'] = array(
+      'label' => t('Imagecache @style thumbnail', array('@style' => $style['name'])),
+      'field types' => array('brightcove_video'),
+    );
+  }
+
   return $formatters;
 }
 
@@ -618,132 +603,126 @@ function theme_brightcove_field_browser($element) {
  */
 function brightcove_field_theme() {
   $theme = array(
-      'brightcove_field_browser' => array(
-        'variables' => array('element' => NULL),
-        ),
-      'brightcove_field_formatter_default' => array(
-        'variables' => array('element' => NULL),
-        'file' => 'brightcove_field.formatters.inc',
-        ),
-      'brightcove_field_player' => array(
-        'variables' => array('player' => NULL, 'video_id' => NULL),
-        'template' => 'brightcove-field-player',
-        'pattern' => 'brightcove-field-player',
-        ),
-      'brightcove_field_lightbox2' => array(
-        'variables' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'lightbox2_width' => NULL, 'lightbox2_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL, 'preset' => NULL),
-        'template' => 'brightcove-field-lightbox2',
-        'pattern' => 'brightcove_field_lightbox2__',
-        'preprocess functions' => array('template_preprocess_brightcove_field_lightbox2'),
-        ),
-      'brightcove_field_node_link' => array(
-        'variables' => array('output' => NULL, 'video_id' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL, 'preset' => NULL),
-        'template' => 'brightcove-field-node-link',
-        'pattern' => 'brightcove_field_node_link__',
-        'preprocess functions' => array('template_preprocess_brightcove_field_node_link'),
-        ),
-      'brightcove_field_node_image' => array(
-        'variables' => array('output' => NULL, 'video_id' => NULL, 'nid' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL),
-        'template' => 'brightcove-field-node-image',
-        'pattern' => 'brightcove_field_node_image__',
-        'preprocess functions' => array('template_preprocess_brightcove_field_node_image'),
-        ),
-      'brightcove_field_lightbox2_imagecache' => array(
-          'variables' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'lightbox2_width' => NULL, 'lightbox2_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'type_name' => NULL),
-          'template' => 'brightcove-field-lightbox2-imagecache',
-          'pattern' => 'brightcove_field_lightbox2_imagecache__',
-          'preprocess functions' => array('template_preprocess_brightcove_field_lightbox2_imagecache'),
-          ),
-      'brightcove_field_browse_button' => array(
-          'variables' => array('element' => NULL),
-          'function' => 'theme_brightcove_field_browse_button',
-          'file' => 'theme.inc',
-          ),
-      'brightcove_field_browse_item' => array(
-          'variables' => array('item' => NULL),
-          'file' => 'theme.inc',
-          ),
-      'brightcove_field_browse_items' => array(
-          'variables' => array('item' => NULL),
-          'file' => 'theme.inc',
-          ),
-      'brightcove_field_embed' => array(
-          'variables' => array('type' => NULL, 'player' => NULL, 'player_key' => NULL, 'video_id' => NULL, 'params' => NULL),
-          'function' => 'theme_brightcove_field_embed',
-          'file' => 'theme.inc',
-          ),
-      );
-  $theme['brightcove_field_formatter_node_link_thumbnailURL'] = array(
-      'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
-      'function' => 'theme_brightcove_field_node_link',
+    'brightcove_field_browser' => array(
+      'variables' => array('element' => NULL),
+    ),
+    'brightcove_field_formatter_default' => array(
+      'variables' => array('element' => NULL),
       'file' => 'brightcove_field.formatters.inc',
-      );
-  $theme['brightcove_field_formatter_node_link_videoStillURL'] = array(
-      'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
-      'function' => 'theme_brightcove_field_node_link',
-      'file' => 'brightcove_field.formatters.inc',
-      );
-  $theme['brightcove_field_formatter_node_image_thumbnailURL'] = array(
-      'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
-      'function' => 'theme_brightcove_field_node_image',
-      'file' => 'brightcove_field.formatters.inc',
-      );
-  $theme['brightcove_field_formatter_node_image_videoStillURL'] = array(
-      'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
-      'function' => 'theme_brightcove_field_node_image',
-      'file' => 'brightcove_field.formatters.inc',
-      );
+    ),
+    'brightcove_field_player' => array(
+      'variables' => array('player' => NULL, 'video_id' => NULL),
+      'template' => 'brightcove-field-player',
+      'pattern' => 'brightcove-field-player',
+    ),
+    'brightcove_field_dialog' => array(
+      'variables' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'dialog_width' => NULL, 'dialog_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL, 'style' => NULL),
+      'template' => 'brightcove-field-dialog',
+      'pattern' => 'brightcove_field_dialog__',
+      'preprocess functions' => array('template_preprocess_brightcove_field_dialog'),
+    ),
+    'brightcove_field_entity_link' => array(
+      'variables' => array('output' => NULL, 'video_id' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL, 'style' => NULL),
+      'template' => 'brightcove-field-entity-link',
+      'pattern' => 'brightcove_field_entity_link__',
+      'preprocess functions' => array('template_preprocess_brightcove_field_entity_link'),
+    ),
+    'brightcove_field_entity_image' => array(
+      'variables' => array('output' => NULL, 'video_id' => NULL, 'entity_id' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL),
+      'template' => 'brightcove-field-entity-image',
+      'pattern' => 'brightcove_field_entity_image__',
+      'preprocess functions' => array('template_preprocess_brightcove_field_entity_image'),
+    ),
+    'brightcove_field_dialog_image' => array(
+      'variables' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'dialog_width' => NULL, 'dialog_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL),
+      'template' => 'brightcove-field-dialog-image',
+      'pattern' => 'brightcove_field_dialog_image__',
+      'preprocess functions' => array('template_preprocess_brightcove_field_dialog_image'),
+    ),
+    'brightcove_field_browse_button' => array(
+      'variables' => array('element' => NULL),
+      'function' => 'theme_brightcove_field_browse_button',
+      'file' => 'theme.inc',
+    ),
+    'brightcove_field_browse_item' => array(
+      'variables' => array('item' => NULL),
+      'file' => 'theme.inc',
+    ),
+    'brightcove_field_browse_items' => array(
+      'variables' => array('item' => NULL),
+      'file' => 'theme.inc',
+    ),
+    'brightcove_field_embed' => array(
+      'variables' => array('type' => NULL, 'player' => NULL, 'player_key' => NULL, 'video_id' => NULL, 'params' => NULL),
+      'function' => 'theme_brightcove_field_embed',
+      'file' => 'theme.inc',
+    ),
+  );
+  $theme['brightcove_field_formatter_entity_link_thumbnailURL'] = array(
+    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'function' => 'theme_brightcove_field_entity_link',
+    'file' => 'brightcove_field.formatters.inc',
+  );
+  $theme['brightcove_field_formatter_entity_link_videoStillURL'] = array(
+    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'function' => 'theme_brightcove_field_entity_link',
+    'file' => 'brightcove_field.formatters.inc',
+  );
+  $theme['brightcove_field_formatter_entity_image_thumbnailURL'] = array(
+    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'function' => 'theme_brightcove_field_entity_image',
+    'file' => 'brightcove_field.formatters.inc',
+  );
+  $theme['brightcove_field_formatter_entity_image_videoStillURL'] = array(
+    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'function' => 'theme_brightcove_field_entity_image',
+    'file' => 'brightcove_field.formatters.inc',
+  );
 
-  if (module_exists('lightbox2')) {
-    $theme['brightcove_field_formatter_lightbox2_player_thumbnailURL'] = array(
-        'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
-        'function' => 'theme_brightcove_field_lightbox2_player',
-        'file' => 'brightcove_field.formatters.inc',
-        );
-    $theme['brightcove_field_formatter_lightbox2_player_videoStillURL'] = array(
-        'variables' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
-        'function' => 'theme_brightcove_field_lightbox2_player',
-        'file' => 'brightcove_field.formatters.inc',
-        );
+  $theme['brightcove_field_formatter_dialog_player_thumbnailURL'] = array(
+    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'function' => 'theme_brightcove_field_dialog_player',
+    'file' => 'brightcove_field.formatters.inc',
+  );
+  $theme['brightcove_field_formatter_dialog_player_videoStillURL'] = array(
+    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'function' => 'theme_brightcove_field_dialog_player',
+    'file' => 'brightcove_field.formatters.inc',
+  );
+  $styles = image_styles();
+  foreach ($styles as $style) {
+    $theme['brightcove_field_formatter_dialog_image_' . $style['name'] . '__thumbnailURL'] = array(
+      'variables' => array('element'),
+      'function' => 'theme_brightcove_field_dialog_image',
+      'file' => 'brightcove_field.formatters.inc',
+    );
+    $theme['brightcove_field_formatter_dialog_image_' . $style['name'] . '__videoStillURL'] = array(
+      'variables' => array('element'),
+      'function' => 'theme_brightcove_field_dialog_image',
+      'file' => 'brightcove_field.formatters.inc',
+    );
+    $theme['brightcove_field_formatter_entity_link_image_' . $style['name'] . '__thumbnailURL'] = array(
+      'variables' => array('element'),
+      'function' => 'theme_brightcove_field_entity_link_image',
+      'file' => 'brightcove_field.formatters.inc',
+    );
+    $theme['brightcove_field_formatter_entity_link_image_' . $style['name'] . '__videoStillURL'] = array(
+      'variables' => array('element'),
+      'function' => 'theme_brightcove_field_entity_link_image',
+      'file' => 'brightcove_field.formatters.inc',
+    );
+    $theme['brightcove_field_formatter_entity_image_image_' . $style['name'] . '__thumbnailURL'] = array(
+      'variables' => array('element'),
+      'function' => 'theme_brightcove_field_entity_image_image',
+      'file' => 'brightcove_field.formatters.inc',
+    );
+    $theme['brightcove_field_formatter_entity_image_image_' . $style['name'] . '__videoStillURL'] = array(
+      'variables' => array('element'),
+      'function' => 'theme_brightcove_field_entity_image_image',
+      'file' => 'brightcove_field.formatters.inc',
+    );
+
   }
-//  if (module_exists('image')) {
-//    $presets = imagecache_presets();
-//    foreach($presets as $preset_id => $preset) {
-//      if (module_exists('lightbox2')) {
-//        $theme['brightcove_field_formatter_lightbox2_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-//            'variables' => array('element'),
-//            'function' => 'theme_brightcove_field_lightbox2_imagecache',
-//            'file' => 'brightcove_field.formatters.inc',
-//            );
-//        $theme['brightcove_field_formatter_lightbox2_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-//            'variables' => array('element'),
-//            'function' => 'theme_brightcove_field_lightbox2_imagecache',
-//            'file' => 'brightcove_field.formatters.inc',
-//            );
-//      }
-//      $theme['brightcove_field_formatter_node_link_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-//          'variables' => array('element'),
-//          'function' => 'theme_brightcove_field_node_link_imagecache',
-//          'file' => 'brightcove_field.formatters.inc',
-//          );
-//      $theme['brightcove_field_formatter_node_link_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-//          'variables' => array('element'),
-//          'function' => 'theme_brightcove_field_node_link_imagecache',
-//          'file' => 'brightcove_field.formatters.inc',
-//          );
-//      $theme['brightcove_field_formatter_node_image_imagecache_' . $preset['presetname'] . '__thumbnailURL'] = array(
-//          'variables' => array('element'),
-//          'function' => 'theme_brightcove_field_node_image_imagecache',
-//          'file' => 'brightcove_field.formatters.inc',
-//          );
-//      $theme['brightcove_field_formatter_node_image_imagecache_' . $preset['presetname'] . '__videoStillURL'] = array(
-//          'variables' => array('element'),
-//          'function' => 'theme_brightcove_field_node_image_imagecache',
-//          'file' => 'brightcove_field.formatters.inc',
-//          );
-//
-//    }
-//  }
   return $theme;
 }
 
@@ -1074,15 +1053,44 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
                                       $instance, $langcode, $items, $display) {
   $element = array();
 
-  switch ($display['type']) {
-    case 'default':
-      foreach ($items as $delta => $item) {
-        $element[$delta] = array(
-          '#theme' => 'brightcove_field_formatter_default',
-          '#element' => $item,
-        );
-      }
-      break;
+  $theme = '';
+  $variables = array();
+
+  if ($display['type'] == 'default') {
+    $theme = 'brightcove_field_formatter_default';
+  }
+  if (in_array($display['type'], array(
+      'entity_link_videoStillURL',
+      'entity_link_thumbnailURL',
+      'entity_link_videoStillURL',
+      'entity_image_thumbnailURL',
+      'dialog_player_videoStillURL',
+      'dialog_player_thumbnailURL',
+    ))) {
+    $theme = "brightcove_field_formatter_{$display['type']}";
+    $variables['#image'] = '';
+    $variables['#preset'] = '';
+  }
+  foreach (image_styles() as $style) {
+    if (in_array($display['type'], array(
+        "dialog_{$style['name']}__thumbnailURL",
+        "dialog_{$style['name']}__videoStillURL",
+        "entity_link_{$style['name']}__thumbnailURL",
+        "entity_link_{$style['name']}__videoStillURL",
+        "entity_image_{$style['name']}__thumbnailURL",
+        "entity_image_{$style['name']}__videoStillURL",
+      ))) {
+      $theme = "brightcove_field_formatter_{$display['type']}";
+    }
+  }
+
+  if ($theme) {
+    foreach ($items as $delta => $item) {
+      $element[$delta] = array(
+        '#theme' => $theme,
+        '#element' => $item,
+      ) + $variables;
+    }
   }
 
   return $element;
