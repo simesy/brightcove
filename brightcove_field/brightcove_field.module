@@ -872,18 +872,6 @@ function brightcove_field_forms($form_id, $args) {
   return $forms;
 }
 
-
-
-/**
- * Implementation of hook_views_api().
- */
-function brightcove_field_views_api() {
-  return array(
-      'api' => 3,
-      'path' => drupal_get_path('module', 'brightcove_field') .'/views',
-      );
-}
-
 /**
  * Browse form. Will return a form for one video item.
  */
