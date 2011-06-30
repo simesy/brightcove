@@ -25,7 +25,7 @@ function brightcove_field_browse() {
 
   //modalframe_child_js(); //dialog internal area
   drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/browse.css');
-  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/browse.js');
+  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js');
   // Issue a BC request to list videos
   // For all videos, get a thumbnail URL
   // Theme a table with videos and a button to attach.

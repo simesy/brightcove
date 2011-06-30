@@ -563,7 +563,7 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
   );
 
   $element['video_id']['#attached']['js'] = array(
-    drupal_get_path('module', 'brightcove_field') . '/js/browse.js',
+    drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
   );
 
   $element['video_id']['#attached']['js'][] = array(
@@ -1115,7 +1115,7 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
  * Dialog box.
  *
  * This command is implemented by Drupal.ajax.prototype.commands.ui()
- * defined in brightcove/brightcove_field/browse.js.
+ * defined in brightcove/brightcove_field/brightcove.js.
  *
  * @param $selector
  *   Selector of the element that should be made into a dialog.
