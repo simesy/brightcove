@@ -659,39 +659,76 @@ function brightcove_field_theme() {
       'file' => 'theme.inc',
     ),
     'brightcove_field_embed' => array(
-      'variables' => array('type' => NULL, 'player' => NULL, 'player_key' => NULL, 'video_id' => NULL, 'params' => NULL),
+      // TODO when submitting the admin form, do a theme rebuild (form_alter)
+      'variables' => array(
+        'type' => 'video',
+        'player' => variable_get('brightcove_player'),
+        'player_key' => variable_get('brightcove_player_key'),
+        'video_id' => NULL,
+        'params' => array(),
+      ),
       'function' => 'theme_brightcove_field_embed',
       'file' => 'theme.inc',
     ),
   );
   $theme['brightcove_field_formatter_entity_link_thumbnailURL'] = array(
-    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'variables' => array(
+      'element' => NULL, 'image' => NULL, 'style' => NULL,
+      'entity_type' => NULL, 'entity' => NULL,
+      'field' => NULL, 'instance' => NULL, 'display' => NULL,
+      'delta' => NULL,
+    ),
     'function' => 'theme_brightcove_field_entity_link',
     'file' => 'brightcove_field.formatters.inc',
   );
   $theme['brightcove_field_formatter_entity_link_videoStillURL'] = array(
-    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'variables' => array(
+      'element' => NULL, 'image' => NULL, 'style' => NULL,
+      'entity_type' => NULL, 'entity' => NULL,
+      'field' => NULL, 'instance' => NULL, 'display' => NULL,
+      'delta' => NULL,
+    ),
     'function' => 'theme_brightcove_field_entity_link',
     'file' => 'brightcove_field.formatters.inc',
   );
   $theme['brightcove_field_formatter_entity_image_thumbnailURL'] = array(
-    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'variables' => array(
+      'element' => NULL, 'image' => NULL, 'style' => NULL,
+      'entity_type' => NULL, 'entity' => NULL,
+      'field' => NULL, 'instance' => NULL, 'display' => NULL,
+      'delta' => NULL,
+    ),
     'function' => 'theme_brightcove_field_entity_image',
     'file' => 'brightcove_field.formatters.inc',
   );
   $theme['brightcove_field_formatter_entity_image_videoStillURL'] = array(
-    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'variables' => array(
+      'element' => NULL, 'image' => NULL, 'style' => NULL,
+      'entity_type' => NULL, 'entity' => NULL,
+      'field' => NULL, 'instance' => NULL, 'display' => NULL,
+      'delta' => NULL,
+    ),
     'function' => 'theme_brightcove_field_entity_image',
     'file' => 'brightcove_field.formatters.inc',
   );
 
   $theme['brightcove_field_formatter_dialog_player_thumbnailURL'] = array(
-    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'variables' => array(
+      'element' => NULL, 'image' => NULL, 'style' => NULL,
+      'entity_type' => NULL, 'entity' => NULL,
+      'field' => NULL, 'instance' => NULL, 'display' => NULL,
+      'delta' => NULL,
+    ),
     'function' => 'theme_brightcove_field_dialog_player',
     'file' => 'brightcove_field.formatters.inc',
   );
   $theme['brightcove_field_formatter_dialog_player_videoStillURL'] = array(
-    'variables' => array('element' => NULL, 'image' => NULL, 'style' => NULL),
+    'variables' => array(
+      'element' => NULL, 'image' => NULL, 'style' => NULL,
+      'entity_type' => NULL, 'entity' => NULL,
+      'field' => NULL, 'instance' => NULL, 'display' => NULL,
+      'delta' => NULL,
+    ),
     'function' => 'theme_brightcove_field_dialog_player',
     'file' => 'brightcove_field.formatters.inc',
   );
@@ -719,12 +756,12 @@ function brightcove_field_theme() {
     );
     $theme['brightcove_field_formatter_entity_image_image_' . $style['name'] . '__thumbnailURL'] = array(
       'variables' => array('element'),
-      'function' => 'theme_brightcove_field_entity_image_image',
+      'function' => 'theme_brightcove_field_entity_image_style',
       'file' => 'brightcove_field.formatters.inc',
     );
     $theme['brightcove_field_formatter_entity_image_image_' . $style['name'] . '__videoStillURL'] = array(
       'variables' => array('element'),
-      'function' => 'theme_brightcove_field_entity_image_image',
+      'function' => 'theme_brightcove_field_entity_image_style',
       'file' => 'brightcove_field.formatters.inc',
     );
 
@@ -1082,11 +1119,6 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
     $theme = "brightcove_field_formatter_{$display['type']}";
     $variables['#image'] = '';
     $variables['#style'] = '';
-    $variables['#entity_type'] = $entity_type;
-    $variables['#entity'] = $entity;
-    $variables['#field'] = $field;
-    $variables['#instance'] = $instance;
-    $variables['#display'] = $display;
   }
   foreach (image_styles() as $style) {
     if (in_array($display['type'], array(
@@ -1106,6 +1138,12 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
       $element[$delta] = array(
         '#theme' => $theme,
         '#element' => $item,
+        '#delta' => $delta,
+        '#entity_type' => $entity_type,
+        '#entity' => $entity,
+        '#field' => $field,
+        '#instance' => $instance,
+        '#display' => $display,
       ) + $variables;
     }
   }
