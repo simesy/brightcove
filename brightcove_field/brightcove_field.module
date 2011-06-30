@@ -1132,10 +1132,11 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
  * @return
  *   An array suitable for use with the ajax_render() function.
  */
-function ajax_command_dialog($selector = '<div>', $data, $field_rel, $settings = NULL, $iframe = FALSE) {
+function ajax_command_dialog($id = NULL, $selector = '<div>', $data, $field_rel, $settings = NULL, $iframe = FALSE) {
   return array(
     'command' => 'ui_dialog',
     'method' => 'dialog',
+    'id' => $id,
     'selector' => $selector,
     'data' => $data,
     'field_rel' => $field_rel,
@@ -1161,11 +1162,12 @@ function ajax_browse_dialog_callback($form, $form_state) {
   $eid = $form_state['triggering_element']['#attributes']['data-entity-id'];
   $field_rel = $form_state['triggering_element']['#attributes']['rel'];
 
-  $selector = '<div id="browse-dialog">';
+  $id = 'browse-dialog';
+  $selector = '<div id="' . $id . '">';
   $path = base_path() . 'brightcove_field/browse/' . $et . '/' . $bundle . '/' . $fn . '/' . $eid;
 
   $commands = array();
-  $commands[] = ajax_command_dialog($selector, $path, $field_rel, NULL, TRUE);
+  $commands[] = ajax_command_dialog($id, $selector, $path, $field_rel, NULL, TRUE);
   return array('#type' => 'ajax', '#commands' => $commands);
 }
 
@@ -1186,10 +1188,11 @@ function ajax_upload_dialog_callback($form, $form_state) {
   $eid = $form_state['triggering_element']['#attributes']['data-entity-id'];
   $field_rel = $form_state['triggering_element']['#attributes']['rel'];
 
-  $selector = '<div id="upload-dialog">';
+  $id = 'upload-dialog';
+  $selector = '<div id="' . $id . '">';
   $path = base_path() . 'brightcove_field/upload/' . $et . '/' . $bundle . '/' . $fn . '/' . $eid;
 
   $commands = array();
-  $commands[] = ajax_command_dialog($selector, $path, $field_rel, NULL, TRUE);
+  $commands[] = ajax_command_dialog($id, $selector, $path, $field_rel, NULL, TRUE);
   return array('#type' => 'ajax', '#commands' => $commands);
 }
