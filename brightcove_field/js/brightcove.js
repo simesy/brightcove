@@ -99,28 +99,28 @@
   Drupal.ajax.prototype.commands = {
     ui_dialog: function (ajax, response, status) {
       var wrapper = response.selector ? $(response.selector) : $(ajax.wrapper);
-      var method = response.method || ajax.method;
       var effect = ajax.getEffect(response);
       var new_content;
+      var title = response.title;
+      var loading;
 
-      switch (method) {
-        case 'dialog':
-          var settings = response.settings || ajax.settings || Drupal.settings;
-          Drupal.brightcove_field.dialog_field_rel = response.field_rel;
-          Drupal.detachBehaviors(wrapper, settings);
-      }
+      var settings = response.settings || ajax.settings || Drupal.settings;
+      Drupal.brightcove_field.dialog_field_rel = response.field_rel;
+      Drupal.detachBehaviors(wrapper, settings);
 
       if (Drupal.brightcove_field.dialog == null) {
         if (response.iframe) {
+          loading = true;
           new_content = $('<iframe id="' + response.id + '-iframe"/>').attr('src', response.data);
           new_content.attr('width', '100%');
           new_content.load(function() {
             try {
-              Drupal.brightcove_field.dialog.dialog('option', 'title', 'Brightcove Video Browser');
+              Drupal.brightcove_field.dialog.dialog('option', 'title', title);
             } catch(e) {}
           });
         }
         else {
+          loading = false;
           var new_content_wrapped = $('<div></div>').html(response.data);
           new_content = new_content_wrapped.contents();
 
@@ -131,14 +131,14 @@
 
         // Add the new content to the page.
         //wrapper[method](new_content);
-        Drupal.brightcove_field.dialog = wrapper[method]({
+        Drupal.brightcove_field.dialog = wrapper['dialog']({
           autoOpen: true,
           height: 600,
           width: 950,
           modal: true,
           show: 'fade',
           hide: 'fade',
-          title: 'Loading...',
+          title: loading ? 'Loading...' : title,
           dialogClass: response.id,
           open: function() {
             $(this).html(new_content);
