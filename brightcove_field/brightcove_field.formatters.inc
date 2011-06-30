@@ -1,9 +1,9 @@
 <?php
 
 /**
-  * @file
-  * Formatters for video field.
-  */
+ * @file
+ * Formatters for video field.
+ */
 
 /**
   * Theme callback for Lightbox2 with imagecache player.

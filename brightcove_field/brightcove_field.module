@@ -1081,7 +1081,12 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
     ))) {
     $theme = "brightcove_field_formatter_{$display['type']}";
     $variables['#image'] = '';
-    $variables['#preset'] = '';
+    $variables['#style'] = '';
+    $variables['#entity_type'] = $entity_type;
+    $variables['#entity'] = $entity;
+    $variables['#field'] = $field;
+    $variables['#instance'] = $instance;
+    $variables['#display'] = $display;
   }
   foreach (image_styles() as $style) {
     if (in_array($display['type'], array(
