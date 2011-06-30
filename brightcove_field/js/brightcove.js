@@ -27,7 +27,7 @@
     button.removeClass('form-button-disabled');
   };
 
-  Drupal.brightcove_field.actions.remove = function() {
+  Drupal.brightcove_field.actions.remove = function(event) {
     event.preventDefault();
     $('.' + $(this).attr('rel')).val('');
     $(this).attr('disabled', '');
@@ -87,7 +87,7 @@
 
   Drupal.brightcove_field.submit_browse = function(field_rel, data) {
     parent.jQuery("." + field_rel).val(data);
-    parent.jQuery('.brightcove-field-remove-button[rel="' + field_rel + '"]').attr('disabled', '').addClass('form-button-disabled');
+    parent.jQuery('.brightcove-field-remove-button[rel="' + field_rel + '"]').attr('disabled', '').removeClass('form-button-disabled');
   };
 
   Drupal.ajax.prototype.commands = {
@@ -106,8 +106,13 @@
 
       if (Drupal.brightcove_field.dialog == null) {
         if (response.iframe) {
-          new_content = $('<iframe/>').attr('src', response.data);
+          new_content = $('<iframe id="' + response.id + '-iframe"/>').attr('src', response.data);
           new_content.attr('width', '100%');
+          new_content.load(function() {
+            try {
+              Drupal.brightcove_field.dialog.dialog('option', 'title', 'Brightcove Video Browser');
+            } catch(e) {}
+          });
         }
         else {
           var new_content_wrapped = $('<div></div>').html(response.data);
@@ -127,6 +132,7 @@
           modal: true,
           show: 'fade',
           hide: 'fade',
+          title: 'Loading...',
           open: function() {
             $(this).html(new_content);
             $(this).attr('rel', Drupal.brightcove_field.dialog_field_rel);
