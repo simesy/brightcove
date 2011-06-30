@@ -1115,14 +1115,18 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
 }
 
 /**
- * Creates a Drupal Ajax 'dialog' command.
+ * Creates a Drupal Ajax 'ui_dialog' command.
  *
- * The 'dialog' command instructs the client to display a jQuery UI
+ * The 'ui_dialog' command instructs the client to display a jQuery UI
  * Dialog box.
  *
  * This command is implemented by Drupal.ajax.prototype.commands.ui()
  * defined in brightcove/brightcove_field/brightcove.js.
  *
+ * @param $title
+ *   Optional. String, title of dialog.
+ * @param $id
+ *   Optional. Additional id to put on dialog.
  * @param $selector
  *   Selector of the element that should be made into a dialog.
  * @param $data
@@ -1133,7 +1137,7 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
  * @param $settings
  *   TODO
  * @param $iframe
- *   Boolean, if the dialog should contain an iframe or other html content
+ *   Optional. Boolean, if the dialog should contain an iframe or other html content
  *
  * @return
  *   An array suitable for use with the ajax_render() function.
@@ -1151,6 +1155,27 @@ function ajax_command_dialog($title = 'Dialog', $id = NULL, $selector = '<div>',
   );
 }
 
+/**
+ * Creates a Drupal Ajax 'ui_close_dialog' command.
+ *
+ * The 'dialog' command instructs the client to close a jQuery UI
+ * Dialog box.
+ *
+ * This command is implemented by Drupal.ajax.prototype.commands.ui()
+ * defined in brightcove/brightcove_field/brightcove.js.
+ *
+ * @param $selector
+ *   Selector of the dialog that should be closed.
+ * @param $data
+ *   Data to send on close, depends on dialog type.
+ * @param $settings
+ *   TODO
+ * @param $dialog_type
+ *   Type of dialog to close.
+ *
+ * @return
+ *   An array suitable for use with the ajax_render() function.
+ */
 function ajax_command_close_dialog($selector = '<div>', $data, $settings = NULL, $dialog_type) {
   return array(
     'command' => 'ui_dialog_close',
