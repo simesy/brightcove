@@ -30,6 +30,7 @@ function brightcove_field_menu() {
       'title' => 'Brightcove Videos Browser',
       'page arguments' => array(2, 3, 4, 5),
       'page callback' => 'brightcove_field_browse',
+      'delivery callback' => 'brightcove_field_deliver_dialog',
       'access callback' => 'brightcove_field_browse_access',
       'access arguments' => array(2, 3, 4, 5),
       'file' => 'brightcove_field.browse.inc',
@@ -39,6 +40,7 @@ function brightcove_field_menu() {
       'title' => 'Upload video to Brightcove',
       'page arguments' => array(2, 3, 4, 5),
       'page callback' => 'brightcove_field_upload',
+    'delivery callback' => 'brightcove_field_deliver_dialog',
       'access callback' => 'brightcove_field_browse_access',
       'access arguments' => array(2, 3, 4, 5),
       'file' => 'brightcove_field.browse.inc',
@@ -562,8 +564,12 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
     array('system', 'ui.dialog')
   );
 
+  $element['video_id']['#attached']['css'] = array(
+    drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css',
+  );
+
   $element['video_id']['#attached']['js'] = array(
-    drupal_get_path('module', 'brightcove_field') . '/js/browse.js',
+    drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
   );
 
   $element['video_id']['#attached']['js'][] = array(
@@ -855,12 +861,12 @@ function brightcove_field_browser_form($form, &$form_state, $item) {
     '#default_value' => $item['title'],
   );
   $form['text_title'] = array(
-    '#prefix' => '<div class="text-title">',
+    '#prefix' => '<div class="video-title">',
     '#suffix' => '</div>',
     '#markup' => $item['title'],
   );
   $form['text_image'] = array(
-    '#prefix' => '<div class="text-image">',
+    '#prefix' => '<div class="video-image">',
     '#suffix' => '</div>',
     '#markup' => $item['thumbnail'],
   );
@@ -1158,7 +1164,7 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
  * Dialog box.
  *
  * This command is implemented by Drupal.ajax.prototype.commands.ui()
- * defined in brightcove/brightcove_field/browse.js.
+ * defined in brightcove/brightcove_field/brightcove.js.
  *
  * @param $selector
  *   Selector of the element that should be made into a dialog.
@@ -1175,10 +1181,11 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
  * @return
  *   An array suitable for use with the ajax_render() function.
  */
-function ajax_command_dialog($selector = '<div>', $data, $field_rel, $settings = NULL, $iframe = FALSE) {
+function ajax_command_dialog($title = 'Dialog', $id = NULL, $selector = '<div>', $data, $field_rel, $settings = NULL, $iframe = FALSE) {
   return array(
     'command' => 'ui_dialog',
-    'method' => 'dialog',
+    'title' => $title,
+    'id' => $id,
     'selector' => $selector,
     'data' => $data,
     'field_rel' => $field_rel,
@@ -1204,11 +1211,13 @@ function ajax_browse_dialog_callback($form, $form_state) {
   $eid = $form_state['triggering_element']['#attributes']['data-entity-id'];
   $field_rel = $form_state['triggering_element']['#attributes']['rel'];
 
-  $selector = '<div id="browse-dialog">';
+  $title = 'Brightcove Video Browser';
+  $id = 'browse-dialog';
+  $selector = '<div id="' . $id . '">';
   $path = base_path() . 'brightcove_field/browse/' . $et . '/' . $bundle . '/' . $fn . '/' . $eid;
 
   $commands = array();
-  $commands[] = ajax_command_dialog($selector, $path, $field_rel, NULL, TRUE);
+  $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
   return array('#type' => 'ajax', '#commands' => $commands);
 }
 
@@ -1229,10 +1238,17 @@ function ajax_upload_dialog_callback($form, $form_state) {
   $eid = $form_state['triggering_element']['#attributes']['data-entity-id'];
   $field_rel = $form_state['triggering_element']['#attributes']['rel'];
 
-  $selector = '<div id="upload-dialog">';
+  $title = 'Upload Video to Brightcove';
+  $id = 'upload-dialog';
+  $selector = '<div id="' . $id . '">';
   $path = base_path() . 'brightcove_field/upload/' . $et . '/' . $bundle . '/' . $fn . '/' . $eid;
 
   $commands = array();
-  $commands[] = ajax_command_dialog($selector, $path, $field_rel, NULL, TRUE);
+  $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
   return array('#type' => 'ajax', '#commands' => $commands);
+}
+
+function brightcove_field_deliver_dialog($page) {
+  $output = '<html><head><title></title>' . drupal_get_css() . drupal_get_js() . '</head><body class="dialog">' . $page . '</body></html>';
+  print $output;
 }

@@ -13,10 +13,16 @@
   Drupal.behaviors.brightcove_field_buttons = {
     attach: function(context, settings) {
       brightcove_field_settings = settings;
+      var remove_button = $('.brightcove-field-remove-button', context);
+
+      remove_button.click(Drupal.brightcove_field.actions.remove);
       $('.brightcove-field-browse-button', context).click(Drupal.brightcove_field.actions.browse);
       $('.brightcove-field-upload-button', context).click(Drupal.brightcove_field.actions.upload);
-      $('.brightcove-field-remove-button', context).click(Drupal.brightcove_field.actions.remove);
       $('.form-text.brightcove-video-field').change(Drupal.brightcove_field.actions.change);
+
+      if ($('.' + remove_button.attr('rel')).val() != '') {
+        remove_button.attr('disabled', '').removeClass('form-button-disabled');
+      }
     }
   };
 
@@ -27,7 +33,7 @@
     button.removeClass('form-button-disabled');
   };
 
-  Drupal.brightcove_field.actions.remove = function() {
+  Drupal.brightcove_field.actions.remove = function(event) {
     event.preventDefault();
     $('.' + $(this).attr('rel')).val('');
     $(this).attr('disabled', '');
@@ -87,29 +93,34 @@
 
   Drupal.brightcove_field.submit_browse = function(field_rel, data) {
     parent.jQuery("." + field_rel).val(data);
-    parent.jQuery('.brightcove-field-remove-button[rel="' + field_rel + '"]').attr('disabled', '').addClass('form-button-disabled');
+    parent.jQuery('.brightcove-field-remove-button[rel="' + field_rel + '"]').attr('disabled', '').removeClass('form-button-disabled');
   };
 
   Drupal.ajax.prototype.commands = {
     ui_dialog: function (ajax, response, status) {
       var wrapper = response.selector ? $(response.selector) : $(ajax.wrapper);
-      var method = response.method || ajax.method;
       var effect = ajax.getEffect(response);
       var new_content;
+      var title = response.title;
+      var loading;
 
-      switch (method) {
-        case 'dialog':
-          var settings = response.settings || ajax.settings || Drupal.settings;
-          Drupal.brightcove_field.dialog_field_rel = response.field_rel;
-          Drupal.detachBehaviors(wrapper, settings);
-      }
+      var settings = response.settings || ajax.settings || Drupal.settings;
+      Drupal.brightcove_field.dialog_field_rel = response.field_rel;
+      Drupal.detachBehaviors(wrapper, settings);
 
       if (Drupal.brightcove_field.dialog == null) {
         if (response.iframe) {
-          new_content = $('<iframe/>').attr('src', response.data);
+          loading = true;
+          new_content = $('<iframe id="' + response.id + '-iframe"/>').attr('src', response.data);
           new_content.attr('width', '100%');
+          new_content.load(function() {
+            try {
+              Drupal.brightcove_field.dialog.dialog('option', 'title', title);
+            } catch(e) {}
+          });
         }
         else {
+          loading = false;
           var new_content_wrapped = $('<div></div>').html(response.data);
           new_content = new_content_wrapped.contents();
 
@@ -120,17 +131,19 @@
 
         // Add the new content to the page.
         //wrapper[method](new_content);
-        Drupal.brightcove_field.dialog = wrapper[method]({
+        Drupal.brightcove_field.dialog = wrapper['dialog']({
           autoOpen: true,
           height: 600,
           width: 950,
           modal: true,
           show: 'fade',
           hide: 'fade',
+          title: loading ? 'Loading...' : title,
+          dialogClass: response.id,
           open: function() {
             $(this).html(new_content);
             $(this).attr('rel', Drupal.brightcove_field.dialog_field_rel);
-            new_content.attr('height', $(this).height() + 'px');
+            new_content.attr('height', $(this).height() - 5 + 'px');
           },
           close: function() {
             Drupal.brightcove_field.dialog_field_rel = null;
