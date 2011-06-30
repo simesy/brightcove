@@ -911,6 +911,9 @@ function brightcove_field_forms($form_id, $args) {
  * Upload form. Will return a form for one video item.
  */
 function brightcove_field_upload_form($form, &$form_state) {
+  $form['upload_messages'] = array(
+    '#markup' => '<div id="dialog-messages"></div>'
+  );
   $form['title'] = array(
       '#type' => 'textfield',
       '#title' => t('Title'),
@@ -930,7 +933,7 @@ function brightcove_field_upload_form($form, &$form_state) {
       '#required' => TRUE,
       '#title' => t('Short description'),
       '#description' => t('Video short description.'),
-      '#default_value' => $form_state['values']['short'],
+      '#default_value' => !empty($form_state['values']['short']) ? $form_state['values']['short'] : '',
       );
   $form['advanced'] = array(
       '#type' => 'fieldset',
@@ -942,26 +945,26 @@ function brightcove_field_upload_form($form, &$form_state) {
       '#type' => 'textfield',
       '#title' => t('Tags'),
       '#description' => t('Associated tags, separated by comma.'),
-      '#default_value' => $form_state['values']['tags'],
+      '#default_value' => !empty($form_state['values']['tags']) ? $form_state['values']['tags'] : '',
       );
   $form['advanced']['long'] = array(
       '#type' => 'textarea',
       '#rows' => 4,
       '#title' => t('Long description'),
       '#description' => t('Video long description.'),
-      '#default_value' => $form_state['values']['long'],
+      '#default_value' => !empty($form_state['values']['long']) ? $form_state['values']['long'] : '',
       );
   $form['advanced']['linktext'] = array(
       '#type' => 'textfield',
       '#title' => t('Related link text'),
       '#description' => t('Related link description or text.'),
-      '#default_value' => $form_state['values']['linktext'],
+      '#default_value' => !empty($form_state['values']['linktext']) ? $form_state['values']['linktext'] : '',
       );
   $form['advanced']['linkurl'] = array(
       '#type' => 'textfield',
       '#title' => t('Related link url'),
       '#description' => t('Related link URL.'),
-      '#default_value' => $form_state['values']['linkurl'],
+      '#default_value' => !empty($form_state['values']['linkurl']) ? $form_state['values']['linkurl'] : '',
       );
   /*  $form['attach'] = array(
       '#type' => 'submit',
@@ -974,6 +977,7 @@ function brightcove_field_upload_form($form, &$form_state) {
       ),*/
   $form['submit'] = array(
       '#type' => 'submit',
+      '#name' => 'submit-',
       //'#name' => 'submit-' . $item['video_id'],
       '#default_value' => t('Attach'),
       '#ajax' => array(
@@ -981,10 +985,10 @@ function brightcove_field_upload_form($form, &$form_state) {
       ),
       );
 
-  $form['#attributes'] = array('enctype' => "multipart/form-data");
-  $form['#submit'] = array("brightcove_field_upload_form_submit");
+  //$form['#attributes'] = array('enctype' => "multipart/form-data");
+  //$form['#submit'] = array("brightcove_field_upload_form_submit");
   $form['#attached']['js'] = array(
-    drupal_get_path('module', 'brightcove_field') . '/js/browse.js',
+    drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
   );
 
   $form['#attached']['css'] = array(
@@ -999,7 +1003,7 @@ function brightcove_field_upload_form($form, &$form_state) {
  *
  * Will save a file and upload it to Brightcove.
  */
-function brightcove_field_upload_form_submit($form, &$form_state) {
+function brightcove_field_upload_formx_submit($form, &$form_state) {
 
   $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
   $validators = array(
@@ -1277,6 +1281,9 @@ function ajax_upload_dialog_callback($form, $form_state) {
 }
 
 function ajax_upload_dialog_close_callback($form, $form_state) {
+  $id = NULL;
+  $commands = array();
+  $msg_selector = '#upload-messages';
 
   $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
   $validators = array(
@@ -1290,9 +1297,16 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
     if ($file->filesize <= 0) {
       // Some uploaded files had zero size, that's an error.
       drupal_set_message(t('Uploaded file not found. Are you sure that you uploaded an existing file?'), 'error');
-      return;
+      return $form;
+      //$commands[] = ajax_command_html($msg_selector, 'Uploaded file not found. Are you sure that you uploaded an existing file?');
+      //return array('#type' => 'ajax', '#commands' => $commands);
     }
     // Do something with $file here.
+
+    /*if (empty($form_state['values']['title'])) {
+      $commands[] = ajax_command_html($msg_selector, 'Title required!');
+      return array('#type' => 'ajax', '#commands' => $commands);
+    }*/
 
 
     $meta = array(
@@ -1306,7 +1320,7 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
     if (!empty($form_state['values']['tags'])) {
       $meta['tags'] = explode(',', $form_state['values']['tags']);
     }
-    $id = brightcove_upload_video($file->filepath, $meta);
+    $id = brightcove_upload_video(drupal_realpath($file->uri), $meta);
 
     // Construct Video object with ID - we need to cache it and save to session.
     // Brightcove Media API doesn't clear it's cache when a new video is
@@ -1324,13 +1338,14 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
     $data = check_plain($form_state['values']['title']) . ' [id:' . check_plain($id) . ']';
     $dialog_type = 'upload';
 
-    $commands = array();
     $commands[] = ajax_command_close_dialog($selector, $data, NULL, $dialog_type);
     return array('#type' => 'ajax', '#commands' => $commands);
   }
   else {
     drupal_set_message(t('Only Video files are allowed here.'), 'error');
-    return;
+    return $form;
+    //$commands[] = ajax_command_html($msg_selector, 'Only Video files are allowed here.');
+    //return array('#type' => 'ajax', '#commands' => $commands);
   }
 }
 

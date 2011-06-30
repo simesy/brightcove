@@ -187,7 +187,10 @@
       switch (dialog_type) {
         case 'browse':
           Drupal.brightcove_field.submit_browse(dialog.attr('rel'), response.data);
+          break;
         case 'upload':
+          Drupal.brightcove_field.submit_browse(dialog.attr('rel'), response.data);
+          break;
       }
 
       dialog.dialog('close');
