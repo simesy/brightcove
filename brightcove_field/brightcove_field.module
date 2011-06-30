@@ -132,8 +132,8 @@ function brightcove_field_field_info() {
      'instance_settings' => array(
        'allow_upload' => FALSE,
      ),
-     'default_widget' => array('brightcove_field_browser'),
-     'default_formatter' => array('default'),
+     'default_widget' => 'brightcove_field_browser',
+     'default_formatter' => 'default',
     ),
   );
 }
