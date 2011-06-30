@@ -13,10 +13,16 @@
   Drupal.behaviors.brightcove_field_buttons = {
     attach: function(context, settings) {
       brightcove_field_settings = settings;
+      var remove_button = $('.brightcove-field-remove-button', context);
+
+      remove_button.click(Drupal.brightcove_field.actions.remove);
       $('.brightcove-field-browse-button', context).click(Drupal.brightcove_field.actions.browse);
       $('.brightcove-field-upload-button', context).click(Drupal.brightcove_field.actions.upload);
-      $('.brightcove-field-remove-button', context).click(Drupal.brightcove_field.actions.remove);
       $('.form-text.brightcove-video-field').change(Drupal.brightcove_field.actions.change);
+
+      if ($('.' + remove_button.attr('rel')).val() != '') {
+        remove_button.attr('disabled', '').removeClass('form-button-disabled');
+      }
     }
   };
 
