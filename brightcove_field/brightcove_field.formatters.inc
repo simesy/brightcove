@@ -114,13 +114,13 @@ function theme_brightcove_field_dialog_player($variables) {
   * Suggest templates based on a field and type name.
   */
 function template_preprocess_brightcove_field_dialog(&$vars) {
-  $vars['template_files'] = array(
-    'brightcove-field-dialog--' . $vars['image_field'],
-    'brightcove-field-dialog--' . $vars['field_name'] . '--' .
-      $vars['image_field'],
-    'brightcove-field-dialog--' . $vars['type_name'] . '--' .
-      $vars['field_name'] . '--' . $vars['image_field'],
-  );
+//  $vars['template_files'] = array(
+//    'brightcove-field-dialog--' . $vars['image_field'],
+//    'brightcove-field-dialog--' . $vars['field_name'] . '--' .
+//      $vars['image_field'],
+//    'brightcove-field-dialog--' . $vars['type_name'] . '--' .
+//      $vars['field_name'] . '--' . $vars['image_field'],
+//  );
 }
 
 /**
@@ -207,11 +207,11 @@ function theme_brightcove_field_entity_link($variables) {
   * Suggest templates based on a field and type name.
   */
 function template_preprocess_brightcove_field_entity_link(&$vars) {
-  $vars['template_files'] = array(
-      'brightcove-field-entity-link--' . $vars['image_field'],
-      'brightcove-field-entity-link--' . $vars['field_name'] . '--' . $vars['image_field'],
-      'brightcove-field-entity-link--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
-      );
+//  $vars['template_files'] = array(
+//      'brightcove-field-entity-link--' . $vars['image_field'],
+//      'brightcove-field-entity-link--' . $vars['field_name'] . '--' . $vars['image_field'],
+//      'brightcove-field-entity-link--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
+//      );
 }
 
 /**
@@ -287,11 +287,11 @@ function theme_brightcove_field_entity_image($variables) {
   * Suggest templates based on a field and type name.
   */
 function template_preprocess_brightcove_field_entity_image(&$vars) {
-  $vars['template_files'] = array(
-    'brightcove-field-entity-image--' . $vars['image_field'],
-    'brightcove-field-entity-image--' . $vars['field_name'] . '--' . $vars['image_field'],
-    'brightcove-field-entity-image--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
-  );
+//  $vars['template_files'] = array(
+//    'brightcove-field-entity-image--' . $vars['image_field'],
+//    'brightcove-field-entity-image--' . $vars['field_name'] . '--' . $vars['image_field'],
+//    'brightcove-field-entity-image--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
+//  );
 }
 
 /**
