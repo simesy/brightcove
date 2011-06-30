@@ -1,5 +1,8 @@
 <?php
 
+define('BRIGHTCOVE_VIDEO_DEFAULT_HEIGHT', 412);
+define('BRIGHTCOVE_VIDEO_DEFAULT_WIDTH', 486);
+
 /**
   * Theme callback for a Brightcove browse button.
   * Currently it's just a thin wrapper around the theme_button()
@@ -58,29 +61,30 @@ function theme_brightcove_field_browse_items($variables) {
 }
 
 function theme_brightcove_field_embed($variables) {
-  if(!isset($variables['player'])) {
+  if (!isset($variables['player'])) {
     watchdog('brightcove', 'Video Player ID is missing.', array(), WATCHDOG_ERROR);
   }
 
-    if(!isset($variables['player_key'])) {
+  if (!isset($variables['player_key'])) {
     watchdog('brightcove', 'Video Player KEY is missing.', array(), WATCHDOG_ERROR);
   }
 
-  $values = array('id' => 'myExperience', 'bgcolor' => 'FFFFFF', 'width' => 486, 'height' => 412);
+  $values = array('id' => 'myExperience', 'bgcolor' => 'FFFFFF', 'width' => BRIGHTCOVE_VIDEO_DEFAULT_WIDTH, 'height' => BRIGHTCOVE_VIDEO_DEFAULT_HEIGHT);
 
-  foreach($values as $key => $value) {
-    if(isset($variables['params'][$key])) {
+  foreach ($values as $key => $value) {
+    if (isset($variables['params'][$key])) {
       $values[$key] = $variables['params'][$key];
     }
   }
 
   $assetCode = '';
 
-  if(isset($variables['video_id'])) {
-    if(is_array($variables['video_id'])) {
-      if(strtolower($variables['type']) == 'video') {
+  if (isset($variables['video_id'])) {
+    if (is_array($variables['video_id'])) {
+      if (strtolower($variables['type']) == 'video') {
         $assetCode = '<param name="@videoPlayer" value="';
-      } else {
+      }
+      else {
         // TODO: Add different types than video.
       }
 
@@ -90,10 +94,12 @@ function theme_brightcove_field_embed($variables) {
 
       $assetCode = substr($assetCode, 0, -1);
       $assetCode .= '" />';
-    } else {
-      if(strtolower($variables['type']) == 'video') {
+    }
+    else {
+      if (strtolower($variables['type']) == 'video') {
         $assetCode = '<param name="@videoPlayer" value="' . $variables['video_id'] . '" />';
-      } else {
+      }
+      else {
         // TODO: Add different types than video.
       }
     }
