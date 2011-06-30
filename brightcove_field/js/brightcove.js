@@ -139,6 +139,7 @@
           show: 'fade',
           hide: 'fade',
           title: 'Loading...',
+          dialogClass: response.id,
           open: function() {
             $(this).html(new_content);
             $(this).attr('rel', Drupal.brightcove_field.dialog_field_rel);

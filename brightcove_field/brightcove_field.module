@@ -564,6 +564,10 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
     array('system', 'ui.dialog')
   );
 
+  $element['video_id']['#attached']['css'] = array(
+    drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css',
+  );
+
   $element['video_id']['#attached']['js'] = array(
     drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
   );
@@ -820,12 +824,12 @@ function brightcove_field_browser_form($form, &$form_state, $item) {
     '#default_value' => $item['title'],
   );
   $form['text_title'] = array(
-    '#prefix' => '<div class="text-title">',
+    '#prefix' => '<div class="video-title">',
     '#suffix' => '</div>',
     '#markup' => $item['title'],
   );
   $form['text_image'] = array(
-    '#prefix' => '<div class="text-image">',
+    '#prefix' => '<div class="video-image">',
     '#suffix' => '</div>',
     '#markup' => $item['thumbnail'],
   );
