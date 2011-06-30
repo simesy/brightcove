@@ -1230,6 +1230,14 @@ function ajax_upload_dialog_callback($form, $form_state) {
   return array('#type' => 'ajax', '#commands' => $commands);
 }
 
+/**
+ * Custom page delivery callback, for content in dialog.
+ *
+ * @param $page
+ *  Content returned by page callback.
+ * @print
+ *  Html for display.
+ */
 function brightcove_field_deliver_dialog($page) {
   $output = '<html><head><title></title>' . drupal_get_css() . drupal_get_js() . '</head><body class="dialog">' . $page . '</body></html>';
   print $output;
