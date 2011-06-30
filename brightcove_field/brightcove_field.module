@@ -30,6 +30,7 @@ function brightcove_field_menu() {
       'title' => 'Brightcove Videos Browser',
       'page arguments' => array(2, 3, 4, 5),
       'page callback' => 'brightcove_field_browse',
+      'delivery callback' => 'brightcove_field_deliver_video_browser',
       'access callback' => 'brightcove_field_browse_access',
       'access arguments' => array(2, 3, 4, 5),
       'file' => 'brightcove_field.browse.inc',
@@ -1195,4 +1196,9 @@ function ajax_upload_dialog_callback($form, $form_state) {
   $commands = array();
   $commands[] = ajax_command_dialog($id, $selector, $path, $field_rel, NULL, TRUE);
   return array('#type' => 'ajax', '#commands' => $commands);
+}
+
+function brightcove_field_deliver_video_browser($page) {
+  $output = '<html><head><title></title>' . drupal_get_css() . drupal_get_js() . '</head><body class="video-browser">' . $page . '</body></html>';
+  print $output;
 }
