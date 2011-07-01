@@ -96,8 +96,7 @@
     parent.jQuery('.brightcove-field-remove-button[rel="' + field_rel + '"]').attr('disabled', '').removeClass('form-button-disabled');
   };
 
-  Drupal.ajax.prototype.commands = {
-    ui_dialog: function (ajax, response, status) {
+  Drupal.ajax.prototype.commands.ui_dialog = function (ajax, response, status) {
       var wrapper = response.selector ? $(response.selector) : $(ajax.wrapper);
       var effect = ajax.getEffect(response);
       var new_content;
@@ -178,9 +177,9 @@
         }
       }
 
-    },
+    };
 
-    ui_dialog_close: function (ajax, response, status) {
+    Drupal.ajax.prototype.commands.ui_dialog_close = function (ajax, response, status) {
       var dialog = parent.jQuery(response.selector);
       var dialog_type = response.dialog_type;
 
@@ -194,7 +193,6 @@
       }
 
       dialog.dialog('close');
-    }
-  };
+    };
 
 })(jQuery);
