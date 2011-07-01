@@ -40,7 +40,7 @@ function brightcove_field_menu() {
       'title' => 'Upload video to Brightcove',
       'page arguments' => array(2, 3, 4, 5),
       'page callback' => 'brightcove_field_upload',
-    'delivery callback' => 'brightcove_field_deliver_dialog',
+      'delivery callback' => 'brightcove_field_deliver_dialog',
       'access callback' => 'brightcove_field_browse_access',
       'access arguments' => array(2, 3, 4, 5),
       'file' => 'brightcove_field.browse.inc',
