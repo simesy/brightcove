@@ -1124,7 +1124,7 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
   if (in_array($display['type'], array(
       'entity_link_videoStillURL',
       'entity_link_thumbnailURL',
-      'entity_link_videoStillURL',
+      'entity_image_videoStillURL',
       'entity_image_thumbnailURL',
       'dialog_player_videoStillURL',
       'dialog_player_thumbnailURL',

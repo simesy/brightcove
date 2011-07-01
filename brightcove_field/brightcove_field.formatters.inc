@@ -173,7 +173,7 @@ function theme_brightcove_field_entity_link($variables) {
     $video = brightcove_video_load($video_id);
 
     $image = $variables['image'] ? $variables['image'] :
-      theme('image', empty($video->field) ?
+      theme('image', empty($video->{$field}) ?
         array(
           'path' => brightcove_get_default_image(),
           'width' => 120,
