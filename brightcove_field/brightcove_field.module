@@ -1358,6 +1358,9 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
  *  Html for display.
  */
 function brightcove_field_deliver_dialog($page) {
+  if (is_array($page)) {
+    $page = drupal_render($page);
+  }
   $output = '<html><head><title></title>' . drupal_get_css() . drupal_get_js() . '</head><body class="dialog">' . $page . '</body></html>';
   print $output;
 }
