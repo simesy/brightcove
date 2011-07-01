@@ -2,5 +2,7 @@ name = Brightcove
 description = Brightcove integration module - basic API
 core = 7.x
 
+configure = admin/config/media/brightcove
+
 files[] = brightcove.module
 files[] = brightcove.admin.inc
