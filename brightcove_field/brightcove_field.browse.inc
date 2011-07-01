@@ -154,6 +154,7 @@ function brightcove_field_upload() {
   drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css');
 //  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/attach.js');
 
-  return drupal_render(drupal_get_form('brightcove_field_upload_form'));
+  $form = drupal_get_form('brightcove_field_upload_form');
+  return drupal_render($form);
 }
 

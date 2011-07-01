@@ -50,7 +50,7 @@ function theme_brightcove_field_dialog_player($variables) {
   if (!empty($element['video_id'])) {
     $formatter_name = str_replace('dialog_player_', '', $display['type']);
     $video = brightcove_video_load($element['video_id']);
-    $video_name = check_plain($video->name);
+    $video_name = $video ? check_plain($video->name) : '';
 
     if (!$image) {
       $image = theme('image', empty($video->{$formatter_name}) ?
@@ -84,7 +84,7 @@ function theme_brightcove_field_dialog_player($variables) {
         'attributes' => array(
           'rel' => $field['field_name'],
           'class' => array($field['field_name'], 'use-ajax'),
-          'title' => check_plain($video->name),
+          'title' => $video ? check_plain($video->name) : '',
         ),
         'html' => TRUE,
       )
