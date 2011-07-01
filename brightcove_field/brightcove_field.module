@@ -53,10 +53,36 @@ function brightcove_field_menu() {
       'page arguments' => array(1, 2, 3, 4),
       'access callback' => 'entity_access',
       'access arguments' => array('view', 1, 2),
+      'delivery callback' => 'brightcove_field_deliver_dialog',
       'type' => MENU_CALLBACK,
       );
 
+  // width, height, entity_type, entity_id, field_name, delta
+  $items['brightcove_dialog/ajax/%/%/%/%/%/%'] = array(
+    'title' => '',
+    'page callback' => 'brightcove_field_open_dialog',
+    'page arguments' => array(2, 3, 4, 5, 6, 7),
+    'access callback' => 'entity_access',
+    'access arguments' => array('view', 4, 5),
+    'delivery callback' => 'ajax_deliver',
+    'type' => MENU_CALLBACK,
+  );
+
   return $items;
+}
+
+/**
+ * Page callback for 'brightcove_dialog/ajax/%/%/%/%/%/%'.
+ */
+function brightcove_field_open_dialog($width, $height, $entity_type, $entity_id, $field_name, $delta) {
+  return array(
+    '#type' => 'ajax',
+    '#commands' => array(
+      ajax_command_dialog(t('Watch video'), NULL, '<div>',
+        url("brightcove_field_player/{$entity_type}/{$entity_id}/{$field_name}/{$delta}"),
+        $field_name, array('width' => $width, 'height' => $height), TRUE),
+    ),
+  );
 }
 
 /**
@@ -108,17 +134,17 @@ function brightcove_field_browse_access($entity_type, $bundle,
 function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) {
   $entities = entity_load($entity_type, array($entity_id));
   $entity = array_shift($entities);
-  if (entity_access('view', $entity_type, $entity) &&
-      field_access('view', field_info_field($field_name),
-                   $entity_type, $entity)) {
-    $field = $entity->{$field_name}[isset($entity->language) ?
-      $entity->language : 'und'][$delta]['video_id'];
-    $output = '<script src="http://admin.brightcove.com/js/BrightcoveExperiences.js" type="text/javascript"></script>';
-    brightcove_initialize();
-    $output .= theme('brightcove_field_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''), $field, array());
-
-    print $output;
-  }
+  $video_id = $entity->{$field_name}[isset($entity->language) ?
+    $entity->language : 'und'][$delta]['video_id'];
+  return array(
+    '#theme' => 'brightcove_field_embed',
+    '#video_id' => $video_id,
+    '#attached' => array(
+      'js' => array(
+        'http://admin.brightcove.com/js/BrightcoveExperiences.js',
+      ),
+    ),
+  );
 }
 
 
@@ -1144,6 +1170,15 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
       ))) {
       $theme = "brightcove_field_formatter_{$display['type']}";
     }
+  }
+
+  if (strpos($display['type'], 'dialog') === 0) {
+    $variables['#attached']['js'][] = 'misc/ajax.js';
+    $variables['#attached']['js'][] =
+      drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js';
+    $variables['#attached']['library'][] = array('system', 'ui.dialog');
+    $variables['#attached']['css'][] =
+      drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css';
   }
 
   if ($theme) {

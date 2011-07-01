@@ -68,7 +68,6 @@ function theme_brightcove_field_dialog_player($variables) {
     }
     $entity_id = $entity && $entity_info ?
       $entity->{$entity_info['entity keys']['id']} : 0;
-    $destination = "brightcove_field_player/{$entity_type}/{$entity_id}/{$field['field_name']}/{$delta}";
 
     // loading theme.inc in order to make sure that the constants are loaded
     module_load_include('inc', 'brightcove_field', 'theme');
@@ -78,13 +77,13 @@ function theme_brightcove_field_dialog_player($variables) {
     $dialog_width = $video_width + 30;
     $dialog_height = $video_height + 30;
 
-    $rel_full = "lightframe[|width: {$dialog_width}px; height: {$dialog_height}px; overflow: visible;]";
+    $destination = "brightcove_dialog/nojs/{$dialog_width}/{$dialog_height}/{$entity_type}/{$entity_id}/{$field['field_name']}/{$delta}";
 
     $output = l($image, $destination,
       array(
         'attributes' => array(
-          'rel' => $rel_full,
-          'class' => array($field['field_name']),
+          'rel' => $field['field_name'],
+          'class' => array($field['field_name'], 'use-ajax'),
           'title' => check_plain($video->name),
         ),
         'html' => TRUE,
