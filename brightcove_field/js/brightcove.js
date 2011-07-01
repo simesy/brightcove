@@ -132,10 +132,10 @@
 
         // Add the new content to the page.
         //wrapper[method](new_content);
-        Drupal.brightcove_field.dialog = wrapper['dialog']({
+        Drupal.brightcove_field.dialog = wrapper.dialog({
           autoOpen: true,
-          height: 600,
-          width: 950,
+          height: settings.height || 600,
+          width: settings.width || 950,
           modal: true,
           show: 'fade',
           hide: 'fade',
