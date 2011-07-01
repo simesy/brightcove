@@ -113,7 +113,8 @@ function brightcove_field_browse() {
   );
 
   $pager = theme_pager($pager_vars);
-  $filter_form = drupal_render(drupal_get_form('brightcove_field_filter_form'));
+  $filter_form = drupal_get_form('brightcove_field_filter_form');
+  $filter_form = drupal_render($filter_form);
 
   return '<div class="brightcove-browse-table">' . $filter_form . $pager . theme('brightcove_field_browse_items', array('items' => $items)) . $pager . '</div>';
 }

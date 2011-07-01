@@ -30,7 +30,8 @@ function theme_brightcove_field_browse_button($element) {
   * Themed item form.
   */
 function theme_brightcove_field_browse_item($variables) {
-  return drupal_render(drupal_get_form('brightcove_field_browser_form' . $variables['item']['video_id'], $variables['item']));
+  $form = drupal_get_form('brightcove_field_browser_form' . $variables['item']['video_id'], $variables['item']);
+  return drupal_render($form);
 }
 
 /**
