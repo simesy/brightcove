@@ -17,45 +17,52 @@
  */
 function brightcove_field_menu() {
   $items = array();
-  $items['brightcove_field/autocomplete/%/%/%'] = array(
-      'title' => 'Brightcove field autocomplete',
-      'page callback' => 'brightcove_field_autocomplete',
-      'page arguments' => array(2),
-      'access callback' => 'brightcove_field_browse_access',
-      'access arguments' => array(3, '', 2),
-      'file' => 'brightcove_field.browse.inc',
-      'type' => MENU_CALLBACK,
-      );
-  $items['brightcove_field/browse/%/%/%/%'] = array(
-      'title' => 'Brightcove Videos Browser',
-      'page arguments' => array(2, 3, 4, 5),
-      'page callback' => 'brightcove_field_browse',
-      'delivery callback' => 'brightcove_field_deliver_dialog',
-      'access callback' => 'brightcove_field_browse_access',
-      'access arguments' => array(2, 3, 4, 5),
-      'file' => 'brightcove_field.browse.inc',
-      'type' => MENU_CALLBACK,
-      );
-  $items['brightcove_field/upload/%/%/%/%'] = array(
-      'title' => 'Upload video to Brightcove',
-      'page arguments' => array(2, 3, 4, 5),
-      'page callback' => 'brightcove_field_upload',
-      'delivery callback' => 'brightcove_field_deliver_dialog',
-      'access callback' => 'brightcove_field_browse_access',
-      'access arguments' => array(2, 3, 4, 5),
-      'file' => 'brightcove_field.browse.inc',
-      'type' => MENU_CALLBACK,
-      );
 
+  // entity type, field name
+  $items['brightcove_field/autocomplete/%/%'] = array(
+    'title' => 'Brightcove field autocomplete',
+    'page callback' => 'brightcove_field_autocomplete',
+    'page arguments' => array(3),
+    'access callback' => 'brightcove_field_browse_access',
+    'access arguments' => array(2, 3),
+    'file' => 'brightcove_field.browse.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // entity type, field name, entity id or bundle
+  $items['brightcove_field/browse/%/%/%'] = array(
+    'title' => 'Brightcove Videos Browser',
+    'page arguments' => array(),
+    'page callback' => 'brightcove_field_browse',
+    'delivery callback' => 'brightcove_field_deliver_dialog',
+    'access callback' => 'brightcove_field_browse_access',
+    'access arguments' => array(2, 3, 4),
+    'file' => 'brightcove_field.browse.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // entity type, field name, entity id or bundle
+  $items['brightcove_field/upload/%/%/%'] = array(
+    'title' => 'Upload video to Brightcove',
+    'page arguments' => array(),
+    'page callback' => 'brightcove_field_upload',
+    'delivery callback' => 'brightcove_field_deliver_dialog',
+    'access callback' => 'brightcove_field_browse_access',
+    'access arguments' => array(2, 3, 4),
+    'file' => 'brightcove_field.browse.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // entity type, entity id, field name, delta
   $items['brightcove_field_player/%/%/%/%'] = array(
-      'title' => 'Brightcove Videos Window Player',
-      'page callback' => 'brightcove_field_player',
-      'page arguments' => array(1, 2, 3, 4),
-      'access callback' => 'entity_access',
-      'access arguments' => array('view', 1, 2),
-      'delivery callback' => 'brightcove_field_deliver_dialog',
-      'type' => MENU_CALLBACK,
-      );
+    'title' => 'Brightcove Videos Window Player',
+    'page callback' => 'brightcove_field_player',
+    'page arguments' => array(1, 2, 3, 4),
+    'access callback' => 'entity_access',
+    'access arguments' => array('view', 1, 2),
+    'delivery callback' => 'brightcove_field_deliver_dialog',
+    'type' => MENU_CALLBACK,
+  );
 
   // width, height, entity_type, entity_id, field_name, delta
   $items['brightcove_dialog/ajax/%/%/%/%/%/%'] = array(
@@ -87,36 +94,29 @@ function brightcove_field_open_dialog($width, $height, $entity_type, $entity_id,
 
 /**
  * Access callback for brightcove browser.
- *
- * @param $node_type
- * Node type.
- * @param $field_name
- * Field name.
- * @param arg(4)
- * Optional node which is edited.
- *
- * @return
- * TRUE if access is allowed, FALSE if access is forbidden.
  */
-function brightcove_field_browse_access($entity_type, $bundle,
-  $field_name, $entity_id = NULL) {
+function brightcove_field_browse_access($entity_type, $field_name,
+  $entity_id_or_bundle = NULL) {
 
   $field = field_info_field($field_name);
 
-  if (isset($entity_id)) {
-    $entity = entity_load($entity_type, array($entity_id));
-    $entity = count($entity) ? array_shift($entity) : NULL;
-    return (entity_access('update', $entity_type, $entity) &&
+  if ($entity_id_or_bundle) {
+    if (is_numeric($entity_id_or_bundle)) { // entity id is given
+      $entity = entity_load($entity_type, array($entity_id_or_bundle));
+      if (count($entity)) {
+        $entity = array_shift($entity);
+        return (entity_access('update', $entity_type, $entity) &&
+          field_access('edit', $field, $entity_type));
+      }
+    }
+    else { // bundle is given
+      return (entity_access('create', $entity_type, $entity_id_or_bundle) &&
         field_access('edit', $field, $entity_type));
+    }
   }
-  else if (!empty($bundle)) {
-    return (entity_access('create', $entity_type, $bundle) &&
-            field_access('edit', $field, $entity_type));
-  }
-  else {
-    return entity_access('create', $entity_type) &&
-           field_access('edit', $field, $entity_type);
-  }
+
+  return entity_access('create', $entity_type) &&
+    field_access('edit', $field, $entity_type);
 }
 
 /**
@@ -493,14 +493,16 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
   $entity_info = entity_get_info($entity_type);
   $eid = isset($form[$entity_info['entity keys']['id']]['#value']) ?
     $form[$entity_info['entity keys']['id']]['#value'] : NULL;
+  $bundle = isset($form[$entity_info['entity keys']['bundle']]['#value']) ?
+    $form[$entity_info['entity keys']['bundle']]['#value'] : NULL;
   $element['video_id'] = array(
     '#type' => 'textfield',
     '#default_value' => isset($items[$delta]['video_id']) ?
       $items[$delta]['video_id'] : NULL,
     '#value_callback' => 'brightcove_field_browser_value',
-    '#autocomplete_path' => 'brightcove_field/autocomplete/'.
-                            $element['#field_name'] . '/' .
-                            $element['#entity_type']. '/' . ($eid ? $eid : 0),
+    '#autocomplete_path' => 'brightcove_field/autocomplete/' .
+      $element['#entity_type'] . '/' . $element['#field_name'] . '/' .
+      ($eid ? $eid : ($bundle ? $bundle : 0)),
     '#attributes' => array(
       'rel' => array($element['#field_name'] . '-' . $delta),
       'class' => array('brightcove-video-field', $element['#field_name'] . '-' . $delta),
@@ -1281,7 +1283,8 @@ function ajax_browse_dialog_callback($form, $form_state) {
   $title = 'Brightcove Video Browser';
   $id = 'browse-dialog';
   $selector = '<div id="' . $id . '">';
-  $path = base_path() . 'brightcove_field/browse/' . $et . '/' . $bundle . '/' . $fn . '/' . $eid;
+  $path = url("brightcove_field/browse/{$et}/{$fn}/" .
+              ($eid ? $eid : ($bundle ? $bundle : 0)));
 
   $commands = array();
   $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
@@ -1308,7 +1311,8 @@ function ajax_upload_dialog_callback($form, $form_state) {
   $title = 'Upload Video to Brightcove';
   $id = 'upload-dialog';
   $selector = '<div id="' . $id . '">';
-  $path = base_path() . 'brightcove_field/upload/' . $et . '/' . $bundle . '/' . $fn . '/' . $eid;
+  $path = url("brightcove_field/upload/{$et}/{$fn}/" .
+              ($eid ? $eid : ($bundle ? $bundle : 0)));
 
   $commands = array();
   $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
