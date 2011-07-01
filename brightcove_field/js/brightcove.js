@@ -4,6 +4,8 @@
  */
 (function ($) {
 
+  Drupal.ajax = Drupal.ajax || {};
+
   Drupal.brightcove_field = {};
   Drupal.brightcove_field.actions = {};
   var brightcove_field_settings;
