@@ -174,7 +174,7 @@
         // optional.
         if (new_content.parents('html').length > 0) {
           // Apply any settings from the returned JSON if available.
-          var settings = response.settings || ajax.settings || Drupal.settings;
+          settings = response.settings || ajax.settings || Drupal.settings;
           Drupal.attachBehaviors(new_content.contents(), settings);
         }
       }
