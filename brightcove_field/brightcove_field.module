@@ -1368,6 +1368,8 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
     $video->id = $id;
     $video->name = $form_state['values']['title'];
     brightcove_video_cache_set($id, $video);
+    // invalidating brightcove video load cache
+    cache_set("bc:video:{$id}", FALSE, 'cache');
 
     //db_query('DELETE FROM {files} WHERE fid = %d', $file->fid);
     //unlink($file->filepath);
