@@ -7,6 +7,9 @@ core = 6
 projects[cck][version] = "2.9"
 projects[cck][subdir] = "contrib"
 
+projects[jquery_update][version] = "2.0-alpha1"
+projects[jquery_update][subdir] = "contrib"
+
 projects[jquery_ui][version] = "1.5"
 projects[jquery_ui][subdir] = "contrib"
 
