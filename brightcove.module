@@ -165,9 +165,9 @@ function brightcove_write_api_access() {
   * Video object or FALSE if video not found.
   */
 function brightcove_video_load($video_id, $cache = TRUE) {
-  $cache = cache_get('bc:video:' . $video_id, 'cache');
-  if (!empty($cache->data->id)) {
-    return $cache->data;
+  $cache = brightcove_video_cache_get($video_id);
+  if (!empty($cache->id) && $id == $cache->id) {
+    return $cache;
   } else {
     $bc = brightcove_initialize();
     try {
@@ -177,7 +177,7 @@ function brightcove_video_load($video_id, $cache = TRUE) {
       return FALSE;
     }
     if (!empty($video->id)) {
-      cache_set('bc:video:' . $video_id, $video, 'cache', $_SERVER['REQUEST_TIME'] + 300);
+      brightcove_video_cache_set($video_id, $video);
       return $video;
     }
   }
@@ -455,12 +455,9 @@ function brightcove_generate_reference($account = NULL) {
  *  The video object to be cached.
  */
 function brightcove_video_cache_set($id, $video) {
-  if (!isset($_SESSION['brightcove'])) {
-    $_SESSION['brightcove'] = array();
-  }
-
   $id = (int) $id;
-  $_SESSION['brightcove']["video_{$id}"] = $video;
+  $key = "bc:video:{$id}";
+  cache_set($key, $video, 'cache', $_SERVER['REQUEST_TIME'] + 300);
 }
 
 /**
@@ -474,9 +471,11 @@ function brightcove_video_cache_set($id, $video) {
  */
 function brightcove_video_cache_get($id) {
   $id = (int) $id;
-  $key = "video_{$id}";
-  if ($id && isset($_SESSION['brightcove'][$key])) {
-    return $_SESSION['brightcove'][$key];
+  $key = "bc:video:{$id}";
+
+  $cache = cache_get($key, 'cache');
+  if (!empty($cache->data)) {
+    return $cache->data;
   }
 
   return NULL;
