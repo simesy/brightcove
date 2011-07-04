@@ -499,6 +499,7 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
     '#type' => 'textfield',
     '#default_value' => isset($items[$delta]['video_id']) ?
       $items[$delta]['video_id'] : NULL,
+    '#title' => $element['#title'],
     '#value_callback' => 'brightcove_field_browser_value',
     '#autocomplete_path' => 'brightcove_field/autocomplete/' .
       $element['#entity_type'] . '/' . $element['#field_name'] . '/' .
