@@ -30,7 +30,7 @@ function brightcove_requirements() {
 
   if (!$path) {
     $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
-    $requirements['bc_mapi']['description'] = $t('Brightcove MAPI SDK is missing. Please install it from !url.', array('!url' => l('http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/', 'http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/')));
+    $requirements['bc_mapi']['description'] = $t('Brightcove MAPI SDK is missing. Please install it to sites/all/libraries from !url and enable the module again.', array('!url' => l('http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/', 'http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/')));
     $requirements['bc_mapi']['severity'] = REQUIREMENT_ERROR;
     $requirements['bc_mapi']['value'] = $t('Missing');
   } else {
