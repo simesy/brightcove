@@ -940,9 +940,7 @@ function brightcove_field_forms($form_id, $args) {
  * Upload form. Will return a form for one video item.
  */
 function brightcove_field_upload_form($form, &$form_state) {
-  $form['upload_messages'] = array(
-    '#markup' => '<div id="dialog-messages"></div>'
-  );
+  $form['#prefix'] = '<div id="dialog-upload-form">';
   $form['title'] = array(
       '#type' => 'textfield',
       '#title' => t('Title'),
@@ -1011,8 +1009,10 @@ function brightcove_field_upload_form($form, &$form_state) {
       '#default_value' => t('Attach'),
       '#ajax' => array(
         'callback' => 'ajax_upload_dialog_close_callback',
+        'wrapper' => 'dialog-upload-form',
       ),
       );
+  $form['#suffix'] = '</div>';
 
   //$form['#attributes'] = array('enctype' => "multipart/form-data");
   //$form['#submit'] = array("brightcove_field_upload_form_submit");
@@ -1338,16 +1338,8 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
       // Some uploaded files had zero size, that's an error.
       drupal_set_message(t('Uploaded file not found. Are you sure that you uploaded an existing file?'), 'error');
       return $form;
-      //$commands[] = ajax_command_html($msg_selector, 'Uploaded file not found. Are you sure that you uploaded an existing file?');
-      //return array('#type' => 'ajax', '#commands' => $commands);
     }
     // Do something with $file here.
-
-    /*if (empty($form_state['values']['title'])) {
-      $commands[] = ajax_command_html($msg_selector, 'Title required!');
-      return array('#type' => 'ajax', '#commands' => $commands);
-    }*/
-
 
     $meta = array(
       'name' => $form_state['values']['title'],
@@ -1386,8 +1378,6 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
   else {
     drupal_set_message(t('Only Video files are allowed here.'), 'error');
     return $form;
-    //$commands[] = ajax_command_html($msg_selector, 'Only Video files are allowed here.');
-    //return array('#type' => 'ajax', '#commands' => $commands);
   }
 }
 
