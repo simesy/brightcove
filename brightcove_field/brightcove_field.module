@@ -22,7 +22,7 @@ function brightcove_field_menu() {
   $items['brightcove_field/autocomplete/%/%'] = array(
     'title' => 'Brightcove field autocomplete',
     'page callback' => 'brightcove_field_autocomplete',
-    'page arguments' => array(3),
+    'page arguments' => array(3, 5),
     'access callback' => 'brightcove_field_browse_access',
     'access arguments' => array(2, 3),
     'file' => 'brightcove_field.browse.inc',
