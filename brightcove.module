@@ -34,6 +34,7 @@ define('BRIGHTCOVE_STATUS_ERROR', 'ERROR');
 function brightcove_menu() {
   $items['admin/config/media/brightcove'] = array(
     'title' => 'Brightcove settings',
+    'description' => 'Configure Brigthcove integration, api keys, player settings, upload settings.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_admin_settings'),
     'type' => MENU_NORMAL_ITEM,
