@@ -74,8 +74,8 @@ function theme_brightcove_field_dialog_player($variables) {
 
     $video_width = BRIGHTCOVE_VIDEO_DEFAULT_WIDTH;
     $video_height = BRIGHTCOVE_VIDEO_DEFAULT_HEIGHT;
-    $dialog_width = $video_width + 30;
-    $dialog_height = $video_height + 30;
+    $dialog_width = $video_width;
+    $dialog_height = $video_height;
 
     $destination = "brightcove_dialog/nojs/{$dialog_width}/{$dialog_height}/{$entity_type}/{$entity_id}/{$field['field_name']}/{$delta}";
 

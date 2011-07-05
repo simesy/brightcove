@@ -1,7 +1,10 @@
+body .ui-dialog { padding: 0; }
 body .ui-dialog .ui-dialog-titlebar,
 .upload-dialog.ui-dialog .ui-dialog-titlebar,
 .browse-dialog.ui-dialog .ui-dialog-titlebar { position: relative; cursor: move; height: 30px; background: #ccc; border: 1px solid #999; white-space: nowrap; padding: 0; }
-.ui-dialog .ui-dialog-title,
-body .upload-dialog.ui-dialog .ui-dialog-title,
+body .ui-dialog .ui-dialog-title,
+.upload-dialog.ui-dialog .ui-dialog-title,
 .browse-dialog.ui-dialog .ui-dialog-title { margin: 0 0 0 15px; line-height: 30px; padding: 0; color: #333; }
-.ui-dialog .ui-dialog-content { padding: 15px; }
+body .ui-dialog .ui-dialog-content { padding: 15px; }
+iframe { border: none; }
+.player-dialog.ui-dialog .ui-dialog-content { overflow: hidden; }

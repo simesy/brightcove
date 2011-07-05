@@ -116,7 +116,6 @@
         if (response.iframe) {
           loading = true;
           new_content = $('<iframe id="' + response.id + '-iframe"/>').attr('src', response.data);
-          new_content.attr('width', '100%');
           new_content.load(function() {
             try {
               Drupal.brightcove_field.dialog.dialog('option', 'title', title);
@@ -133,13 +132,19 @@
           }
         }
 
+        var content_height = settings.height ? settings.height : 600 - 75 ;
+        var content_width = settings.width ? settings.width + 'px' : 100 + '%';
+        var dialog_height = settings.height ? (parseInt(settings.height) + 70) : 600;
+        var dialog_width = settings.width ? (parseInt(settings.width) + 30) : 950;
+
         // Add the new content to the page.
         //wrapper[method](new_content);
         Drupal.brightcove_field.dialog = wrapper.dialog({
           autoOpen: true,
-          height: settings.height || 600,
-          width: settings.width || 950,
+          height: dialog_height,
+          width: dialog_width,
           modal: true,
+          resizable: false,
           show: 'fade',
           hide: 'fade',
           title: loading ? 'Loading...' : title,
@@ -147,7 +152,8 @@
           open: function() {
             $(this).html(new_content);
             $(this).attr('rel', Drupal.brightcove_field.dialog_field_rel);
-            new_content.attr('height', $(this).height() - 5 + 'px');
+            new_content.attr('height', content_height - (settings.height ? 0 : 5) + 'px');
+            new_content.attr('width', content_width);
           },
           close: function() {
             Drupal.brightcove_field.dialog_field_rel = null;

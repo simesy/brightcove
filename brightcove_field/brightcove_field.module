@@ -85,7 +85,7 @@ function brightcove_field_open_dialog($width, $height, $entity_type, $entity_id,
   return array(
     '#type' => 'ajax',
     '#commands' => array(
-      ajax_command_dialog(t('Watch video'), NULL, '<div>',
+      ajax_command_dialog(t('Watch video'), 'player-dialog', '<div>',
         url("brightcove_field_player/{$entity_type}/{$entity_id}/{$field_name}/{$delta}"),
         $field_name, array('width' => $width, 'height' => $height), TRUE),
     ),
