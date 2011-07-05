@@ -6,8 +6,8 @@
 
   Drupal.ajax = Drupal.ajax || {};
 
-  Drupal.brightcove_field = {};
-  Drupal.brightcove_field.actions = {};
+  Drupal.brightcove_field = Drupal.brightcove_field || {};
+  Drupal.brightcove_field.actions = Drupal.brightcove_field.actions || {};
   var brightcove_field_settings;
   Drupal.brightcove_field.dialog = null;
   Drupal.brightcove_field.dialog_field_rel = null;
@@ -25,6 +25,9 @@
       if ($('.' + remove_button.attr('rel')).val() != '') {
         remove_button.attr('disabled', '').removeClass('form-button-disabled');
       }
+
+      var messages = $('.messages').parent().not('.jquery-processed');
+      $(messages).addClass('jquery-processed').clone().insertAfter('#brightcove-field-upload-form');
     }
   };
 
