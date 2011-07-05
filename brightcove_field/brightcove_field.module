@@ -1364,6 +1364,9 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
       drupal_set_message(t('Uploaded file not found. Are you sure that you uploaded an existing file?'), 'error');
       return $form;
     }
+    if (form_get_errors()) {
+      return $form;
+    }
     // Do something with $file here.
 
     $meta = array(
