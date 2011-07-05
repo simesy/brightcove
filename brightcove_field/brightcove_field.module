@@ -336,6 +336,13 @@ function brightcove_field_field_formatter_info() {
     );
   }
 
+  foreach (_brightcove_field_get_object_formatter_keys() as $key => $label) {
+    $formatters["brightcove_metadata_{$key}"] = array(
+      'label' => t("Metadata: {$label}"),
+      'field types' => array('brightcove_video'),
+    );
+  }
+
   return $formatters;
 }
 
@@ -799,8 +806,17 @@ function brightcove_field_theme() {
       'function' => 'theme_brightcove_field_entity_image_style',
       'file' => 'brightcove_field.formatters.inc',
     );
-
   }
+
+  $theme["brightcove_field_formatter_metadata"] = array(
+    'variables' => array(
+      'video' => NULL, // video object
+      'key' => NULL,
+      'label' => NULL,
+    ),
+    'function' => 'theme_brightcove_field_formatter_metadata',
+    'file' => 'brightcove_field.formatters.inc',
+  );
   return $theme;
 }
 
@@ -1175,6 +1191,14 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
     }
   }
 
+  foreach (_brightcove_field_get_object_formatter_keys() as $key => $label) {
+    if ($display['type'] == "brightcove_metadata_{$key}") {
+      $theme = 'brightcove_field_formatter_metadata';
+      $variables['#key'] = $key;
+      $variables['#label'] = $label;
+    }
+  }
+
   if (strpos($display['type'], 'dialog') === 0) {
     $variables['#attached']['js'][] = 'misc/ajax.js';
     $variables['#attached']['js'][] =
@@ -1195,6 +1219,7 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
         '#field' => $field,
         '#instance' => $instance,
         '#display' => $display,
+        '#video' => brightcove_video_load($item['video_id']),
       ) + $variables;
     }
   }
@@ -1395,4 +1420,18 @@ function brightcove_field_deliver_dialog($page) {
   }
   $output = '<html><head><title></title>' . drupal_get_css() . drupal_get_js() . '</head><body class="dialog">' . $page . '</body></html>';
   print $output;
+}
+
+function _brightcove_field_get_object_formatter_keys() {
+  return array(
+    'name' => t('Name'),
+    'shortDescription' => t('Short description'),
+    'longDescription' => t('Long description'),
+    'creationDate' => t('Creation date'),
+    'publishedDate' => t('Published date'),
+    'lastModifiedDate' => t('Last modified date'),
+    'length' => t('Length'),
+    'playsTotal' => t('Total plays'),
+    'playsTrailingWeek' => t('Trailing week plays'),
+  );
 }
