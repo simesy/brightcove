@@ -24,20 +24,20 @@ function brightcove_admin_settings() {
     '#maxlength' => 255,
     '#required' => TRUE,
     '#default_value' => variable_get('brightcove_read_api_key', ''),
-    '#description' => t('A Brightcove Read API key from your account at Brightcove Studio. Please check at <a href="http://my.brightcove.com">Brightcove studio</a> page.'),
+    '#description' => t('A Brightcove Read API key from your account at Brightcove Studio. Please check at !link page.', array('!link' => l(t('Brightcove studio'), 'http://my.brightcove.com'))),
   );
   $form['account']['brightcove_write_api_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Write API key'),
     '#maxlength' => 255,
     '#default_value' => variable_get('brightcove_write_api_key', ''),
-    '#description' => t('A Brightcove Write API key from your account at Brightcove Studio. Please check at <a href="http://my.brightcove.com">Brightcove studio</a> page. <strong>Requires at least a Professional account</strong>.'),
+    '#description' => t('A Brightcove Write API key from your account at Brightcove Studio. Please check at !link page. <strong>Requires at least a Professional account</strong>.', array('!link' =>  l(t('Brightcove studio'), 'http://my.brightcove.com'))),
   );
   $form['account']['brightcove_user_field'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Drupal User Custom Field'),
     '#default_value' => variable_get('brightcove_user_field', ''),
-    '#description' => t('A Brightcove Custom Field to store the Drupal username of the user who uploaded a video - useful to determine which Drupal user uploaded a given video in BC Studio. This field must be created in BC Studio first. Read more about <a href="http://support.brightcove.com/en/docs/setting-custom-metadata">Brightcove custom metadata</a>. <strong>Requires at least a Professional account</strong>'),
+    '#description' => t('A Brightcove Custom Field to store the Drupal username of the user who uploaded a video - useful to determine which Drupal user uploaded a given video in BC Studio. This field must be created in BC Studio first. Read more about !link. <strong>Requires at least a Professional account</strong>', array('!link' =>  l(t('Brightcove custom metadata'), 'http://support.brightcove.com/en/docs/setting-custom-metadata'))),
   );
   $form['player'] = array(
     '#type' => 'fieldset',
@@ -50,14 +50,14 @@ function brightcove_admin_settings() {
     '#title' => t('Brightcove Player ID'),
     '#required' => TRUE,
     '#default_value' => variable_get('brightcove_player', ''),
-    '#description' => t('A Brightcove Player ID from BC Studio. Will be used to play all videos.'),
+    '#description' => t('A Brightcove Player ID from BC Studio. Will be used to play all videos. Please check at !link.', array('!link' => l(t('Brightcove integration handbook on Drupal.org'), 'http://drupal.org/node/807598'))),
   );
   $form['player']['brightcove_player_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Player KEY'),
     '#required' => TRUE,
     '#default_value' => variable_get('brightcove_player_key', ''),
-    '#description' => t('A Brightcove Player KEY from BC Studio. Will be used to play all videos.'),
+    '#description' => t('A Brightcove Player KEY from BC Studio. Will be used to play all videos. Please check at !link.', array('!link' => l(t('Brightcove integration handbook on Drupal.org'), 'http://drupal.org/node/807598'))),
   );
   $form['player']['brightcove_default_image'] = array(
     '#type' => 'textfield',
