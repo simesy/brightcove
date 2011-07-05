@@ -169,7 +169,7 @@ function brightcove_field_field_info() {
 /**
  * Implements hook_field_settings_form().
  */
-function brightcove_field_field_settings_form($field, $instance, $has_data) {
+function brightcove_field_field_instance_settings_form($field, $instance) {
   $form = array();
 
   // Only allow Upload if this site has Write API keys.
@@ -546,7 +546,7 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
   }
 
   if ((user_access('upload videos')) &&
-      ($field['settings']['allow_upload'])
+      ($instance['settings']['allow_upload'])
   ) {
     $element['actions']['upload'] = array(
       '#type' => 'button',
