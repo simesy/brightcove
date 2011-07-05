@@ -311,27 +311,27 @@ function brightcove_field_field_formatter_info() {
   $styles = image_styles();
   foreach ($styles as $style) {
     $formatters['dialog_' . $style['name'] . '__thumbnailURL'] = array(
-      'label' => t('Imagecache @style thumbnail -> Dialog player', array('@style' => $style['name'])),
+      'label' => t('Image style @style thumbnail -> Dialog player', array('@style' => $style['name'])),
       'field types' => array('brightcove_video'),
     );
     $formatters['dialog_' . $style['name'] . '__videoStillURL'] = array(
-      'label' => t('Imagecache @style still image -> Dialog player', array('@style' => $style['name'])),
+      'label' => t('Image style @style still image -> Dialog player', array('@style' => $style['name'])),
       'field types' => array('brightcove_video'),
     );
     $formatters['entity_link_' . $style['name'] . '__videoStillURL'] = array(
-      'label' => t('Imagecache @style still image linked to entity', array('@style' => $style['name'])),
+      'label' => t('Image style @style still image linked to entity', array('@style' => $style['name'])),
       'field types' => array('brightcove_video'),
     );
     $formatters['entity_link_' . $style['name'] . '__thumbnailURL'] = array(
-      'label' => t('Imagecache @style thumbnail linked to entity', array('@style' => $style['name'])),
+      'label' => t('Image style @style thumbnail linked to entity', array('@style' => $style['name'])),
       'field types' => array('brightcove_video'),
     );
     $formatters['entity_image_' . $style['name'] . '__videoStillURL'] = array(
-      'label' => t('Imagecache @style still image', array('@style' => $style['name'])),
+      'label' => t('Image style @style still image', array('@style' => $style['name'])),
       'field types' => array('brightcove_video'),
     );
     $formatters['entity_image_' . $style['name'] . '__thumbnailURL'] = array(
-      'label' => t('Imagecache @style thumbnail', array('@style' => $style['name'])),
+      'label' => t('Image style @style thumbnail', array('@style' => $style['name'])),
       'field types' => array('brightcove_video'),
     );
   }
