@@ -1,0 +1,10 @@
+
+#media-tab-brightcove #container {
+  padding: 20px 0;
+}
+
+#media-tab-brightcove #scrollbox {
+  height: 300px;
+  overflow: auto;
+  overflow-x: hidden;
+}
