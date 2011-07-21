@@ -245,6 +245,7 @@ function theme_brightcove_field_entity_link_dialog($variables) {
   * Theme callback for Default thumbnail.
   */
 function theme_brightcove_field_entity_image($variables) {
+  module_load_include('inc', 'brightcove_field', 'theme');
   $video_id = isset($variables['element']['video_id']) ?
     $variables['element']['video_id'] : NULL;
   $entity_info = entity_get_info($variables['entity_type']);
@@ -266,7 +267,9 @@ function theme_brightcove_field_entity_image($variables) {
           )
       );
 
-    $entity_id = $variables['entity']->{$entity_info['entity keys']['id']};
+    $entity_id = isset($entity_info['entity keys']['id']) &&
+      isset($variables['entity']->{$entity_info['entity keys']['id']}) ?
+        $variables['entity']->{$entity_info['entity keys']['id']} : NULL;
 
     return theme('brightcove_field_entity_image', array(
       'output' => $image,
