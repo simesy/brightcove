@@ -226,7 +226,7 @@ function brightcove_media_list() {
     if (count($result)) {
       foreach ($result as $video) {
         $file = (object) array(
-          'fid' => $video->id,
+          'fid' => "v{$video->id}",
           'uid' => $user->uid,
           'filename' => check_plain($video->name),
           'uri' => "brightcove://{$video->id}",
@@ -262,4 +262,33 @@ function brightcove_media_ctools_plugin_api($owner, $api) {
 
   return isset($api_versions[$owner][$api]) ?
     array('version' => $api_versions[$owner][$api]) : NULL;
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function brightcove_media_element_info_alter(&$type) {
+  if (isset($type['media']['#process'])) {
+    array_unshift($type['media']['#process'],
+      'brightcove_media_media_element_process');
+  }
+}
+
+function brightcove_media_media_element_process(&$element, &$form_state) {
+  if (isset($element['#value']['fid']) &&
+      strpos($element['#value']['fid'], 'v') === 0) {
+    $video_id = substr($element['#value']['fid'], 1);
+    $candidates = file_load_multiple(array(),
+      array('uri' => "brightcove://{$video_id}"));
+    if (count($candidates)) {
+      $element['#value']['fid'] = array_shift($candidates)->fid;
+    }
+    else {
+      $handler = new MediaInternetBrightcoveHandler($video_id);
+      $element['#value']['fid'] = $handler->save()->fid;
+    }
+
+    form_set_value($element, $element['#value'], $form_state);
+  }
+  return $element;
 }

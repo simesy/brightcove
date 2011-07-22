@@ -19,6 +19,7 @@ class MediaInternetBrightcoveHandler extends MediaInternetBaseHandler {
     // using regexes are right here, because brightcove provides badly
     // formatted html files
     $regexes = array(
+      '#^([0-9]+)$#i',
       '#name="@videoPlayer" value="([0-9]+)"#i',
       '#@videoPlayer=([0-9]+)&#i',
     );
