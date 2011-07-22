@@ -1438,3 +1438,63 @@ function _brightcove_field_get_object_formatter_keys() {
     'playsTrailingWeek' => t('Trailing week plays'),
   );
 }
+
+/**
+ * Updates the video entity link on a video.
+ *
+ * @param $entity_type
+ *   Type of the entity to reference.
+ * @param $entity
+ *   The entity to reference.
+ * @param $items
+ *   The $items array of hook_field_insert() and hook_field_update().
+ *   Example:
+ *   array(
+ *     array('video_id' => 0),
+ *     array('video_id' => 1),
+ *     array('video_id' => 2),
+ *   )
+ */
+function brightcove_field_refresh_video_entity_link($entity_type, $entity,
+                                                    $items) {
+  if ($entity_link_field = variable_get('brightcove_link_field')) {
+    if ($entity_link = entity_uri($entity_type, $entity)) {
+      $absolute_entity_link = url($entity_link['path'],
+        array(
+          'absolute' => TRUE,
+        ) + $entity_link['options']);
+
+      $bc = brightcove_initialize();
+      $video_ids = array();
+      foreach ($items as $item) {
+        $video_ids[] = $item['video_id'];
+      }
+      $videos = $bc->find('videosbyids', array(
+        'video_ids' => implode(',', $video_ids),
+        'video_fields' => 'id,customFields',
+      ));
+      foreach ($videos as $video) {
+        $video->customFields->{$entity_link_field} = $absolute_entity_link;
+        $bc->update('video', $video);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_field_insert().
+ */
+function brightcove_field_field_insert($entity_type, $entity,
+                                       $field, $instance,
+                                       $langcode, &$items) {
+  brightcove_field_refresh_video_entity_link($entity_type, $entity, $items);
+}
+
+/**
+ * IMplements hook_field_update().
+ */
+function brightcove_field_field_update($entity_type, $entity,
+                                       $field, $instance,
+                                       $langcode, &$items) {
+  brightcove_field_refresh_video_entity_link($entity_type, $entity, $items);
+}
