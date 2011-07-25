@@ -136,6 +136,8 @@ function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) 
   $entity = array_shift($entities);
   $video_id = $entity->{$field_name}[isset($entity->language) ?
     $entity->language : 'und'][$delta]['video_id'];
+  list(,,$bundle) = entity_extract_ids($entity_type, $entity);
+  $instance = field_info_instance($entity_type, $field_name, $bundle);
   return array(
     '#theme' => 'brightcove_field_embed',
     '#video_id' => $video_id,
@@ -144,6 +146,9 @@ function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) 
         'http://admin.brightcove.com/js/BrightcoveExperiences.js',
       ),
     ),
+    '#player' => brightcove_field_get_value('brightcove_player', $instance),
+    '#player_key' =>
+      brightcove_field_get_value('brightcove_player_key', $instance),
   );
 }
 
@@ -159,6 +164,8 @@ function brightcove_field_field_info() {
      'settings' => array(),
      'instance_settings' => array(
        'allow_upload' => FALSE,
+       'brightcove_player' => '',
+       'brightcove_player_key' => '',
      ),
      'default_widget' => 'brightcove_field_browser',
      'default_formatter' => 'default',
@@ -196,6 +203,23 @@ function brightcove_field_field_instance_settings_form($field, $instance) {
       '#value' => $instance['settings']['allow_upload'],
     );
   }
+
+  $form['brightcove_player'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Brightcove Player ID'),
+    '#default_value' => isset($instance['settings']['brightcove_player']) ?
+      $instance['settings']['brightcove_player'] : NULL,
+    '#description' => t('Leave empty if you don\'t want to override the global settings.'),
+  );
+
+  $form['brightcove_player_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Brightcove Player KEY'),
+    '#default_value' => isset($instance['settings']['brightcove_player_key']) ?
+      $instance['settings']['brightcove_player_key'] : NULL,
+    '#description' => t('Leave empty if you don\'t want to override the global settings.'),
+  );
+
   return $form;
 }
 
@@ -655,7 +679,10 @@ function brightcove_field_theme() {
       'variables' => array('element' => NULL),
     ),
     'brightcove_field_formatter_default' => array(
-      'variables' => array('element' => NULL),
+      'variables' => array(
+        'element' => NULL,
+        'instance' => array(),
+      ),
       'file' => 'brightcove_field.formatters.inc',
     ),
     'brightcove_field_player' => array(
@@ -1497,4 +1524,9 @@ function brightcove_field_field_update($entity_type, $entity,
                                        $field, $instance,
                                        $langcode, &$items) {
   brightcove_field_refresh_video_entity_link($entity_type, $entity, $items);
+}
+
+function brightcove_field_get_value($value, $instance) {
+  return empty($instance['settings'][$value]) ?
+    variable_get($value) : $instance['settings'][$value];
 }

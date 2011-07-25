@@ -144,6 +144,12 @@ function theme_brightcove_field_formatter_default($variables) {
         'type' => 'video',
         'video_id' => $variables['element']['video_id'],
         'params' => $params,
+        'player' =>
+          brightcove_field_get_value('brightcove_player',
+            $variables['instance']),
+        'player_key' =>
+          brightcove_field_get_value('brightcove_player_key',
+            $variables['instance']),
     ));
     $vidcount++;
   }
