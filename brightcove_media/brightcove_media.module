@@ -83,6 +83,11 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
     $element = array(
       '#theme' => 'brightcove_field_embed',
       '#video_id' => parse_url($file->uri, PHP_URL_HOST),
+      '#attached' => array(
+        'js' => array(
+          'http://admin.brightcove.com/js/BrightcoveExperiences.js',
+        ),
+      ),
     );
 
     return $element;
