@@ -133,6 +133,7 @@ function brightcove_media_file_default_displays() {
     'media_large' => array(),
     'media_original' => array(),
     'media_gallery_detail' => array(),
+    'media_gallery_lightbox' => array(),
   );
   foreach ($video_display_settings as $view_mode => $settings) {
     $display_name = "video__{$view_mode}__brightcove_media_video";
@@ -150,6 +151,8 @@ function brightcove_media_file_default_displays() {
     'media_large' => '',
     'media_original' => '',
     'media_gallery_thumbnail' => '',
+    'media_gallery_block_thumbnail' => '',
+    'media_gallery_collection_thumbnail' => '',
   );
   foreach ($image_display_styles as $view_mode => $image_style) {
     $display_name = "video__{$view_mode}__brightcove_media_image";
