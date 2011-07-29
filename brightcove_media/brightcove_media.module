@@ -132,6 +132,7 @@ function brightcove_media_file_default_displays() {
   $video_display_settings = array(
     'media_large' => array(),
     'media_original' => array(),
+    'media_gallery_detail' => array(),
   );
   foreach ($video_display_settings as $view_mode => $settings) {
     $display_name = "video__{$view_mode}__brightcove_media_video";
