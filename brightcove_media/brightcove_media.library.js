@@ -12,8 +12,6 @@
           }
           params.limit = 0;
           library.start($(ui.panel), params);
-          $('#media-tab-brightcove #scrollbox')
-            .bind('scroll', library, library.scrollUpdater);
         }
       });
     }
