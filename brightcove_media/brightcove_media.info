@@ -5,6 +5,7 @@ core = 7.x
 dependencies[] = brightcove
 dependencies[] = media
 dependencies[] = brightcove_field
+dependencies[] = media_internet
 
 files[] = brightcove_media.module
 files[] = MediaBrightcoveStreamWrapper.inc
