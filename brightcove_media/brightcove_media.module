@@ -268,7 +268,7 @@ function brightcove_media_list() {
 
   module_load_include('browser.inc', 'media', 'includes/media');
 
-//  $params = drupal_get_query_parameters();
+  $params = drupal_get_query_parameters();
 //
 //  $start = isset($params['start']) ? $params['start'] : 0;
 //  $limit = isset($params['limit']) ? $params['limit'] :
@@ -278,9 +278,32 @@ function brightcove_media_list() {
 
   $bc = brightcove_initialize();
 
+  $bc_find_params = array();
+  if (isset($params['filter'])) {
+    switch ($params['filter']['search']) {
+      case 'tags':
+        $method = 'find_videos_by_tags';
+        $bc_find_params = array('or_tags' => $params['filter']['keywords']);
+        break;
+      case 'and_tags':
+        $method = 'find_videos_by_tags';
+        $bc_find_params = array('and_tags' => $params['filter']['keywords']);
+        break;
+
+      case 'name':
+      default:
+        $method = 'find_videos_by_text';
+        $bc_find_params = array('text' => join(' ', split(',', $params['filter']['keywords'])));
+        break;
+    }
+  }
+  else {
+    $method = 'find_all_videos';
+  }
+
   $result = NULL;
   try {
-    $result = $bc->find('find_all_videos');
+    $result = $bc->find($method, $bc_find_params);
     if (count($result)) {
       foreach ($result as $video) {
         $file = (object) array(
