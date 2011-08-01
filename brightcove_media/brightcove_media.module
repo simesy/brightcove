@@ -460,3 +460,55 @@ function brightcove_media_media_element_process(&$element, &$form_state) {
   }
   return $element;
 }
+
+function ajax_brightcove_media_upload_callback($form, $form_state) {
+  $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
+  $validators = array(
+    'file_validate_extensions' => array($limits['extensions']),
+  );
+
+  // Save new file uploads.
+  if ($file = file_save_upload('file_upload', $validators,
+                               drupal_realpath(file_default_scheme() . ':/'))
+  ) {
+    if ($file->filesize <= 0) {
+      // Some uploaded files had zero size, that's an error.
+      drupal_set_message(t('Uploaded file not found. Are you sure that you uploaded an existing file?'), 'error');
+      return $form;
+    }
+    if (form_get_errors()) {
+      return $form;
+    }
+    // Do something with $file here.
+
+    $meta = array(
+      'name' => $form_state['values']['title'],
+      'shortDescription' => $form_state['values']['short'],
+      'longDescription' => $form_state['values']['long'],
+      'linkText' => $form_state['values']['linktext'],
+      'linkURL' => $form_state['values']['linkurl'],
+      'referenceId' => brightcove_generate_reference(),
+    );
+    if (!empty($form_state['values']['tags'])) {
+      $meta['tags'] = explode(',', $form_state['values']['tags']);
+    }
+    $id = brightcove_upload_video(drupal_realpath($file->uri), $meta);
+
+    // Construct Video object with ID - we need to cache it and save to session.
+    // Brightcove Media API doesn't clear it's cache when a new video is
+    // uploaded, therefore the node save would fail.
+    $video = new StdClass;
+    $video->id = $id;
+    $video->name = $form_state['values']['title'];
+    brightcove_video_cache_set($id, $video);
+    // invalidating brightcove video load cache
+    cache_set("bc:video:{$id}", FALSE, 'cache');
+
+    drupal_set_message(t('Upload succesful. It takes several minutes, until video is available through the browser. (filter by name for quickest results)'), 'status');
+    return $form;
+  }
+  else {
+    drupal_set_message(t('Only Video files are allowed here.'), 'error');
+    return $form;
+  }
+}
