@@ -180,11 +180,59 @@ function brightcove_media_media_browser_plugin_info() {
 }
 
 /**
+ * Filter form for media video browser.
+ */
+function brightcove_media_browser_filter_form($form, &$form_state) {
+  $form['search'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Filter videos'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      );
+  $keywords = '';
+  $form['search']['keywords'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Keywords'),
+      '#size' => 25,
+      '#default_value' => $keywords,
+      '#description' => t('Comma separated keywords to search for. (do not add space after comma)'),
+      );
+
+  $form['search']['search'] = array(
+    '#type' => 'radios',
+    '#title' => t('Search in'),
+    '#options' => array('name' => t('Names and descriptions'), 'tags' => t('Tags: at least one of these'), 'and_tags' => t('Tags: all of these')),
+    '#default_value' => 'name',
+    '#attributes' => array(
+      'class' => array('search-radio'),
+    ),
+    '#description' => t('"Names and descriptions" searches in Video name, short and long descriptions. Tags searches in Video associated tags.'),
+  );
+
+  $form['search']['filter'] = array(
+    '#type' => 'button',
+    '#name' => 'filter',
+    //'#button_type' => 'filter',
+    '#value' => t('Filter'),
+  );
+  $form['search']['reset'] = array(
+    '#type' => 'button',
+    '#name' => 'reset',
+    //'#button_type' => 'reset',
+    '#value' => t('Reset'),
+  );
+
+  return $form;
+}
+
+/**
  * Implements hook_media_browser_plugin_view().
  */
 function brightcove_media_media_browser_plugin_view($plugin_name, $params) {
   switch ($plugin_name) {
     case 'brightcove':
+      $filter_form = drupal_get_form('brightcove_media_browser_filter_form');
+      $filter_form = drupal_render($filter_form);
       $media_path = drupal_get_path('module', 'media');
       $bcpath = drupal_get_path('module', 'brightcove_media');
       return array(
@@ -207,7 +255,7 @@ function brightcove_media_media_browser_plugin_view($plugin_name, $params) {
             $bcpath . '/brightcove_media.library.css',
           ),
         ),
-        '#markup' => '<div id="container"><div id="scrollbox"><ul id="media-browser-library-list" class="media-list-thumbnails"></ul><div id="status"></div></div></div>',
+        '#markup' => '<div id="container"><div id="filter-form">' . $filter_form . '</div><div id="scrollbox"><ul id="media-browser-library-list" class="media-list-thumbnails"></ul><div id="status"></div></div></div>',
       );
       break;
   }
