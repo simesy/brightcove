@@ -6,6 +6,9 @@
 
   Drupal.behaviors.brightcoveLibrary = {
     attach: function (context, settings) {
+
+      // safely override the original function
+      var proxied = Drupal.media.browser.validateButtons;
       Drupal.media.browser.validateButtons = function() {
         if (this.id === 'media-tab-brightcove') {
           $('<a class="button fake-ok">Submit</a>').appendTo(this).bind('click', Drupal.media.browser.submit);
@@ -13,18 +16,7 @@
             $('<a class="button fake-cancel">Cancel</a>').appendTo(this).bind('click', Drupal.media.browser.submit);
           }
         } else {
-          if (!($('.form-submit', this).length > 0)) {
-            $('<a class="button fake-ok">Submit</a>').appendTo(this).bind('click', Drupal.media.browser.submit);
-            if (!($('.fake-cancel', this).length > 0)) {
-              $('<a class="button fake-cancel">Cancel</a>').appendTo(this).bind('click', Drupal.media.browser.submit);
-            }
-          } else if (!($('.fake-cancel', this).length > 0)) {
-            var parent = $('.form-actions', this);
-            if (!parent.length) {
-              parent = $('form > div', this);
-            }
-            $('<a class="button fake-cancel">Cancel</a>').appendTo(parent).bind('click', Drupal.media.browser.submit);
-          }
+          return proxied.apply(this);
         }
       };
 
@@ -33,7 +25,6 @@
       $('#media-browser-tabset').bind('tabsselect', function (event, ui) {
         if (ui.tab.hash === '#media-tab-brightcove') {
           if (!loaded) {
-            console.log('megint');
             var params = {};
             for (var p in Drupal.settings.media.browser.brightcove) {
               params[p] = Drupal.settings.media.browser.library[p];
@@ -70,6 +61,4 @@
       });
     }
   };
-
-
 })(jQuery);
