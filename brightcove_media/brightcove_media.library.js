@@ -31,7 +31,6 @@
             }
             params.limit = 0;
 
-            Drupal.brightcoveLibrary.origParams = params;
             Drupal.brightcoveLibrary.library.start($(ui.panel), params);
             loaded = true;
           }
