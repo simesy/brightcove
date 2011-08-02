@@ -460,6 +460,28 @@ function brightcove_media_media_element_process(&$element, &$form_state) {
 }
 
 /**
+ * Implements hook_node_presave(). (needed for media gallery)
+ */
+function brightcove_media_node_presave($node) {
+  if (isset($node->media_gallery_media['und'])) {
+    foreach ($node->media_gallery_media['und'] as &$file) {
+      if (isset($file['fid']) && strpos($file['fid'], 'v') === 0) {
+        $video_id = substr($file['fid'], 1);
+        $candidates = file_load_multiple(array(),
+          array('uri' => "brightcove://{$video_id}"));
+        if (count($candidates)) {
+          $file['fid'] = array_shift($candidates)->fid;
+        }
+        else {
+          $handler = new MediaInternetBrightcoveHandler($video_id);
+          $file['fid'] = $handler->save()->fid;
+        }
+      }
+    }
+  }
+}
+
+/**
  * Ajax callback for upload form
  *
  * @param $form
