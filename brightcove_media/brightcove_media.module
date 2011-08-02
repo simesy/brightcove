@@ -141,7 +141,7 @@ function brightcove_media_file_default_displays() {
       'api_version' => 1,
       'name' => $display_name,
       'status' => 1,
-      'weight' => 2,
+      'weight' => 1,
       'settings' => $settings,
     );
   }
