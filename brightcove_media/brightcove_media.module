@@ -342,7 +342,7 @@ function brightcove_media_media_browser_plugin_view($plugin_name, $params) {
             $bcpath . '/brightcove_media.library.css',
           ),
         ),
-        '#markup' => '<div id="container">' . $upload_form . $filter_form . '<div id="scrollbox"><ul id="media-browser-library-list" class="media-list-thumbnails"></ul><div id="status"></div></div></div>',
+        '#markup' => '<div id="container"><div id="scrollbox">' . $upload_form . $filter_form . '<ul id="media-browser-library-list" class="media-list-thumbnails"></ul><div id="status"></div></div></div>',
       );
       break;
   }
