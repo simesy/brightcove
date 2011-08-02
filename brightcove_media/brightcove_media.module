@@ -349,11 +349,12 @@ function brightcove_media_list() {
 
   module_load_include('browser.inc', 'media', 'includes/media');
 
+  $items_per_page = 20;
+
   $params = drupal_get_query_parameters();
-//
-//  $start = isset($params['start']) ? $params['start'] : 0;
-//  $limit = isset($params['limit']) ? $params['limit'] :
-//    media_variable_get('browser_pager_limit');
+
+  $limit = isset($params['limit']) ? $params['limit'] : $items_per_page;
+  $start = isset($params['start']) ? ceil($params['start'] / $limit) : 0;
 
   $media = array();
 
@@ -384,6 +385,9 @@ function brightcove_media_list() {
 
   $result = NULL;
   try {
+    $bc_find_params['page_size'] = $limit;
+    $bc_find_params['page_number'] = $start;
+
     $result = $bc->find($method, $bc_find_params);
     if (count($result)) {
       foreach ($result as $video) {
