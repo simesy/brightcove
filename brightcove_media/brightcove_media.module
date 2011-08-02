@@ -463,6 +463,8 @@ function brightcove_media_media_element_process(&$element, &$form_state) {
  * @return Validated form with messages
  */
 function ajax_brightcove_media_upload_callback($form, $form_state) {
+  global $user;
+
   $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
   $validators = array(
     'file_validate_extensions' => array($limits['extensions']),
@@ -505,11 +507,37 @@ function ajax_brightcove_media_upload_callback($form, $form_state) {
     // invalidating brightcove video load cache
     cache_set("bc:video:{$id}", FALSE, 'cache');
 
-    drupal_set_message(t('Upload succesful. It takes ~15 minutes, until video is available.'), 'status');
-    return $form;
+    $file_obj = (object) array(
+      'fid' => "v{$video->id}",
+      'uid' => $user->uid,
+      'filename' => check_plain($video->name),
+      'uri' => "brightcove://{$video->id}",
+      'filemime' => 'media/brightcove',
+      'filesize' => 0,
+      'status' => 1,
+      'type' => 'video',
+    );
+    media_browser_build_media_item($file_obj);
+
+    $commands = array();
+    $commands[] = ajax_command_brightcove_media_upload($file_obj);
+    return array('#type' => 'ajax', '#commands' => $commands);
   }
   else {
     drupal_set_message(t('Only Video files are allowed here.'), 'error');
     return $form;
   }
+}
+
+/**
+ * @param $data
+ * @param null $settings
+ * @return array
+ */
+function ajax_command_brightcove_media_upload($data, $settings = NULL) {
+  return array(
+    'command' => 'brightcove_media_upload',
+    'data' => $data,
+    'settings' => $settings,
+  );
 }

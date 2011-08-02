@@ -42,14 +42,6 @@
         }
       });
 
-/*      $('#edit-upload').not('.bc-processed').addClass('bc-processed').click(function(ev) {
-        //ev.preventDefault();
-
-        $(Drupal.brightcoveLibrary.library.renderElement).find('#media-browser-library-list li').remove();
-        Drupal.brightcoveLibrary.library.loading = true;
-        Drupal.brightcoveLibrary.library.loadMedia();
-      });*/
-
       $('#edit-filter').not('.bc-processed').addClass('bc-processed').click(function(ev) {
         ev.preventDefault();
 
@@ -83,5 +75,10 @@
         Drupal.brightcoveLibrary.library.loadMedia();
       });
     }
+  };
+
+  Drupal.ajax.prototype.commands.brightcove_media_upload = function (ajax, response, status) {
+    Drupal.brightcoveLibrary.library.mediaSelected([response.data]);
+    $(Drupal.brightcoveLibrary.library.renderElement).find('.fake-ok').trigger('click');
   };
 })(jQuery);
