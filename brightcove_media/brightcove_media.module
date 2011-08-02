@@ -180,7 +180,7 @@ function brightcove_media_media_browser_plugin_info() {
 }
 
 /**
- * Upload form for media integration. Will return a form for one video item.
+ * Upload form for brightcove media.
  */
 function brightcove_media_upload_form($form, &$form_state) {
   $form['uploadform'] = array(
@@ -265,7 +265,7 @@ function brightcove_media_upload_form($form, &$form_state) {
 }
 
 /**
- * Filter form for media video browser.
+ * Filter form for brightcove media video browser.
  */
 function brightcove_media_browser_filter_form($form, &$form_state) {
   $form['searchform'] = array(
@@ -461,6 +461,13 @@ function brightcove_media_media_element_process(&$element, &$form_state) {
   return $element;
 }
 
+/**
+ * Ajax callback for upload form
+ *
+ * @param $form
+ * @param $form_state
+ * @return Validated form with messages
+ */
 function ajax_brightcove_media_upload_callback($form, $form_state) {
   $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
   $validators = array(
@@ -504,7 +511,7 @@ function ajax_brightcove_media_upload_callback($form, $form_state) {
     // invalidating brightcove video load cache
     cache_set("bc:video:{$id}", FALSE, 'cache');
 
-    drupal_set_message(t('Upload succesful. It takes several minutes, until video is available through the browser. (filter by name for quickest results)'), 'status');
+    drupal_set_message(t('Upload succesful. It takes ~15 minutes, until video is available.'), 'status');
     return $form;
   }
   else {
