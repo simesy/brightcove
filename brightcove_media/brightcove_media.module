@@ -188,6 +188,7 @@ function brightcove_media_upload_form($form, &$form_state) {
       '#title' => t('Upload video'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
+      '#description' => t('It takes several minutes (depending on processing time in Brightcove cloud), until video is available after upload. Clicking \'Upload and attach\' uploads video to Brightcove then closes the dialog and attaches the video.'),
       );
   $form['uploadform']['title'] = array(
       '#type' => 'textfield',
@@ -245,19 +246,12 @@ function brightcove_media_upload_form($form, &$form_state) {
   $form['uploadform']['upload'] = array(
       '#type' => 'button',
       '#name' => 'upload',
-      '#value' => t('Upload'),
+      '#value' => t('Upload and attach'),
       '#ajax' => array(
         'callback' => 'ajax_brightcove_media_upload_callback',
         'wrapper' => 'bc-upload-form',
       ),
       );
-/*  $form['#attached']['js'] = array(
-    drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
-  );
-
-  $form['#attached']['css'] = array(
-    drupal_get_path('module', 'brightcove_field') . '/styles/upload.css',
-  );*/
   $form['#prefix'] = '<div id="bc-upload-form">';
   $form['#suffix'] = '</div>';
 
