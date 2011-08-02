@@ -349,11 +349,11 @@ function brightcove_media_list() {
 
   module_load_include('browser.inc', 'media', 'includes/media');
 
-  $items_per_page = 20;
+  $default_items_per_page = 20;
 
   $params = drupal_get_query_parameters();
 
-  $limit = isset($params['limit']) ? $params['limit'] : $items_per_page;
+  $limit = isset($params['limit']) ? $params['limit'] : $default_items_per_page;
   $start = isset($params['start']) ? ceil($params['start'] / $limit) : 0;
 
   $media = array();
