@@ -62,7 +62,7 @@ class MediaInternetBrightcoveHandler extends MediaInternetBaseHandler {
    */
   public function getFileObject() {
     $uri = $this->parse($this->embedCode);
-    return file_uri_to_object($uri);
+    return brightcove_media_file_uri_to_object($uri);
   }
 
 }
