@@ -558,6 +558,9 @@ function ajax_brightcove_media_upload_callback($form, $form_state) {
       $meta['tags'] = explode(',', $form_state['values']['tags']);
     }
     $id = brightcove_upload_video(drupal_realpath($file->uri), $meta);
+    if (!isset($id)) {
+      return $form;
+    }
 
     // Construct Video object with ID - we need to cache it and save to session.
     // Brightcove Media API doesn't clear it's cache when a new video is
