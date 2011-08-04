@@ -445,10 +445,11 @@ function brightcove_media_element_info_alter(&$type) {
 function brightcove_media_media_element_process(&$element, &$form_state) {
   global $user;
   if (isset($element['#value']['fid']) &&
-      strpos($element['#value']['fid'], 'v') === 0) {
+      strpos($element['#value']['fid'], 'v') === 0
+  ) {
     $video_id = substr($element['#value']['fid'], 1);
     $candidates = file_load_multiple(array(),
-      array('uri' => "brightcove://{$video_id}"));
+                                     array('uri' => "brightcove://{$video_id}"));
     if (count($candidates)) {
       $element['#value']['fid'] = array_shift($candidates)->fid;
     }
@@ -459,13 +460,13 @@ function brightcove_media_media_element_process(&$element, &$form_state) {
         try {
           $result = $bc->find('find_video_by_id', $video_id);
           if (count($result)) {
-            $file = (object) $result;
+            $file = (object)$result;
             $_SESSION['brightcove']["selected_video_{$user->uid}"] = $file;
           }
         }
         catch (Exception $e) {
           watchdog('brightcove', 'Retrieving media list failed.', array(),
-            WATCHDOG_ERROR);
+                   WATCHDOG_ERROR);
         }
       }
       $element['#value']['fid'] = $handler->save()->fid;
@@ -603,40 +604,44 @@ function ajax_command_brightcove_media_upload($data, $settings = NULL) {
 }
 
 function brightcove_media_file_uri_to_object($uri, $use_existing = FALSE) {
-    if ($use_existing) {
-      $query = db_select('file_managed', 'f')
+  if ($use_existing) {
+    $query = db_select('file_managed', 'f')
         ->fields('f', array('fid'))
         ->condition('uri', $uri)
         ->execute()
         ->fetchCol();
-      if (!empty($query)) {
-        $file = file_load(array_shift($query));
-      }
+    if (!empty($query)) {
+      $file = file_load(array_shift($query));
     }
-    if (!isset($file)) {
-      global $user;
-      $uri = file_stream_wrapper_uri_normalize($uri);
-      $wrapper = file_stream_wrapper_get_instance_by_uri($uri);
-      $file = new StdClass;
-      // This is gagged because some uris will not support it.
-      $file->filesize = @filesize($uri);
-      $file->timestamp = REQUEST_TIME;
-      $file->status = FILE_STATUS_PERMANENT;
-      $file->is_new = TRUE;
-      $file->uri = $uri;
-      $file->filemime = file_get_mimetype($uri);
-      $file->uid = $user->uid;
-      if (isset($_SESSION['brightcove']["video_just_uploaded_{$user->uid}"])) {
-        $uploaded_video = $_SESSION['brightcove']["video_just_uploaded_{$user->uid}"];
-        $file->filename = $uploaded_video->filename;
-        unset($_SESSION['brightcove']["video_just_uploaded_{$user->uid}"]);
-      } else if (isset($_SESSION['brightcove']["selected_video_{$user->uid}"])) {
+  }
+  if (!isset($file)) {
+    global $user;
+    $uri = file_stream_wrapper_uri_normalize($uri);
+    $wrapper = file_stream_wrapper_get_instance_by_uri($uri);
+    $file = new StdClass;
+    // This is gagged because some uris will not support it.
+    $file->filesize = @filesize($uri);
+    $file->timestamp = REQUEST_TIME;
+    $file->status = FILE_STATUS_PERMANENT;
+    $file->is_new = TRUE;
+    $file->uri = $uri;
+    $file->filemime = file_get_mimetype($uri);
+    $file->uid = $user->uid;
+    if (isset($_SESSION['brightcove']["video_just_uploaded_{$user->uid}"])) {
+      $uploaded_video = $_SESSION['brightcove']["video_just_uploaded_{$user->uid}"];
+      $file->filename = $uploaded_video->filename;
+      unset($_SESSION['brightcove']["video_just_uploaded_{$user->uid}"]);
+    }
+    else {
+      if (isset($_SESSION['brightcove']["selected_video_{$user->uid}"])) {
         $selected_video = $_SESSION['brightcove']["selected_video_{$user->uid}"];
         $file->filename = $selected_video->name;
         unset($_SESSION['brightcove']["selected_video_{$user->uid}"]);
-      } else {
+      }
+      else {
         $file->filename = basename($uri);
       }
     }
-    return $file;
   }
+  return $file;
+}
