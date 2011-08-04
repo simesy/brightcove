@@ -524,6 +524,9 @@ function brightcove_media_node_presave($node) {
 function ajax_brightcove_media_upload_callback($form, $form_state) {
   global $user;
 
+  // Make sure it is not set, might be needed if a user changes mind after upload and wants to upload another.
+  unset($_SESSION['brightcove']["video_just_uploaded_{$user->uid}"]);
+
   $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
   $validators = array(
     'file_validate_extensions' => array($limits['extensions']),
