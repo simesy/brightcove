@@ -91,6 +91,17 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
         ),
       ),
     );
+    // add player override
+    if (isset($display['settings']['player']) &&
+        $display['settings']['player']) {
+      $element['#player'] = $display['settings']['player'];
+      $element['#player_key'] = $display['settings']['player_key'];
+    }
+    foreach (array('width', 'height') as $setting) {
+      if (isset($display['settings'][$setting]) && $display['settings'][$setting]) {
+        $element['#params'][$setting] = $display['settings'][$setting];
+      }
+    }
 
     return $element;
   }
@@ -117,12 +128,41 @@ function brightcove_media_file_formatter_image_view($file, $display, $langcode) 
   return NULL;
 }
 
-function brightcove_media_file_formatter_video_settings() {
-  return array();
+function brightcove_media_file_formatter_video_settings($form, $form_state, $settings) {
+  $element = array();
+  $element['player'] = array(
+    '#title' => t('Player Id'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['player']) ? $settings['player'] : '',
+  );
+  $element['player_key'] = array(
+    '#title' => t('Player Key'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['player_key']) ? $settings['player_key'] : '',
+  );
+  $element['width'] = array(
+    '#title' => t('Player Width'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['width']) ? $settings['width'] : '',
+  );
+  $element['height'] = array(
+    '#title' => t('Player Height'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['height']) ? $settings['height'] : '',
+  );
+  return $element;
 }
 
-function brightcove_media_file_formatter_image_settings() {
-  return array();
+function brightcove_media_file_formatter_image_settings($form, $form_state, $settings) {
+  $element = array();
+  $element['image_style'] = array(
+    '#title' => t('Image style'),
+    '#type' => 'select',
+    '#options' => image_style_options(FALSE),
+    '#default_value' => isset($settings['image_style']) ? $settings['image_style'] : '',
+    '#empty_option' => t('None (original image)'),
+  );
+  return $element;
 }
 
 /**
