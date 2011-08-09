@@ -538,8 +538,7 @@ function brightcove_media_node_presave($node) {
             try {
               $result = $bc->find('find_video_by_id', $video_id);
               if (count($result)) {
-                $file = (object)$result;
-                $_SESSION['brightcove']["selected_video_{$user->uid}"] = $file;
+                $_SESSION['brightcove']["selected_video_{$user->uid}"] = (object)$result;
               }
             }
             catch (Exception $e) {
