@@ -49,7 +49,7 @@ function brightcove_field_browse() {
       case 'name':
       default:
         $method = 'find_videos_by_text';
-        $params = array('text' => join(' ', split(',', $_SESSION['brightcove_field_filter']['keywords'])));
+        $params = array('text' => join(' ', explode(',', $_SESSION['brightcove_field_filter']['keywords'])));
         break;
     }
   } else {

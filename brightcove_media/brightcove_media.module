@@ -377,7 +377,7 @@ function brightcove_media_list() {
       case 'name':
       default:
         $method = 'find_videos_by_text';
-        $bc_find_params = array('text' => join(' ', split(',', $params['filter']['keywords'])));
+        $bc_find_params = array('text' => join(' ', explode(',', $params['filter']['keywords'])));
         break;
     }
   }
