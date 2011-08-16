@@ -41,7 +41,6 @@ function theme_brightcove_field_dialog_player($variables) {
   $entity_type = $variables['entity_type'];
   $entity = $variables['entity'];
   $field = $variables['field'];
-  //$instance = $variables['instance']; // currently unused
   $display = $variables['display'];
   $delta = $variables['delta'];
 

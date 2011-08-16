@@ -416,9 +416,6 @@ function brightcove_field_browser_process($element, $form_state, $form) {
   $entity_info = entity_get_info($entity_type);
   $eid = $form[$entity_info['entity keys']['id']]['#value'];
 
-  //$field_info = content_fields($element['#field_name'],
-  //                              $element['#type_name']);
-  //modalframe_parent_js(); //dialog internal area
   $field_info = field_info_field($element['#field_name']);
   $element[$field_key] = array(
     '#type' => 'textfield',
@@ -692,25 +689,21 @@ function brightcove_field_theme() {
       'variables' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'dialog_width' => NULL, 'dialog_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL, 'style' => NULL),
       'template' => 'brightcove-field-dialog',
       'pattern' => 'brightcove_field_dialog__',
-//      'preprocess functions' => array('template_preprocess_brightcove_field_dialog'),
     ),
     'brightcove_field_entity_link' => array(
       'variables' => array('output' => NULL, 'video_id' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL, 'style' => NULL),
       'template' => 'brightcove-field-entity-link',
       'pattern' => 'brightcove_field_entity_link__',
-//      'preprocess functions' => array('template_preprocess_brightcove_field_entity_link'),
     ),
     'brightcove_field_entity_image' => array(
       'variables' => array('output' => NULL, 'video_id' => NULL, 'entity_id' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL),
       'template' => 'brightcove-field-entity-image',
       'pattern' => 'brightcove_field_entity_image__',
-//      'preprocess functions' => array('template_preprocess_brightcove_field_entity_image'),
     ),
     'brightcove_field_dialog_image' => array(
       'variables' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'dialog_width' => NULL, 'dialog_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL),
       'template' => 'brightcove-field-dialog-image',
       'pattern' => 'brightcove_field_dialog_image__',
-//      'preprocess functions' => array('template_preprocess_brightcove_field_dialog_image'),
     ),
     'brightcove_field_browse_button' => array(
       'variables' => array('element' => NULL),
@@ -948,7 +941,6 @@ function brightcove_field_browser_form($form, &$form_state, $item) {
       'callback' => 'ajax_browse_dialog_close_callback',
     ),
   );
-  //$form['#submit'] = array("brightcove_field_browser_form_submit");
   return $form;
 }
 
@@ -960,7 +952,6 @@ function brightcove_field_browser_form($form, &$form_state, $item) {
 function brightcove_field_browser_form_submit($form, &$form_state) {
   // The value is "title [id:ID]" - recognised by validating element.
   $return['selected'] = check_plain($form_state['values']['title']) . ' [id:' . check_plain($form_state['values']['id']) . ']';
-  //modalframe_close_dialog($return);
 }
 
 /**
@@ -1055,8 +1046,6 @@ function brightcove_field_upload_form($form, &$form_state) {
       );
   $form['#suffix'] = '</div>';
 
-  //$form['#attributes'] = array('enctype' => "multipart/form-data");
-  //$form['#submit'] = array("brightcove_field_upload_form_submit");
   $form['#attached']['js'] = array(
     drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
   );
@@ -1416,10 +1405,6 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
     brightcove_video_cache_set($id, $video);
     // invalidating brightcove video load cache
     cache_set("bc:video:{$id}", FALSE, 'cache');
-
-    //db_query('DELETE FROM {files} WHERE fid = %d', $file->fid);
-    //unlink($file->filepath);
-
 
     $selector = '#upload-dialog';
     $data = check_plain($form_state['values']['title']) . ' [id:' . check_plain($id) . ']';

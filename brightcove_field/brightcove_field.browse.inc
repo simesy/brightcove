@@ -23,7 +23,6 @@ function brightcove_field_browse() {
 
   $items_per_page = 20;
 
-  //modalframe_child_js(); //dialog internal area
   drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/browse.css');
   drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js');
   // Issue a BC request to list videos
@@ -101,9 +100,6 @@ function brightcove_field_browse() {
     }
   }
 
-
-  //$pager = theme('pager', NULL, $items_per_page, 0);
-
   $pager_vars = array(
     'tags' => NULL,
     'element' => 0,
@@ -145,13 +141,8 @@ function brightcove_field_autocomplete($field_name, $string = '') {
   drupal_json_output($matches);
 }
 
-
-
-
 function brightcove_field_upload() {
-  //modalframe_child_js(); //dialog internal area
   drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css');
-//  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/attach.js');
 
   $form = drupal_get_form('brightcove_field_upload_form');
   return drupal_render($form);
