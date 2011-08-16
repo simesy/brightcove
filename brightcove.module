@@ -1,32 +1,31 @@
 <?php
-/*
-   http://docs.brightcove.com/en/media/
-   http://support.brightcove.com/en/docs/category/players
-   http://support.brightcove.com/en/docs/media-api-error-message-reference
-   http://support.brightcove.com/en/docs/media-api-objects-reference
-   */
-
 /**
-  * @file
-  * Brightcove module is an integration layer between any modules using
-  * Brightcove API. It makes all necessary checks for the API and makes
-  * settings available to the user.
-  *
-  * @author
-  * Jakub Suchy <jakub@dynamiteheads.com>
-  * Parts of code taken from Media Brightcove module by Aaron Winborn - http://advomatic.com
-  *
-  * Module development sponsored by Brightcove, Inc.
-  */
+ * @file
+ * Brightcove module is an integration layer between any modules using
+ * Brightcove API. It makes all necessary checks for the API and makes
+ * settings available to the user.
+ *
+ * @author
+ * Jakub Suchy <jakub@dynamiteheads.com>
+ * Parts of code taken from Media Brightcove module by Aaron Winborn - http://advomatic.com
+ *
+ * Module development sponsored by Brightcove, Inc.
+ *
+ * References:
+ *   - http://docs.brightcove.com/en/media/
+ *   - http://support.brightcove.com/en/docs/category/players
+ *   - http://support.brightcove.com/en/docs/media-api-error-message-reference
+ *   - http://support.brightcove.com/en/docs/media-api-objects-reference
+ */
 
 define('BRIGHTCOVE_STATUS_COMPLETE', 'COMPLETE');
 define('BRIGHTCOVE_STATUS_ERROR', 'ERROR');
 
 /**
-  * Settings needed:
-  *  - API key
-  *  - Allow public videos
-  */
+ * Settings needed:
+ *  - API key
+ *  - Allow public videos
+ */
 
 /**
  * Implements hook_menu().
@@ -45,8 +44,8 @@ function brightcove_menu() {
 }
 
 /**
-  * Implements hook_permission().
-  */
+ * Implements hook_permission().
+ */
 function brightcove_permission() {
   return array(
     'administer brightcove settings' => array(
@@ -72,7 +71,7 @@ function brightcove_permission() {
  * The library is available from http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/.
  *
  * @return string
- *  The path to the bc-mapi.php file.
+ *   The path to the bc-mapi.php file.
  */
 function brightcove_mapi_path() {
   $path = &drupal_static(__FUNCTION__);
@@ -117,25 +116,25 @@ function brightcove_initialize() {
 
 
 /**
-  * Check a set of API keys to determine write access to Brightcove Studio.
-  * Only customers with Professional and higher accounts have write access.
-  *
-  * @return bool
-  *  TRUE for write access allowed.
-  *  FALSE for write access forbidden.
-  */
+ * Check a set of API keys to determine write access to Brightcove Studio.
+ * Only customers with Professional and higher accounts have write access.
+ *
+ * @return bool
+ *  TRUE for write access allowed.
+ *  FALSE for write access forbidden.
+ */
 function brightcove_write_api_access() {
-  return (bool) variable_get('brightcove_write_api_key', '');
+  return (bool) variable_get('brightcove_write_api_key', FALSE);
 }
 
 /**
-  * Loads Brightcove video from BC Media API. Uses a 5 minutes cache to speed up lookups.
-  *
-  * @param $video_id
-  *
-  * @return $video
-  * Video object or FALSE if video not found.
-  */
+ * Loads Brightcove video from BC Media API. Uses a 5 minutes cache to speed up lookups.
+ *
+ * @param $video_id
+ *
+ * @return $video
+ * Video object or FALSE if video not found.
+ */
 function brightcove_video_load($video_id) {
   $cache = cache_get('bc:video:' . $video_id, 'cache');
   if (!empty($cache->data->id)) {
@@ -158,15 +157,15 @@ function brightcove_video_load($video_id) {
 }
 
 /**
-  * Function that saves a remote image as a local file.
-  *
-  * @param $url
-  * Remote image URL.
-  *
-  * @return
-  * Returns FALSE if image doesn't exist, cannot be saved or is not image (based on extension).
-  * Returns local file path if image already exists or was saved correctly.
-  */
+ * Function that saves a remote image as a local file.
+ *
+ * @param $url string
+ *   Remote image URL.
+ *
+ * @return
+ *   Returns FALSE if image doesn't exist, cannot be saved or is not image (based on extension).
+ *   Returns local file path if image already exists or was saved correctly.
+ */
 function brightcove_remote_image($url) {
   $parse = parse_url($url);
   $path = pathinfo($parse['path']);
@@ -219,21 +218,21 @@ function theme_brightcove_unavailable_message($variables) {
 }
 
 /**
-  * Will return a default image for videos without a thumbnail or still image.
-  */
+ * Returns a default image for videos without a thumbnail or still image.
+ */
 function brightcove_get_default_image() {
   return drupal_get_path('module', 'brightcove') . '/images/default-image.png';
 }
 
-/*
+/**
  * Return the status of a specific video.
  *
  * @param string $code
- * The code for the Brightcove video.
+ *   The code for the Brightcove video.
  * @param boolean $reset
- * (Optional) If TRUE, then reset the cached status.
+ *   (Optional) If TRUE, then reset the cached status.
  * @return string
- * The status code returned by Brightcove.
+ *   The status code returned by Brightcove.
  */
 function brightcove_status($code, $reset = FALSE) {
   static $status;
@@ -261,11 +260,11 @@ function brightcove_status($code, $reset = FALSE) {
 }
 
 /**
-  * Check if expose unavailability message in case the video is not available.
-  *
-  * @return
-  * Returns a themed message if checks are enabled.
-  */
+ * Check if expose unavailability message in case the video is not available.
+ *
+ * @return
+ *   Returns a themed message if checks are enabled.
+ */
 function brightcove_expose_unavailable() {
   if (variable_get('brightcove_check_for_unavailable', TRUE) &&
      ($unavailable_message = variable_get('brightcove_status_display_unavailable', 'This video is unavailable for the moment.'))) {
@@ -277,18 +276,18 @@ function brightcove_expose_unavailable() {
 }
 
 /**
-  * Upload video to Brightcove.
-  *
-  * @param $path
-  * Filepath to video file.
-  * @param $meta
-  * Meta data array. Required values:
-  *     array(
-  *       'name' => 'video name',
-  *       'shortDescription' => 'short description',
-  *     );
-  * @see http://support.brightcove.com/en/docs/media-api-objects-reference#Video
-  */
+ * Upload video to Brightcove.
+ *
+ * @param $path
+ *   Filepath to video file.
+ * @param $meta
+ *   Meta data array. Required values:
+ *     array(
+ *       'name' => 'video name',
+ *       'shortDescription' => 'short description',
+ *     );
+ * @see http://support.brightcove.com/en/docs/media-api-objects-reference#Video
+ */
 function brightcove_upload_video($path, $meta) {
   global $user;
   if (empty($meta['name'])) {
@@ -302,8 +301,8 @@ function brightcove_upload_video($path, $meta) {
     $meta['customFields'] = array($user_attribute => $user->name);
   }
   $bc = brightcove_initialize();
-  try {
 
+  try {
     $options = array();
     preg_match('/\.(f4a|f4b|f4v|f4p|flv)$/i', $path, $invalid_extensions);
     if (!isset($invalid_extensions[1])) {
@@ -328,13 +327,13 @@ function brightcove_upload_video($path, $meta) {
 }
 
 /**
-  * Parse a field value in form of "title [id:123]" and return 123
-  *
-  * @param $id
-  *  Video ID in form of "title [id:123]".
-  * @return
-  *  Int value of the ID or NULL if not found.
-  */
+ * Parse a field value in form of "title [id:123]" and return 123
+ *
+ * @param $id
+ *   Video ID in form of "title [id:123]".
+ * @return
+ *   Int value of the ID or NULL if not found.
+ */
 function brightcove_parse_id($id) {
   preg_match('/\[id:([^\[]*)\]$/', $id, $matches);
   if (count($matches) == 2) {
@@ -344,11 +343,11 @@ function brightcove_parse_id($id) {
 }
 
 /**
-  * Generate a reference ID based on Drupal version and User ID.
-  *
-  * @param $account
-  * Account UID that is responsible for this video. If NULL, logged in user is used.
-  */
+ * Generate a reference ID based on Drupal version and User ID.
+ *
+ * @param $account
+ *   Account UID that is responsible for this video. If NULL, logged in user is used.
+ */
 function brightcove_generate_reference($account = NULL) {
   global $user;
   if (!isset($account)) {
@@ -364,10 +363,10 @@ function brightcove_generate_reference($account = NULL) {
  * videos are uploaded.
  *
  * @param $id
- *  The Brightcove identifier for the video.
+ *   The Brightcove identifier for the video.
  *
  * @param $video
- *  The video object to be cached.
+ *   The video object to be cached.
  */
 function brightcove_video_cache_set($id, $video) {
   if (!isset($_SESSION['brightcove'])) {
@@ -382,10 +381,10 @@ function brightcove_video_cache_set($id, $video) {
  * Fetches a brighcove video object from the cache, if available.
  *
  * @param
- *  The Brightcove identifier for the video.
+ *   The Brightcove identifier for the video.
  *
  * @return
- *  Object the Brightcove video object.
+ *   Object the Brightcove video object.
  */
 function brightcove_video_cache_get($id) {
   $id = (int) $id;

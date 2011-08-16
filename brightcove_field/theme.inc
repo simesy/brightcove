@@ -4,14 +4,14 @@ define('BRIGHTCOVE_VIDEO_DEFAULT_HEIGHT', 412);
 define('BRIGHTCOVE_VIDEO_DEFAULT_WIDTH', 486);
 
 /**
-  * Theme callback for a Brightcove browse button.
-  * Currently it's just a thin wrapper around the theme_button()
-  * function which only returns a button of type submit. The themed
-  * representation is just adapted to achieve an input html tag
-  * of the type button.
-  *
-  * @see nodereference_explorer.module
-  */
+ * Theme callback for a Brightcove browse button.
+ * Currently it's just a thin wrapper around the theme_button()
+ * function which only returns a button of type submit. The themed
+ * representation is just adapted to achieve an input html tag
+ * of the type button.
+ *
+ * @see nodereference_explorer.module
+ */
 function theme_brightcove_field_browse_button($element) {
   drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js');
   $element['#button_type'] = 'button';
@@ -21,28 +21,28 @@ function theme_brightcove_field_browse_button($element) {
 }
 
 /**
-  * Theme callback for Brightcove browse table item.
-  *
-  * @param item
-  * Video item.
-  *
-  * @return
-  * Themed item form.
-  */
+ * Theme callback for Brightcove browse table item.
+ *
+ * @param item
+ *   Video item.
+ *
+ * @return
+ *   Themed item form.
+ */
 function theme_brightcove_field_browse_item($variables) {
   $form = drupal_get_form('brightcove_field_browser_form' . $variables['item']['video_id'], $variables['item']);
   return drupal_render($form);
 }
 
 /**
-  * Theme callback for Brightcove browse table.
-  *
-  * @param $variables
-  * Array of video items.
-  *
-  * @return
-  * Themed browse table.
-  */
+ * Theme callback for Brightcove browse table.
+ *
+ * @param $variables
+ *   Array of video items.
+ *
+ * @return
+ *   Themed browse table.
+ */
 function theme_brightcove_field_browse_items($variables) {
   $rowcount = 0;
   $activerow = 0;

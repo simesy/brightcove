@@ -123,13 +123,13 @@ function brightcove_field_browse_access($entity_type, $field_name,
  * Callback for brightcove_field_player - checks access to the field and prints a player for Lightbox2.
  *
  * @param $node
- * Node object.
+ *   Node object.
  * @param $field_name
- * Field that is being displayed.
+ *   Field that is being displayed.
  * @param $delta
- * Field delta.
+ *   Field delta.
  *
- * @return none
+ * @return array
  */
 function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) {
   $entities = entity_load($entity_type, array($entity_id));
@@ -481,7 +481,6 @@ function brightcove_field_browser_process($element, $form_state, $form) {
     $element['actions']['remove']['#attributes']['disabled'] = 'disabled';
   }
 
-
   if (empty($brightcove_field_settings[$element['#field_name']])) {
     $brightcove_field_settings[$element['#field_name']] = array(
         'brightcove_field' => array($element['#field_name'] => array(
@@ -501,7 +500,6 @@ function brightcove_field_browser_process($element, $form_state, $form) {
   array_unshift($element[$field_key]['#element_validate'], 'brightcove_field_browser_validate');
 
   return $element;
-
 }
 
 /**
@@ -1440,9 +1438,9 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
  * Custom page delivery callback, for content in dialog.
  *
  * @param $page
- *  Content returned by page callback.
+ *   Content returned by page callback.
  * @print
- *  Html for display.
+ *   Html for display.
  */
 function brightcove_field_deliver_dialog($page) {
   if (is_array($page)) {

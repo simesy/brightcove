@@ -1,23 +1,23 @@
 <?php
 
 /**
-  * @file brightcove_field.browse.inc
-  *       Holds a method to list all BC videos that are attachable to a field.
-  */
+ * @file
+ * Holds a method to list all BC videos that are attachable to a field.
+ */
 
 /**
-  * This function is a callback for modalframe window, providing an access to browse videos.
-  *
-  * @see brightcove_field_menu()
-  *
-  * @param none
-  *
-  * @return A list of available videos that can be attached to a field.
-  *
-  * TODO: Allow limiting videos by user (own videos only).
-  * TODO: Interesting feature would be to detect multiple values allowed in the
-  *       parent field and allow attaching all videos at once.
-  */
+ * This function is a callback for modalframe window, providing an access to browse videos.
+ *
+ * @see brightcove_field_menu()
+ *
+ * @param none
+ *
+ * @return A list of available videos that can be attached to a field.
+ *
+ * TODO: Allow limiting videos by user (own videos only).
+ * TODO: Interesting feature would be to detect multiple values allowed in the
+ *       parent field and allow attaching all videos at once.
+ */
 function brightcove_field_browse() {
   global $pager_from_array, $pager_total, $pager_page_array;
 
@@ -74,7 +74,6 @@ function brightcove_field_browse() {
           ((int)$pager_total[0]) - 1)
        );
 
-
   $items = array();
   if (count($result)) {
     foreach($result as $video) {
@@ -120,15 +119,15 @@ function brightcove_field_browse() {
 }
 
 /**
-  * Menu callback for brightcove_field/autocomplete.
-  *
-  * @param $field_name
-  *  Field name - field name that is requesting autocomplete. Unused, will be utilized to limit access to certain videos for certain fields.
-  * @param $string
-  *  String to search for - will match videos by this text.
-  * @return
-  *  JSON object with matched videos.
-  */
+ * Menu callback for brightcove_field/autocomplete.
+ *
+ * @param $field_name
+ *   Field name - field name that is requesting autocomplete. Unused, will be utilized to limit access to certain videos for certain fields.
+ * @param $string
+ *   String to search for - will match videos by this text.
+ * @return
+ *   JSON object with matched videos.
+ */
 function brightcove_field_autocomplete($field_name, $string = '') {
   $bc = brightcove_initialize();
   $matches = array();

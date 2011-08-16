@@ -32,8 +32,8 @@ function theme_brightcove_field_dialog_image($variables) {
 }
 
 /**
-  * Theme callback for Default thumbnail -> dialog player formatter.
-  */
+ * Theme callback for Default thumbnail -> dialog player formatter.
+ */
 function theme_brightcove_field_dialog_player($variables) {
   $element = $variables['element'];
   $image = $variables['image'];
@@ -123,14 +123,14 @@ function template_preprocess_brightcove_field_dialog(&$vars) {
 }
 
 /**
-  * Theme callback for Brightcove field formatter.
-  * Returns an embedded player with default site player.
-  *
-  * @param $element
-  *  Element with the Video ID.
-  * @return
-  *  Player HTML code.
-  */
+ * Theme callback for Brightcove field formatter.
+ * Returns an embedded player with default site player.
+ *
+ * @param $element
+ *   Element with the Video ID.
+ * @return
+ *   Player HTML code.
+ */
 function theme_brightcove_field_formatter_default($variables) {
   $player = '';
 
@@ -163,8 +163,8 @@ function theme_brightcove_field_formatter_default($variables) {
 
 
 /**
-  * Theme callback for Default thumbnail linked to entity formatter.
-  */
+ * Theme callback for Default thumbnail linked to entity formatter.
+ */
 function theme_brightcove_field_entity_link($variables) {
   $video_id = isset($variables['element']['video_id']) ?
     $variables['element']['video_id'] : NULL;
@@ -220,8 +220,8 @@ function template_preprocess_brightcove_field_entity_link(&$vars) {
 }
 
 /**
-  * Theme callback for image linking to entity.
-  */
+ * Theme callback for image linking to entity.
+ */
 function theme_brightcove_field_entity_link_dialog($variables) {
   $video_id = isset($variables['element']['video_id']) ?
     $variables['element']['video_id'] : NULL;
@@ -248,8 +248,8 @@ function theme_brightcove_field_entity_link_dialog($variables) {
 }
 
 /**
-  * Theme callback for Default thumbnail.
-  */
+ * Theme callback for Default thumbnail.
+ */
 function theme_brightcove_field_entity_image($variables) {
   module_load_include('inc', 'brightcove_field', 'theme');
   $video_id = isset($variables['element']['video_id']) ?
@@ -303,13 +303,13 @@ function template_preprocess_brightcove_field_entity_image(&$vars) {
 }
 
 /**
-  * Theme callback for imagecache image
-  *
-  * @param $element
-  *  Element with the Video ID.
-  * @return
-  *  Link HTML code.
-  */
+ * Theme callback for imagecache image
+ *
+ * @param $element
+ *   Element with the Video ID.
+ * @return
+ *   Link HTML code.
+ */
 function theme_brightcove_field_entity_image_style($variables) {
   $video_id = isset($variables['element']['video_id']) ?
     $variables['element']['video_id'] : NULL;
