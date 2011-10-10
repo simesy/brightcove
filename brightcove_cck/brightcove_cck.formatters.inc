@@ -6,6 +6,14 @@
   */
 
 /**
+ *  Define our constants and default variables.
+ */
+define('BRIGHTCOVE_DEFAULT_VIDEO_WIDTH', 425);
+define('BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT', 350);
+define('BRIGHTCOVE_DEFAULT_THUMBNAIL_WIDTH', 180);
+define('BRIGHTCOVE_DEFAULT_THUMBNAIL_HEIGHT', 176);
+
+/**
   * Theme callback for Lightbox2 with imagecache player.
   * @param $element
   *  Element with the Video ID.
@@ -126,6 +134,18 @@ function theme_brightcove_cck_formatter_default($element) {
       drupal_set_html_head('<script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script>');
     }
     $params['id'] = 'myExperience'.$vidcount;
+    $field = content_fields($element['#field_name'], $element['#type_name']);
+    // get width/height settings based on formatter type
+    switch ($element['#formatter']) {
+      case 'default':
+        $params['width'] = $field['widget']['video_width'] ? $field['widget']['video_width'] : variable_get('brightcove_cck_default_video_width', BRIGHTCOVE_DEFAULT_VIDEO_WIDTH);
+        $params['height'] = $field['widget']['video_height'] ? $field['widget']['video_height'] : variable_get('brightcove_cck_default_video_height', BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT);
+        break;
+      case 'video_thumbnail':
+        $params['width'] = $field['widget']['thumbnail_width'] ? $field['widget']['thumbnail_width'] : variable_get('brightcove_cck_default_thumbnail_width', BRIGHTCOVE_DEFAULT_THUMBNAIL_WIDTH);
+        $params['height'] = $field['widget']['thumbnail_height'] ? $field['widget']['thumbnail_height'] : variable_get('brightcove_cck_default_thumbnail_height', BRIGHTCOVE_DEFAULT_THUMBNAIL_HEIGHT);
+        break;
+    }
     $player = theme('brightcove_cck_embed', 'video', variable_get('brightcove_player', ''), variable_get('brightcove_player_key', ''),  $element['#item']['video_id'], $params);
     $vidcount++;
   }

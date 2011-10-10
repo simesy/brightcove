@@ -12,6 +12,11 @@
  * Module development sponsored by Brightcove, Inc.
  */
 
+define('BRIGHTCOVE_DEFAULT_VIDEO_WIDTH', 425);
+define('BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT', 350);
+define('BRIGHTCOVE_DEFAULT_THUMBNAIL_WIDTH', 180);
+define('BRIGHTCOVE_DEFAULT_THUMBNAIL_HEIGHT', 176);
+
 /**
  * Implementation of hook_menu().
  */
@@ -276,6 +281,11 @@ function brightcove_cck_field_formatter_info() {
       'field types' => array('brightcove_video'),
       'multiple values' => CONTENT_HANDLE_CORE,
       );
+  $formatters['video_thumbnail'] = array(
+      'label' => t('Thumbnail video player'),
+      'field types' => array('brightcove_video'),
+      'multiple values' => CONTENT_HANDLE_CORE,
+      );
 
   if (module_exists('lightbox2')) {
     $formatters['lightbox2_player_videoStillURL'] = array(
@@ -346,6 +356,93 @@ function brightcove_cck_widget_info() {
           ),
         ),
       );
+}
+
+/**
+ * Implementation of hook_widget_settings().
+ */
+function brightcove_cck_widget_settings($op, $widget) {
+  switch ($op) {
+    case 'form':
+      if ($widget['type'] == 'brightcove_cck_browser') {
+        // settings fieldset for the standard video player formatter
+        $width = variable_get('brightcove_cck_default_video_width', BRIGHTCOVE_DEFAULT_VIDEO_WIDTH);
+        $height = variable_get('brightcove_cck_default_video_height', BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT);
+        $form['video'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Standard Video Display Settings'),
+          '#description' => t('These settings control how this video is displayed in its full size, which defaults to @widthx@height.', array('@width' => $width, '@height' => $height)),
+          '#collapsible' => TRUE,
+          '#collapsed' => FALSE,
+        );
+        $form['video']['video_width'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Standard Video width'),
+          '#default_value' => empty($widget['video_width']) ? $width : $widget['video_width'],
+          '#required' => TRUE,
+          '#description' => t('The width of the video. It defaults to @width. Minimum width: 180.', array('@width' => $width)),
+        );
+        $form['video']['video_height'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Standard Video height'),
+          '#default_value' => empty($widget['video_height']) ? $height : $widget['video_height'],
+          '#required' => TRUE,
+          '#description' => t('The height of the video. It defaults to @height. Minimum height: 176.', array('@height' => $height)),
+        );
+
+        // settings fieldset for the thumbnail video player formatter
+        $width = variable_get('brightcove_cck_default_thumbnail_width', BRIGHTCOVE_DEFAULT_THUMBNAIL_WIDTH);
+        $height = variable_get('brightcove_cck_default_thumbnail_height', BRIGHTCOVE_DEFAULT_THUMBNAIL_HEIGHT);
+        $form['thumbnail'] = array(
+          '#type' => 'fieldset',
+          '#title' => t('Thumbnail Video Display Settings'),
+          '#description' => t('These settings control how this video is displayed in its thumbnail size, which defaults to @widthx@height.', array('@width' => $width, '@height' => $height)),
+          '#collapsible' => TRUE,
+          '#collapsed' => FALSE,
+        );
+        $form['thumbnail']['thumbnail_width'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Thumbnail Video width'),
+          '#default_value' => empty($widget['thumbnail_width']) ? $width : $widget['thumbnail_width'],
+          '#required' => TRUE,
+          '#description' => t('The width of the thumbnail video. It defaults to @width. Minimum width: 180.', array('@width' => $width)),
+        );
+        $form['thumbnail']['thumbnail_height'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Thumbnail Video height'),
+          '#default_value' => empty($widget['thumbnail_height']) ? $height : $widget['thumbnail_height'],
+          '#required' => TRUE,
+          '#description' => t('The height of the thumbnail video. It defaults to @height. Minimum height: 176.', array('@height' => $height)),
+        );
+
+        return $form;
+      }
+      break;
+
+    case 'validate':
+      if ($widget['widget_type'] == 'brightcove_cck_browser') {
+        if (!is_numeric($widget['video_width']) || intval($widget['video_width']) != $widget['video_width'] || $widget['video_width'] < 180) {
+          form_set_error('video_width', t('"Standard Video width" must be a positive integer, larger than or equals to 180.'));
+        }
+        if (!is_numeric($widget['video_height']) || intval($widget['video_height']) != $widget['video_height'] || $widget['video_height'] < 176) {
+          form_set_error('video_height', t('"Standard Video height" must be a positive integer, larger than or equals to 176.'));
+        }
+        if (!is_numeric($widget['thumbnail_width']) || intval($widget['thumbnail_width']) != $widget['thumbnail_width'] || $widget['thumbnail_width'] < 180) {
+          form_set_error('thumbnail_width', t('"Thumbnail Video width" must be a positive integer, larger than or equals to 180.'));
+        }
+        if (!is_numeric($widget['thumbnail_height']) || intval($widget['thumbnail_height']) != $widget['thumbnail_height'] || $widget['thumbnail_height'] < 176) {
+          form_set_error('thumbnail_height', t('"Thumbnail Video height" must be a positive integer, larger than or equals to 176 .'));
+        }
+      }
+      break;
+
+    case 'save':
+      if ($widget['widget_type'] == 'brightcove_cck_browser') {
+        $columns = array('video_width', 'video_height', 'thumbnail_width', 'thumbnail_height');
+        return $columns;
+      }
+      break;
+  }
 }
 
 /**
@@ -577,6 +674,11 @@ function brightcove_cck_theme() {
   $theme['brightcove_cck_formatter_node_image_videoStillURL'] = array(
       'arguments' => array('element' => NULL, 'image' => NULL, 'preset' => NULL),
       'function' => 'theme_brightcove_cck_node_image',
+      'file' => 'brightcove_cck.formatters.inc',
+      );
+  $theme['brightcove_cck_formatter_video_thumbnail'] = array(
+      'arguments' => array('element' => NULL),
+      'function' => 'theme_brightcove_cck_formatter_default',
       'file' => 'brightcove_cck.formatters.inc',
       );
 
