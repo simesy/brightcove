@@ -93,13 +93,22 @@ function brightcove_mapi_path() {
 /**
  * Initializes the Brightcove Media API and returns an instance of the object.
  *
+ * @param string $read_token
+ *   An optional read token instead of the stored one.
+ * @param string $write_token
+ *   An optional write token instead of the stored one.
+ *
  * @return BCMAPI
  *   Instance of the Brightcove Media API or FALSE if fails to initialize.
  */
-function brightcove_initialize() {
+function brightcove_initialize($read_token = NULL, $write_token = NULL) {
 
-  $read_token = variable_get('brightcove_read_api_key', '');
-  $write_token = variable_get('brightcove_write_api_key', '');
+  if (empty($read_token)) {
+    $read_token = variable_get('brightcove_read_api_key', '');
+  }
+  if (empty($write_token)) {
+    $write_token = variable_get('brightcove_write_api_key', '');
+  }
 
   if (empty($read_token)) {
     drupal_set_message(t('Cannot initialize Brightcove API. Contact site administrators.'), 'error');
@@ -394,4 +403,35 @@ function brightcove_video_cache_get($id) {
   }
 
   return NULL;
+}
+
+/**
+ * Verifies the brightcove API keys.
+ *
+ * @param string $read_token
+ *   An optional read token instead of the stored one.
+ * @param string $write_token
+ *   An optional write token instead of the stored one.
+ *
+ * @return array
+ *   A touple of booleans as the result of the verification.
+ *   The first item is TRUE if the read key is correct.
+ *   The second item is TRUE if the write key is correct.
+ */
+function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
+  $bc = brightcove_initialize($read_token, $write_token);
+
+  $read = FALSE;
+  try {
+    $read = $bc->find('videobyid', 0) || TRUE;
+  } catch (Exception $e) {}
+
+  try {
+    $bc->getStatus('video', 0, 0);
+    $write = TRUE;
+  } catch (Exception $e) {
+    $write = stripos($e->getMessage(), 'token') === FALSE;
+  }
+
+  return array($read, $write);
 }

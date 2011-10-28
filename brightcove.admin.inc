@@ -134,5 +134,22 @@ function brightcove_admin_settings() {
   );
 
 
-  return system_settings_form($form);
+  $form = system_settings_form($form);
+  $form['#validate'][] = 'brightcove_admin_settings_validate';
+
+  return $form;
+}
+
+function brightcove_admin_settings_validate($form, &$form_state) {
+  list($can_read, $can_write) = brightcove_verify_tokens(
+    $form_state['values']['brightcove_read_api_key'],
+    $form_state['values']['brightcove_write_api_key']
+  );
+
+  if (!$can_read) {
+    form_set_error('brightcove_read_api_key', t('Invalid read key'));
+  }
+  if ($form_state['values']['brightcove_write_api_key'] && !$can_write) {
+    form_set_error('brightcove_write_api_key', t('Invalid write key'));
+  }
 }
