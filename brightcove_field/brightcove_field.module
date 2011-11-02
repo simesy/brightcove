@@ -1058,61 +1058,6 @@ function brightcove_field_upload_form($form, &$form_state) {
 }
 
 /**
- * Submit callback for brightcove_field_upload_form.
- *
- * Will save a file and upload it to Brightcove.
- */
-function brightcove_field_upload_formx_submit($form, &$form_state) {
-
-  $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
-  $validators = array(
-      'file_validate_extensions' => array($limits['extensions']),
-      );
-
-  // Save new file uploads.
-  if ($file = file_save_upload('file_upload', $validators,
-        drupal_realpath(file_default_scheme() . ':/'))) {
-    if ($file->filesize <= 0) {
-      // Some uploaded files had zero size, that's an error.
-      drupal_set_message(t('Uploaded file not found. Are you sure that you uploaded an existing file?'), 'error');
-      return;
-    }
-    // Do something with $file here.
-
-
-    $meta = array(
-        'name' => $form_state['values']['title'],
-        'shortDescription' => $form_state['values']['short'],
-        'longDescription' => $form_state['values']['long'],
-        'linkText' => $form_state['values']['linktext'],
-        'linkURL' => $form_state['values']['linkurl'],
-        'referenceId' => brightcove_generate_reference(),
-        );
-    if (!empty($form_state['values']['tags'])) {
-      $meta['tags'] = explode(',', $form_state['values']['tags']);
-    }
-    $id = brightcove_upload_video($file->filepath, $meta);
-
-    // Construct Video object with ID - we need to cache it and save to session.
-    // Brightcove Media API doesn't clear it's cache when a new video is
-    // uploaded, therefore the node save would fail.
-    $video = new StdClass;
-    $video->id = $id;
-    $video->name = $form_state['values']['title'];
-    brightcove_video_cache_set($id, $video);
-
-    db_query('DELETE FROM {files} WHERE fid = %d', $file->fid);
-    unlink($file->filepath);
-
-    $return['selected'] = $form_state['values']['title'] . ' [id:' . $id . ']';
-    //modalframe_close_dialog($return);
-
-  } else {
-    drupal_set_message(t('Only Video files are allowed here.'), 'error');
-  }
-}
-
-/**
  * Implements hook_content_migrate_field_alter().
  */
 function brightcove_field_content_migrate_field_alter(&$field_value,
