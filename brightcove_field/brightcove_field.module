@@ -974,57 +974,89 @@ function brightcove_field_forms($form_id, $args) {
 function brightcove_field_upload_form($form, &$form_state) {
   $form['#prefix'] = '<div id="dialog-upload-form">';
   $form['title'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Title'),
-      '#description' => t('Video name or title.'),
-      '#required' => TRUE,
-      '#default_value' => !empty($form_state['values']['title']) ? $form_state['values']['title'] : '',
-      );
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#description' => t('Video name or title.'),
+    '#required' => TRUE,
+    '#default_value' => !empty($form_state['values']['title'])
+      ? $form_state['values']['title'] : '',
+  );
+
+  $custom_fields = variable_get('brightcove_custom_fields', 0);
+  for ($i = 0; $i < $custom_fields; ++$i) {
+    $key = variable_get("brightcove_custom_fields_{$i}_key");
+    $label = variable_get("brightcove_custom_fields_{$i}_label");
+    $type = variable_get("brightcove_custom_fields_{$i}_type");
+    $values = array_map('trim', explode("\n",
+      (string) variable_get("brightcove_custom_fields_{$i}_values")));
+    $required = variable_get("brightcove_custom_fields_{$i}_required");
+    $typedic = array(
+      'text' => 'textfield',
+      'list' => 'select',
+    );
+
+    if (isset($typedic[$type])) {
+      $form["custom_field_{$i}"] = array(
+        '#type' => $typedic[$type],
+        '#title' => t($label),
+        '#key' => $key,
+        '#required' => (bool) $required,
+      ) + ($type == 'list' ? array(
+        '#options' => drupal_map_assoc($values),
+      ) : array());
+    }
+  }
+
   $form['file_upload'] = array(
-      '#type' => 'file',
-      '#title' => t('Video file'),
-      '#size' => 40,
-      );
+    '#type' => 'file',
+    '#title' => t('Video file'),
+    '#size' => 40,
+  );
 
   $form['short'] = array(
-      '#type' => 'textarea',
-      '#rows' => 3,
-      '#required' => TRUE,
-      '#title' => t('Short description'),
-      '#description' => t('Video short description.'),
-      '#default_value' => !empty($form_state['values']['short']) ? $form_state['values']['short'] : '',
-      );
+    '#type' => 'textarea',
+    '#rows' => 3,
+    '#required' => TRUE,
+    '#title' => t('Short description'),
+    '#description' => t('Video short description.'),
+    '#default_value' => !empty($form_state['values']['short'])
+      ? $form_state['values']['short'] : '',
+  );
   $form['advanced'] = array(
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-      '#title' => t('Advanced attributes'),
-      );
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => t('Advanced attributes'),
+  );
   $form['advanced']['tags'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Tags'),
-      '#description' => t('Associated tags, separated by comma.'),
-      '#default_value' => !empty($form_state['values']['tags']) ? $form_state['values']['tags'] : '',
-      );
+    '#type' => 'textfield',
+    '#title' => t('Tags'),
+    '#description' => t('Associated tags, separated by comma.'),
+    '#default_value' => !empty($form_state['values']['tags'])
+      ? $form_state['values']['tags'] : '',
+  );
   $form['advanced']['long'] = array(
-      '#type' => 'textarea',
-      '#rows' => 4,
-      '#title' => t('Long description'),
-      '#description' => t('Video long description.'),
-      '#default_value' => !empty($form_state['values']['long']) ? $form_state['values']['long'] : '',
-      );
+    '#type' => 'textarea',
+    '#rows' => 4,
+    '#title' => t('Long description'),
+    '#description' => t('Video long description.'),
+    '#default_value' => !empty($form_state['values']['long'])
+      ? $form_state['values']['long'] : '',
+  );
   $form['advanced']['linktext'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Related link text'),
-      '#description' => t('Related link description or text.'),
-      '#default_value' => !empty($form_state['values']['linktext']) ? $form_state['values']['linktext'] : '',
-      );
+    '#type' => 'textfield',
+    '#title' => t('Related link text'),
+    '#description' => t('Related link description or text.'),
+    '#default_value' => !empty($form_state['values']['linktext'])
+      ? $form_state['values']['linktext'] : '',
+  );
   $form['advanced']['linkurl'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Related link url'),
-      '#description' => t('Related link URL.'),
-      '#default_value' => !empty($form_state['values']['linkurl']) ? $form_state['values']['linkurl'] : '',
-      );
+    '#type' => 'textfield',
+    '#title' => t('Related link url'),
+    '#description' => t('Related link URL.'),
+    '#default_value' => !empty($form_state['values']['linkurl'])
+      ? $form_state['values']['linkurl'] : '',
+  );
   /*  $form['attach'] = array(
       '#type' => 'submit',
       '#value' => t('Upload'),
@@ -1035,15 +1067,15 @@ function brightcove_field_upload_form($form, &$form_state) {
       'progress' => array('type' => 'bar', 'message' => t('Please wait...')),
       ),*/
   $form['submit'] = array(
-      '#type' => 'submit',
-      '#name' => 'submit-',
-      //'#name' => 'submit-' . $item['video_id'],
-      '#default_value' => t('Attach'),
-      '#ajax' => array(
-        'callback' => 'ajax_upload_dialog_close_callback',
-        'wrapper' => 'dialog-upload-form',
-      ),
-      );
+    '#type' => 'submit',
+    '#name' => 'submit-',
+    //'#name' => 'submit-' . $item['video_id'],
+    '#default_value' => t('Attach'),
+    '#ajax' => array(
+      'callback' => 'ajax_upload_dialog_close_callback',
+      'wrapper' => 'dialog-upload-form',
+    ),
+  );
   $form['#suffix'] = '</div>';
 
   $form['#attached']['js'] = array(
@@ -1339,20 +1371,35 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
     if (!empty($form_state['values']['tags'])) {
       $meta['tags'] = explode(',', $form_state['values']['tags']);
     }
+
+    if ($custom_fields = variable_get('brightcove_custom_fields', 0)) {
+      $meta['customFields'] = array();
+
+      for ($i = 0; $i < $custom_fields; ++$i) {
+        $key = $form["custom_field_{$i}"]['#key'];
+        $meta['customFields'][$key] =
+          $form_state['values']["custom_field_{$i}"];
+      }
+    }
+
     $id = brightcove_upload_video(drupal_realpath($file->uri), $meta);
 
-    // Construct Video object with ID - we need to cache it and save to session.
-    // Brightcove Media API doesn't clear it's cache when a new video is
-    // uploaded, therefore the node save would fail.
-    $video = new StdClass;
-    $video->id = $id;
-    $video->name = $form_state['values']['title'];
-    brightcove_video_cache_set($id, $video);
-    // invalidating brightcove video load cache
-    cache_set("bc:video:{$id}", FALSE, 'cache');
+    if ($id) {
+      // Construct Video object with ID - we need to cache it and save to
+      // session. Brightcove Media API doesn't clear it's cache when a new
+      // video is uploaded, therefore the node save would fail.
+      $video = new StdClass;
+      $video->id = $id;
+      $video->name = $form_state['values']['title'];
+      brightcove_video_cache_set($id, $video);
+      // invalidating brightcove video load cache
+      cache_set("bc:video:{$id}", FALSE, 'cache');
+    }
 
     $selector = '#upload-dialog';
-    $data = check_plain($form_state['values']['title']) . ' [id:' . check_plain($id) . ']';
+    $data_title = check_plain($form_state['values']['title']);
+    $data_id = check_plain($id);
+    $data = $id ? "{$data_title} [id:{$data_id}]" : '';
     $dialog_type = 'upload';
 
     $commands[] = ajax_command_close_dialog($selector, $data, NULL, $dialog_type);

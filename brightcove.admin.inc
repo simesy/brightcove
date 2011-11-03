@@ -11,7 +11,7 @@
  * @ingroup forms
  * @see system_settings_form()
  */
-function brightcove_admin_settings() {
+function brightcove_admin_settings($form, &$form_state) {
   $form['account'] = array(
     '#type' => 'fieldset',
     '#title' => t('Account settings'),
@@ -133,11 +133,119 @@ function brightcove_admin_settings() {
     '#default_value' => variable_get('brightcove_status_display_unavailable', 'This video is unavailable for the moment.'),
   );
 
+  $num_customfields = empty($form_state['brightcove_custom_fields']) ?
+    $form_state['brightcove_custom_fields'] =
+      variable_get('brightcove_custom_fields', 0) :
+    $form_state['brightcove_custom_fields'];
+
+  $form['upload_customfields'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Custom fields'),
+    '#collapsible' => TRUE,
+    '#collapsed' => !((bool) $num_customfields),
+    '#prefix' => '<div id="brightcove-admin-customfield">',
+    '#suffix' => '</div>',
+  );
+
+  $form['upload_customfields']['brightcove_custom_fields'] = array(
+    '#type' => 'value',
+    '#value' => $num_customfields,
+  );
+
+  for ($i = 0; $i < $num_customfields; ++$i) {
+    $form['upload_customfields'][] = array(
+      '#type' => 'fieldset',
+      "brightcove_custom_fields_{$i}_key" => array(
+        '#type' => 'textfield',
+        '#title' => t('Field key'),
+        '#default_value' => variable_get("brightcove_custom_fields_{$i}_key"),
+      ),
+      "brightcove_custom_fields_{$i}_label" => array(
+        '#type' => 'textfield',
+        '#title' => t('Label'),
+        '#default_value' => variable_get("brightcove_custom_fields_{$i}_label"),
+      ),
+      "brightcove_custom_fields_{$i}_type" => array(
+        '#type' => 'radios',
+        '#title' => t('Type'),
+        '#default_value' =>
+          variable_get("brightcove_custom_fields_{$i}_type", 'text'),
+        '#options' => array(
+          'text' => t('Text'),
+          'list' => t('List'),
+        ),
+      ),
+      "brightcove_custom_fields_{$i}_values" => array(
+        '#type' => 'textarea',
+        '#title' => t('Values'),
+        '#description' => t('Put each values into a new line.'),
+        '#default_value' =>
+          variable_get("brightcove_custom_fields_{$i}_values"),
+        '#states' => array(
+          'visible' => array(
+            ":input[name=brightcove_custom_fields_{$i}_type]" => array(
+              'value' => 'list',
+            ),
+          ),
+        ),
+      ),
+      "brightcove_custom_fields_{$i}_required" => array(
+        '#type' => 'checkbox',
+        '#title' => t('Required'),
+        '#default_value' =>
+          variable_get("brightcove_custom_fields_{$i}_required"),
+      ),
+    );
+  }
+
+  $form['upload_customfields']['add'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add more'),
+    '#submit' => array(
+      'brightcove_admin_add_customfield_submit',
+    ),
+    '#ajax' => array(
+      'callback' => 'brightcove_admin_customfield_ajax_callback',
+      'wrapper' => 'brightcove-admin-customfield'
+    ),
+  );
+
+  if ($num_customfields > 0) {
+    $form['upload_customfields']['remove'] = array(
+      '#type' => 'submit',
+      '#value' => t('Remove last'),
+      '#submit' => array(
+        'brightcove_admin_remove_customfield_submit',
+      ),
+      '#ajax' => array(
+        'callback' => 'brightcove_admin_customfield_ajax_callback',
+        'wrapper' => 'brightcove-admin-customfield',
+      ),
+    );
+  }
 
   $form = system_settings_form($form);
   $form['#validate'][] = 'brightcove_admin_settings_validate';
 
   return $form;
+}
+
+function brightcove_admin_customfield_ajax_callback($form) {
+  return $form['upload_customfields'];
+}
+
+function brightcove_admin_add_customfield_submit($form, &$form_state) {
+  if ($form_state['brightcove_custom_fields'] < 10) {
+    $form_state['brightcove_custom_fields']++;
+  }
+  $form_state['rebuild'] = TRUE;
+}
+
+function brightcove_admin_remove_customfield_submit($form, &$form_state) {
+  if ($form_state['brightcove_custom_fields'] > 0) {
+    $form_state['brightcove_custom_fields']--;
+  }
+  $form_state['rebuild'] = TRUE;
 }
 
 function brightcove_admin_settings_validate($form, &$form_state) {
