@@ -1,8 +1,5 @@
 <?php
 
-define('BRIGHTCOVE_VIDEO_DEFAULT_HEIGHT', 412);
-define('BRIGHTCOVE_VIDEO_DEFAULT_WIDTH', 486);
-
 /**
  * Theme callback for a Brightcove browse button.
  * Currently it's just a thin wrapper around the theme_button()
@@ -70,7 +67,12 @@ function theme_brightcove_field_embed($variables) {
     watchdog('brightcove', 'Video Player KEY is missing.', array(), WATCHDOG_ERROR);
   }
 
-  $values = array('id' => 'myExperience', 'bgcolor' => 'FFFFFF', 'width' => BRIGHTCOVE_VIDEO_DEFAULT_WIDTH, 'height' => BRIGHTCOVE_VIDEO_DEFAULT_HEIGHT);
+  $values = array(
+    'id' => 'myExperience',
+    'bgcolor' => 'FFFFFF',
+    'width' => $variables['width'],
+    'height' => $variables['height'],
+  );
 
   foreach ($values as $key => $value) {
     if (isset($variables['params'][$key])) {

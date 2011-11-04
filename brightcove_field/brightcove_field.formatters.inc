@@ -149,6 +149,8 @@ function theme_brightcove_field_formatter_default($variables) {
         'player_key' =>
           brightcove_field_get_value('brightcove_player_key',
             $variables['instance']),
+        'width' => $variables['width'],
+        'height' => $variables['height'],
     ));
     $vidcount++;
   }
