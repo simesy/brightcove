@@ -1573,6 +1573,9 @@ function brightcove_field_refresh_video_entity_link($entity_type, $entity,
           'video_fields' => 'id,customFields',
         ));
         foreach ($videos as $video) {
+          if (!isset($video->customFields)) {
+            $video->customFields = new stdClass();
+          }
           $video->customFields->{$entity_link_field} = $absolute_entity_link;
           $bc->update('video', $video);
         }
