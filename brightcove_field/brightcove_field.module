@@ -141,6 +141,10 @@ function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) 
   $entity = array_shift($entities);
   $video_id = $entity->{$field_name}[isset($entity->language) ?
     $entity->language : 'und'][$delta]['video_id'];
+  $player_id = $entity->{$field_name}[isset($entity->language) ?
+    $entity->language : 'und'][$delta]['player_id'];
+  $player_key = $entity->{$field_name}[isset($entity->language) ?
+    $entity->language : 'und'][$delta]['player_key'];
   list(,,$bundle) = entity_extract_ids($entity_type, $entity);
   $instance = field_info_instance($entity_type, $field_name, $bundle);
   return array(
@@ -151,9 +155,10 @@ function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) 
         'http://admin.brightcove.com/js/BrightcoveExperiences.js',
       ),
     ),
-    '#player' => brightcove_field_get_value('brightcove_player', $instance),
-    '#player_key' =>
-      brightcove_field_get_value('brightcove_player_key', $instance),
+    '#player' => brightcove_field_get_value('brightcove_player',
+      $instance, $player_id),
+    '#player_key' => brightcove_field_get_value('brightcove_player_key',
+      $instance, $player_key),
   );
 }
 
@@ -653,8 +658,7 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
   }
 
   if ((user_access('upload videos')) &&
-      ($instance['settings']['allow_upload'])
-  ) {
+      ($instance['settings']['allow_upload'])) {
     $element['actions']['upload'] = array(
       '#type' => 'button',
       '#attributes' => array(
@@ -687,6 +691,20 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
     '#default_value' => t('Remove'),
     '#value_callback' => 'brightcove_field_button_value_callback',
     '#name' => $element['#field_name'] . '-' . $delta,
+  );
+
+  $element['player_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Player ID'),
+    '#default_value' => isset($items[$delta]['player_id']) ?
+      $items[$delta]['player_id'] : NULL,
+  );
+
+  $element['player_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Player key'),
+    '#default_value' => isset($items[$delta]['player_key']) ?
+      $items[$delta]['player_key'] : NULL,
   );
 
   if (!isset($element['#default_value'])) {
@@ -1602,7 +1620,14 @@ function brightcove_field_field_update($entity_type, $entity,
   brightcove_field_refresh_video_entity_link($entity_type, $entity, $items);
 }
 
-function brightcove_field_get_value($value, $instance) {
-  return empty($instance['settings'][$value]) ?
-    variable_get($value) : $instance['settings'][$value];
+function brightcove_field_get_value($value, $instance, $stored) {
+  if ($stored) {
+    return $stored;
+  }
+
+  if (!empty($instance['settings'][$value])) {
+    $instance['settings'][$value];
+  }
+
+  return variable_get($value);
 }

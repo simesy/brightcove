@@ -11,9 +11,50 @@ function brightcove_field_field_schema() {
         'length' => 15,
         'not null' => FALSE
       ),
+      'player_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'player_key' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
     ),
     'indexes' => array(
       'video_id' => array('video_id'),
     ),
   );
+}
+
+/**
+ * Updates the schema of the brightcove field if possible.
+ */
+function brightcove_field_update_7201() {
+  if (module_exists('field_sql_storage')) {
+    $coldef = array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+    );
+
+    foreach (field_info_fields() as $name => $def) {
+      if ($def['type'] == 'brightcove_video' &&
+          $def['storage']['type'] == 'field_sql_storage') {
+        $tablename = _field_sql_storage_tablename($def);
+        $revtablename = _field_sql_storage_revision_tablename($def);
+        $pidcol = _field_sql_storage_columnname($name, 'player_id');
+        $pkcol = _field_sql_storage_columnname($name, 'player_key');
+
+        db_add_field($tablename, $pidcol, $coldef);
+        db_add_field($tablename, $pkcol, $coldef);
+        db_add_field($revtablename, $pidcol, $coldef);
+        db_add_field($revtablename, $pkcol, $coldef);
+      }
+    }
+
+    db_delete('cache_field')
+      ->execute();
+  }
 }

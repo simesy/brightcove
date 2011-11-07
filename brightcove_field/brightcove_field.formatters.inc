@@ -145,10 +145,10 @@ function theme_brightcove_field_formatter_default($variables) {
         'params' => $params,
         'player' =>
           brightcove_field_get_value('brightcove_player',
-            $variables['instance']),
+            $variables['instance'], $variables['element']['player_id']),
         'player_key' =>
           brightcove_field_get_value('brightcove_player_key',
-            $variables['instance']),
+            $variables['instance'], $variables['element']['player_key']),
         'width' => $variables['width'],
         'height' => $variables['height'],
     ));
