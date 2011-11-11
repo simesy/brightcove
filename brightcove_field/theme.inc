@@ -60,12 +60,10 @@ function theme_brightcove_field_browse_items($variables) {
 
 function theme_brightcove_field_embed($variables) {
   if (!isset($variables['player'])) {
-    watchdog('brightcove', 'Video Player ID is missing.', array(), WATCHDOG_ERROR);
+    watchdog('brightcove', 'Video Player is missing.', array(), WATCHDOG_ERROR);
   }
 
-  if (!isset($variables['player_key'])) {
-    watchdog('brightcove', 'Video Player KEY is missing.', array(), WATCHDOG_ERROR);
-  }
+  $player = brightcove_player_load($variables['player']);
 
   $values = array(
     'id' => 'myExperience',
@@ -113,11 +111,11 @@ function theme_brightcove_field_embed($variables) {
     <param name="bgcolor" value="#' . $values['bgcolor'] . '" />
     <param name="width" value="' . $values['width'] . '" />
     <param name="height" value="' . $values['height'] . '" />
-    <param name="playerID" value="' . $variables['player'] . '" />'
+    <param name="playerID" value="' . $player->player_id . '" />'
     . $assetCode . '
     <param name="isVid" value="true" />
     <param name="isUI" value="true" />
-    <param name="playerKey" value="' . $variables['player_key'] . '" />
+    <param name="playerKey" value="' . $player->player_key . '" />
     </object>';
 
   return $code;

@@ -144,11 +144,8 @@ function theme_brightcove_field_formatter_default($variables) {
         'video_id' => $variables['element']['video_id'],
         'params' => $params,
         'player' =>
-          brightcove_field_get_value('brightcove_player',
-            $variables['instance'], $variables['element']['player_id']),
-        'player_key' =>
-          brightcove_field_get_value('brightcove_player_key',
-            $variables['instance'], $variables['element']['player_key']),
+          brightcove_field_get_value(
+            $variables['instance'], $variables['element']['player']),
         'width' => $variables['width'],
         'height' => $variables['height'],
     ));
@@ -266,8 +263,8 @@ function theme_brightcove_field_entity_image($variables) {
       theme('image', empty($video->{$field}) ?
           array(
             'path' => brightcove_get_default_image(),
-            'width' => BRIGHTCOVE_VIDEO_DEFAULT_WIDTH,
-            'height' => BRIGHTCOVE_VIDEO_DEFAULT_HEIGHT,
+            'width' => BRIGHTCOVE_DEFAULT_VIDEO_WIDTH,
+            'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
           ) :
           array(
             'path' => $video->{$field},

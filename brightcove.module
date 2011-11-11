@@ -31,7 +31,11 @@ define('BRIGHTCOVE_STATUS_ERROR', 'ERROR');
  * Implements hook_menu().
  */
 function brightcove_menu() {
-  $items['admin/config/media/brightcove'] = array(
+  $items = array();
+
+  $base = 'admin/config/media/brightcove';
+
+  $items[$base] = array(
     'title' => 'Brightcove settings',
     'description' => 'Configure Brigthcove integration, api keys, player settings, upload settings.',
     'page callback' => 'drupal_get_form',
@@ -40,6 +44,48 @@ function brightcove_menu() {
     'access arguments' => array('administer brightcove settings'),
     'file' => 'brightcove.admin.inc',
   );
+
+  $items["{$base}/general"] = array(
+    'title' => 'General',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'access arguments' => array('administer brightcove settings'),
+  );
+
+  $items["{$base}/players"] = array(
+    'title' => 'Players',
+    'page callback' => 'brightcove_admin_players',
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('adminster brightcove settings'),
+    'file' => 'brightcove.admin.inc',
+  );
+
+  $items["{$base}/players/new"] = array(
+    'title' => 'Add player',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('brightcove_player_editor_form'),
+    'access arguments' => array('adminster brightcove settings'),
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'brightcove.admin.inc',
+  );
+
+  $items["{$base}/players/%brightcove_player/edit"] = array(
+    'title' => 'Edit player',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('brightcove_player_editor_form', 5),
+    'access arguments' => array('adminster brightcove settings'),
+    'type' => MENU_CALLBACK,
+    'file' => 'brightcove.admin.inc',
+  );
+
+  $items["{$base}/players/%brightcove_player/delete"] = array(
+    'title' => 'Delete player',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('brightcove_player_delete_form', 5),
+    'access arguments' => array('adminster brightcove settings'),
+    'type' => MENU_CALLBACK,
+    'file' => 'brightcove.admin.inc',
+  );
+
   return $items;
 }
 
@@ -434,4 +480,39 @@ function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
   }
 
   return array($read, $write);
+}
+
+function brightcove_player_load($name) {
+  return db_query('SELECT * FROM {brightcove_player} WHERE name = :name',
+    array(
+      ':name' => $name,
+    ))->fetch();
+}
+
+function brightcove_player_load_all() {
+  return db_query('SELECT * FROM {brightcove_player} ORDER BY name')
+    ->fetchAll();
+}
+
+function brightcove_player_list() {
+  return db_query('SELECT name FROM {brightcove_player} ORDER BY name')
+    ->fetchAllKeyed(0, 0);
+}
+
+function brightcove_player_save($player) {
+  return db_merge('brightcove_player')
+    ->key(array(
+      'name' => $player->name,
+    ))
+    ->fields(array(
+      'player_id' => $player->player_id,
+      'player_key' => $player->player_key,
+    ))
+    ->execute();
+}
+
+function brightcove_player_delete($name) {
+  return db_delete('brightcove_player')
+    ->condition('name', $name)
+    ->execute();
 }

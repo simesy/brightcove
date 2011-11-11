@@ -51,20 +51,6 @@ function brightcove_admin_settings($form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
-  $form['player']['brightcove_player'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Brightcove Player ID'),
-    '#required' => TRUE,
-    '#default_value' => variable_get('brightcove_player', ''),
-    '#description' => t('A Brightcove Player ID from BC Studio. Will be used to play all videos. Please check at !link.', array('!link' => l(t('Brightcove integration handbook on Drupal.org'), 'http://drupal.org/node/807598'))),
-  );
-  $form['player']['brightcove_player_key'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Brightcove Player KEY'),
-    '#required' => TRUE,
-    '#default_value' => variable_get('brightcove_player_key', ''),
-    '#description' => t('A Brightcove Player KEY from BC Studio. Will be used to play all videos. Please check at !link.', array('!link' => l(t('Brightcove integration handbook on Drupal.org'), 'http://drupal.org/node/807598'))),
-  );
   $form['player']['brightcove_default_image'] = array(
     '#type' => 'textfield',
     '#title' => t('Default image'),
@@ -260,4 +246,95 @@ function brightcove_admin_settings_validate($form, &$form_state) {
   if ($form_state['values']['brightcove_write_api_key'] && !$can_write) {
     form_set_error('brightcove_write_api_key', t('Invalid write key'));
   }
+}
+
+function brightcove_admin_players() {
+  $players = brightcove_player_load_all();
+
+  $header = array(
+    t('Name'),
+    t('Player ID'),
+    t('Player Key'),
+    array(
+      'data' => t('Operations'),
+      'colspan' => 2,
+    ),
+  );
+
+  $rows = array();
+  foreach ($players as $player) {
+    $rows[] = array(
+      check_plain($player->name),
+      check_plain($player->player_id),
+      check_plain($player->player_key),
+      l(t('Edit'), 'admin/config/media/brightcove/players/' .
+                   urlencode($player->name) . '/edit'),
+      l(t('Delete'), 'admin/config/media/brightcove/players/' .
+                   urlencode($player->name) . '/delete'),
+    );
+  }
+
+  return array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+  );
+}
+
+function brightcove_player_editor_form($form, &$form_state, $player = NULL) {
+  if (!$player) {
+    $player = new stdClass();
+  }
+
+  $titles = array(
+    'name' => 'Name',
+    'player_id' => 'Player ID',
+    'player_key' => 'Player Key',
+  );
+
+  $required = array(
+    'name' => TRUE,
+    'player_id' => TRUE,
+    'player_key' => FALSE,
+  );
+
+  foreach (array('name', 'player_id', 'player_key') as $item) {
+    $form[$item] = array(
+      '#title' => t($titles[$item]),
+      '#type' => 'textfield',
+      '#default_value' => isset($player->$item) ?
+        $player->$item : NULL,
+      '#required' => $required[$item],
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  return $form;
+}
+
+function brightcove_player_editor_form_submit($form, &$form_state) {
+  brightcove_player_save((object) $form_state['values']);
+  $form_state['redirect'] = 'admin/config/media/brightcove/players';
+}
+
+function brightcove_player_delete_form($form, &$form_state, $player) {
+  $form['player_name'] = array(
+    '#type' => 'value',
+    '#value' => $player->name,
+  );
+
+  return confirm_form($form,
+    t('Are you sure that you want to delete "@name" player?', array(
+        '@name' => $player->name,
+      )),
+    'admin/config/media/brightcove/players');
+}
+
+function brightcove_player_delete_form_submit($form, &$form_state) {
+  brightcove_player_delete($form_state['values']['player_name']);
+  $form_state['redirect'] = 'admin/config/media/brightcove/players';
 }

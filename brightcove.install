@@ -6,6 +6,83 @@
   */
 
 /**
+ * Implements hook_schema().
+ */
+function brightcove_schema() {
+  $schema = array();
+
+  $schema['brightcove_player'] = array(
+    'description' => 'Stores brightcove players.',
+    'fields' => array(
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'player_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'player_key' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('name'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Adds brightcove_player table.
+ */
+function brightcove_update_7001() {
+  db_create_table('brightcove_player', array(
+    'description' => 'Stores brightcove players.',
+    'fields' => array(
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'player_id' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'player_key' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('name'),
+  ));
+}
+
+/**
+ * Migrates old player id and key to the table.
+ */
+function brightcove_update_7002() {
+  $t = get_t();
+
+  $player_id = variable_get('brightcove_player');
+  $player_key = variable_get('brightcove_player_key');
+
+  brightcove_player_save((object) array(
+    'name' => $t('Default'),
+    'player_id' => $player_id,
+    'player_key' => $player_key,
+  ));
+
+  variable_del('brightcove_player');
+  variable_del('brightcove_player_key');
+}
+
+/**
   * Implementation of hook_requirements().
   */
 function brightcove_requirements() {

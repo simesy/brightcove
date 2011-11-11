@@ -11,12 +11,7 @@ function brightcove_field_field_schema() {
         'length' => 15,
         'not null' => FALSE
       ),
-      'player_id' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-      ),
-      'player_key' => array(
+      'player' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
@@ -44,13 +39,10 @@ function brightcove_field_update_7201() {
           $def['storage']['type'] == 'field_sql_storage') {
         $tablename = _field_sql_storage_tablename($def);
         $revtablename = _field_sql_storage_revision_tablename($def);
-        $pidcol = _field_sql_storage_columnname($name, 'player_id');
-        $pkcol = _field_sql_storage_columnname($name, 'player_key');
+        $playercol = _field_sql_storage_columnname($name, 'player');
 
-        db_add_field($tablename, $pidcol, $coldef);
-        db_add_field($tablename, $pkcol, $coldef);
-        db_add_field($revtablename, $pidcol, $coldef);
-        db_add_field($revtablename, $pkcol, $coldef);
+        db_add_field($tablename, $playercol, $coldef);
+        db_add_field($revtablename, $playercol, $coldef);
       }
     }
 

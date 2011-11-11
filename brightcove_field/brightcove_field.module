@@ -141,10 +141,8 @@ function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) 
   $entity = array_shift($entities);
   $video_id = $entity->{$field_name}[isset($entity->language) ?
     $entity->language : 'und'][$delta]['video_id'];
-  $player_id = $entity->{$field_name}[isset($entity->language) ?
+  $player_name = $entity->{$field_name}[isset($entity->language) ?
     $entity->language : 'und'][$delta]['player_id'];
-  $player_key = $entity->{$field_name}[isset($entity->language) ?
-    $entity->language : 'und'][$delta]['player_key'];
   list(,,$bundle) = entity_extract_ids($entity_type, $entity);
   $instance = field_info_instance($entity_type, $field_name, $bundle);
   return array(
@@ -155,10 +153,7 @@ function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) 
         'http://admin.brightcove.com/js/BrightcoveExperiences.js',
       ),
     ),
-    '#player' => brightcove_field_get_value('brightcove_player',
-      $instance, $player_id),
-    '#player_key' => brightcove_field_get_value('brightcove_player_key',
-      $instance, $player_key),
+    '#player' => brightcove_field_get_value($instance, $player_name),
   );
 }
 
@@ -175,7 +170,7 @@ function brightcove_field_field_info() {
      'instance_settings' => array(
        'allow_upload' => FALSE,
        'brightcove_player' => '',
-       'brightcove_player_key' => '',
+       'per_content_player' => FALSE,
      ),
      'default_widget' => 'brightcove_field_browser',
      'default_formatter' => 'default',
@@ -215,19 +210,19 @@ function brightcove_field_field_instance_settings_form($field, $instance) {
   }
 
   $form['brightcove_player'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Brightcove Player ID'),
+    '#type' => 'select',
+    '#title' => t('Brightcove Player'),
     '#default_value' => isset($instance['settings']['brightcove_player']) ?
       $instance['settings']['brightcove_player'] : NULL,
+    '#options' => brightcove_player_list(),
     '#description' => t('Leave empty if you don\'t want to override the global settings.'),
   );
 
-  $form['brightcove_player_key'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Brightcove Player KEY'),
-    '#default_value' => isset($instance['settings']['brightcove_player_key']) ?
-      $instance['settings']['brightcove_player_key'] : NULL,
-    '#description' => t('Leave empty if you don\'t want to override the global settings.'),
+  $form['per_content_player'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow setting player per content'),
+    '#default_value' => isset($instance['settings']['per_content_player']) ?
+      $instance['settings']['per_content_player'] : NULL,
   );
 
   return $form;
@@ -693,18 +688,13 @@ function brightcove_field_field_widget_form(&$form, &$form_state,
     '#name' => $element['#field_name'] . '-' . $delta,
   );
 
-  $element['player_id'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Player ID'),
-    '#default_value' => isset($items[$delta]['player_id']) ?
-      $items[$delta]['player_id'] : NULL,
-  );
-
-  $element['player_key'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Player key'),
-    '#default_value' => isset($items[$delta]['player_key']) ?
-      $items[$delta]['player_key'] : NULL,
+  $element['player'] = array(
+    '#type' => $instance['settings']['per_content_player'] ?
+      'select' : 'value',
+    '#title' => t('Player'),
+    '#options' => brightcove_player_list(),
+    '#default_value' => isset($items[$delta]['player']) ?
+      $items[$delta]['player'] : NULL,
   );
 
   if (!isset($element['#default_value'])) {
@@ -794,22 +784,60 @@ function brightcove_field_theme() {
       'pattern' => 'brightcove-field-player',
     ),
     'brightcove_field_dialog' => array(
-      'variables' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'dialog_width' => NULL, 'dialog_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL, 'style' => NULL),
+      'variables' => array(
+        'output' => NULL,
+        'video_id' => NULL,
+        'video_width' => NULL,
+        'video_height' => NULL,
+        'dialog_width' => NULL,
+        'dialog_height' => NULL,
+        'destination' => NULL,
+        'image_field' => NULL,
+        'field_name' => NULL,
+        'entity_type' => NULL,
+        'style' => NULL,
+      ),
       'template' => 'brightcove-field-dialog',
       'pattern' => 'brightcove_field_dialog__',
     ),
     'brightcove_field_entity_link' => array(
-      'variables' => array('output' => NULL, 'video_id' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL, 'style' => NULL),
+      'variables' => array(
+        'output' => NULL,
+        'video_id' => NULL,
+        'destination' => NULL,
+        'image_field' => NULL,
+        'field_name' => NULL,
+        'entity_type' => NULL,
+        'style' => NULL,
+      ),
       'template' => 'brightcove-field-entity-link',
       'pattern' => 'brightcove_field_entity_link__',
     ),
     'brightcove_field_entity_image' => array(
-      'variables' => array('output' => NULL, 'video_id' => NULL, 'entity_id' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL),
+      'variables' => array(
+        'output' => NULL,
+        'video_id' => NULL,
+        'entity_id' => NULL,
+        'image_field' => NULL,
+        'field_name' => NULL,
+        'entity_type' => NULL,
+      ),
       'template' => 'brightcove-field-entity-image',
       'pattern' => 'brightcove_field_entity_image__',
     ),
     'brightcove_field_dialog_image' => array(
-      'variables' => array('output' => NULL, 'video_id' => NULL, 'video_width' => NULL, 'video_height' => NULL, 'dialog_width' => NULL, 'dialog_height' => NULL, 'destination' => NULL, 'image_field' => NULL, 'field_name' => NULL, 'entity_type' => NULL),
+      'variables' => array(
+        'output' => NULL,
+        'video_id' => NULL,
+        'video_width' => NULL,
+        'video_height' => NULL,
+        'dialog_width' => NULL,
+        'dialog_height' => NULL,
+        'destination' => NULL,
+        'image_field' => NULL,
+        'field_name' => NULL,
+        'entity_type' => NULL,
+      ),
       'template' => 'brightcove-field-dialog-image',
       'pattern' => 'brightcove_field_dialog_image__',
     ),
@@ -830,8 +858,7 @@ function brightcove_field_theme() {
       // TODO when submitting the admin form, do a theme rebuild (form_alter)
       'variables' => array(
         'type' => 'video',
-        'player' => variable_get('brightcove_player'),
-        'player_key' => variable_get('brightcove_player_key'),
+        'player' => NULL,
         'video_id' => NULL,
         'params' => array(),
         'width' => BRIGHTCOVE_DEFAULT_VIDEO_WIDTH,
@@ -953,22 +980,25 @@ function brightcove_field_theme() {
  */
 function brightcove_field_filter_form($form, &$form_state) {
   $form['search'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Filter videos'),
-      '#collapsible' => TRUE,
-      '#collapsed' => empty($_SESSION['brightcove_field_filter']) ? TRUE : FALSE,
-      );
+    '#type' => 'fieldset',
+    '#title' => t('Filter videos'),
+    '#collapsible' => TRUE,
+    '#collapsed' => empty($_SESSION['brightcove_field_filter']) ? TRUE : FALSE,
+  );
+
   $keywords = '';
+
   if (!empty($_SESSION['brightcove_field_filter']['keywords'])) {
     $keywords = $_SESSION['brightcove_field_filter']['keywords'];
   }
+
   $form['search']['keywords'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Keywords'),
-      '#size' => 25,
-      '#default_value' => $keywords,
-      '#description' => t('Comma separated keywords to search for.'),
-      );
+    '#type' => 'textfield',
+    '#title' => t('Keywords'),
+    '#size' => 25,
+    '#default_value' => $keywords,
+    '#description' => t('Comma separated keywords to search for.'),
+  );
 
   $form['search']['search'] = array(
     '#type' => 'radios',
@@ -986,6 +1016,7 @@ function brightcove_field_filter_form($form, &$form_state) {
     '#name' => 'submit',
     '#default_value' => t('Filter'),
   );
+
   $form['search']['reset'] = array(
     '#type' => 'submit',
     '#name' => 'reset',
@@ -1088,8 +1119,8 @@ function brightcove_field_upload_form($form, &$form_state) {
     '#title' => t('Title'),
     '#description' => t('Video name or title.'),
     '#required' => TRUE,
-    '#default_value' => !empty($form_state['values']['title'])
-      ? $form_state['values']['title'] : '',
+    '#default_value' => !empty($form_state['values']['title']) ?
+      $form_state['values']['title'] : '',
   );
 
   $custom_fields = variable_get('brightcove_custom_fields', 0);
@@ -1620,7 +1651,7 @@ function brightcove_field_field_update($entity_type, $entity,
   brightcove_field_refresh_video_entity_link($entity_type, $entity, $items);
 }
 
-function brightcove_field_get_value($value, $instance, $stored) {
+function brightcove_field_get_value($instance, $stored) {
   if ($stored) {
     return $stored;
   }
@@ -1629,5 +1660,5 @@ function brightcove_field_get_value($value, $instance, $stored) {
     $instance['settings'][$value];
   }
 
-  return variable_get($value);
+  return NULL;
 }
