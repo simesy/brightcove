@@ -14,8 +14,8 @@
 
 define('BRIGHTCOVE_DEFAULT_VIDEO_WIDTH', 425);
 define('BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT', 350);
-define('BRIGHTCOVE_DEFAULT_THUMBNAIL_WIDTH', 180);
-define('BRIGHTCOVE_DEFAULT_THUMBNAIL_HEIGHT', 176);
+define('BRIGHTCOVE_MINIMUM_VIDEO_WIDTH', 180);
+define('BRIGHTCOVE_MINIMUM_VIDEO_HEIGHT', 176);
 
 /**
  * Implementation of hook_menu().
@@ -316,14 +316,6 @@ function brightcove_field_field_formatter_info() {
       'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
     ),
   );
-  $formatters['thumbnail'] = array(
-    'label' => t('Thumbnail video player'),
-    'field types' => array('brightcove_video'),
-    'settings' => array(
-      'width' => BRIGHTCOVE_DEFAULT_THUMBNAIL_WIDTH,
-      'height' => BRIGHTCOVE_DEFAULT_THUMBNAIL_HEIGHT,
-    ),
-  );
   $formatters['entity_link_videoStillURL'] = array(
     'label' => t('Default still image linked to entity'),
     'field types' => array('brightcove_video'),
@@ -393,7 +385,7 @@ function brightcove_field_field_formatter_settings_summary($field, $instance, $v
 
   $summary = '';
 
-  if ($display['type'] == 'default' || $display['type'] == 'thumbnail') {
+  if ($display['type'] == 'default') {
     $summary = t('Size: @width x @height', array(
       '@width' => $settings['width'],
       '@height' => $settings['height'],
@@ -409,7 +401,7 @@ function brightcove_field_field_formatter_settings_form($field, $instance, $view
 
   $element = array();
 
-  if ($display['type'] == 'default' || $display['type'] == 'thumbnail') {
+  if ($display['type'] == 'default') {
     $element['width'] = array(
       '#title' => t('Width'),
       '#type' => 'textfield',
@@ -440,8 +432,7 @@ function _brightcove_field_formatter_dimension_validate($value,
 }
 
 function brightcove_field_formatter_width_validate($element) {
-  $minwidth = $element['#formatter_type'] == 'default' ?
-    BRIGHTCOVE_DEFAULT_VIDEO_WIDTH : BRIGHTCOVE_DEFAULT_THUMBNAIL_WIDTH;
+  $minwidth = BRIGHTCOVE_MINIMUM_VIDEO_WIDTH;
   $errormsg = t('The video width must be a number, greater than %num', array(
     '%num' => $minwidth,
   ));
@@ -450,8 +441,7 @@ function brightcove_field_formatter_width_validate($element) {
 }
 
 function brightcove_field_formatter_height_validate($element) {
-  $minheight = $element['#formatter_type'] == 'default' ?
-    BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT : BRIGHTCOVE_DEFAULT_THUMBNAIL_HEIGHT;
+  $minheight = BRIGHTCOVE_MINIMUM_VIDEO_HEIGHT;
   $errormsg = t('The video height must be a number, greater than %num', array(
     '%num' => $minheight,
   ));
@@ -1297,7 +1287,7 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
 
   $settings = $display['settings'];
 
-  if ($display['type'] == 'default' || $display['type'] == 'thumbnail') {
+  if ($display['type'] == 'default') {
     $theme = 'brightcove_field_formatter_default';
   }
   if (in_array($display['type'], array(
