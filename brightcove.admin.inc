@@ -270,7 +270,7 @@ function brightcove_admin_players() {
       _brightcove_player_is_default($player) ?
         t('Default') :
         l(t('Set default'), 'admin/config/media/brightcove/players/' .
-                   urlencode($player->name) . '/delete'),
+                   urlencode($player->name) . '/setdefault'),
       l(t('Edit'), 'admin/config/media/brightcove/players/' .
                    urlencode($player->name) . '/edit'),
       l(t('Delete'), 'admin/config/media/brightcove/players/' .
