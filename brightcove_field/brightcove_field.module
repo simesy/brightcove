@@ -419,7 +419,7 @@ function brightcove_field_field_formatter_settings_form($field, $instance, $view
       '#formatter_type' => $display['type'],
     );
     $element['height'] = array(
-      '#title' => t('height'),
+      '#title' => t('Height'),
       '#type' => 'textfield',
       '#default_value' => $settings['height'],
       '#required' => TRUE,
