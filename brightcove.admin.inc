@@ -267,6 +267,10 @@ function brightcove_admin_players() {
       check_plain($player->name),
       check_plain($player->player_id),
       check_plain($player->player_key),
+      _brightcove_player_is_default($player) ?
+        t('Default') :
+        l(t('Set default'), 'admin/config/media/brightcove/players/' .
+                   urlencode($player->name) . '/delete'),
       l(t('Edit'), 'admin/config/media/brightcove/players/' .
                    urlencode($player->name) . '/edit'),
       l(t('Delete'), 'admin/config/media/brightcove/players/' .
@@ -279,6 +283,15 @@ function brightcove_admin_players() {
     '#header' => $header,
     '#rows' => $rows,
   );
+}
+
+function _brightcove_player_is_default($player) {
+  $ret = 1;
+
+  $ret &= (int) (variable_get('brightcove_player') === $player->player_id);
+  $ret &= (int) (variable_get('brightcove_player_key') === $player->player_key);
+
+  return (bool) $ret;
 }
 
 function brightcove_player_editor_form($form, &$form_state, $player = NULL) {
@@ -336,5 +349,25 @@ function brightcove_player_delete_form($form, &$form_state, $player) {
 
 function brightcove_player_delete_form_submit($form, &$form_state) {
   brightcove_player_delete($form_state['values']['player_name']);
+  $form_state['redirect'] = 'admin/config/media/brightcove/players';
+}
+
+function brightcove_player_setdefault_form($form, &$form_state, $player) {
+  $form['player_name'] = array(
+    '#type' => 'value',
+    '#value' => $player->name,
+  );
+
+  return confirm_form($form,
+    t('Are you sure that you want to set "@name" player default?', array(
+        '@name' => $player->name,
+      )),
+    'admin/config/media/brightcove/players');
+}
+
+function brightcove_player_setdefault_form_submit($form, &$form_state) {
+  $player = brightcove_player_load($form_state['values']['player_name']);
+  variable_set('brightcove_player', $player->player_id);
+  variable_set('brightcove_player_key', $player->player_key);
   $form_state['redirect'] = 'admin/config/media/brightcove/players';
 }
