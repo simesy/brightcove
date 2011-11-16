@@ -1646,8 +1646,8 @@ function brightcove_field_get_value($instance, $stored) {
     return $stored;
   }
 
-  if (!empty($instance['settings'][$value])) {
-    $instance['settings'][$value];
+  if (!empty($instance['settings']['brightcove_player'])) {
+    $instance['settings']['brightcove_player'];
   }
 
   return NULL;
