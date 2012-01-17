@@ -270,11 +270,11 @@ function brightcove_admin_players() {
       _brightcove_player_is_default($player) ?
         t('Default') :
         l(t('Set default'), 'admin/config/media/brightcove/players/' .
-                   urlencode($player->name) . '/setdefault'),
-      l(t('Edit'), 'admin/config/media/brightcove/players/' .
-                   urlencode($player->name) . '/edit'),
-      l(t('Delete'), 'admin/config/media/brightcove/players/' .
-                   urlencode($player->name) . '/delete'),
+          urlencode($player->name) . '/setdefault'),
+        l(t('Edit'), 'admin/config/media/brightcove/players/' .
+          urlencode($player->name) . '/edit'),
+        l(t('Delete'), 'admin/config/media/brightcove/players/' .
+          urlencode($player->name) . '/delete'),
     );
   }
 
@@ -313,7 +313,7 @@ function brightcove_player_editor_form($form, &$form_state, $player = NULL) {
 
   foreach (array('name', 'player_id', 'player_key') as $item) {
     $form[$item] = array(
-      '#title' => t($titles[$item]),
+      '#title' => check_plain(t($titles[$item])),
       '#type' => 'textfield',
       '#default_value' => isset($player->$item) ?
         $player->$item : NULL,
