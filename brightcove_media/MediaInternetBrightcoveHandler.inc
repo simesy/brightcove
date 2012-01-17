@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Internet handler for Brightcove videos.
+ */
 
 class MediaInternetBrightcoveHandler extends MediaInternetBaseHandler {
   public function parse($embedCode) {
