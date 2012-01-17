@@ -138,7 +138,7 @@ function theme_brightcove_field_formatter_default($variables) {
     if ($vidcount == 1) {
       drupal_add_js('http://admin.brightcove.com/js/BrightcoveExperiences.js');
     }
-    $params['id'] = 'myExperience'.$vidcount;
+    $params['id'] = 'myExperience' . $vidcount;
     $player = theme('brightcove_field_embed', array(
         'type' => 'video',
         'video_id' => $variables['element']['video_id'],
