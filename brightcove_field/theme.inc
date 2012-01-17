@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Theme funciton for the module.
+ */
 
 /**
  * Theme callback for a Brightcove browse button.
@@ -44,7 +48,7 @@ function theme_brightcove_field_browse_items($variables) {
   $rowcount = 0;
   $activerow = 0;
   $rows = array();
-  foreach($variables['items'] as $item) {
+  foreach ($variables['items'] as $item) {
     // TODO test these after field port is stable
     $themed = theme('brightcove_field_browse_item', array('item' => $item));
     $rowcount++;
@@ -78,27 +82,27 @@ function theme_brightcove_field_embed($variables) {
     }
   }
 
-  $assetCode = '';
+  $asset_code = '';
 
   if (isset($variables['video_id'])) {
     if (is_array($variables['video_id'])) {
-      if (strtolower($variables['type']) == 'video') {
-        $assetCode = '<param name="@videoPlayer" value="';
+      if (drupal_strtolower($variables['type']) == 'video') {
+        $asset_code = '<param name="@videoPlayer" value="';
       }
       else {
         // TODO: Add different types than video.
       }
 
-      foreach($variables['video_id'] as $assetId) {
-        $assetCode .= $assetId . ',';
+      foreach ($variables['video_id'] as $asset_td) {
+        $asset_code .= $asset_td . ',';
       }
 
-      $assetCode = substr($assetCode, 0, -1);
-      $assetCode .= '" />';
+      $asset_code = drupal_substr($asset_code, 0, -1);
+      $asset_code .= '" />';
     }
     else {
-      if (strtolower($variables['type']) == 'video') {
-        $assetCode = '<param name="@videoPlayer" value="' . $variables['video_id'] . '" />';
+      if (drupal_strtolower($variables['type']) == 'video') {
+        $asset_code = '<param name="@videoPlayer" value="' . $variables['video_id'] . '" />';
       }
       else {
         // TODO: Add different types than video.
@@ -112,7 +116,7 @@ function theme_brightcove_field_embed($variables) {
     <param name="width" value="' . $values['width'] . '" />
     <param name="height" value="' . $values['height'] . '" />
     <param name="playerID" value="' . $player->player_id . '" />'
-    . $assetCode . '
+    . $asset_code . '
     <param name="isVid" value="true" />
     <param name="isUI" value="true" />
     <param name="playerKey" value="' . $player->player_key . '" />
