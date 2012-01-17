@@ -83,8 +83,8 @@ function brightcove_update_7002() {
 }
 
 /**
-  * Implementation of hook_requirements().
-  */
+ * Implements hook_requirements().
+ */
 function brightcove_requirements() {
   $requirements = array();
   $t = get_t();
@@ -110,7 +110,8 @@ function brightcove_requirements() {
     $requirements['bc_mapi']['description'] = $t('Brightcove MAPI SDK is missing. Please install it to sites/all/libraries from !url and enable the module again.', array('!url' => l('http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/', 'http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/')));
     $requirements['bc_mapi']['severity'] = REQUIREMENT_ERROR;
     $requirements['bc_mapi']['value'] = $t('Missing');
-  } else {
+  }
+  else {
     $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
     $requirements['bc_mapi']['severity'] = REQUIREMENT_OK;
     $requirements['bc_mapi']['value'] = $t('Installed');
