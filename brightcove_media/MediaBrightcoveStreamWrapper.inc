@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Stream wrapper fro Brightcove videos.
+ */
 
 class MediaBrightcoveStreamWrapper extends MediaReadOnlyStreamWrapper {
   public function getTarget() {
