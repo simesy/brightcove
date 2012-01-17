@@ -244,7 +244,7 @@ function brightcove_remote_image($url) {
   }
 
   // Perform basic extension check.
-  if (!in_array(strtolower($path['extension']), array('jpg', 'jpeg', 'png', 'gif'))) {
+  if (!in_array(drupal_strtolower($path['extension']), array('jpg', 'jpeg', 'png', 'gif'))) {
     return FALSE;
   }
 
@@ -267,7 +267,7 @@ function brightcove_remote_image($url) {
 }
 
 /**
- * Implementation of hook_theme().
+ * Implements of hook_theme().
  */
 function brightcove_theme() {
   return array(
@@ -304,7 +304,7 @@ function brightcove_status($code, $reset = FALSE) {
     $status = array();
   }
   if (!isset($status[$code])) {
-    if (($cache = cache_get('brightcove:status:'. $code, 'cache'))) {
+    if (($cache = cache_get('brightcove:status:' . $code, 'cache'))) {
       $status[$code] = $cache->data;
     }
     else {
@@ -317,7 +317,7 @@ function brightcove_status($code, $reset = FALSE) {
         watchdog('brightcove', 'Unhandled error from Brightcove when retrieving the status of video ID %video: %error', array('%video' => $code, '%error' => $error->getMessage()), WATCHDOG_ERROR);
         $status[$code] = 'ERROR';
       }
-      cache_set('brightcove:status:'. $code, $status[$code], 'cache', CACHE_TEMPORARY);
+      cache_set('brightcove:status:' . $code, $status[$code], 'cache', CACHE_TEMPORARY);
     }
   }
   return $status[$code];
@@ -331,9 +331,8 @@ function brightcove_status($code, $reset = FALSE) {
  */
 function brightcove_expose_unavailable() {
   if (variable_get('brightcove_check_for_unavailable', TRUE) &&
-     ($unavailable_message = variable_get('brightcove_status_display_unavailable', 'This video is unavailable for the moment.'))) {
-    return theme('brightcove_unavailable_message',
-                 array('message' => $unavailable_message));
+    ($unavailable_message = variable_get('brightcove_status_display_unavailable', 'This video is unavailable for the moment.'))) {
+    return theme('brightcove_unavailable_message', array('message' => $unavailable_message));
   }
 
   return '';
@@ -479,7 +478,10 @@ function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
   $read = FALSE;
   try {
     $read = $bc->find('videobyid', 0) || TRUE;
-  } catch (Exception $e) {}
+  }
+  catch (Exception $e) {
+    watchdog_exception('brightcove', $e);
+  }
 
   try {
     $bc->getStatus('video', 0, 0);
