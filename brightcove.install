@@ -14,6 +14,11 @@ function brightcove_schema() {
   $schema['brightcove_player'] = array(
     'description' => 'Stores brightcove players.',
     'fields' => array(
+      'pid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
       'name' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -30,7 +35,7 @@ function brightcove_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('name'),
+    'primary key' => array('pid'),
   );
 
   return $schema;
@@ -80,6 +85,20 @@ function brightcove_update_7002() {
 
   variable_del('brightcove_player');
   variable_del('brightcove_player_key');
+}
+
+/**
+ * Create individual primary key for players.
+ */
+function brightcove_update_7003() {
+  $spec = array(
+    'type' => 'serial',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+
+  db_drop_primary_key('brightcove_player');
+  db_add_field('brightcove_player', 'pid', $spec, array('primary key' => array('pid')));
 }
 
 /**
@@ -133,8 +152,7 @@ function brightcove_uninstall() {
   variable_del('brightcove_encode_to');
   variable_del('brightcove_mapi_path');
   variable_del('brightcove_player');
-  variable_del('brightcove_player_key');
-  variable_del('brightcove_player_key');
+  variable_del('brightcove_player_pid');
   variable_del('brightcove_player_key');
   variable_del('brightcove_preserve_source_rendition');
   variable_del('brightcove_read_api_key');

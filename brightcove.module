@@ -493,10 +493,10 @@ function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
   return array($read, $write);
 }
 
-function brightcove_player_load($name) {
-  return db_query('SELECT * FROM {brightcove_player} WHERE name = :name',
+function brightcove_player_load($pid) {
+  return db_query('SELECT * FROM {brightcove_player} WHERE pid = :pid',
     array(
-      ':name' => $name,
+      ':pid' => $pid,
     ))->fetch();
 }
 
@@ -506,24 +506,34 @@ function brightcove_player_load_all() {
 }
 
 function brightcove_player_list() {
-  return db_query('SELECT name FROM {brightcove_player} ORDER BY name')
-    ->fetchAllKeyed(0, 0);
+  return db_query('SELECT pid, name FROM {brightcove_player} ORDER BY name')
+    ->fetchAllKeyed(0, 1);
 }
 
 function brightcove_player_save($player) {
-  return db_merge('brightcove_player')
-    ->key(array(
-      'name' => $player->name,
-    ))
-    ->fields(array(
-      'player_id' => $player->player_id,
-      'player_key' => $player->player_key,
-    ))
-    ->execute();
+  if (empty($player->pid)) {
+    return db_insert('brightcove_player')
+      ->fields(array(
+        'name' => $player->name,
+        'player_id' => $player->player_id,
+        'player_key' => $player->player_key,
+      ))
+      ->execute();
+  }
+  else {
+    return db_update('brightcove_player')
+      ->fields(array(
+        'name' => $player->name,
+        'player_id' => $player->player_id,
+        'player_key' => $player->player_key,
+      ))
+      ->condition('pid', $player->pid)
+      ->execute();
+  }
 }
 
-function brightcove_player_delete($name) {
+function brightcove_player_delete($pid) {
   return db_delete('brightcove_player')
-    ->condition('name', $name)
+    ->condition('pid', $pid)
     ->execute();
 }
