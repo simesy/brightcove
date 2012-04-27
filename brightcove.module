@@ -435,8 +435,6 @@ function brightcove_video_cache_set($id, $video) {
   if (!isset($_SESSION['brightcove'])) {
     $_SESSION['brightcove'] = array();
   }
-
-  $id = (int) $id;
   $_SESSION['brightcove']["video_{$id}"] = $video;
 }
 
@@ -450,7 +448,6 @@ function brightcove_video_cache_set($id, $video) {
  *   Object the Brightcove video object.
  */
 function brightcove_video_cache_get($id) {
-  $id = (int) $id;
   $key = "video_{$id}";
   if ($id && isset($_SESSION['brightcove'][$key])) {
     return $_SESSION['brightcove'][$key];

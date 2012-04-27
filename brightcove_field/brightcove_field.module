@@ -1518,14 +1518,16 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
     }
 
     $id = brightcove_upload_video(drupal_realpath($file->uri), $meta);
-
+    
     if ($id) {
       // Construct Video object with ID - we need to cache it and save to
       // session. Brightcove Media API doesn't clear it's cache when a new
       // video is uploaded, therefore the node save would fail.
       $video = new StdClass;
       $video->id = $id;
-      $video->name = $form_state['values']['title'];
+      foreach ($meta as $id => $data) {
+        $video->$id = $data;
+      }
       brightcove_video_cache_set($id, $video);
       // invalidating brightcove video load cache
       cache_set("bc:video:{$id}", FALSE, 'cache');
