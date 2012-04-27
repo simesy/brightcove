@@ -97,7 +97,7 @@
   };
 
   Drupal.brightcove_field.submit_browse = function(field_rel, data) {
-    parent.jQuery("." + field_rel).val(data);
+    parent.jQuery("." + field_rel).val(data).triggerHandler('change');
     parent.jQuery('.brightcove-field-remove-button[rel="' + field_rel + '"]').attr('disabled', '').removeClass('form-button-disabled');
   };
 
