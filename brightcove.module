@@ -491,10 +491,15 @@ function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
 }
 
 function brightcove_player_load($pid) {
-  return db_query('SELECT * FROM {brightcove_player} WHERE pid = :pid',
-    array(
-      ':pid' => $pid,
-    ))->fetch();
+  return is_numeric($pid) ?
+    db_query('SELECT * FROM {brightcove_player} WHERE pid = :pid',
+      array(
+        ':pid' => $pid,
+      ))->fetch() :
+    db_query('SELECT * FROM {brightcove_player} WHERE name = :name',
+      array(
+        ':name' => $pid,
+      ))->fetch();
 }
 
 function brightcove_player_load_all() {
