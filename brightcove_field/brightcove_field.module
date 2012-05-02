@@ -183,7 +183,6 @@ function brightcove_field_field_info() {
  */
 function brightcove_field_field_instance_settings_form($field, $instance) {
   $form = array();
-
   // Only allow Upload if this site has Write API keys.
   if (brightcove_write_api_access()) {
     $form['allow_upload'] = array(
@@ -1518,7 +1517,7 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
     }
 
     $id = brightcove_upload_video(drupal_realpath($file->uri), $meta);
-    
+
     if ($id) {
       // Construct Video object with ID - we need to cache it and save to
       // session. Brightcove Media API doesn't clear it's cache when a new
