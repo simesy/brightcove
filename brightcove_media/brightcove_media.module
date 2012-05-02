@@ -95,7 +95,6 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
     if (isset($display['settings']['player']) &&
         $display['settings']['player']) {
       $element['#player'] = $display['settings']['player'];
-      $element['#player_key'] = $display['settings']['player_key'];
     }
     foreach (array('width', 'height') as $setting) {
       if (isset($display['settings'][$setting]) && $display['settings'][$setting]) {
