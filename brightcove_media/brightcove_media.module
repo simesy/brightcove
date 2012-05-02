@@ -131,14 +131,10 @@ function brightcove_media_file_formatter_image_view($file, $display, $langcode) 
 function brightcove_media_file_formatter_video_settings($form, $form_state, $settings) {
   $element = array();
   $element['player'] = array(
-    '#title' => t('Player Id'),
-    '#type' => 'textfield',
+    '#title' => t('Player'),
+    '#type' => 'radios',
+    '#options' => brightcove_player_list(),
     '#default_value' => isset($settings['player']) ? $settings['player'] : '',
-  );
-  $element['player_key'] = array(
-    '#title' => t('Player Key'),
-    '#type' => 'textfield',
-    '#default_value' => isset($settings['player_key']) ? $settings['player_key'] : '',
   );
   $element['width'] = array(
     '#title' => t('Player Width'),
