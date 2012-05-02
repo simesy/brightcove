@@ -282,7 +282,7 @@ function brightcove_field_browser_validate($element, &$form_state) {
     if (is_numeric($id)) {
       // Matched ID, check if the video exists.
       $video = brightcove_video_load($id);
-      if ($video || (is_null(brightcove_video_cache_get($id)) && $video->id != $id)) {
+      if (!$video || (is_null(brightcove_video_cache_get($id)) && $video->id != $id)) {
         form_error($element, t('%name: Found no valid video with that name. Please note that it might take several minutes after the video has been uploaded in Brightcove Studio to appear in the API.', array('%name' => t($field['widget']['label']))));
       }
     } else {
