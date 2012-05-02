@@ -55,7 +55,7 @@ function brightcove_menu() {
     'title' => 'Players',
     'page callback' => 'brightcove_admin_players',
     'type' => MENU_LOCAL_TASK,
-    'access arguments' => array('adminster brightcove settings'),
+    'access arguments' => array('administer brightcove settings'),
     'file' => 'brightcove.admin.inc',
   );
 
@@ -63,7 +63,7 @@ function brightcove_menu() {
     'title' => 'Add player',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_player_editor_form'),
-    'access arguments' => array('adminster brightcove settings'),
+    'access arguments' => array('administer brightcove settings'),
     'type' => MENU_LOCAL_ACTION,
     'file' => 'brightcove.admin.inc',
   );
@@ -72,7 +72,7 @@ function brightcove_menu() {
     'title' => 'Edit player',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_player_editor_form', 5),
-    'access arguments' => array('adminster brightcove settings'),
+    'access arguments' => array('administer brightcove settings'),
     'type' => MENU_CALLBACK,
     'file' => 'brightcove.admin.inc',
   );
@@ -81,7 +81,7 @@ function brightcove_menu() {
     'title' => 'Delete player',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_player_delete_form', 5),
-    'access arguments' => array('adminster brightcove settings'),
+    'access arguments' => array('administer brightcove settings'),
     'type' => MENU_CALLBACK,
     'file' => 'brightcove.admin.inc',
   );
@@ -90,7 +90,7 @@ function brightcove_menu() {
     'title' => 'Set player default',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_player_setdefault_form', 5),
-    'access arguments' => array('adminster brightcove settings'),
+    'access arguments' => array('administer brightcove settings'),
     'type' => MENU_CALLBACK,
     'file' => 'brightcove.admin.inc',
   );
