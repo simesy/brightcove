@@ -119,8 +119,7 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
       ),
     );
     // add player override
-    if (isset($display['settings']['player']) &&
-        $display['settings']['player']) {
+    if (isset($display['settings']['player']) && $display['settings']['player']) {
       $element['#player'] = $display['settings']['player'];
       $element['#player_key'] = $display['settings']['player_key'];
     }

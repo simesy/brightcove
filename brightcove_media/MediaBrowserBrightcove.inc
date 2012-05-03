@@ -34,8 +34,7 @@ class MediaBrowserBrightcove extends MediaBrowserPlugin {
       '#settings' => array(
         'viewMode' => 'thumbnails',
         'getMediaUrl' => url('brightcove/media/list'),
-        'multiselect' => isset($params['multiselect']) &&
-                         $params['multiselect'] != 'false',
+        'multiselect' => isset($params['multiselect']) && $params['multiselect'] != 'false',
         'types' => isset($params['types']) ? $params['types'] : array(),
       ),
       '#attached' => array(
