@@ -5,8 +5,15 @@
  */
 
 class MediaInternetBrightcoveHandler extends MediaInternetBaseHandler {
+
+  /**
+   * Parse the video id from an embedcode.
+   *
+   * @param $embedCode
+   * @return null|string
+   */
   public function parse($embedCode) {
-    // special handling for the shortened urls
+    // Special handling for the shortened urls.
     if (preg_match('#^http://bcove.me/[a-z0-9]+$#i', $embedCode)) {
       $resp = drupal_http_request($embedCode);
       if ($resp) {
@@ -20,8 +27,8 @@ class MediaInternetBrightcoveHandler extends MediaInternetBaseHandler {
       }
     }
 
-    // using regexes are right here, because brightcove provides badly
-    // formatted html files
+    // Using regexes are right here, because brightcove provides badly
+    // formatted html files.
     $regexes = array(
       '#^([0-9]+)$#i',
       '#name="@videoPlayer" value="([0-9]+)"#i',
@@ -39,10 +46,21 @@ class MediaInternetBrightcoveHandler extends MediaInternetBaseHandler {
     return NULL;
   }
 
+  /**
+   * Set the claim attribute.
+   *
+   * @param string $embedCode
+   * @return bool
+   */
   public function claim($embedCode) {
     return (bool) $this->parse($embedCode);
   }
 
+  /**
+   * Validate the embedCode.
+   *
+   * @throws MediaInternetValidationException
+   */
   public function validate() {
     $uri = $this->parse($this->embedCode);
     $existing_files = file_load_multiple(array(), array('uri' => $uri));
@@ -53,6 +71,11 @@ class MediaInternetBrightcoveHandler extends MediaInternetBaseHandler {
     }
   }
 
+  /**
+   * Save the file object.
+   *
+   * @return StdClass
+   */
   public function save() {
     $file = $this->getFileObject();
     file_save($file);
