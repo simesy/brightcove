@@ -49,7 +49,10 @@ class MediaBrowserBrightcove extends MediaBrowserPlugin {
           $bcpath . '/brightcove_media.library.css',
         ),
       ),
-      '#markup' => '<div id="container"><div id="scrollbox">' . $upload_form . $filter_form . '<ul id="media-browser-library-list" class="media-list-thumbnails"></ul><div id="status"></div></div></div>',
+      // If the #form and #markup parameters are not empty the media module will not
+      // render fake submit and cancel buttons.
+      '#form' => array(FALSE),
+      '#markup' => '<div id="container">' . $upload_form . $filter_form . '<div id="status"></div></div>',
     );
   }
 }
