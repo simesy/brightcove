@@ -55,7 +55,7 @@ function brightcove_menu() {
     'title' => 'Players',
     'page callback' => 'brightcove_admin_players',
     'type' => MENU_LOCAL_TASK,
-    'access arguments' => array('adminster brightcove settings'),
+    'access arguments' => array('administer brightcove settings'),
     'file' => 'brightcove.admin.inc',
   );
 
@@ -63,7 +63,7 @@ function brightcove_menu() {
     'title' => 'Add player',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_player_editor_form'),
-    'access arguments' => array('adminster brightcove settings'),
+    'access arguments' => array('administer brightcove settings'),
     'type' => MENU_LOCAL_ACTION,
     'file' => 'brightcove.admin.inc',
   );
@@ -72,7 +72,7 @@ function brightcove_menu() {
     'title' => 'Edit player',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_player_editor_form', 5),
-    'access arguments' => array('adminster brightcove settings'),
+    'access arguments' => array('administer brightcove settings'),
     'type' => MENU_CALLBACK,
     'file' => 'brightcove.admin.inc',
   );
@@ -81,7 +81,7 @@ function brightcove_menu() {
     'title' => 'Delete player',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_player_delete_form', 5),
-    'access arguments' => array('adminster brightcove settings'),
+    'access arguments' => array('administer brightcove settings'),
     'type' => MENU_CALLBACK,
     'file' => 'brightcove.admin.inc',
   );
@@ -90,7 +90,7 @@ function brightcove_menu() {
     'title' => 'Set player default',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('brightcove_player_setdefault_form', 5),
-    'access arguments' => array('adminster brightcove settings'),
+    'access arguments' => array('administer brightcove settings'),
     'type' => MENU_CALLBACK,
     'file' => 'brightcove.admin.inc',
   );
@@ -435,8 +435,6 @@ function brightcove_video_cache_set($id, $video) {
   if (!isset($_SESSION['brightcove'])) {
     $_SESSION['brightcove'] = array();
   }
-
-  $id = (int) $id;
   $_SESSION['brightcove']["video_{$id}"] = $video;
 }
 
@@ -450,7 +448,6 @@ function brightcove_video_cache_set($id, $video) {
  *   Object the Brightcove video object.
  */
 function brightcove_video_cache_get($id) {
-  $id = (int) $id;
   $key = "video_{$id}";
   if ($id && isset($_SESSION['brightcove'][$key])) {
     return $_SESSION['brightcove'][$key];
@@ -493,11 +490,16 @@ function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
   return array($read, $write);
 }
 
-function brightcove_player_load($name) {
-  return db_query('SELECT * FROM {brightcove_player} WHERE name = :name',
-    array(
-      ':name' => $name,
-    ))->fetch();
+function brightcove_player_load($pid) {
+  return is_numeric($pid) ?
+    db_query('SELECT * FROM {brightcove_player} WHERE pid = :pid',
+      array(
+        ':pid' => $pid,
+      ))->fetch() :
+    db_query('SELECT * FROM {brightcove_player} WHERE name = :name',
+      array(
+        ':name' => $pid,
+      ))->fetch();
 }
 
 function brightcove_player_load_all() {
@@ -506,24 +508,35 @@ function brightcove_player_load_all() {
 }
 
 function brightcove_player_list() {
-  return db_query('SELECT name FROM {brightcove_player} ORDER BY name')
-    ->fetchAllKeyed(0, 0);
+  return db_query('SELECT pid, name FROM {brightcove_player} ORDER BY name')
+    ->fetchAllKeyed(0, 1);
 }
 
 function brightcove_player_save($player) {
-  return db_merge('brightcove_player')
-    ->key(array(
-      'name' => $player->name,
-    ))
-    ->fields(array(
-      'player_id' => $player->player_id,
-      'player_key' => $player->player_key,
-    ))
+  if (empty($player->pid)) {
+    return db_insert('brightcove_player')
+      ->fields(array(
+        'name' => $player->name,
+        'player_id' => $player->player_id,
+        'player_key' => $player->player_key,
+      ))
+      ->execute();
+  }
+  else {
+    return db_update('brightcove_player')
+      ->fields(array(
+        'name' => $player->name,
+        'player_id' => $player->player_id,
+        'player_key' => $player->player_key,
+      ))
+      ->condition('pid', $player->pid)
+      ->execute();
+  }
+}
+
+function brightcove_player_delete($pid) {
+  return db_delete('brightcove_player')
+    ->condition('pid', $pid)
     ->execute();
 }
 
-function brightcove_player_delete($name) {
-  return db_delete('brightcove_player')
-    ->condition('name', $name)
-    ->execute();
-}

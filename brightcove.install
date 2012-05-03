@@ -14,6 +14,11 @@ function brightcove_schema() {
   $schema['brightcove_player'] = array(
     'description' => 'Stores brightcove players.',
     'fields' => array(
+      'pid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
       'name' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -30,7 +35,7 @@ function brightcove_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('name'),
+    'primary key' => array('pid'),
   );
 
   return $schema;
@@ -83,18 +88,45 @@ function brightcove_update_7002() {
 }
 
 /**
+ * Create individual primary key for players.
+ */
+function brightcove_update_7003() {
+  $spec = array(
+    'type' => 'serial',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+
+  db_drop_primary_key('brightcove_player');
+  db_add_field('brightcove_player', 'pid', $spec, array('primary key' => array('pid')));
+}
+
+/**
  * Implements hook_requirements().
  */
-function brightcove_requirements() {
+function brightcove_requirements($phase) {
   $requirements = array();
   $t = get_t();
 
-  if (!($path = variable_get('brightcove_mapi_path', FALSE))) {
-    $files = drupal_system_listing('/^bc-mapi\.php$/', 'libraries',
-                                   'filename', 0);
-    if (isset($files['bc-mapi.php'])) {
-      $path = dirname($files['bc-mapi.php']->uri);
-      variable_set('brightcove_mapi_path', $path);
+  if ($phase != 'install') {
+    if (!($path = variable_get('brightcove_mapi_path', FALSE))) {
+      $files = drupal_system_listing('/^bc-mapi\.php$/', 'libraries', 'filename', 0);
+      if (isset($files['bc-mapi.php'])) {
+        $path = dirname($files['bc-mapi.php']->uri);
+        variable_set('brightcove_mapi_path', $path);
+      }
+    }
+
+    if (!$path) {
+      $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
+      $requirements['bc_mapi']['description'] = $t('Brightcove MAPI SDK is missing. Please install it to sites/all/libraries from !url and enable the module again.', array('!url' => l('http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/', 'http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/')));
+      $requirements['bc_mapi']['severity'] = REQUIREMENT_ERROR;
+      $requirements['bc_mapi']['value'] = $t('Missing');
+    }
+    else {
+      $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
+      $requirements['bc_mapi']['severity'] = REQUIREMENT_OK;
+      $requirements['bc_mapi']['value'] = $t('Installed');
     }
   }
 
@@ -105,17 +137,6 @@ function brightcove_requirements() {
     $requirements['curl']['value'] = $t(': missing');
   }
 
-  if (!$path) {
-    $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
-    $requirements['bc_mapi']['description'] = $t('Brightcove MAPI SDK is missing. Please install it to sites/all/libraries from !url and enable the module again.', array('!url' => l('http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/', 'http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/')));
-    $requirements['bc_mapi']['severity'] = REQUIREMENT_ERROR;
-    $requirements['bc_mapi']['value'] = $t('Missing');
-  }
-  else {
-    $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
-    $requirements['bc_mapi']['severity'] = REQUIREMENT_OK;
-    $requirements['bc_mapi']['value'] = $t('Installed');
-  }
   return $requirements;
 }
 
@@ -133,8 +154,7 @@ function brightcove_uninstall() {
   variable_del('brightcove_encode_to');
   variable_del('brightcove_mapi_path');
   variable_del('brightcove_player');
-  variable_del('brightcove_player_key');
-  variable_del('brightcove_player_key');
+  variable_del('brightcove_player_pid');
   variable_del('brightcove_player_key');
   variable_del('brightcove_preserve_source_rendition');
   variable_del('brightcove_read_api_key');

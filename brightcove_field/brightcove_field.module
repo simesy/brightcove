@@ -18,6 +18,14 @@ define('BRIGHTCOVE_MINIMUM_VIDEO_WIDTH', 180);
 define('BRIGHTCOVE_MINIMUM_VIDEO_HEIGHT', 176);
 
 /**
+ * Implements hook_init().
+ */
+function brightcove_field_init() {
+  // This is required in order to make the filter work.
+  drupal_add_js('http://admin.brightcove.com/js/BrightcoveExperiences.js');
+}
+
+/**
  * Implementation of hook_menu().
  */
 function brightcove_field_menu() {
@@ -183,7 +191,6 @@ function brightcove_field_field_info() {
  */
 function brightcove_field_field_instance_settings_form($field, $instance) {
   $form = array();
-
   // Only allow Upload if this site has Write API keys.
   if (brightcove_write_api_access()) {
     $form['allow_upload'] = array(
@@ -236,13 +243,14 @@ function brightcove_field_field_validate($entity_type, $entity,
                                          $langcode, $items, &$errors) {
   foreach ($items as $delta => $item) {
     if (!empty($item['video_id'])) {
-    $video = brightcove_video_load($item['video_id']);
+      $video = brightcove_video_load($item['video_id']);
       if (empty($video->id)) {
         if (brightcove_video_cache_get($item['video_id']) === NULL) {
           $errors[$field['field_name']][$langcode][$delta][] = array(
             'error' => 'brightcove_field',
             'message' => t('%name: invalid video.', array(
-              '%name' => t($field['widget']['label'])
+              '%name' => t(isset($field['widget']['label']) ?
+                $field['widget']['label'] : ''),
             )),
           );
         }
@@ -274,7 +282,7 @@ function brightcove_field_browser_validate($element, &$form_state) {
     if (is_numeric($id)) {
       // Matched ID, check if the video exists.
       $video = brightcove_video_load($id);
-      if (is_null(brightcove_video_cache_get($id)) && $video->id != $id) {
+      if (!$video || (is_null(brightcove_video_cache_get($id)) && $video->id != $id)) {
         form_error($element, t('%name: Found no valid video with that name. Please note that it might take several minutes after the video has been uploaded in Brightcove Studio to appear in the API.', array('%name' => t($field['widget']['label']))));
       }
     } else {
@@ -1525,7 +1533,9 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
       // video is uploaded, therefore the node save would fail.
       $video = new StdClass;
       $video->id = $id;
-      $video->name = $form_state['values']['title'];
+      foreach ($meta as $id => $data) {
+        $video->$id = $data;
+      }
       brightcove_video_cache_set($id, $video);
       // invalidating brightcove video load cache
       cache_set("bc:video:{$id}", FALSE, 'cache');
@@ -1645,10 +1655,85 @@ function brightcove_field_get_value($instance, $stored) {
   if ($stored) {
     return $stored;
   }
-
   if (!empty($instance['settings']['brightcove_player'])) {
     return $instance['settings']['brightcove_player'];
   }
-
+  // If no player is set to the content and the BC video field,
+  // try to get the global default player.
+  elseif($pid = variable_get('brightcove_player_pid')) {
+    return $pid;
+  }
   return NULL;
+}
+
+/**
+ * Implements hook_filter_info().
+ */
+function brightcove_field_filter_info() {
+  $filters = array();
+
+  $filters['filter_brightcove'] = array(
+    'title' => t('Brightcove filter'),
+    'process callback' => '_filter_brightcove',
+    'settings callback' => '_filter_brightcove_settings',
+    'default settings' => array(
+      'player' => variable_get('brightcove_player_pid'),
+    ),
+    'tips callback' => '_filter_brightcove_tips',
+  );
+
+  return $filters;
+}
+
+/**
+ * Settings callback for the brightcove filter.
+ */
+function _filter_brightcove_settings($form, &$form_state, $filter, $format, $defaults) {
+  $filter->settings += $defaults;
+
+  $settings = array();
+
+  $settings['player'] = array(
+    '#type' => 'radios',
+    '#title' => t('Player'),
+    '#options' => brightcove_player_list(),
+    '#default_value' => $filter->settings['player'],
+  );
+
+  return $settings;
+}
+
+/**
+ * Process callback for the brightcove filter.
+ *
+ * @TODO: refactor this function to use a closure when we can use PHP 5.3 (D8?)
+ */
+function _filter_brightcove($text, $filter) {
+  $current_filter = &drupal_static(__FUNCTION__);
+  $current_filter = $filter;
+  return preg_replace_callback('#\[brightcove:([\d]+)\]#', '_filter_brightcove_replace', $text);
+}
+
+/**
+ * Callback for preg_replace() in _filter_brightcove().
+ *
+ * @TODO: make this function a closure.
+ */
+function _filter_brightcove_replace($videoid) {
+  $filter = &drupal_static('_filter_brightcove');
+  return theme('brightcove_field_embed', array(
+    'player' => $filter && $filter->settings['player'] ?
+      $filter->settings['player'] : variable_get('brightcove_player_pid'),
+    'video_id' => $videoid[1],
+  ));
+}
+
+/**
+ * Tips callback for brightcove filter.
+ *
+ * @TODO: improve documentation.
+ */
+function _filter_brightcove_tips($filter, $format, $long = FALSE) {
+  return t('To embed a brightcove video use the [brightcove:VIDEOID] syntax, ' .
+  'where VIDEOID is the ID of the brightcove video what you want to embed.');
 }
