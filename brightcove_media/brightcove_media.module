@@ -78,23 +78,6 @@ function brightcove_media_file_formatter_info() {
 }
 
 /**
- * Implements hook_theme().
- *
- * @param $existing
- * @param $type
- * @param $theme
- * @param $path
- * @return array
- */
-function brightcove_media_theme($existing, $type, $theme, $path) {
-  return array(
-    'brightcove_media_browser_filter_form' => array(
-      'render element' => 'form',
-    ),
-  );
-}
-
-/**
  * The brightcove_media_video file_formatter view callback.
  *
  * @param $file
@@ -398,41 +381,14 @@ function brightcove_media_browser_filter_form($form, &$form_state) {
   $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#submit' => array('brightcove_media_browser_filter_form_submit'),
-    '#value' => t('Submit'),
-  );
-  $form['actions']['cancel'] = array(
-    '#type' => 'link',
-    '#title' => t('Cancel'),
-    '#href' => '',
     '#attributes' => array(
-      'class' => array('button', 'button-no', 'fake-cancel', 'brightcove')
+      'class' => array('fake-submit'),
     ),
-    '#weight' => 100,
+    '#value' => t('Submit'),
   );
 
   return $form;
 }
-
-/**
- * The brightcove_media_browser_filter_form form theme function.
- *
- * @param $variables
- * @return string
- */
-function theme_brightcove_media_browser_filter_form(&$variables) {
-  $output = '';
-  $form = $variables['form'];
-
-  $output .= drupal_render($form['searchform']);
-  $output .= '<div id="scrollbox">';
-  $output .= '<ul id="media-browser-library-list" class="media-list-thumbnails"></ul>';
-  $output .= '</div>';
-  $output .= drupal_render($form['actions']);
-  $output .= drupal_render_children($form);
-
-  return $output;
-}
-
 
 /**
  * The brightcove_media_browser_filter_form submit callback function.
@@ -465,7 +421,6 @@ function brightcove_media_browser_filter_form_submit($form, &$form_state) {
 
 /**
  * Get the avaliable videos from brightcove.
- * @return JSON list of available brightcove vieos.
  */
 function brightcove_media_list() {
   global $user;
@@ -546,10 +501,6 @@ function brightcove_media_list() {
 
 /**
  * Implements hook_ctools_plugin_api().
- *
- * @param $owner
- * @param $api
- * @return array|null
  */
 function brightcove_media_ctools_plugin_api($owner, $api) {
   static $api_versions = array(
@@ -564,8 +515,6 @@ function brightcove_media_ctools_plugin_api($owner, $api) {
 
 /**
  * Implements hook_element_info_alter().
- *
- * @param $type
  */
 function brightcove_media_element_info_alter(&$type) {
   if (isset($type['media']['#process'])) {
