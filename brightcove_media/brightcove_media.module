@@ -77,14 +77,6 @@ function brightcove_media_file_formatter_info() {
   return $formatters;
 }
 
-/**
- * The brightcove_media_video file_formatter view callback.
- *
- * @param $file
- * @param $display
- * @param $langcode
- * @return array|null
- */
 function brightcove_media_file_formatter_video_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
   if ($scheme == 'brightcove' && empty($file->override['wysiwyg'])) {
@@ -118,14 +110,6 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
   return NULL;
 }
 
-/**
- * The brightcove_media_image file formatter view callback.
- *
- * @param $file
- * @param $display
- * @param $langcode
- * @return array|null
- */
 function brightcove_media_file_formatter_image_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
   if ($scheme == 'brightcove') {
@@ -145,14 +129,6 @@ function brightcove_media_file_formatter_image_view($file, $display, $langcode) 
   return NULL;
 }
 
-/**
- * The brightcove_media_video file formatter settings callback.
- *
- * @param $form
- * @param $form_state
- * @param $settings
- * @return array
- */
 function brightcove_media_file_formatter_video_settings($form, $form_state, $settings) {
   $element = array();
   $element['player'] = array(
@@ -174,14 +150,6 @@ function brightcove_media_file_formatter_video_settings($form, $form_state, $set
   return $element;
 }
 
-/**
- * The brightcove_media_image file formatter settings callback.
- *
- * @param $form
- * @param $form_state
- * @param $settings
- * @return array
- */
 function brightcove_media_file_formatter_image_settings($form, $form_state, $settings) {
   $element = array();
   $element['image_style'] = array(
@@ -350,6 +318,7 @@ function brightcove_media_browser_filter_form($form, &$form_state) {
     '#default_value' => '',
     '#description' => t('Comma separated keywords to search for. (do not add space after comma)'),
   );
+
   $form['searchform']['search'] = array(
     '#type' => 'radios',
     '#title' => t('Search in'),
@@ -360,6 +329,7 @@ function brightcove_media_browser_filter_form($form, &$form_state) {
     ),
     '#description' => t('"Names and descriptions" searches in Video name, short and long descriptions. Tags searches in Video associated tags.'),
   );
+
   $form['searchform']['filter'] = array(
     '#type' => 'button',
     '#name' => 'filter',
@@ -377,6 +347,7 @@ function brightcove_media_browser_filter_form($form, &$form_state) {
     '#type' => 'hidden',
     '#default_value' => FALSE,
   );
+
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
