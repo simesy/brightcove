@@ -1,3 +1,4 @@
+
 #media-tab-brightcove #container {
   padding: 0;
 }
@@ -6,11 +7,4 @@
   height: 400px;
   overflow: auto;
   overflow-x: hidden;
-}
-
-#media-tab-brightcove .media-item {
-  height: 130px;
-}
-#media-tab-brightcove ul#media-browser-library-list {
-  margin: 0px;
 }
