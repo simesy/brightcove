@@ -333,14 +333,14 @@ function theme_brightcove_field_entity_image_style($variables) {
   return '';
 }
 
-function theme_brightcove_field_formatter_metadata($variables) {
-  if ($variables['video']) {
-    $text = check_plain($variables['video']->{$variables['key']});
-    return "<span><strong>{$variables['label']}:</strong> $text</span>";
-  }
-
-  return '';
-}
+//function theme_brightcove_field_formatter_metadata($variables) {
+//  if ($variables['video']) {
+//    $text = check_plain($variables['video']->{$variables['key']});
+//    return "<span><strong>{$variables['label']}:</strong> $text</span>";
+//  }
+//
+//  return '';
+//}
 
 /**
  * Theme function to render brightcove images.
@@ -349,4 +349,15 @@ function theme_brightcove_field_formatter_metadata($variables) {
  */
 function theme_brightcove_field_image($variables) {
 
+}
+
+function theme_brightcove_field_metadata($variables) {
+  $output = NULL;
+
+  if ($variables['video']) {
+    $text = check_plain($variables['video']->{$variables['key']});
+    $output = "<span><strong>{$variables['label']}:</strong> $text</span>";
+  }
+
+  return $output;
 }
