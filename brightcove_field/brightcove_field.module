@@ -404,6 +404,14 @@ function brightcove_field_field_formatter_info() {
   return $formatters;
 }
 
+/**
+ * Implements hook_field_formatter_settings_summary().
+ *
+ * @param $field
+ * @param $instance
+ * @param $view_mode
+ * @return array|null|string
+ */
 function brightcove_field_field_formatter_settings_summary($field, $instance, $view_mode) {
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
@@ -421,7 +429,8 @@ function brightcove_field_field_formatter_settings_summary($field, $instance, $v
     // Unset possible 'No defined styles' option.
     unset($image_styles['']);
     if (isset($image_styles[$settings['image_style']])) {
-      $summary = t('Image style: @style', array('@style' => $image_styles[$settings['brightcove_image_style']]));
+      $summary = t('Image style: @style', array(
+        '@style' => $image_styles[$settings['brightcove_image_style']]));
     }
     else {
       $summary = t('Original image');
@@ -429,12 +438,23 @@ function brightcove_field_field_formatter_settings_summary($field, $instance, $v
   }
   if ($display['type'] == 'brightcove_metadata') {
     $metadata_options = _brightcove_field_get_object_formatter_keys();
-    $summary = t('Metadata: @metadata', array('@metadata' => $metadata_options[$settings['brightcove_metadata_option']]));
+    $summary = t('Metadata: @metadata', array(
+      '@metadata' => $metadata_options[$settings['brightcove_metadata_type']]));
   }
 
   return $summary;
 }
 
+/**
+ * Impelements hook_field_formatter_settings_form().
+ *
+ * @param $field
+ * @param $instance
+ * @param $view_mode
+ * @param $form
+ * @param $form_state
+ * @return array
+ */
 function brightcove_field_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
@@ -457,6 +477,52 @@ function brightcove_field_field_formatter_settings_form($field, $instance, $view
       '#required' => TRUE,
       '#element_validate' => array('brightcove_field_formatter_height_validate'),
       '#formatter_type' => $display['type'],
+    );
+  }
+
+  if ($display['type'] == 'brightcove_image') {
+    $image_styles = image_style_options(FALSE);
+    $element['brightcove_image_style'] = array(
+      '#title' => t('Image style'),
+      '#type' => 'select',
+      '#default_value' => $settings['brightcove_image_style'],
+      '#empty_option' => t('None (original image)'),
+      '#options' => $image_styles,
+    );
+
+    $link_types = array(
+      'entity' => t('Entity'),
+      'dialog' => t('Dialog'),
+    );
+    $element['brightcove_image_link'] = array(
+      '#title' => t('Link image to'),
+      '#type' => 'select',
+      '#default_value' => $settings['brightcove_image_link'],
+      '#empty_option' => t('Nothing'),
+      '#options' => $link_types,
+    );
+
+    $image_types = array(
+      'thumbnail' => t('Thumbnail'),
+      'still_image' => t('Still image'),
+    );
+    $element['brightcove_image_type'] = array(
+      '#title' => t('Image type'),
+      '#type' => 'select',
+      '#default_value' => $settings['brightcove_image_type'],
+      '#empty_option' => $image_types[0],
+      '#options' => $image_types,
+    );
+  }
+
+  if ($display['type'] == 'brightcove_metadata') {
+    $metadata_options = _brightcove_field_get_object_formatter_keys();
+    $element['brightcove_metadata_options'] = array(
+      '#title' => t('Image type'),
+      '#type' => 'select',
+      '#default_value' => $settings['brightcove_metadata_type'],
+      '#empty_option' => $metadata_options[0],
+      '#options' => $metadata_options,
     );
   }
 
@@ -793,9 +859,31 @@ function theme_brightcove_field_browser($element) {
 
 /**
  * Implementation of hook_theme().
+ *
+ * @param $existing
+ * @param $type
+ * @param $theme
+ * @param $path
+ * @return array
  */
-function brightcove_field_theme() {
+function brightcove_field_theme($existing, $type, $theme, $path) {
   $theme = array(
+    // Brightcove image field formatter theme function.
+    'brightcove_image' => array(
+      'variables' => array(
+        'image_style' => NULL,
+        'image_link' => NULL,
+        'image_type' => NULL,
+      ),
+      'file' => 'brightcove_field.formatters.inc',
+    ),
+    // Brightcove metadata formatter theme function.
+    'brightcove_metadata' => array(
+      'variables' => array(
+        'brightcove_metadata_type' => NULL,
+      ),
+      'file' => 'brightcove_field.formatters.inc',
+    ),
     'brightcove_field_browser' => array(
       'variables' => array('element' => NULL),
     ),
@@ -1321,56 +1409,63 @@ function brightcove_field_image_default_styles() {
 function brightcove_field_field_formatter_view($entity_type, $entity, $field,
                                       $instance, $langcode, $items, $display) {
   $element = array();
-
-  $theme = '';
+  $theme = NULL;
   $variables = array();
-
   $settings = $display['settings'];
 
   if ($display['type'] == 'default') {
     $theme = 'brightcove_field_formatter_default';
   }
-  if (in_array($display['type'], array(
-      'entity_link_videoStillURL',
-      'entity_link_thumbnailURL',
-      'entity_image_videoStillURL',
-      'entity_image_thumbnailURL',
-      'dialog_player_videoStillURL',
-      'dialog_player_thumbnailURL',
-    ))) {
-    $theme = "brightcove_field_formatter_{$display['type']}";
-    $variables['#image'] = '';
-    $variables['#style'] = '';
-  }
-  foreach (image_styles() as $style) {
-    if (in_array($display['type'], array(
-        "dialog_{$style['name']}__thumbnailURL",
-        "dialog_{$style['name']}__videoStillURL",
-        "entity_link_{$style['name']}__thumbnailURL",
-        "entity_link_{$style['name']}__videoStillURL",
-        "entity_image_{$style['name']}__thumbnailURL",
-        "entity_image_{$style['name']}__videoStillURL",
-      ))) {
-      $theme = "brightcove_field_formatter_{$display['type']}";
-    }
+
+  if ($display['type'] == 'brightcove_image') {
+    $theme = '';
   }
 
-  foreach (_brightcove_field_get_object_formatter_keys() as $key => $label) {
-    if ($display['type'] == "brightcove_metadata_{$key}") {
-      $theme = 'brightcove_field_formatter_metadata';
-      $variables['#key'] = $key;
-      $variables['#label'] = $label;
-    }
+  if ($display['type'] == 'brightcove_metadata') {
+    $theme = '';
   }
 
-  if (strpos($display['type'], 'dialog') === 0) {
-    $variables['#attached']['js'][] = 'misc/ajax.js';
-    $variables['#attached']['js'][] =
-      drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js';
-    $variables['#attached']['library'][] = array('system', 'ui.dialog');
-    $variables['#attached']['css'][] =
-      drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css';
-  }
+//  if (in_array($display['type'], array(
+//      'entity_link_videoStillURL',
+//      'entity_link_thumbnailURL',
+//      'entity_image_videoStillURL',
+//      'entity_image_thumbnailURL',
+//      'dialog_player_videoStillURL',
+//      'dialog_player_thumbnailURL',
+//    ))) {
+//    $theme = "brightcove_field_formatter_{$display['type']}";
+//    $variables['#image'] = '';
+//    $variables['#style'] = '';
+//  }
+//  foreach (image_styles() as $style) {
+//    if (in_array($display['type'], array(
+//        "dialog_{$style['name']}__thumbnailURL",
+//        "dialog_{$style['name']}__videoStillURL",
+//        "entity_link_{$style['name']}__thumbnailURL",
+//        "entity_link_{$style['name']}__videoStillURL",
+//        "entity_image_{$style['name']}__thumbnailURL",
+//        "entity_image_{$style['name']}__videoStillURL",
+//      ))) {
+//      $theme = "brightcove_field_formatter_{$display['type']}";
+//    }
+//  }
+//
+//  foreach (_brightcove_field_get_object_formatter_keys() as $key => $label) {
+//    if ($display['type'] == "brightcove_metadata_{$key}") {
+//      $theme = 'brightcove_field_formatter_metadata';
+//      $variables['#key'] = $key;
+//      $variables['#label'] = $label;
+//    }
+//  }
+//
+//  if (strpos($display['type'], 'dialog') === 0) {
+//    $variables['#attached']['js'][] = 'misc/ajax.js';
+//    $variables['#attached']['js'][] =
+//      drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js';
+//    $variables['#attached']['library'][] = array('system', 'ui.dialog');
+//    $variables['#attached']['css'][] =
+//      drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css';
+//  }
 
   if ($theme) {
     foreach ($items as $delta => $item) {
