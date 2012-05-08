@@ -324,65 +324,82 @@ function brightcove_field_field_formatter_info() {
       'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
     ),
   );
-  $formatters['entity_link_videoStillURL'] = array(
-    'label' => t('Default still image linked to entity'),
+  $formatters['brightcove_image'] = array(
+    'label' => t('Image'),
     'field types' => array('brightcove_video'),
+    'settings' => array(
+      'brightcove_image_style' => '',
+      'brightcove_image_link' => '',
+      'brightcove_image_type' => '',
+    ),
   );
-  $formatters['entity_link_thumbnailURL'] = array(
-    'label' => t('Default thumbnail linked to entity'),
+  $formatters['brightcove_metadata'] = array(
+    'label' => t('Metadata'),
     'field types' => array('brightcove_video'),
-  );
-  $formatters['entity_image_videoStillURL'] = array(
-    'label' => t('Default still image'),
-    'field types' => array('brightcove_video'),
-  );
-  $formatters['entity_image_thumbnailURL'] = array(
-    'label' => t('Default thumbnail'),
-    'field types' => array('brightcove_video'),
-  );
-  $formatters['dialog_player_videoStillURL'] = array(
-    'label' => t('Default still image -> Dialog player'),
-    'field types' => array('brightcove_video'),
-  );
-  $formatters['dialog_player_thumbnailURL'] = array(
-    'label' => t('Default thumbnail -> Dialog player'),
-    'field types' => array('brightcove_video'),
+    'settings' => array(
+      'brightcove_metadata_option' => '',
+    ),
   );
 
-  $styles = image_styles();
-  foreach ($styles as $style) {
-    $formatters['dialog_' . $style['name'] . '__thumbnailURL'] = array(
-      'label' => t('Image style @style thumbnail -> Dialog player', array('@style' => $style['name'])),
-      'field types' => array('brightcove_video'),
-    );
-    $formatters['dialog_' . $style['name'] . '__videoStillURL'] = array(
-      'label' => t('Image style @style still image -> Dialog player', array('@style' => $style['name'])),
-      'field types' => array('brightcove_video'),
-    );
-    $formatters['entity_link_' . $style['name'] . '__videoStillURL'] = array(
-      'label' => t('Image style @style still image linked to entity', array('@style' => $style['name'])),
-      'field types' => array('brightcove_video'),
-    );
-    $formatters['entity_link_' . $style['name'] . '__thumbnailURL'] = array(
-      'label' => t('Image style @style thumbnail linked to entity', array('@style' => $style['name'])),
-      'field types' => array('brightcove_video'),
-    );
-    $formatters['entity_image_' . $style['name'] . '__videoStillURL'] = array(
-      'label' => t('Image style @style still image', array('@style' => $style['name'])),
-      'field types' => array('brightcove_video'),
-    );
-    $formatters['entity_image_' . $style['name'] . '__thumbnailURL'] = array(
-      'label' => t('Image style @style thumbnail', array('@style' => $style['name'])),
-      'field types' => array('brightcove_video'),
-    );
-  }
-
-  foreach (_brightcove_field_get_object_formatter_keys() as $key => $label) {
-    $formatters["brightcove_metadata_{$key}"] = array(
-      'label' => t("Metadata: {$label}"),
-      'field types' => array('brightcove_video'),
-    );
-  }
+//  $formatters['entity_link_videoStillURL'] = array(
+//    'label' => t('Default still image linked to entity'),
+//    'field types' => array('brightcove_video'),
+//  );
+//  $formatters['entity_link_thumbnailURL'] = array(
+//    'label' => t('Default thumbnail linked to entity'),
+//    'field types' => array('brightcove_video'),
+//  );
+//  $formatters['entity_image_videoStillURL'] = array(
+//    'label' => t('Default still image'),
+//    'field types' => array('brightcove_video'),
+//  );
+//  $formatters['entity_image_thumbnailURL'] = array(
+//    'label' => t('Default thumbnail'),
+//    'field types' => array('brightcove_video'),
+//  );
+//  $formatters['dialog_player_videoStillURL'] = array(
+//    'label' => t('Default still image -> Dialog player'),
+//    'field types' => array('brightcove_video'),
+//  );
+//  $formatters['dialog_player_thumbnailURL'] = array(
+//    'label' => t('Default thumbnail -> Dialog player'),
+//    'field types' => array('brightcove_video'),
+//  );
+//
+//  $styles = image_styles();
+//  foreach ($styles as $style) {
+//    $formatters['dialog_' . $style['name'] . '__thumbnailURL'] = array(
+//      'label' => t('Image style @style thumbnail -> Dialog player', array('@style' => $style['name'])),
+//      'field types' => array('brightcove_video'),
+//    );
+//    $formatters['dialog_' . $style['name'] . '__videoStillURL'] = array(
+//      'label' => t('Image style @style still image -> Dialog player', array('@style' => $style['name'])),
+//      'field types' => array('brightcove_video'),
+//    );
+//    $formatters['entity_link_' . $style['name'] . '__videoStillURL'] = array(
+//      'label' => t('Image style @style still image linked to entity', array('@style' => $style['name'])),
+//      'field types' => array('brightcove_video'),
+//    );
+//    $formatters['entity_link_' . $style['name'] . '__thumbnailURL'] = array(
+//      'label' => t('Image style @style thumbnail linked to entity', array('@style' => $style['name'])),
+//      'field types' => array('brightcove_video'),
+//    );
+//    $formatters['entity_image_' . $style['name'] . '__videoStillURL'] = array(
+//      'label' => t('Image style @style still image', array('@style' => $style['name'])),
+//      'field types' => array('brightcove_video'),
+//    );
+//    $formatters['entity_image_' . $style['name'] . '__thumbnailURL'] = array(
+//      'label' => t('Image style @style thumbnail', array('@style' => $style['name'])),
+//      'field types' => array('brightcove_video'),
+//    );
+//  }
+//
+//  foreach (_brightcove_field_get_object_formatter_keys() as $key => $label) {
+//    $formatters["brightcove_metadata_{$key}"] = array(
+//      'label' => t("Metadata: {$label}"),
+//      'field types' => array('brightcove_video'),
+//    );
+//  }
 
   return $formatters;
 }
@@ -398,6 +415,21 @@ function brightcove_field_field_formatter_settings_summary($field, $instance, $v
       '@width' => $settings['width'],
       '@height' => $settings['height'],
     ));
+  }
+  if ($display['type'] == 'brightcove_image') {
+    $image_styles = image_style_options(FALSE);
+    // Unset possible 'No defined styles' option.
+    unset($image_styles['']);
+    if (isset($image_styles[$settings['image_style']])) {
+      $summary = t('Image style: @style', array('@style' => $image_styles[$settings['brightcove_image_style']]));
+    }
+    else {
+      $summary = t('Original image');
+    }
+  }
+  if ($display['type'] == 'brightcove_metadata') {
+    $metadata_options = _brightcove_field_get_object_formatter_keys();
+    $summary = t('Metadata: @metadata', array('@metadata' => $metadata_options[$settings['brightcove_metadata_option']]));
   }
 
   return $summary;
