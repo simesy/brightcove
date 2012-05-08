@@ -71,8 +71,8 @@ function theme_brightcove_field_dialog_player($variables) {
     // loading theme.inc in order to make sure that the constants are loaded
     module_load_include('inc', 'brightcove_field', 'theme');
 
-    $video_width = BRIGHTCOVE_VIDEO_DEFAULT_WIDTH;
-    $video_height = BRIGHTCOVE_VIDEO_DEFAULT_HEIGHT;
+    $video_width = BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
+    $video_height = BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
     $dialog_width = $video_width;
     $dialog_height = $video_height;
 
