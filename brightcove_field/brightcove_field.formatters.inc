@@ -341,3 +341,12 @@ function theme_brightcove_field_formatter_metadata($variables) {
 
   return '';
 }
+
+/**
+ * Theme function to render brightcove images.
+ *
+ * @param $variables
+ */
+function theme_brightcove_field_image($variables) {
+
+}

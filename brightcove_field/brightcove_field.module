@@ -325,7 +325,7 @@ function brightcove_field_field_formatter_info() {
     ),
   );
   $formatters['brightcove_image'] = array(
-    'label' => t('Image'),
+    'label' => t('Brightcove Image'),
     'field types' => array('brightcove_video'),
     'settings' => array(
       'brightcove_image_style' => '',
@@ -334,7 +334,7 @@ function brightcove_field_field_formatter_info() {
     ),
   );
   $formatters['brightcove_metadata'] = array(
-    'label' => t('Metadata'),
+    'label' => t('Brightcove Metadata'),
     'field types' => array('brightcove_video'),
     'settings' => array(
       'brightcove_metadata_option' => '',
@@ -428,7 +428,7 @@ function brightcove_field_field_formatter_settings_summary($field, $instance, $v
     $image_styles = image_style_options(FALSE);
     // Unset possible 'No defined styles' option.
     unset($image_styles['']);
-    if (isset($image_styles[$settings['image_style']])) {
+    if (isset($image_styles[$settings['brightcove_image_style']])) {
       $summary = t('Image style: @style', array(
         '@style' => $image_styles[$settings['brightcove_image_style']]));
     }
@@ -438,8 +438,14 @@ function brightcove_field_field_formatter_settings_summary($field, $instance, $v
   }
   if ($display['type'] == 'brightcove_metadata') {
     $metadata_options = _brightcove_field_get_object_formatter_keys();
-    $summary = t('Metadata: @metadata', array(
-      '@metadata' => $metadata_options[$settings['brightcove_metadata_type']]));
+    if (isset($settings['brightcove_metadata_type'])) {
+      $summary = t('Metadata: @metadata', array(
+        '@metadata' => $metadata_options[$settings['brightcove_metadata_type']]));
+    }
+    else {
+      $summary = t('Metadata: @metadata', array(
+        '@metadata' => reset($metadata_options)));
+    }
   }
 
   return $summary;
@@ -517,7 +523,7 @@ function brightcove_field_field_formatter_settings_form($field, $instance, $view
 
   if ($display['type'] == 'brightcove_metadata') {
     $metadata_options = _brightcove_field_get_object_formatter_keys();
-    $element['brightcove_metadata_options'] = array(
+    $element['brightcove_metadata_type'] = array(
       '#title' => t('Image type'),
       '#type' => 'select',
       '#default_value' => $settings['brightcove_metadata_type'],
@@ -869,7 +875,7 @@ function theme_brightcove_field_browser($element) {
 function brightcove_field_theme($existing, $type, $theme, $path) {
   $theme = array(
     // Brightcove image field formatter theme function.
-    'brightcove_image' => array(
+    'brightcove_field_image' => array(
       'variables' => array(
         'image_style' => NULL,
         'image_link' => NULL,
@@ -878,11 +884,11 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
       'file' => 'brightcove_field.formatters.inc',
     ),
     // Brightcove metadata formatter theme function.
-    'brightcove_metadata' => array(
+    'brightcove_field_metadata' => array(
       'variables' => array(
         'brightcove_metadata_type' => NULL,
       ),
-      'file' => 'brightcove_field.formatters.inc',
+      'template' => 'brightcove-field-metadata',
     ),
     'brightcove_field_browser' => array(
       'variables' => array('element' => NULL),
