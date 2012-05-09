@@ -1533,8 +1533,8 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
       // video is uploaded, therefore the node save would fail.
       $video = new StdClass;
       $video->id = $id;
-      foreach ($meta as $id => $data) {
-        $video->$id = $data;
+      foreach ($meta as $key => $data) {
+        $video->$key = $data;
       }
       brightcove_video_cache_set($id, $video);
       // invalidating brightcove video load cache
