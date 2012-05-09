@@ -8,28 +8,28 @@
 /**
   * Theme callback for dialog with image player.
   */
-function theme_brightcove_field_dialog_image($variables) {
-  $element = $variables['element'];
-  $style_data = str_replace('dialog_image_', '', $element['#formatter']);
-  list($style, $field) = explode('__', $style_data);
-
-  if (isset($element['#item']['video_id'])) {
-    $video = brightcove_video_load($element['#item']['video_id']);
-    $image = theme('image_style', array(
-      'style_name' => $style,
-      'path' => empty($video->thumbnailURL) ?
-        brightcove_get_default_image() :
-        brightcove_remote_image($video->{$field}),
-    ));
-    return theme("brightcove_field_formatter_dialog_player_{$field}", array(
-      'element' => $element,
-      'image' => $image,
-      'style' => $style,
-    ));
-  }
-
-  return '';
-}
+//function theme_brightcove_field_dialog_image($variables) {
+//  $element = $variables['element'];
+//  $style_data = str_replace('dialog_image_', '', $element['#formatter']);
+//  list($style, $field) = explode('__', $style_data);
+//
+//  if (isset($element['#item']['video_id'])) {
+//    $video = brightcove_video_load($element['#item']['video_id']);
+//    $image = theme('image_style', array(
+//      'style_name' => $style,
+//      'path' => empty($video->thumbnailURL) ?
+//        brightcove_get_default_image() :
+//        brightcove_remote_image($video->{$field}),
+//    ));
+//    return theme("brightcove_field_formatter_dialog_player_{$field}", array(
+//      'element' => $element,
+//      'image' => $image,
+//      'style' => $style,
+//    ));
+//  }
+//
+//  return '';
+//}
 
 /**
  * Theme callback for Default thumbnail -> dialog player formatter.
@@ -111,7 +111,7 @@ function theme_brightcove_field_dialog_player($variables) {
   * Template preprocess for brightcove_field_lightbox2 theme file.
   * Suggest templates based on a field and type name.
   */
-function template_preprocess_brightcove_field_dialog(&$vars) {
+//function template_preprocess_brightcove_field_dialog(&$vars) {
 //  $vars['template_files'] = array(
 //    'brightcove-field-dialog--' . $vars['image_field'],
 //    'brightcove-field-dialog--' . $vars['field_name'] . '--' .
@@ -119,12 +119,9 @@ function template_preprocess_brightcove_field_dialog(&$vars) {
 //    'brightcove-field-dialog--' . $vars['type_name'] . '--' .
 //      $vars['field_name'] . '--' . $vars['image_field'],
 //  );
-}
+//}
 
 /**
- *
- *  TODO: Refactore the code more readable.
- *
  * Theme callback for Brightcove field formatter.
  * Returns an embedded player with default site player.
  *
@@ -166,87 +163,87 @@ function theme_brightcove_field_formatter_default($variables) {
 /**
  * Theme callback for Default thumbnail linked to entity formatter.
  */
-function theme_brightcove_field_entity_link($variables) {
-  $video_id = isset($variables['element']['video_id']) ?
-    $variables['element']['video_id'] : NULL;
-  $formatter_name = $variables['display']['type'];
-  $entity_info = entity_get_info($variables['entity_type']);
-  $entity = $variables['entity'];
-  if (!empty($video_id)) {
-
-    $field = str_replace('entity_link_', '', $formatter_name);
-
-    $video = brightcove_video_load($video_id);
-
-    $image = $variables['image'] ? $variables['image'] :
-      theme('image', empty($video->{$field}) ?
-        array(
-          'path' => brightcove_get_default_image(),
-          'width' => 120,
-          'height' => 120,
-        ) :
-        array(
-          'path' => $video->{$field},
-        ));
-
-    // TODO make some checks here
-    $uri = $entity_info['uri callback']($entity);
-    $destination = $uri['path'];
-
-    $output = l($image, $destination, array(
-      'attributes' => array(
-        'class' => array($variables['field']['field_name']),
-      ),
-      'html' => TRUE,
-    ));
-
-    return theme('brightcove_field_entity_link', array(
-      'output' => $output,
-    ));
-  }
-
-  return '';
-}
+//function theme_brightcove_field_entity_link($variables) {
+//  $video_id = isset($variables['element']['video_id']) ?
+//    $variables['element']['video_id'] : NULL;
+//  $formatter_name = $variables['display']['type'];
+//  $entity_info = entity_get_info($variables['entity_type']);
+//  $entity = $variables['entity'];
+//  if (!empty($video_id)) {
+//
+//    $field = str_replace('entity_link_', '', $formatter_name);
+//
+//    $video = brightcove_video_load($video_id);
+//
+//    $image = $variables['image'] ? $variables['image'] :
+//      theme('image', empty($video->{$field}) ?
+//        array(
+//          'path' => brightcove_get_default_image(),
+//          'width' => 120,
+//          'height' => 120,
+//        ) :
+//        array(
+//          'path' => $video->{$field},
+//        ));
+//
+//    // TODO make some checks here
+//    $uri = $entity_info['uri callback']($entity);
+//    $destination = $uri['path'];
+//
+//    $output = l($image, $destination, array(
+//      'attributes' => array(
+//        'class' => array($variables['field']['field_name']),
+//      ),
+//      'html' => TRUE,
+//    ));
+//
+//    return theme('brightcove_field_entity_link', array(
+//      'output' => $output,
+//    ));
+//  }
+//
+//  return '';
+//}
 
 /**
   * Template preprocess for brightcove_field_entity_link theme file.
   * Suggest templates based on a field and type name.
   */
-function template_preprocess_brightcove_field_entity_link(&$vars) {
+//function template_preprocess_brightcove_field_entity_link(&$vars) {
 //  $vars['template_files'] = array(
 //      'brightcove-field-entity-link--' . $vars['image_field'],
 //      'brightcove-field-entity-link--' . $vars['field_name'] . '--' . $vars['image_field'],
 //      'brightcove-field-entity-link--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
 //      );
-}
+//}
 
 /**
  * Theme callback for image linking to entity.
  */
-function theme_brightcove_field_entity_link_dialog($variables) {
-  $video_id = isset($variables['element']['video_id']) ?
-    $variables['element']['video_id'] : NULL;
-  list($style, $field) = explode('__',
-    str_replace('entity_link_image_', '', $variables['display']['type']));
-
-  if (isset($video_id)) {
-    $video = brightcove_video_load($video_id);
-
-    $image = theme('image_style', array(
-      'style_name' => $style,
-      'path' => empty($video->{$field}) ?
-        brightcove_get_default_image() :
-        brightcove_remote_image($video->{$field}),
-    ));
-
-    return theme("brightcove_field_formatter_entity_link_{$field}", array(
-      'image' => $image,
-      'style' => $style,
-    ) + $variables);
-  }
-
-  return '';
-}
+//function theme_brightcove_field_entity_link_dialog($variables) {
+//  $video_id = isset($variables['element']['video_id']) ?
+//    $variables['element']['video_id'] : NULL;
+//  list($style, $field) = explode('__',
+//    str_replace('entity_link_image_', '', $variables['display']['type']));
+//
+//  if (isset($video_id)) {
+//    $video = brightcove_video_load($video_id);
+//
+//    $image = theme('image_style', array(
+//      'style_name' => $style,
+//      'path' => empty($video->{$field}) ?
+//        brightcove_get_default_image() :
+//        brightcove_remote_image($video->{$field}),
+//    ));
+//
+//    return theme("brightcove_field_formatter_entity_link_{$field}", array(
+//      'image' => $image,
+//      'style' => $style,
+//    ) + $variables);
+//  }
+//
+//  return '';
+//}
 
 /**
  * Theme callback for Default thumbnail.
@@ -295,13 +292,13 @@ function theme_brightcove_field_entity_image($variables) {
   * Template preprocess for brightcove_field_node_image theme file.
   * Suggest templates based on a field and type name.
   */
-function template_preprocess_brightcove_field_entity_image(&$vars) {
+//function template_preprocess_brightcove_field_entity_image(&$vars) {
 //  $vars['template_files'] = array(
 //    'brightcove-field-entity-image--' . $vars['image_field'],
 //    'brightcove-field-entity-image--' . $vars['field_name'] . '--' . $vars['image_field'],
 //    'brightcove-field-entity-image--' . $vars['type_name'] . '--' . $vars['field_name'] . '--' . $vars['image_field'],
 //  );
-}
+//}
 
 /**
  * Theme callback for imagecache image
@@ -311,30 +308,30 @@ function template_preprocess_brightcove_field_entity_image(&$vars) {
  * @return
  *   Link HTML code.
  */
-function theme_brightcove_field_entity_image_style($variables) {
-  $video_id = isset($variables['element']['video_id']) ?
-    $variables['element']['video_id'] : NULL;
-  list($style, $field) = explode('__',
-    str_replace('entity_link_image_', '', $variables['display']['type']));
-
-  if (isset($video_id)) {
-    $video = brightcove_video_load($video_id);
-
-    $image = theme('image_style', array(
-      'style_name' => $style,
-      'path' => empty($video->{$field}) ?
-        brightcove_get_default_image() :
-        brightcove_remote_image($video->{$field}),
-    ));
-
-    return theme("brightcove_field_formatter_entity_image_{$field}", array(
-      'element' => $variables['element'],
-      'image' => $image,
-    ));
-  }
-
-  return '';
-}
+//function theme_brightcove_field_entity_image_style($variables) {
+//  $video_id = isset($variables['element']['video_id']) ?
+//    $variables['element']['video_id'] : NULL;
+//  list($style, $field) = explode('__',
+//    str_replace('entity_link_image_', '', $variables['display']['type']));
+//
+//  if (isset($video_id)) {
+//    $video = brightcove_video_load($video_id);
+//
+//    $image = theme('image_style', array(
+//      'style_name' => $style,
+//      'path' => empty($video->{$field}) ?
+//        brightcove_get_default_image() :
+//        brightcove_remote_image($video->{$field}),
+//    ));
+//
+//    return theme("brightcove_field_formatter_entity_image_{$field}", array(
+//      'element' => $variables['element'],
+//      'image' => $image,
+//    ));
+//  }
+//
+//  return '';
+//}
 
 /**
  * Theme function to render brightcove images.
@@ -346,19 +343,20 @@ function theme_brightcove_field_image($variables) {
   $elements = $variables['elements'];
   $dialog_width = BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
   $dialog_height = BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
-  $entity_type = $elements['#entity_type'];
-  $delta = $elements['#delta'];
-  $field = $elements['#field'];
-  $entity = $elements['#entity'];
-  $entity_info = entity_get_info($entity_type);
-  $entity_id = $entity->{$entity_info['entity keys']['id']};
+  $entity_type = (isset($elements['#entity_type'])) ? $elements['#entity_type'] : NULL;
+  $delta = (isset($elements['#delta'])) ? $elements['#delta'] : NULL;
+  $field = (isset($elements['#field'])) ? $elements['#field'] : NULL;
+  $entity = (isset($elements['#entity'])) ? $elements['#entity'] : NULL;
+  $entity_info = (isset($elements['#entity_type'])) ? entity_get_info($entity_type) : NULL;
+  $entity_id = is_null($entity) ? NULL : $entity->{$entity_info['entity keys']['id']};
 
   if ($elements['#video']) {
     if (empty($elements['#video']->{$elements['#brightcove_image_type']})) {
-      $image = theme('image_style', array(
-        'style_name' => $elements['#brightcove_image_style'],
-        'path' => brightcove_get_default_image(),
-      ));
+      $path = brightcove_get_default_image();
+      $styled_path = image_style_path($elements['#brightcove_image_style'], 'default-image.png');
+      $style = image_style_load($elements['#brightcove_image_style']);
+      image_style_create_derivative($style, $path, $styled_path);
+      $image = theme('image', array('path' => $styled_path));
     }
     else {
       $file = brightcove_remote_image($elements['#video']->{$elements['#brightcove_image_type']});
@@ -366,7 +364,6 @@ function theme_brightcove_field_image($variables) {
         'style_name' => $elements['#brightcove_image_style'],
         'path' => $file->uri,
       ));
-
     }
 
     if ($elements['#brightcove_image_link'] == 'dialog') {
@@ -381,7 +378,7 @@ function theme_brightcove_field_image($variables) {
       ));
     }
 
-    if ($elements['#brightcove_image_link'] == 'entity') {
+    if ($elements['#brightcove_image_link'] == 'entity' && !is_null($entity_info)) {
       $uri = $entity_info['uri callback']($entity);
       $output = l($image, $uri['path'], array(
         'attributes' => array(
