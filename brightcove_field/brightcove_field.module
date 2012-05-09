@@ -1517,7 +1517,6 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
     if (form_get_errors()) {
       return $form;
     }
-    // Do something with $file here.
 
     $meta = array(
       'name' => $form_state['values']['title'],
