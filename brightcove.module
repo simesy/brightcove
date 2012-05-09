@@ -283,6 +283,9 @@ function theme_brightcove_unavailable_message($variables) {
 
 /**
  * Returns a default image for videos without a thumbnail or still image.
+ *
+ * @return string
+ *   Path for the Brightcove placeholder image.
  */
 function brightcove_get_default_image() {
   return drupal_get_path('module', 'brightcove') . '/images/default-image.png';
