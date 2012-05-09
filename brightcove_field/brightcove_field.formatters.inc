@@ -122,6 +122,9 @@ function template_preprocess_brightcove_field_dialog(&$vars) {
 }
 
 /**
+ *
+ *  TODO: Refactore the code more readable.
+ *
  * Theme callback for Brightcove field formatter.
  * Returns an embedded player with default site player.
  *
@@ -379,8 +382,14 @@ function theme_brightcove_field_image($variables) {
     }
 
     if ($elements['#brightcove_image_link'] == 'entity') {
-      $destination = '';
-      $output = l('', '');
+      $uri = $entity_info['uri callback']($entity);
+      $output = l($image, $uri['path'], array(
+        'attributes' => array(
+          'class' => array($field['field_name']),
+          'title' => $elements['#video'] ? check_plain($elements['#video']->name) : '',
+        ),
+        'html' => TRUE,
+      ));
     }
   }
 
