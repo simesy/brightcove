@@ -333,30 +333,73 @@ function theme_brightcove_field_entity_image_style($variables) {
   return '';
 }
 
-//function theme_brightcove_field_formatter_metadata($variables) {
-//  if ($variables['video']) {
-//    $text = check_plain($variables['video']->{$variables['key']});
-//    return "<span><strong>{$variables['label']}:</strong> $text</span>";
-//  }
-//
-//  return '';
-//}
-
 /**
  * Theme function to render brightcove images.
  *
  * @param $variables
  */
 function theme_brightcove_field_image($variables) {
+  $output = NULL;
+  $elements = $variables['elements'];
+  $dialog_width = BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
+  $dialog_height = BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
+  $entity_type = $elements['#entity_type'];
+  $delta = $elements['#delta'];
+  $field = $elements['#field'];
+  $entity = $elements['#entity'];
+  $entity_info = entity_get_info($entity_type);
+  $entity_id = $entity->{$entity_info['entity keys']['id']};
 
+  if ($elements['#video']) {
+    if (empty($elements['#video']->{$elements['#brightcove_image_type']})) {
+      $image = theme('image_style', array(
+        'style_name' => $elements['#brightcove_image_style'],
+        'path' => brightcove_get_default_image(),
+      ));
+    }
+    else {
+      $file = brightcove_remote_image($elements['#video']->{$elements['#brightcove_image_type']});
+      $image = theme('image_style', array(
+        'style_name' => $elements['#brightcove_image_style'],
+        'path' => $file->uri,
+      ));
+
+    }
+
+    if ($elements['#brightcove_image_link'] == 'dialog') {
+      $destination = "brightcove_dialog/nojs/{$dialog_width}/{$dialog_height}/{$entity_type}/{$entity_id}/{$field['field_name']}/{$delta}";
+      $output = l($image, $destination, array(
+        'attributes' => array(
+          'rel' => $field['field_name'],
+          'class' => array($field['field_name'], 'use-ajax'),
+          'title' => $elements['#video'] ? check_plain($elements['#video']->name) : '',
+        ),
+        'html' => TRUE,
+      ));
+    }
+
+    if ($elements['#brightcove_image_link'] == 'entity') {
+      $destination = '';
+      $output = l('', '');
+    }
+  }
+
+  return $output;
 }
 
+/**
+ * Theme function to render brightcove metadata.
+ *
+ * @param $variables
+ * @return null|string
+ */
 function theme_brightcove_field_metadata($variables) {
   $output = NULL;
+  $elements = $variables['elements'];
 
-  if ($variables['video']) {
-    $text = check_plain($variables['video']->{$variables['key']});
-    $output = "<span><strong>{$variables['label']}:</strong> $text</span>";
+  if ($elements['#video']) {
+    $text = check_plain($elements['#video']->{$elements['#key']});
+    $output = "<span><strong>{$elements['#label']}:</strong> $text</span>";
   }
 
   return $output;

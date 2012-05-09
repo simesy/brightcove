@@ -509,8 +509,8 @@ function brightcove_field_field_formatter_settings_form($field, $instance, $view
     );
 
     $image_types = array(
-      'thumbnail' => t('Thumbnail'),
-      'still_image' => t('Still image'),
+      'thumbnailURL' => t('thumbnailURL'),
+      'videoStillURL' => t('videoStillURL'),
     );
     $element['brightcove_image_type'] = array(
       '#title' => t('Image type'),
@@ -875,20 +875,12 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
   $theme = array(
     // Brightcove image field formatter theme function.
     'brightcove_field_image' => array(
-      'variables' => array(
-        'image_style' => NULL,
-        'image_link' => NULL,
-        'image_type' => NULL,
-      ),
+      'render element' => 'elements',
       'file' => 'brightcove_field.formatters.inc',
     ),
     // Brightcove metadata formatter theme function.
     'brightcove_field_metadata' => array(
-      'variables' => array(
-        'video' => NULL,
-        'key' => NULL,
-        'label' => NULL,
-      ),
+      'render element' => 'elements',
       'file' => 'brightcove_field.formatters.inc',
     ),
     'brightcove_field_browser' => array(
@@ -1434,6 +1426,10 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
   }
 
   if ($display['type'] == 'brightcove_image') {
+    $theme = 'brightcove_field_image';
+    $variables['#brightcove_image_style'] = $settings['brightcove_image_style'];
+    $variables['#brightcove_image_link'] = $settings['brightcove_image_link'];
+    $variables['#brightcove_image_type'] = $settings['brightcove_image_type'];
   }
 
   if ($display['type'] == 'brightcove_metadata') {
@@ -1441,6 +1437,15 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
     $theme = 'brightcove_field_metadata';
     $variables['#key'] = $settings['brightcove_metadata_type'];
     $variables['#label'] = $metadata_options[$settings['brightcove_metadata_type']];
+  }
+
+  if (isset($settings['brightcove_image_link']) && $settings['brightcove_image_link'] == 'dialog') {
+    $variables['#attached']['js'][] = 'misc/ajax.js';
+    $variables['#attached']['js'][] =
+      drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js';
+    $variables['#attached']['library'][] = array('system', 'ui.dialog');
+    $variables['#attached']['css'][] =
+      drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css';
   }
 
   if ($theme) {
