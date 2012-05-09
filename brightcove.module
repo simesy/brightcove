@@ -228,19 +228,19 @@ function brightcove_video_load($video_id) {
  *
  * @return
  *   Returns FALSE if image doesn't exist, cannot be saved or is not image (based on extension).
- *   Returns local file path if image already exists or was saved correctly.
+ *   Returns $file object if image already exists or was saved correctly.
  */
 function brightcove_remote_image($url) {
   $parse = parse_url($url);
   $path = pathinfo($parse['path']);
-
-  $fullpath = drupal_realpath(file_default_scheme() . ':/') .
+  $fullpath = drupal_realpath(file_default_scheme() . '://') .
               '/brightcove_thumbnail';
 
+  $uri = file_default_scheme() . '://brightcove_thumbnail/' . $path['basename'];
   $final_file = $fullpath . '/' . $path['basename'];
 
-  if (file_exists($final_file)) {
-    return $final_file;
+  if ($file = file_uri_to_object($uri, TRUE)) {
+    return $file;
   }
 
   // Perform basic extension check.
@@ -262,8 +262,11 @@ function brightcove_remote_image($url) {
   if (($fp = @fopen($final_file, 'x'))) {
     fwrite($fp, $rawdata);
     fclose($fp);
+    $file = file_uri_to_object($uri, TRUE);
+    file_save($file);
   }
-  return $final_file;
+
+  return $file;
 }
 
 /**
