@@ -223,10 +223,10 @@ function brightcove_video_load($video_id) {
 /**
  * Function that saves a remote image as a local file.
  *
- * @param $url string
+ * @param string $url
  *   Remote image URL.
  *
- * @return
+ * @return string|bool
  *   Returns FALSE if image doesn't exist, cannot be saved or is not image (based on extension).
  *   Returns local file path if image already exists or was saved correctly.
  */
@@ -234,8 +234,7 @@ function brightcove_remote_image($url) {
   $parse = parse_url($url);
   $path = pathinfo($parse['path']);
 
-  $fullpath = drupal_realpath(file_default_scheme() . ':/') .
-              '/brightcove_thumbnail';
+  $fullpath = drupal_realpath(file_default_scheme() . ':/') . '/brightcove_thumbnail';
 
   $final_file = $fullpath . '/' . $path['basename'];
 
