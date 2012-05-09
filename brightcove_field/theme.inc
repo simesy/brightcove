@@ -118,6 +118,7 @@ function theme_brightcove_field_embed($variables) {
     <param name="playerID" value="' . $player->player_id . '" />'
     . $asset_code . '
     <param name="isVid" value="true" />
+    <param name="wmode" value="transparent" />
     <param name="isUI" value="true" />
     <param name="playerKey" value="' . $player->player_key . '" />
     </object>';
