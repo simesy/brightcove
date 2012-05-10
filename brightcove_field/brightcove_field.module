@@ -165,6 +165,18 @@ function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) 
   );
 }
 
+/**
+ * Implements hook_admin_paths().
+ */
+function brightcove_field_admin_paths() {
+  if (variable_get('node_admin_theme')) {
+    $paths = array(
+      'brightcove_field/upload/*/*/*' => TRUE,
+      'brightcove_field/browse/*/*/*' => TRUE,
+    );
+    return $paths;
+  }
+}
 
 /**
  * Implementation of hook_field_info().
