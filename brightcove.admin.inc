@@ -85,7 +85,7 @@ function brightcove_admin_settings($form, &$form_state) {
   );
   $form['upload']['brightcove_encode_to'] = array(
     '#type' => 'radios',
-    '#title' => t('Output rendition encoding'),
+    '#title' => t('Default output rendition encoding'),
     '#default_value' => variable_get('brightcove_encode_to', 'MP4'),
     '#options' => array(
       'MP4' => t('H.264 (MP4)'),

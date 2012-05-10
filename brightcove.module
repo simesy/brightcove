@@ -356,12 +356,20 @@ function brightcove_expose_unavailable() {
  *       'name' => 'video name',
  *       'shortDescription' => 'short description',
  *     );
+ * @param string|NULL $encode_to
+ *   Container format to encode the video to.
+ *   Possible values: "FLV", "MP4"
  *
  * @return int|NULL
  *   Brightcove video id or NULL if not found.
  */
-function brightcove_upload_video($path, $meta) {
+function brightcove_upload_video($path, $meta, $encode_to = NULL) {
   global $user;
+
+  if ($encode_to === NULL) {
+    $encode_to = variable_get('brightcove_encode_to', 'MP4');
+  }
+
   if (empty($meta['name'])) {
     $meta['name'] = t('Video');
   }
@@ -381,7 +389,6 @@ function brightcove_upload_video($path, $meta) {
       // retrieve upload settings
       $create_multiple_renditions = (bool) variable_get('brightcove_create_multiple_renditions', TRUE);
       $preserve_source_rendition = (bool) variable_get('brightcove_preserve_source_rendition', 0);
-      $encode_to = variable_get('brightcove_encode_to', 'MP4');
 
       $options = array(
         'create_multiple_renditions' => $create_multiple_renditions,

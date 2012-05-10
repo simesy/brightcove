@@ -1330,15 +1330,16 @@ function brightcove_field_upload_form($form, &$form_state) {
     '#default_value' => !empty($form_state['values']['linkurl'])
       ? $form_state['values']['linkurl'] : '',
   );
-  /*  $form['attach'] = array(
-      '#type' => 'submit',
-      '#value' => t('Upload'),
-      '#name' => 'upload',
-      '#ahah' => array(
-      'path' => 'upload/js',
-      'wrapper' => 'attach-wrapper',
-      'progress' => array('type' => 'bar', 'message' => t('Please wait...')),
-      ),*/
+  $form['advanced']['encode_to'] = array(
+    '#type' => 'select',
+    '#title' => t('Video container'),
+    '#options' => array(
+      'FLV' => 'FLV',
+      'MP4' => 'MP4',
+    ),
+    '#default_value' => variable_get('brightcove_encode_to', 'MP4'),
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#name' => 'submit-',
@@ -1670,7 +1671,6 @@ function ajax_upload_dialog_callback($form, $form_state) {
 function ajax_upload_dialog_close_callback($form, $form_state) {
   $id = NULL;
   $commands = array();
-  $msg_selector = '#upload-messages';
 
   $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
   $validators = array(
@@ -1713,7 +1713,7 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
       }
     }
 
-    $id = brightcove_upload_video(drupal_realpath($file->uri), $meta);
+    $id = brightcove_upload_video(drupal_realpath($file->uri), $meta, $form_state['values']['encode_to']);
 
     if ($id) {
       // Construct Video object with ID - we need to cache it and save to
