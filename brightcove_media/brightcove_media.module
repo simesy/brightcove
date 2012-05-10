@@ -91,6 +91,9 @@ function brightcove_media_theme($existing, $type, $theme, $path) {
     'brightcove_media_browser_filter_form' => array(
       'render element' => 'form',
     ),
+    'brightcove_media_image' => array(
+      'render element' => 'elements',
+    ),
   );
 }
 
@@ -159,6 +162,18 @@ function brightcove_media_file_formatter_image_view($file, $display, $langcode) 
   }
 
   return NULL;
+}
+
+/**
+ * The brightcove_media_image file formatter theme function.
+ *
+ * @param $variables
+ * @return null
+ */
+function theme_brightcove_media_image($variables) {
+  $output = NULL;
+
+  return $output;
 }
 
 /**
