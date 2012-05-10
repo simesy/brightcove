@@ -91,6 +91,9 @@ function brightcove_media_theme($existing, $type, $theme, $path) {
     'brightcove_media_browser_filter_form' => array(
       'render element' => 'form',
     ),
+    'brightcove_media_image' => array(
+      'render element' => 'elements',
+    ),
   );
 }
 
@@ -145,20 +148,49 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
 function brightcove_media_file_formatter_image_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
   if ($scheme == 'brightcove') {
+    $video_id = parse_url($file->uri, PHP_URL_HOST);
+    $video = brightcove_video_load($video_id);
+
     $element = array(
-      '#theme' => 'brightcove_field_formatter_entity_image_thumbnailURL',
-      '#element' => array(
-        'video_id' => parse_url($file->uri, PHP_URL_HOST),
-      ),
-      '#display' => array(
-        'type' => 'entity_image_thumbnailURL',
-      ),
+      '#theme' => 'brightcove_media_image',
+      '#video' => $video
     );
 
     return $element;
   }
 
   return NULL;
+}
+
+/**
+ * The brightcove_media_image file formatter theme function.
+ *
+ * @param $variables
+ * @return null
+ */
+function theme_brightcove_media_image($variables) {
+  $output = NULL;
+  $elements = $variables['elements'];
+  $image_type = isset($variables['#brightcove_image_type']) ? $elements['#brightcove_image_type'] : 'thumbnailURL';
+  $image_style = isset($elements['#brightcove_image_style']) ? $elements['#brightcove_image_style'] : 'thumbnail';
+
+  if (isset($elements['#video'])) {
+    $destination = NULL;
+
+    if (isset($elements['#video']->$image_type)) {
+      $destination = brightcove_remote_image($elements['#video']->$image_type);
+    }
+    else {
+      $destination = brightcove_get_default_image();
+    }
+
+    $styled_path = image_style_path($image_style, $destination);
+    $style = image_style_load($image_style);
+    image_style_create_derivative($style, $destination, $styled_path);
+    $output = theme('image', array('path' => $styled_path));
+  }
+
+  return $output;
 }
 
 /**

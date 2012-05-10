@@ -359,10 +359,10 @@ function theme_brightcove_field_image($variables) {
       $image = theme('image', array('path' => $styled_path));
     }
     else {
-      $file = brightcove_remote_image($elements['#video']->{$elements['#brightcove_image_type']});
+      $remote_file = brightcove_remote_image($elements['#video']->{$elements['#brightcove_image_type']});
       $image = theme('image_style', array(
         'style_name' => $elements['#brightcove_image_style'],
-        'path' => $file->uri,
+        'path' => $remote_file,
       ));
     }
 
