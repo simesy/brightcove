@@ -176,17 +176,15 @@ function theme_brightcove_media_image($variables) {
 
   if (isset($elements['#video'])) {
     $destination = NULL;
-    $styled_path = NULL;
 
     if (isset($elements['#video']->$image_type)) {
-      $remote_file = brightcove_remote_image($elements['#video']->$image_type);
-      $styled_path = image_style_path($image_style, $remote_file->uri);
+      $destination = brightcove_remote_image($elements['#video']->$image_type);
     }
     else {
       $destination = brightcove_get_default_image();
-      $styled_path = image_style_path($image_style, $destination);
     }
 
+    $styled_path = image_style_path($image_style, $destination);
     $style = image_style_load($image_style);
     image_style_create_derivative($style, $destination, $styled_path);
     $output = theme('image', array('path' => $styled_path));
