@@ -1016,16 +1016,6 @@ function brightcove_field_browser_form($form, &$form_state, $item) {
 }
 
 /**
- * Submit callback for brightcove_field_browser_form().
- *
- * Just take the value and pass it to modalframe.
- */
-function brightcove_field_browser_form_submit($form, &$form_state) {
-  // The value is "title [id:ID]" - recognised by validating element.
-  $return['selected'] = check_plain($form_state['values']['title']) . ' [id:' . check_plain($form_state['values']['id']) . ']';
-}
-
-/**
  * Implementation of hook_forms().
  *
  * Needed to help Drupal determine which form to render - every video item in
