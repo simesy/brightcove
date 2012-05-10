@@ -1334,9 +1334,10 @@ function brightcove_field_upload_form($form, &$form_state) {
     '#type' => 'select',
     '#title' => t('Video container'),
     '#options' => array(
-      'FLV' => 'FLV',
-      'MP4' => 'MP4',
+      'MP4' => t('H.264 (MP4)'),
+      'FLV' => t('VP6 (FLV)'),
     ),
+    '#description' => t('Output rendition encoding'),
     '#default_value' => variable_get('brightcove_encode_to', 'MP4'),
   );
 
