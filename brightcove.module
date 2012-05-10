@@ -233,13 +233,12 @@ function brightcove_video_load($video_id) {
 function brightcove_remote_image($url) {
   $parse = parse_url($url);
   $path = pathinfo($parse['path']);
-  $fullpath = drupal_realpath(file_default_scheme() . '://') .
-              '/brightcove_thumbnail';
+  $fullpath = drupal_realpath(file_default_scheme() . '://brightcove_thumbnail');
   $uri = file_default_scheme() . '://brightcove_thumbnail/' . $path['basename'];
   $final_file = $fullpath . '/' . $path['basename'];
 
-  if ($file = file_uri_to_object($uri, TRUE)) {
-    return $file;
+  if (file_exists($final_file)) {
+    return file_build_uri('brightcove_thumbnail/' . $path['basename']);
   }
 
   // Perform basic extension check.
@@ -261,11 +260,9 @@ function brightcove_remote_image($url) {
   if (($fp = @fopen($final_file, 'x'))) {
     fwrite($fp, $rawdata);
     fclose($fp);
-    $file = file_uri_to_object($uri, TRUE);
-    file_save($file);
   }
 
-  return $file;
+  return file_build_uri('brightcove_thumbnail/' . $path['basename']);
 }
 
 /**
