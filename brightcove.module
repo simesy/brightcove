@@ -223,10 +223,10 @@ function brightcove_video_load($video_id) {
 /**
  * Function that saves a remote image as a local file.
  *
- * @param $url string
+ * @param string $url
  *   Remote image URL.
  *
- * @return
+ * @return string|bool
  *   Returns FALSE if image doesn't exist, cannot be saved or is not image (based on extension).
  *   Returns $file object if image already exists or was saved correctly.
  */
@@ -235,7 +235,6 @@ function brightcove_remote_image($url) {
   $path = pathinfo($parse['path']);
   $fullpath = drupal_realpath(file_default_scheme() . '://') .
               '/brightcove_thumbnail';
-
   $uri = file_default_scheme() . '://brightcove_thumbnail/' . $path['basename'];
   $final_file = $fullpath . '/' . $path['basename'];
 
@@ -286,6 +285,9 @@ function theme_brightcove_unavailable_message($variables) {
 
 /**
  * Returns a default image for videos without a thumbnail or still image.
+ *
+ * @return string
+ *   Path for the Brightcove placeholder image.
  */
 function brightcove_get_default_image() {
   return drupal_get_path('module', 'brightcove') . '/images/default-image.png';
@@ -344,15 +346,19 @@ function brightcove_expose_unavailable() {
 /**
  * Upload video to Brightcove.
  *
- * @param $path
+ * @see http://support.brightcove.com/en/docs/media-api-objects-reference#Video
+ *
+ * @param string $path
  *   Filepath to video file.
- * @param $meta
+ * @param array $meta
  *   Meta data array. Required values:
  *     array(
  *       'name' => 'video name',
  *       'shortDescription' => 'short description',
  *     );
- * @see http://support.brightcove.com/en/docs/media-api-objects-reference#Video
+ *
+ * @return int|NULL
+ *   Brightcove video id or NULL if not found.
  */
 function brightcove_upload_video($path, $meta) {
   global $user;
@@ -389,6 +395,7 @@ function brightcove_upload_video($path, $meta) {
     drupal_set_message(t('Video upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
     return NULL;
   }
+
   return $id;
 }
 
