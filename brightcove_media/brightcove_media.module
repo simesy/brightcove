@@ -455,9 +455,7 @@ function theme_brightcove_media_browser_filter_form(&$variables) {
   $form = $variables['form'];
 
   $output .= drupal_render($form['searchform']);
-  $output .= '<div id="scrollbox">';
   $output .= '<ul id="media-browser-library-list" class="media-list-thumbnails"></ul>';
-  $output .= '</div>';
   $output .= drupal_render($form['actions']);
   $output .= drupal_render_children($form);
 
