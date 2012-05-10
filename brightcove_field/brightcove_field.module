@@ -271,7 +271,6 @@ function brightcove_field_field_is_empty($item, $field) {
  */
 function brightcove_field_browser_validate($element, &$form_state) {
   $id = '';
-  $field_name = $element['#field_name'];
   $value = $element['#value'];
   if (!empty($value)) {
     // Assign ID to the value.
@@ -285,13 +284,15 @@ function brightcove_field_browser_validate($element, &$form_state) {
       if (empty($video) && empty($video_cache)) {
         form_error($element, t('%name: Found no valid video with that name. Please note that it might take several minutes after the video has been uploaded in Brightcove Studio to appear in the API.', array('%name' => t($element['#title']))));
       }
-    } else {
+    }
+    else {
       // Didn't match ID, try looking up the video text at BC.
       $bc = brightcove_initialize();
       $result = NULL;
       try {
-        $result = $bc ? $bc->find('find_videos_by_text',
-                                array('text' => $value)) : array();
+        $result = $bc->search('video',
+          array('all' => 'display_name:' . $value),
+          array('sort_by' => 'CREATION_DATE', 'sort_order' => 'DESC'));
       } catch (Exception $error) {
         form_error($element, t('There was a problem accessing Brightcove. Please try again'));
         watchdog('brightcove', 'Validating element with Brightcove failed', array(), WATCHDOG_ERROR);
@@ -299,10 +300,12 @@ function brightcove_field_browser_validate($element, &$form_state) {
       if (count($result) > 1) {
         // This title is ambiguous.
         form_error($element, t('%name: Video title %title matched more than one video. In case of doubt, use text "title [id:ID_OF_THE_VIDEO]"', array('%title', $value, '%name' => t($element['#title']))));
-      } else if (count($result) == 0) {
+      }
+      elseif (count($result) == 0) {
         // No video found.
         form_error($element, t('%name: Found no valid video with that name. Please note that it might take several minutes after the video has been uploaded in Brightcove Studio to appear in the API.', array('%name' => t($element['#title']))));
-      } else {
+      }
+      else {
         $id = $result[0]->id;
       }
     }
