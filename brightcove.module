@@ -303,6 +303,14 @@ function brightcove_add_logo_overlay($video_id, $ref_id, $image, $params) {
     'alignment' => isset($params['alignment']) ? $params['alignment'] : BRIGHTCOVE_LOGO_BOTTOM_RIGHT
   );
 
+  if (isset($params['tooltip'])) {
+    $meta['tooltip'] = $params['tooltip'];
+  }
+
+  if (isset($params['linkURL'])) {
+    $meta['linkURL'] = $params['linkURL'];
+  }
+
   try {
     $result = $bc->createOverlay($image_path, $meta, $video_id, $ref_id);
   }
@@ -319,8 +327,23 @@ function brightcove_add_logo_overlay($video_id, $ref_id, $image, $params) {
  * @param $video_id
  * @param $ref_id
  */
-function brightcove_remove_logo_overlay($video_id, $ref_id) {
+function brightcove_remove_logo_overlay($video_id, $ref_id, $options) {
+  $result = FALSE;
+
+  if (empty($video_id) || empty($ref_id)) {
+    return FALSE;
+  }
+
+  // Initialize a brightcove connection.
   $bc = brightcove_initialize();
+  try {
+    $result = $bc->deleteOverlay($video_id, $ref_id, $options);
+  }
+  catch (Exception $exception) {
+    watchdog_exception('brightcove', $exception);
+  }
+
+  return $result;
 }
 
 /**
