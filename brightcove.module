@@ -554,3 +554,80 @@ function brightcove_player_delete($pid) {
     ->execute();
 }
 
+function _brightcove_upload_form($form, &$form_state) {
+  $form = array();
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#description' => t('Video name or title.'),
+    '#required' => TRUE,
+    '#default_value' => !empty($form_state['values']['title']) ? $form_state['values']['title'] : '',
+  );
+
+  $form['file_upload'] = array(
+    '#type' => 'file',
+    '#title' => t('Video file'),
+    '#size' => 40,
+    '#description' => t('Allowed file types: ') . '<strong>3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv</strong>',
+  );
+
+  $form['short'] = array(
+    '#type' => 'textarea',
+    '#rows' => 3,
+    '#required' => TRUE,
+    '#title' => t('Short description'),
+    '#description' => t('Video short description.'),
+    '#default_value' => !empty($form_state['values']['short']) ? $form_state['values']['short'] : '',
+  );
+
+  $form['advanced'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => t('Advanced attributes'),
+  );
+
+  $form['advanced']['tags'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Tags'),
+    '#description' => t('Associated tags, separated by comma.'),
+    '#default_value' => !empty($form_state['values']['tags']) ? $form_state['values']['tags'] : '',
+  );
+
+  $form['advanced']['long'] = array(
+    '#type' => 'textarea',
+    '#rows' => 4,
+    '#title' => t('Long description'),
+    '#description' => t('Video long description.'),
+    '#default_value' => !empty($form_state['values']['long']) ? $form_state['values']['long'] : '',
+  );
+
+  $form['advanced']['linktext'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Related link text'),
+    '#description' => t('Related link description or text.'),
+    '#default_value' => !empty($form_state['values']['linktext']) ? $form_state['values']['linktext'] : '',
+  );
+
+  $form['advanced']['linkurl'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Related link url'),
+    '#description' => t('Related link URL.'),
+    '#default_value' => !empty($form_state['values']['linkurl']) ? $form_state['values']['linkurl'] : '',
+  );
+
+  $form['advanced']['encode_to'] = array(
+    '#type' => 'select',
+    '#title' => t('Video container'),
+    '#options' => array(
+      'MP4' => t('H.264 (MP4)'),
+      'FLV' => t('VP6 (FLV)'),
+    ),
+    '#description' => t('Output rendition encoding'),
+    '#default_value' => variable_get('brightcove_encode_to', 'MP4'),
+  );
+
+  return $form;
+}
+

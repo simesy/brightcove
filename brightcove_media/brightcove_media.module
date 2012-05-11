@@ -313,6 +313,8 @@ function brightcove_media_upload_form($form, &$form_state) {
     '#collapsed' => TRUE,
     '#description' => t('It takes several minutes (depending on processing time in Brightcove cloud), until video is available after upload. Clicking \'Upload and attach\' uploads video to Brightcove then closes the dialog and attaches the video.'),
   );
+  $form['uploadform'] += _brightcove_upload_form($form, &$form_state);
+  /*
   $form['uploadform']['title'] = array(
     '#type' => 'textfield',
     '#title' => t('Title'),
@@ -365,7 +367,7 @@ function brightcove_media_upload_form($form, &$form_state) {
     '#title' => t('Related link url'),
     '#description' => t('Related link URL.'),
     '#default_value' => !empty($form_state['values']['linkurl']) ? $form_state['values']['linkurl'] : '',
-  );
+  );*/
   $form['uploadform']['upload'] = array(
     '#type' => 'button',
     '#name' => 'upload',
@@ -564,7 +566,7 @@ function brightcove_media_list() {
     }
   }
   catch (Exception $e) {
-    watchdog('brightcove', 'Retrieving media list failed.', array(),
+    watchog('brightcove', 'Retrieving media list failed.', array(),
       WATCHDOG_ERROR);
   }
 
