@@ -17,6 +17,11 @@ define('BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT', 350);
 define('BRIGHTCOVE_MINIMUM_VIDEO_WIDTH', 180);
 define('BRIGHTCOVE_MINIMUM_VIDEO_HEIGHT', 176);
 
+// Brightcove Economic model options.
+// @see http://docs.brightcove.com/en/media/#EconomicsEnum
+define('BRIGHTCOVE_ECONOMICS_FREE', 'FREE');
+define('BRIGHTCOVE_ECONOMICS_AD_SUPPORTED', 'AD_SUPPORTED');
+
 /**
  * Implements hook_init().
  */
@@ -1132,6 +1137,7 @@ function brightcove_field_upload_form($form, &$form_state) {
     '#description' => t('Output rendition encoding'),
     '#default_value' => variable_get('brightcove_encode_to', 'MP4'),
   );*/
+  );
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -1422,7 +1428,6 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
     if (form_get_errors()) {
       return $form;
     }
-    // Do something with $file here.
 
     $meta = array(
       'name' => $form_state['values']['title'],
@@ -1430,6 +1435,7 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
       'longDescription' => $form_state['values']['long'],
       'linkText' => $form_state['values']['linktext'],
       'linkURL' => $form_state['values']['linkurl'],
+      'economics' => $form_state['values']['economics'],
       'referenceId' => brightcove_generate_reference(),
     );
     if (!empty($form_state['values']['tags'])) {
