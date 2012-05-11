@@ -21,6 +21,14 @@
 define('BRIGHTCOVE_STATUS_COMPLETE', 'COMPLETE');
 define('BRIGHTCOVE_STATUS_ERROR', 'ERROR');
 
+// Logo overlay alignment constants
+define('BRIGHTCOVE_LOGO_TOP_LEFT', 'TOP_LEFT');
+define('BRIGHTCOVE_LOGO_BOTTOM_LEFT', 'BOTTOM_LEFT');
+define('BRIGHTCOVE_LOGO_BOTTOM_RIGHT', 'BOTTOM_RIGHT');
+define('BRIGHTCOVE_LOGO_TOP_RIGHT', 'TOP_RIGHT');
+define('BRIGHTCOVE_LOGO_IMAGE_TYPE', 'LOGO_OVERLAY');
+
+
 /**
  * Settings needed:
  *  - API key
@@ -208,7 +216,8 @@ function brightcove_video_load($video_id) {
     $bc = brightcove_initialize();
     try {
       $video = $bc ? $bc->find('find_video_by_id', $video_id) : NULL;
-    } catch (Exception $error) {
+    }
+    catch (Exception $error) {
       watchdog('brightcove', 'Loading Brightcove video failed.', array(), WATCHDOG_ERROR);
       return FALSE;
     }
@@ -268,13 +277,40 @@ function brightcove_remote_image($url) {
  * Add a logo overlay to a video object. This function is also upload the logo
  * image.
  *
- * @param $video_id
- * @param $ref_id
- * @param $image
- * @param $position
+ * @param string $video_id
+ * @param string $ref_id
+ * @param object $image
+ * @param string $params
  */
-function brightcove_add_logo_overlay($video_id, $ref_id, $image, $position) {
+function brightcove_add_logo_overlay($video_id, $ref_id, $image, $params) {
+  $result = FALSE;
+
+  if (empty($video_id) || empty($ref_id) || empty($image) || empty($params)) {
+    return FALSE;
+  }
+
+  // Initialize a brightcove connection.
   $bc = brightcove_initialize();
+  // The local path of the image.
+  $image_path = file_create_url($image->uri);
+  // Initialize the logo structure.
+  $meta = array(
+    'image' => array(
+      'type' => BRIGHTCOVE_LOGO_IMAGE_TYPE,
+      'remoteUrl' => $image_path,
+    ),
+    // The default alignment is BOTTOM_RIGHT
+    'alignment' => isset($params['alignment']) ? $params['alignment'] : BRIGHTCOVE_LOGO_BOTTOM_RIGHT
+  );
+
+  try {
+    $result = $bc->createOverlay($image_path, $meta, $video_id, $ref_id);
+  }
+  catch (Exception $exception) {
+    watchdog_exception('brightcove', $exception);
+  }
+
+  return $result;
 }
 
 /**
@@ -417,7 +453,8 @@ function brightcove_upload_video($path, $meta, $encode_to = NULL) {
     }
 
     $id = $bc->createMedia('video', $path, $meta, $options);
-  } catch (Exception $error) {
+  }
+  catch (Exception $error) {
     drupal_set_message(t('Video upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
     return NULL;
   }
@@ -519,7 +556,8 @@ function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
   try {
     $bc->getStatus('video', 0, 0);
     $write = TRUE;
-  } catch (Exception $e) {
+  }
+  catch (Exception $e) {
     $write = stripos($e->getMessage(), 'token') === FALSE;
   }
 
