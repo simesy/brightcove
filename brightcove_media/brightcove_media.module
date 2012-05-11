@@ -514,7 +514,7 @@ function brightcove_media_list() {
     }
   }
   catch (Exception $e) {
-    watchog('brightcove', 'Retrieving media list failed.', array(),
+    watchdog('brightcove', 'Retrieving media list failed.', array(),
       WATCHDOG_ERROR);
   }
 
