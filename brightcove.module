@@ -589,6 +589,31 @@ function _brightcove_upload_form($form, &$form_state) {
     '#default_value' => !empty($form_state['values']['short']) ? $form_state['values']['short'] : '',
   );
 
+  $custom_fields = variable_get('brightcove_custom_fields', 0);
+  for ($i = 0; $i < $custom_fields; ++$i) {
+    $key = variable_get("brightcove_custom_fields_{$i}_key");
+    $label = variable_get("brightcove_custom_fields_{$i}_label");
+    $type = variable_get("brightcove_custom_fields_{$i}_type");
+    $values = array_map('trim', explode("\n",
+      (string) variable_get("brightcove_custom_fields_{$i}_values")));
+    $required = variable_get("brightcove_custom_fields_{$i}_required");
+    $typedic = array(
+      'text' => 'textfield',
+      'list' => 'select',
+    );
+
+    if (isset($typedic[$type])) {
+      $form["custom_field_{$i}"] = array(
+        '#type' => $typedic[$type],
+        '#title' => t($label),
+        '#key' => $key,
+        '#required' => (bool) $required,
+      ) + ($type == 'list' ? array(
+        '#options' => drupal_map_assoc($values),
+      ) : array());
+    }
+  }
+
   $form['advanced'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
