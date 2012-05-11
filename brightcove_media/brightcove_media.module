@@ -313,61 +313,9 @@ function brightcove_media_upload_form($form, &$form_state) {
     '#collapsed' => TRUE,
     '#description' => t('It takes several minutes (depending on processing time in Brightcove cloud), until video is available after upload. Clicking \'Upload and attach\' uploads video to Brightcove then closes the dialog and attaches the video.'),
   );
+
   $form['uploadform'] += _brightcove_upload_form($form, &$form_state);
-  /*
-  $form['uploadform']['title'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Title'),
-    '#description' => t('Video name or title.'),
-    '#required' => TRUE,
-    '#default_value' => !empty($form_state['values']['title']) ? $form_state['values']['title'] : '',
-  );
-  $form['uploadform']['file_upload'] = array(
-    '#type' => 'file',
-    '#title' => t('Video file'),
-    '#size' => 40,
-    '#required' => FALSE,
-    '#description' => t('Allowed file types: ') . '<strong>3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv</strong>',
-  );
-  $form['uploadform']['short'] = array(
-    '#type' => 'textarea',
-    '#rows' => 3,
-    '#required' => TRUE,
-    '#title' => t('Short description'),
-    '#description' => t('Video short description.'),
-    '#default_value' => !empty($form_state['values']['short']) ? $form_state['values']['short'] : '',
-  );
-  $form['uploadform']['advanced'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#title' => t('Advanced attributes'),
-  );
-  $form['uploadform']['advanced']['tags'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Tags'),
-    '#description' => t('Associated tags, separated by comma.'),
-    '#default_value' => !empty($form_state['values']['tags']) ? $form_state['values']['tags'] : '',
-  );
-  $form['uploadform']['advanced']['long'] = array(
-    '#type' => 'textarea',
-    '#rows' => 4,
-    '#title' => t('Long description'),
-    '#description' => t('Video long description.'),
-    '#default_value' => !empty($form_state['values']['long']) ? $form_state['values']['long'] : '',
-  );
-  $form['uploadform']['advanced']['linktext'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Related link text'),
-    '#description' => t('Related link description or text.'),
-    '#default_value' => !empty($form_state['values']['linktext']) ? $form_state['values']['linktext'] : '',
-  );
-  $form['uploadform']['advanced']['linkurl'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Related link url'),
-    '#description' => t('Related link URL.'),
-    '#default_value' => !empty($form_state['values']['linkurl']) ? $form_state['values']['linkurl'] : '',
-  );*/
+
   $form['uploadform']['upload'] = array(
     '#type' => 'button',
     '#name' => 'upload',
