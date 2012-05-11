@@ -234,7 +234,6 @@ function brightcove_remote_image($url) {
   $parse = parse_url($url);
   $path = pathinfo($parse['path']);
   $fullpath = drupal_realpath(file_default_scheme() . '://brightcove_thumbnail');
-  $uri = file_default_scheme() . '://brightcove_thumbnail/' . $path['basename'];
   $final_file = $fullpath . '/' . $path['basename'];
 
   if (file_exists($final_file)) {
