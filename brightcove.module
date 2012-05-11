@@ -265,6 +265,29 @@ function brightcove_remote_image($url) {
 }
 
 /**
+ * Add a logo overlay to a video object. This function is also upload the logo
+ * image.
+ *
+ * @param $video_id
+ * @param $ref_id
+ * @param $image
+ * @param $position
+ */
+function brightcove_add_logo_overlay($video_id, $ref_id, $image, $position) {
+  $bc = brightcove_initialize();
+}
+
+/**
+ * Remove a logo overlay from a specific video.
+ *
+ * @param $video_id
+ * @param $ref_id
+ */
+function brightcove_remove_logo_overlay($video_id, $ref_id) {
+  $bc = brightcove_initialize();
+}
+
+/**
  * Implements of hook_theme().
  */
 function brightcove_theme() {
