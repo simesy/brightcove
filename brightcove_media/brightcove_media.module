@@ -637,73 +637,28 @@ function ajax_brightcove_media_upload_callback($form, $form_state) {
   // Make sure it is not set, might be needed if a user changes mind after upload and wants to upload another.
   unset($_SESSION['brightcove']["video_just_uploaded_{$user->uid}"]);
 
-  $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
-  $validators = array(
-    'file_validate_extensions' => array($limits['extensions']),
+  $video = _brightcove_upload_form_callback($form, $form_state);
+  if (is_array($video) || is_bool($video)) {
+    return $video;
+  }
+
+  $file_obj = (object) array(
+    'fid' => "v{$video->id}",
+    'uid' => $user->uid,
+    'filename' => check_plain($video->name),
+    'uri' => "brightcove://{$video->id}",
+    'filemime' => 'media/brightcove',
+    'filesize' => 0,
+    'status' => 1,
+    'type' => 'video',
   );
+  media_browser_build_media_item($file_obj);
 
-  // Save new file uploads.
-  if ($file = file_save_upload('file_upload', $validators,
-                               drupal_realpath(file_default_scheme() . ':/'))
-  ) {
-    if ($file->filesize <= 0) {
-      // Some uploaded files had zero size, that's an error.
-      drupal_set_message(t('Uploaded file not found. Are you sure that you uploaded an existing file?'), 'error');
-      return $form;
-    }
-    if (form_get_errors()) {
-      return $form;
-    }
-    // Do something with $file here.
+  $_SESSION['brightcove']["video_just_uploaded_{$user->uid}"] = $file_obj;
 
-    $meta = array(
-      'name' => $form_state['values']['title'],
-      'shortDescription' => $form_state['values']['short'],
-      'longDescription' => $form_state['values']['long'],
-      'linkText' => $form_state['values']['linktext'],
-      'linkURL' => $form_state['values']['linkurl'],
-      'referenceId' => brightcove_generate_reference(),
-    );
-    if (!empty($form_state['values']['tags'])) {
-      $meta['tags'] = explode(',', $form_state['values']['tags']);
-    }
-    $id = brightcove_upload_video(drupal_realpath($file->uri), $meta);
-    if (!isset($id)) {
-      return $form;
-    }
-
-    // Construct Video object with ID - we need to cache it and save to session.
-    // Brightcove Media API doesn't clear it's cache when a new video is
-    // uploaded, therefore the node save would fail.
-    $video = new StdClass;
-    $video->id = $id;
-    $video->name = $form_state['values']['title'];
-    brightcove_video_cache_set($id, $video);
-    // invalidating brightcove video load cache
-    cache_set("bc:video:{$id}", FALSE, 'cache');
-
-    $file_obj = (object) array(
-      'fid' => "v{$video->id}",
-      'uid' => $user->uid,
-      'filename' => check_plain($video->name),
-      'uri' => "brightcove://{$video->id}",
-      'filemime' => 'media/brightcove',
-      'filesize' => 0,
-      'status' => 1,
-      'type' => 'video',
-    );
-    media_browser_build_media_item($file_obj);
-
-    $_SESSION['brightcove']["video_just_uploaded_{$user->uid}"] = $file_obj;
-
-    $commands = array();
-    $commands[] = ajax_command_brightcove_media_upload($file_obj);
-    return array('#type' => 'ajax', '#commands' => $commands);
-  }
-  else {
-    drupal_set_message(t('Only Video files are allowed here.'), 'error');
-    return $form;
-  }
+  $commands = array();
+  $commands[] = ajax_command_brightcove_media_upload($file_obj);
+  return array('#type' => 'ajax', '#commands' => $commands);
 }
 
 /**
