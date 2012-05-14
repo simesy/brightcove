@@ -298,6 +298,7 @@ function brightcove_add_logo_overlay($video_id, $ref_id, $image, $params = NULL)
     'image' => array(
       'referenceId' => $image->fid,
       'type' => BRIGHTCOVE_LOGO_IMAGE_TYPE,
+      'displayName' => $image->filename,
     ),
     // The default alignment is BOTTOM_RIGHT
     'alignment' => isset($params['alignment']) ? $params['alignment'] : BRIGHTCOVE_LOGO_BOTTOM_RIGHT

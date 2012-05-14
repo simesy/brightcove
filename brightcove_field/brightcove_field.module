@@ -1041,8 +1041,6 @@ function brightcove_field_upload_form($form, &$form_state) {
   $form = _brightcove_upload_form($form, &$form_state);
   $form['#prefix'] = '<div id="dialog-upload-form">';
 
-  $form['logo_overlay'] = array();
-
   $form['submit'] = array(
     '#type' => 'submit',
     '#name' => 'submit-',
