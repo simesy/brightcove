@@ -756,6 +756,58 @@ function _brightcove_upload_form($form, &$form_state) {
     '#default_value' => variable_get('brightcove_encode_to', 'MP4'),
   );
 
+  $form['logo_overlay'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Logo overlay'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['logo_overlay']['logo_image_upload'] = array(
+    '#type' => 'managed_file',
+    '#title' => t('Upload logo image'),
+    '#description' => t('Transparent PNG or GIF'),
+    '#upload_location' => 'public://brightcove/logo_images',
+    '#upload_validators' => array(
+      'file_validate_extensions' => array(
+        0 => 'png gif',
+     ),
+    ),
+  );
+
+  $form['logo_overlay']['logo_link'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Logo Link URL'),
+    '#description' => t('Ex. http://www.brightcove.com'),
+    '#default_value' => 'http://',
+  );
+
+  $form['logo_overlay']['logo_tooltip'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Logo tooltip'),
+    '#description' => t('128 character allowed.'),
+    '#maxlength' => 128,
+  );
+
+  $form['logo_overlay']['logo_alignment'] = array(
+    '#type' => 'select',
+    '#title' => t('Logo Alignment'),
+    '#options' => array(
+      BRIGHTCOVE_LOGO_BOTTOM_RIGHT => t('Align bottom right'),
+      BRIGHTCOVE_LOGO_BOTTOM_LEFT => t('Align bottom left'),
+      BRIGHTCOVE_LOGO_TOP_LEFT => t('Align top left'),
+      BRIGHTCOVE_LOGO_TOP_RIGHT => t('Align top right'),
+    ),
+  );
+
+  $form['logo_overlay']['logo_description'] = array(
+    '#markup' > t('Logo overlay images display a logo in the corner of the video
+                 playback window. Viewers can click through to a web site that
+                 you specify. The image you select should be at 100% scale when
+                 viewed in a 480x360 video playback window and will be scaled
+                 proportionately to fit smaller videos.'),
+  );
+
   return $form;
 }
 
