@@ -1145,6 +1145,8 @@ function brightcove_field_upload_form($form, &$form_state) {
       ? $form_state['values']['economics'] : BRIGHTCOVE_ECONOMICS_FREE
   );
 
+  $form['logo_overlay'] = array();
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#name' => 'submit-',
@@ -1423,9 +1425,7 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
   );
 
   // Save new file uploads.
-  if ($file = file_save_upload('file_upload', $validators,
-                               drupal_realpath(file_default_scheme() . ':/'))
-  ) {
+  if ($file = file_save_upload('file_upload', $validators, drupal_realpath(file_default_scheme() . ':/'))) {
     if ($file->filesize <= 0) {
       // Some uploaded files had zero size, that's an error.
       drupal_set_message(t('Uploaded file not found. Are you sure that you uploaded an existing file?'), 'error');
@@ -1453,8 +1453,7 @@ function ajax_upload_dialog_close_callback($form, $form_state) {
 
       for ($i = 0; $i < $custom_fields; ++$i) {
         $key = $form["custom_field_{$i}"]['#key'];
-        $meta['customFields'][$key] =
-          $form_state['values']["custom_field_{$i}"];
+        $meta['customFields'][$key] = $form_state['values']["custom_field_{$i}"];
       }
     }
 
@@ -1505,6 +1504,11 @@ function brightcove_field_deliver_dialog($page) {
   print $output;
 }
 
+/**
+ * Brightcove video metadata properties.
+ *
+ * @return array
+ */
 function _brightcove_field_get_object_formatter_keys() {
   return array(
     'name' => t('Name'),
