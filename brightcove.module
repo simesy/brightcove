@@ -103,6 +103,14 @@ function brightcove_menu() {
     'file' => 'brightcove.admin.inc',
   );
 
+  $items["{$base}/playlist"] = array(
+    'title' => 'Manage playlists',
+    'page callback' => 'brightcove_playlist_overview_page',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'brightcove.playlist.inc',
+    'access arguments' => array('administer brightcove playlists'),
+  );
+
   return $items;
 }
 
