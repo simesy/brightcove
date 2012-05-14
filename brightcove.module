@@ -282,22 +282,22 @@ function brightcove_remote_image($url) {
  * @param object $image
  * @param string $params
  */
-function brightcove_add_logo_overlay($video_id, $ref_id, $image, $params) {
+function brightcove_add_logo_overlay($video_id, $ref_id, $image, $params = NULL) {
   $result = FALSE;
 
-  if (empty($video_id) || empty($ref_id) || empty($image) || empty($params)) {
+  if (empty($video_id) || empty($ref_id) || empty($image)) {
     return FALSE;
   }
 
   // Initialize a brightcove connection.
   $bc = brightcove_initialize();
   // The local path of the image.
-  $image_path = file_create_url($image->uri);
+  $image_path = drupal_realpath($image->uri);
   // Initialize the logo structure.
   $meta = array(
     'image' => array(
+      'referenceId' => $image->fid,
       'type' => BRIGHTCOVE_LOGO_IMAGE_TYPE,
-      'remoteUrl' => $image_path,
     ),
     // The default alignment is BOTTOM_RIGHT
     'alignment' => isset($params['alignment']) ? $params['alignment'] : BRIGHTCOVE_LOGO_BOTTOM_RIGHT
@@ -800,6 +800,7 @@ function _brightcove_upload_form($form, &$form_state) {
     '#type' => 'managed_file',
     '#title' => t('Upload logo image'),
     '#description' => t('Transparent PNG or GIF'),
+    '#required' => TRUE,
     '#states' => array(
       'invisible' => array(
        ':input[name="logo_enable"]' => array('checked' => FALSE),
@@ -921,7 +922,26 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
   if ($id) {
     // If the logo overlay options enabled.
     if ($form_state['values']['logo_enable']) {
+      $params = array();
+      // Save the image local.
+      $image = file_load($form_state['values']['logo_image_upload']['fid']);
 
+      if ($form_state['values']['logo_link']) {
+        $params['linkURL'] = $form_state['values']['logo_link'];
+      }
+      if ($form_state['values']['logo_tooltip']) {
+        $params['tooltip'] = $form_state['values']['logo_tooltip'];
+      }
+      if ($form_state['values']['logo_alignment']) {
+        $params['alignment'] = $form_state['values']['logo_alignment'];
+      }
+
+      try {
+        $response = brightcove_add_logo_overlay($id, $meta['referenceId'], $image, $params);
+      }
+      catch (Exception $e) {
+        watchdog_exception('brightcove', $e->getMessage());
+      }
     }
 
     // Construct Video object with ID - we need to cache it and save to
