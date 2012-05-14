@@ -587,6 +587,12 @@ function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
   return array($read, $write);
 }
 
+/**
+ * Load a player.
+ *
+ * @param $pid
+ * @return mixed
+ */
 function brightcove_player_load($pid) {
   return is_numeric($pid) ?
     db_query('SELECT * FROM {brightcove_player} WHERE pid = :pid',
@@ -599,16 +605,32 @@ function brightcove_player_load($pid) {
       ))->fetch();
 }
 
+/**
+ * Load all players.
+ *
+ * @return mixed
+ */
 function brightcove_player_load_all() {
   return db_query('SELECT * FROM {brightcove_player} ORDER BY name')
     ->fetchAll();
 }
 
+/**
+ * Get players list.
+ *
+ * @return mixed
+ */
 function brightcove_player_list() {
   return db_query('SELECT pid, name FROM {brightcove_player} ORDER BY name')
     ->fetchAllKeyed(0, 1);
 }
 
+/**
+ * Save a player.
+ *
+ * @param $player
+ * @return DatabaseStatementInterface|int|null
+ */
 function brightcove_player_save($player) {
   if (empty($player->pid)) {
     return db_insert('brightcove_player')
@@ -631,6 +653,12 @@ function brightcove_player_save($player) {
   }
 }
 
+/**
+ * Delete a player.
+ *
+ * @param $pid
+ * @return DatabaseStatementInterface
+ */
 function brightcove_player_delete($pid) {
   return db_delete('brightcove_player')
     ->condition('pid', $pid)
@@ -891,6 +919,11 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
   $id = brightcove_upload_video(drupal_realpath($file->uri), $meta, $form_state['values']['encode_to']);
 
   if ($id) {
+    // If the logo overlay options enabled.
+    if ($form_state['values']['logo_enable']) {
+
+    }
+
     // Construct Video object with ID - we need to cache it and save to
     // session. Brightcove Media API doesn't clear it's cache when a new
     // video is uploaded, therefore the node save would fail.
