@@ -763,10 +763,20 @@ function _brightcove_upload_form($form, &$form_state) {
     '#collapsed' => TRUE,
   );
 
+  $form['logo_overlay']['logo_enable'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable logo overlay'),
+  );
+
   $form['logo_overlay']['logo_image_upload'] = array(
     '#type' => 'managed_file',
     '#title' => t('Upload logo image'),
     '#description' => t('Transparent PNG or GIF'),
+    '#states' => array(
+      'invisible' => array(
+       ':input[name="logo_enable"]' => array('checked' => FALSE),
+      ),
+    ),
     '#upload_location' => 'public://brightcove/logo_images',
     '#upload_validators' => array(
       'file_validate_extensions' => array(
@@ -780,6 +790,11 @@ function _brightcove_upload_form($form, &$form_state) {
     '#title' => t('Logo Link URL'),
     '#description' => t('Ex. http://www.brightcove.com'),
     '#default_value' => 'http://',
+    '#states' => array(
+      'invisible' => array(
+       ':input[name="logo_enable"]' => array('checked' => FALSE),
+      ),
+    ),
   );
 
   $form['logo_overlay']['logo_tooltip'] = array(
@@ -787,6 +802,11 @@ function _brightcove_upload_form($form, &$form_state) {
     '#title' => t('Logo tooltip'),
     '#description' => t('128 character allowed.'),
     '#maxlength' => 128,
+    '#states' => array(
+      'invisible' => array(
+       ':input[name="logo_enable"]' => array('checked' => FALSE),
+      ),
+    ),
   );
 
   $form['logo_overlay']['logo_alignment'] = array(
@@ -798,10 +818,15 @@ function _brightcove_upload_form($form, &$form_state) {
       BRIGHTCOVE_LOGO_TOP_LEFT => t('Align top left'),
       BRIGHTCOVE_LOGO_TOP_RIGHT => t('Align top right'),
     ),
+    '#states' => array(
+      'invisible' => array(
+       ':input[name="logo_enable"]' => array('checked' => FALSE),
+      ),
+    ),
   );
 
   $form['logo_overlay']['logo_description'] = array(
-    '#markup' > t('Logo overlay images display a logo in the corner of the video
+    '#markup' => t('Logo overlay images display a logo in the corner of the video
                  playback window. Viewers can click through to a web site that
                  you specify. The image you select should be at 100% scale when
                  viewed in a 480x360 video playback window and will be scaled
@@ -811,6 +836,13 @@ function _brightcove_upload_form($form, &$form_state) {
   return $form;
 }
 
+/**
+ * Upload the submitted video.
+ *
+ * @param $form
+ * @param $form_state
+ * @return bool|StdClass
+ */
 function _brightcove_upload_form_callback(&$form, $form_state) {
   $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
   $validators = array(
