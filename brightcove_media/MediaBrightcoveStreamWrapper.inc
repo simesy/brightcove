@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Stream wrapper fro Brightcove videos.
+ * Stream wrapper for Brightcove videos.
  */
 
 

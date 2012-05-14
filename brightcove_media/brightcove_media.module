@@ -27,6 +27,12 @@ function brightcove_media_stream_wrappers() {
       'description' => t('Videos provided by Brightcove.'),
       'type' => STREAM_WRAPPERS_READ_VISIBLE,
     ),
+    'brightcoveplaylist' => array(
+      'name' => t('Brightcove playlist'),
+      'class' => 'MediaBrightcovePlaylistStreamWrapper',
+      'description' => t('Playlists provided by Brightcove'),
+      'type' => STREAM_WRAPPERS_READ_VISIBLE,
+    ),
   );
 }
 
