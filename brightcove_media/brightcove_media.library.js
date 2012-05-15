@@ -1,3 +1,8 @@
+/**
+ * @file
+ * Provides functions for the brightcove module media browser integration.
+ */
+
 (function ($) {
   Drupal.brightcoveLibrary = Drupal.brightcoveLibrary || {};
   Drupal.brightcoveLibrary.library = Drupal.brightcoveLibrary.library || {};
@@ -5,7 +10,6 @@
 
   Drupal.behaviors.brightcoveLibrary = {
     attach: function (context, settings) {
-//      $('#media-tab-brightcove .form-actions').hide();
 
       // Check if object already exists
       if (typeof Drupal.brightcoveLibrary.library.start != 'function') {
@@ -79,6 +83,14 @@
     }
   };
 
+  /**
+   * This function called after the user clicked on the "Upload and attach" button
+   * in the media browser upload form.
+   *
+   * @param ajax
+   * @param response
+   * @param status
+   */
   Drupal.ajax.prototype.commands.brightcove_media_upload = function (ajax, response, status) {
     $("input[name='submitted-video']").val(response.data.uri);
     Drupal.media.browser.selectMedia([{uri: response.data.uri}]);
