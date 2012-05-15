@@ -165,18 +165,6 @@ function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) 
   );
 }
 
-/**
- * Implements hook_admin_paths().
- */
-function brightcove_field_admin_paths() {
-  if (variable_get('node_admin_theme')) {
-    $paths = array(
-      'brightcove_field/upload/*/*/*' => TRUE,
-      'brightcove_field/browse/*/*/*' => TRUE,
-    );
-    return $paths;
-  }
-}
 
 /**
  * Implementation of hook_field_info().
@@ -296,15 +284,13 @@ function brightcove_field_browser_validate($element, &$form_state) {
       if (!$video || (is_null(brightcove_video_cache_get($id)) && $video->id != $id)) {
         form_error($element, t('%name: Found no valid video with that name. Please note that it might take several minutes after the video has been uploaded in Brightcove Studio to appear in the API.', array('%name' => t($element['#title']))));
       }
-    }
-    else {
+    } else {
       // Didn't match ID, try looking up the video text at BC.
       $bc = brightcove_initialize();
       $result = NULL;
       try {
-        $result = $bc->search('video',
-          array('all' => 'display_name:' . $value),
-          array('sort_by' => 'CREATION_DATE', 'sort_order' => 'DESC'));
+        $result = $bc ? $bc->find('find_videos_by_text',
+                                array('text' => $value)) : array();
       } catch (Exception $error) {
         form_error($element, t('There was a problem accessing Brightcove. Please try again'));
         watchdog('brightcove', 'Validating element with Brightcove failed', array(), WATCHDOG_ERROR);
