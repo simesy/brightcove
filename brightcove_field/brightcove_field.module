@@ -494,9 +494,7 @@ function brightcove_field_field_formatter_settings_form($field, $instance, $view
   return $element;
 }
 
-function _brightcove_field_formatter_dimension_validate($value,
-                                                        $element,
-                                                        $error_msg) {
+function _brightcove_field_formatter_dimension_validate($value, $element, $error_msg) {
   if (!is_numeric($element['#value']) || ((int) $element['#value']) < $value) {
     form_error($element, $error_msg);
   }
@@ -660,16 +658,11 @@ function brightcove_field_button_value_callback() {
 /**
  * Implements hook_field_widget_form().
  */
-function brightcove_field_field_widget_form(&$form, &$form_state,
-                                            $field, $instance,
-                                            $langcode, $items, $delta,
-                                            $element) {
+function brightcove_field_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $entity_type = $element['#entity_type'];
   $entity_info = entity_get_info($entity_type);
-  $eid = isset($form[$entity_info['entity keys']['id']]['#value']) ?
-    $form[$entity_info['entity keys']['id']]['#value'] : NULL;
-  $bundle = isset($form[$entity_info['entity keys']['bundle']]['#value']) ?
-    $form[$entity_info['entity keys']['bundle']]['#value'] : NULL;
+  $eid = isset($form[$entity_info['entity keys']['id']]['#value']) ? $form[$entity_info['entity keys']['id']]['#value'] : NULL;
+  $bundle = isset($form[$entity_info['entity keys']['bundle']]['#value']) ? $form[$entity_info['entity keys']['bundle']]['#value'] : NULL;
   $element['video_id'] = array(
     '#type' => 'textfield',
     '#default_value' => isset($items[$delta]['video_id']) ?

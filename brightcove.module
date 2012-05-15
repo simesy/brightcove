@@ -801,7 +801,6 @@ function _brightcove_upload_form($form, &$form_state) {
     '#type' => 'managed_file',
     '#title' => t('Upload logo image'),
     '#description' => t('Transparent PNG or GIF'),
-    '#required' => TRUE,
     '#states' => array(
       'invisible' => array(
        ':input[name="logo_enable"]' => array('checked' => FALSE),
@@ -905,6 +904,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
     'economics' => $form_state['values']['economics'],
     'referenceId' => brightcove_generate_reference(),
   );
+
   if (!empty($form_state['values']['tags'])) {
     $meta['tags'] = explode(',', $form_state['values']['tags']);
   }
