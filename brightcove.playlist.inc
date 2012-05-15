@@ -53,13 +53,17 @@ function _brightcove_playlist_overview_row(stdClass $playlist) {
  *
  * This function is a cached wrapper around BCMAPI::find('allplaylists').
  *
+ * @param bool $cache_reset
+ *   (optional) True to reset the cache.
+ *
  * @return bool|array
  *   Array of playlists or FALSE if none found.
  *   @see http://support.brightcove.com/en/docs/media-api-objects-reference#Playlist
  */
-function brightcove_get_playlists() {
+function brightcove_get_playlists($cache_reset = FALSE) {
+
   $cache = cache_get('bc:playlist:list', 'cache');
-  if ($cache && !empty($cache->data)) {
+  if (!$cache_reset && $cache && !empty($cache->data)) {
     return $cache->data;
   }
 
@@ -78,3 +82,88 @@ function brightcove_get_playlists() {
 
   return $playlists;
 }
+
+function brightcove_playlist_edit_page($playlist) {
+  if (!$playlist) {
+    return t('Playlist not found');
+  }
+
+  return drupal_get_form('brightcove_playlist_edit_form');
+}
+
+function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
+  $form = array();
+
+  $form['referenceId'] = array(
+    '#type' => 'hidden',
+    '#value' => isset($form_state['values']['referenceId']) ? $form_state['values']['referenceId'] : '',
+  );
+
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Name',
+    '#default_value' => isset($form_state['values']['name']) ? $form_state['values']['name'] : '',
+  );
+
+  $form['shortDescription'] = array(
+    '#type' => 'textarea',
+    '#title' => 'Short description',
+    '#default_value' => isset($form_state['values']['shortDescription']) ? $form_state['values']['shortDescription'] : '',
+  );
+
+  // @todo
+  $form['videos'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Videos',
+    '#default_value' => isset($form_state['values']['name']) ? $form_state['values']['name'] : '',
+  );
+
+  $form['playlistType'] = array(
+    '#type' => 'select',
+    '#title' => t('Playlist ordering'),
+    '#options' => array(
+      'OLDEST_TO_NEWEST' => t('Oldest to newest (by activation date)'),
+      'NEWEST_TO_OLDEST' => t('Newest to oldest (by activation date)'),
+      'START_DATE_OLDEST_TO_NEWEST' => t('Oldest to newest'),
+      'START_DATE_NEWEST_TO_OLDEST' => t('Newest to Oldest'),
+      'ALPHABETICAL' => t('Alphabetical (by video name)'),
+      'PLAYS_TOTAL' => t('Total plays'),
+      'PLAYS_TRAILING_WEEK' => t('Plays trailing week'),
+    ),
+    '#default_value' => isset($form_state['values']['playlistType']),
+  );
+
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Add'));
+
+  return $form;
+}
+
+function brightcove_playlist_edit_form_submit($form, &$form_state) {
+  $keys_to_send = array('name', 'playlistType', 'shortDescription');
+
+  $metadata = array();
+  foreach ($keys_to_send as $key) {
+    $metadata[$key] = $form_state['values'][$key];
+  }
+
+  brightcove_add_playlist($metadata);
+}
+
+
+function brightcove_add_playlist($metadata) {
+  $bc = brightcove_initialize();
+
+  try {
+    $playlist = $bc->createPlaylist('video', $metadata);
+  }
+  catch(Exception $error) {
+    drupal_set_message(t('Playlist upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
+    return FALSE;
+  }
+
+  // Invalidate playlist cache.
+  cache_set('bc:playlist:list', FALSE);
+
+  return $playlist;
+}
+

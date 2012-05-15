@@ -104,14 +104,60 @@ function brightcove_menu() {
   );
 
   $items["{$base}/playlist"] = array(
-    'title' => 'Manage playlists',
+    'title' => 'Playlists',
     'page callback' => 'brightcove_playlist_overview_page',
     'type' => MENU_LOCAL_TASK,
     'file' => 'brightcove.playlist.inc',
     'access arguments' => array('administer brightcove playlists'),
   );
 
+  $items["{$base}/playlist/add"] = array(
+    'title' => 'Add playlist',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('brightcove_playlist_edit_form'),
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'brightcove.playlist.inc',
+    'access arguments' => array('administer brightcove playlists'),
+  );
+
+  $items["{$base}/playlist/%brightcove_playlist/edit"] = array(
+    'title' => 'Playlists',
+    'page callback' => 'brightcove_playlist_edit_page',
+    'page arguments' => array(5),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'brightcove.playlist.inc',
+    'access arguments' => array('administer brightcove playlists'),
+  );
+
   return $items;
+}
+
+/**
+ * @param $playlist_id
+ * @param bool $reset
+ * @return bool|object
+ */
+function brightcove_playlist_load($playlist_id, $reset = FALSE) {
+  $cache = cache_get("bc:playlist:$playlist_id", 'cache');
+  if (!$reset && $cache && !empty($cache->data)) {
+    return $cache->data;
+  }
+
+  $playlist = FALSE;
+
+  $bc = brightcove_initialize();
+  try {
+    $playlist = $bc->find('playlistbyid', array('playlist_id' => $playlist_id));
+  }
+  catch (Exception $e) {
+    watchdog('brightcove', 'Loading brightcove playlists failed.', array(), WATCHDOG_ERROR);
+  }
+
+  if ($playlist) {
+    cache_set("bc:playlist:$playlist_id", $playlist);
+  }
+
+  return $playlist;
 }
 
 /**

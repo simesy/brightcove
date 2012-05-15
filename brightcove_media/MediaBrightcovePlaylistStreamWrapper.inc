@@ -9,8 +9,9 @@ class MediaBrightcovePlaylistStreamWrapper extends MediaReadOnlyStreamWrapper {
    * Get MIME type.
    *
    * @static
-   * @param $uri
+   * @param string $uri
    * @param null $mapping
+   *
    * @return string
    */
   public static function getMimeType($uri, $mapping = NULL) {
