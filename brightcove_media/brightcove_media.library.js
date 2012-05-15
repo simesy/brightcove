@@ -80,7 +80,8 @@
   };
 
   Drupal.ajax.prototype.commands.brightcove_media_upload = function (ajax, response, status) {
-    Drupal.brightcoveLibrary.library.mediaSelected([response.data]);
-    $(Drupal.brightcoveLibrary.library.renderElement).find('.fake-ok').trigger('click');
+    $("input[name='submitted-video']").val(response.data.uri);
+    Drupal.media.browser.selectMedia([{uri: response.data.uri}]);
+    $('#bc-filter-form .form-actions #edit-submit').trigger('click');
   };
 })(jQuery);

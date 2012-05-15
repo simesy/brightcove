@@ -643,22 +643,20 @@ function ajax_brightcove_media_upload_callback($form, $form_state) {
     return $video;
   }
 
-  $file_obj = (object) array(
-    'fid' => "v{$video->id}",
-    'uid' => $user->uid,
-    'filename' => check_plain($video->name),
-    'uri' => "brightcove://{$video->id}",
-    'filemime' => 'media/brightcove',
-    'filesize' => 0,
-    'status' => 1,
-    'type' => 'video',
-  );
-  media_browser_build_media_item($file_obj);
+  $uri = file_stream_wrapper_uri_normalize("brightcove://{$video->id}");
+  $file = file_uri_to_object($uri);
+  $file->filename = $video->name;
+  $file->filemime = 'media/brightcove';
+  $file->type = 'video';
+  if (!isset($file->fid)) {
+   $file->fid = 0;
+  }
+  media_browser_build_media_item($file);
 
-  $_SESSION['brightcove']["video_just_uploaded_{$user->uid}"] = $file_obj;
+  $_SESSION['brightcove']["video_just_uploaded_{$user->uid}"] = $file;
 
   $commands = array();
-  $commands[] = ajax_command_brightcove_media_upload($file_obj);
+  $commands[] = ajax_command_brightcove_media_upload($file);
   return array('#type' => 'ajax', '#commands' => $commands);
 }
 
