@@ -113,9 +113,7 @@ function brightcove_field_open_dialog($width, $height, $entity_type, $entity_id,
 /**
  * Access callback for brightcove browser.
  */
-function brightcove_field_browse_access($entity_type, $field_name,
-  $entity_id_or_bundle = NULL) {
-
+function brightcove_field_browse_access($entity_type, $field_name, $entity_id_or_bundle = NULL) {
   $field = field_info_field($field_name);
 
   if ($entity_id_or_bundle) {
@@ -568,11 +566,8 @@ function brightcove_field_browser_process($element, $form_state, $form) {
   $field_info = field_info_field($element['#field_name']);
   $element[$field_key] = array(
     '#type' => 'textfield',
-    '#default_value' => isset($element['#value'][$field_key]) ?
-      $element['#value'][$field_key] : '',
-    '#autocomplete_path' => 'brightcove_field/autocomplete/'.
-                            $element['#field_name'] . '/' .
-                            $element['#entity_type']. '/' . $eid,
+    '#default_value' => isset($element['#value'][$field_key]) ? $element['#value'][$field_key] : '',
+    '#autocomplete_path' => 'brightcove_field/autocomplete/'. $element['#field_name'] . '/' . $element['#entity_type']. '/' . $eid,
     // The following values were set by the content module and need
     // to be passed down to the nested element.
     '#title' => $element['#title'],
@@ -660,20 +655,14 @@ function brightcove_field_button_value_callback() {
 /**
  * Implements hook_field_widget_form().
  */
-function brightcove_field_field_widget_form(&$form, &$form_state,
-                                            $field, $instance,
-                                            $langcode, $items, $delta,
-                                            $element) {
+function brightcove_field_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $entity_type = $element['#entity_type'];
   $entity_info = entity_get_info($entity_type);
-  $eid = isset($form[$entity_info['entity keys']['id']]['#value']) ?
-    $form[$entity_info['entity keys']['id']]['#value'] : NULL;
-  $bundle = isset($form[$entity_info['entity keys']['bundle']]['#value']) ?
-    $form[$entity_info['entity keys']['bundle']]['#value'] : NULL;
+  $eid = isset($form[$entity_info['entity keys']['id']]['#value']) ? $form[$entity_info['entity keys']['id']]['#value'] : NULL;
+  $bundle = isset($form[$entity_info['entity keys']['bundle']]['#value']) ? $form[$entity_info['entity keys']['bundle']]['#value'] : NULL;
   $element['video_id'] = array(
     '#type' => 'textfield',
-    '#default_value' => isset($items[$delta]['video_id']) ?
-      $items[$delta]['video_id'] : NULL,
+    '#default_value' => isset($items[$delta]['video_id']) ? $items[$delta]['video_id'] : NULL,
     '#title' => $element['#title'],
     '#value_callback' => 'brightcove_field_browser_value',
     '#autocomplete_path' => 'brightcove_field/autocomplete/' .
