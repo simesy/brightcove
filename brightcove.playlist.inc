@@ -7,7 +7,7 @@
  *   Rendered overivew page.
  */
 function brightcove_playlist_overview_page() {
-  $table = array('header' => array('Title', 'ops'));
+  $table = array('header' => array('Title', 'Operations'));
 
   $playlists = brightcove_get_playlists();
   if ($playlists) {
@@ -40,6 +40,7 @@ function brightcove_playlist_overview_page() {
 function _brightcove_playlist_overview_row(stdClass $playlist) {
   $operations = array(
     l(t('edit'), "admin/config/media/brightcove/playlist/{$playlist->id}/edit"),
+    l(t('delete'), "admin/config/media/brightcove/playlist/{$playlist->id}/delete"),
   );
 
   return array(
@@ -166,4 +167,29 @@ function brightcove_add_playlist($metadata) {
 
   return $playlist;
 }
+
+
+function brightcove_playlist_delete_form($form, &$form_state, $playlist) {
+  $form = array();
+
+  if (!$playlist) {
+    drupal_set_message(t('Playlist not found!', 'error'));
+    return $form;
+  }
+
+  $form['playlist_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $playlist->id,
+  );
+
+  return confirm_form(
+    $form,
+    t('Are you sure you want to delete playlist "%name"', array('%name' => $playlist->name)),
+    'admin/config/media/brightcove/playlist',
+    t('This action annot be undone'),
+    t('Delete'),
+    t('Cancel')
+  );
+}
+
 

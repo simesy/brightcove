@@ -129,7 +129,21 @@ function brightcove_menu() {
     'access arguments' => array('administer brightcove playlists'),
   );
 
+  $items["{$base}/playlist/%brightcove_playlist/delete"] = array(
+    'title' => 'Playlists',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('brightcove_playlist_delete_form', 5),
+    'type' => MENU_CALLBACK,
+    'file' => 'brightcove.playlist.inc',
+    'access arguments' => array('administer brightcove playlists'),
+  );
+
   return $items;
+}
+
+
+function brightcove_playlist_delete_form_submit($form, &$form_state) {
+
 }
 
 /**
