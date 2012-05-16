@@ -100,7 +100,7 @@ function brightcove_playlist_edit_page($playlist) {
     return t('Playlist not found');
   }
 
-  return drupal_get_form('brightcove_playlist_edit_form');
+  return drupal_get_form('brightcove_playlist_edit_form', $playlist);
 }
 
 /**
@@ -122,19 +122,23 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => 'Name',
-    '#default_value' => isset($form_state['values']['name']) ? $form_state['values']['name'] : '',
+    '#default_value' => isset($playlist->name) ? $playlist->name : '',
   );
 
   $form['shortDescription'] = array(
     '#type' => 'textarea',
     '#title' => 'Short description',
-    '#default_value' => isset($form_state['values']['shortDescription']) ? $form_state['values']['shortDescription'] : '',
+    '#default_value' => isset($playlist->shortDescription) ? $playlist->shortDescription : '',
   );
 
+  $videos = NULL;
+  foreach ($playlist->videos as $video) {
+    $videos .= check_plain($video->name) . ' [id:' . $video->id . ']';
+  }
   $form['videos'] = array(
     '#type' => 'textfield',
     '#title' => 'Videos',
-    '#default_value' => isset($form_state['values']['name']) ? $form_state['values']['name'] : '',
+    '#default_value' => !is_null($videos) ? $videos : '',
     '#autocomplete_path' => 'brightcove/autocomplete/videos',
   );
 
@@ -150,7 +154,7 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
       'PLAYS_TOTAL' => t('Total plays'),
       'PLAYS_TRAILING_WEEK' => t('Plays trailing week'),
     ),
-    '#default_value' => isset($form_state['values']['playlistType']),
+    '#default_value' => isset($playlist->playlistType) ? $playlist->playlistType : '',
   );
 
   $form['submit'] = array('#type' => 'submit', '#value' => t('Add'));
