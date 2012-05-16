@@ -113,6 +113,9 @@ function brightcove_playlist_edit_page($playlist) {
  */
 function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
   $form = array();
+  if (!isset($form_state['playlist'])) {
+    $form_state['playlist'] = $playlist;
+  }
 
   $form['referenceId'] = array(
     '#type' => 'hidden',
@@ -132,8 +135,13 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
   );
 
   $videos = NULL;
-  foreach ($playlist->videos as $video) {
-    $videos .= check_plain($video->name) . ' [id:' . $video->id . ']';
+  if (!empty ($playlist)) {
+    foreach ($playlist->videos as $video) {
+      $videos .= check_plain($video->name) . ' [id:' . $video->id . ']';
+      if (end($playlist->videos)->id != $video->id) {
+        $videos .= ', ';
+      }
+    }
   }
   $form['videos'] = array(
     '#type' => 'textfield',
@@ -157,13 +165,22 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
     '#default_value' => isset($playlist->playlistType) ? $playlist->playlistType : '',
   );
 
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Add'));
-
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#submit' => array('brightcove_playlist_edit_form_submit'),
+  );
+  $form['actions']['delete'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete'),
+    '#submit' => array('brightcove_playlist_edit_form_delete'),
+  );
   return $form;
 }
 
 /**
- *
+ * brightcove_playlist_edit_form submit handler.
  *
  * @param $form
  * @param $form_state
@@ -181,7 +198,21 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
     preg_match('/[0-9]+/', $video, $video_id);
     $metadata['videoIds'][] = end($video_id);
   }
+
   brightcove_add_playlist($metadata);
+  cache_clear_all('bc:playlist:list', 'cache');
+
+  $form_state['redirect'] = array('admin/config/media/brightcove/playlist');
+}
+
+/**
+ * brightcove_playlist_edit_form delete button callback.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function brightcove_playlist_edit_form_delete($form, &$form_state) {
+  $form_state['redirect'] = array("admin/config/media/brightcove/playlist/" . $form_state['playlist']->id . "/delete");
 }
 
 /**

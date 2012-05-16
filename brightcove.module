@@ -211,13 +211,31 @@ function brightcove_autocomplete_videos($videos_typed) {
 }
 
 /**
- *
+ * Playlist delete confirm form submit handler.
  *
  * @param $form
  * @param $form_state
  */
 function brightcove_playlist_delete_form_submit($form, &$form_state) {
+  brightcove_playlist_delete($form_state['values']['playlist_id']);
+  cache_clear_all('bc:playlist:list', 'cache');
+  $form_state['redirect'] = array('admin/config/media/brightcove/playlist');
+}
 
+/**
+ * Delete a playlists from brightcove wrapper function.
+ *
+ * @param array $playlist_id
+ * @return boolean
+ */
+function brightcove_playlist_delete($playlist_id) {
+  $bc = brightcove_initialize();
+  try {
+    $bc->delete('playlist', $playlist_id);
+  }
+  catch (Exception $exception) {
+    watchdog_exception('brightcove', $exception);
+  }
 }
 
 /**
