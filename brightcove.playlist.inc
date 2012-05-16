@@ -104,7 +104,7 @@ function brightcove_playlist_edit_page($playlist) {
 }
 
 /**
- *
+ * Playlist edit form.
  *
  * @param $form
  * @param $form_state
@@ -166,16 +166,19 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
   );
 
   $form['actions'] = array('#type' => 'actions');
+
   $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
     '#submit' => array('brightcove_playlist_edit_form_submit'),
   );
+
   $form['actions']['delete'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
     '#submit' => array('brightcove_playlist_edit_form_delete'),
   );
+
   return $form;
 }
 
@@ -195,13 +198,15 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
 
   $videos = drupal_explode_tags($form_state['values']['videos']);
   foreach ($videos as $video) {
+    // Parse the video id.
     preg_match('/[0-9]+/', $video, $video_id);
     $metadata['videoIds'][] = end($video_id);
   }
 
   brightcove_add_playlist($metadata);
-  cache_clear_all('bc:playlist:list', 'cache');
-
+  // Invalidate playlist cache.
+  cache_set('bc:playlist:list', FALSE);
+  // Redirect the user to the playlist listing page.
   $form_state['redirect'] = array('admin/config/media/brightcove/playlist');
 }
 
@@ -216,30 +221,7 @@ function brightcove_playlist_edit_form_delete($form, &$form_state) {
 }
 
 /**
- *
- *
- * @param $metadata
- * @return bool|string
- */
-function brightcove_add_playlist($metadata) {
-  $bc = brightcove_initialize();
-
-  try {
-    $playlist = $bc->createPlaylist('video', $metadata);
-  }
-  catch(Exception $error) {
-    drupal_set_message(t('Playlist upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
-    return FALSE;
-  }
-
-  // Invalidate playlist cache.
-  cache_set('bc:playlist:list', FALSE);
-
-  return $playlist;
-}
-
-/**
- *
+ * Delete playlist confirm form.
  *
  * @param $form
  * @param $form_state
