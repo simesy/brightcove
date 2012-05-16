@@ -450,6 +450,7 @@ function brightcove_media_browser_filter_form_submit($form, &$form_state) {
 
 /**
  * Get the avaliable videos from brightcove.
+ *
  * @return JSON list of available brightcove vieos.
  */
 function brightcove_media_list() {
@@ -554,11 +555,17 @@ function brightcove_media_ctools_plugin_api($owner, $api) {
  */
 function brightcove_media_element_info_alter(&$type) {
   if (isset($type['media']['#process'])) {
-    array_unshift($type['media']['#process'],
-      'brightcove_media_media_element_process');
+    array_unshift($type['media']['#process'], 'brightcove_media_media_element_process');
   }
 }
 
+/**
+ * Media type element process function.
+ *
+ * @param $element
+ * @param $form_state
+ * @return mixed
+ */
 function brightcove_media_media_element_process(&$element, &$form_state) {
   global $user;
   if (isset($element['#value']['fid']) &&
@@ -595,7 +602,10 @@ function brightcove_media_media_element_process(&$element, &$form_state) {
 }
 
 /**
- * Implements hook_node_presave(). (needed for media gallery)
+ * Implements hook_node_presave().
+ * (needed for media gallery)
+ *
+ * @param $node
  */
 function brightcove_media_node_presave($node) {
   global $user;
