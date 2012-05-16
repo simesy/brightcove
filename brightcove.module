@@ -218,7 +218,9 @@ function brightcove_autocomplete_videos($videos_typed) {
  */
 function brightcove_playlist_delete_form_submit($form, &$form_state) {
   brightcove_playlist_delete($form_state['values']['playlist_id']);
-  cache_clear_all('bc:playlist:list', 'cache');
+  // Invalidate playlist cache.
+  cache_set('bc:playlist:list', FALSE);
+  // Redirect the user the playlists listing page.
   $form_state['redirect'] = array('admin/config/media/brightcove/playlist');
 }
 
@@ -236,6 +238,52 @@ function brightcove_playlist_delete($playlist_id) {
   catch (Exception $exception) {
     watchdog_exception('brightcove', $exception);
   }
+}
+
+/**
+ * Wrapper function around playlist save.
+ *
+ * @param $metadata
+ * @return bool|string
+ */
+function brightcove_add_playlist($metadata) {
+  $bc = brightcove_initialize();
+
+  try {
+    $playlist = $bc->createPlaylist('video', $metadata);
+  }
+  catch(Exception $error) {
+    drupal_set_message(t('Playlist upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
+    return FALSE;
+  }
+
+  // Invalidate playlist cache.
+  cache_set('bc:playlist:list', FALSE);
+
+  return $playlist;
+}
+
+/**
+ * Wrapper function around playlist update.
+ *
+ * @param $metadata
+ * @return bool|object
+ */
+function brightcove_update_playlist($metadata) {
+  $bc = brightcove_initialize();
+
+  try {
+    $playlist = $bc->update('playlist', $metadata);
+  }
+  catch(Exception $error) {
+    drupal_set_message(t('Playlist upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
+    return FALSE;
+  }
+
+  // Invalidate playlist cache.
+  cache_set('bc:playlist:list', FALSE);
+
+  return $playlist;
 }
 
 /**
