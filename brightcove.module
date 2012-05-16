@@ -129,10 +129,11 @@ function brightcove_menu() {
   );
 
   $items["{$base}/playlist/%brightcove_playlist/edit"] = array(
-    'title' => 'Playlists',
+    'title callback' => 'brightcove_playlist_title',
+    'title arguments' => array(5),
     'page callback' => 'brightcove_playlist_edit_page',
     'page arguments' => array(5),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_CALLBACK,
     'file' => 'brightcove.playlist.inc',
     'access arguments' => array('administer brightcove playlists'),
   );
@@ -164,6 +165,15 @@ function brightcove_permission() {
       'title' => t('Upload videos'),
     ),
   );
+}
+
+/**
+ * Title callback of the playlist edit page.
+ *
+ * @param $brightcove_playlist
+ */
+function brightcove_playlist_title($brightcove_playlist) {
+  return $brightcove_playlist->name;
 }
 
 /**
