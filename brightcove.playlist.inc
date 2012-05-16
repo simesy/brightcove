@@ -1,4 +1,9 @@
 <?php
+/**
+ * @file
+ * This file contains function over the brightcove playlist feature.
+ */
+
 
 /**
  * Renders the playlist overview page.
@@ -84,6 +89,12 @@ function brightcove_get_playlists($cache_reset = FALSE) {
   return $playlists;
 }
 
+/**
+ *
+ *
+ * @param $playlist
+ * @return array|mixed|null|string
+ */
 function brightcove_playlist_edit_page($playlist) {
   if (!$playlist) {
     return t('Playlist not found');
@@ -92,6 +103,14 @@ function brightcove_playlist_edit_page($playlist) {
   return drupal_get_form('brightcove_playlist_edit_form');
 }
 
+/**
+ *
+ *
+ * @param $form
+ * @param $form_state
+ * @param null $playlist
+ * @return array
+ */
 function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
   $form = array();
 
@@ -139,18 +158,34 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
   return $form;
 }
 
+/**
+ *
+ *
+ * @param $form
+ * @param $form_state
+ */
 function brightcove_playlist_edit_form_submit($form, &$form_state) {
+  $metadata = array();
   $keys_to_send = array('name', 'playlistType', 'shortDescription');
 
-  $metadata = array();
   foreach ($keys_to_send as $key) {
     $metadata[$key] = $form_state['values'][$key];
   }
 
+  $videos = drupal_explode_tags($form_state['values']['videos']);
+  foreach ($videos as $video) {
+    preg_match('/[0-9]+/', $video, $video_id);
+    $metadata['videoIds'][] = end($video_id);
+  }
   brightcove_add_playlist($metadata);
 }
 
-
+/**
+ *
+ *
+ * @param $metadata
+ * @return bool|string
+ */
 function brightcove_add_playlist($metadata) {
   $bc = brightcove_initialize();
 
@@ -168,7 +203,14 @@ function brightcove_add_playlist($metadata) {
   return $playlist;
 }
 
-
+/**
+ *
+ *
+ * @param $form
+ * @param $form_state
+ * @param $playlist
+ * @return array
+ */
 function brightcove_playlist_delete_form($form, &$form_state, $playlist) {
   $form = array();
 
