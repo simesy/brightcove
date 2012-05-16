@@ -112,11 +112,11 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
     '#default_value' => isset($form_state['values']['shortDescription']) ? $form_state['values']['shortDescription'] : '',
   );
 
-  // @todo
   $form['videos'] = array(
     '#type' => 'textfield',
     '#title' => 'Videos',
     '#default_value' => isset($form_state['values']['name']) ? $form_state['values']['name'] : '',
+    '#autocomplete_path' => 'brightcove/autocomplete/videos',
   );
 
   $form['playlistType'] = array(
