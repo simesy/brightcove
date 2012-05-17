@@ -111,7 +111,6 @@ function brightcove_playlist_edit_page($playlist) {
  * @return array
  */
 function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
-  $form = array();
   if (!isset($form_state['playlist'])) {
     $form_state['playlist'] = $playlist;
   }
@@ -121,10 +120,25 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
     '#value' => isset($form_state['values']['referenceId']) ? $form_state['values']['referenceId'] : '',
   );
 
+  $type_default = BRIGHTCOVE_PLAYLIST_TYPE_MANUAL;
+  if (!is_null($playlist) && $playlist->playlistType != 'EXPLICIT') {
+    $type_default = BRIGHTCOVE_PLAYLIST_TYPE_SMART;
+  }
+
+  $active_type = $type_default;
+  if (!empty($form_state['values']['type'])) {
+    if ($form_state['values']['type'] == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
+      $active_type = BRIGHTCOVE_PLAYLIST_TYPE_MANUAL;
+    }
+    else if ($form_state['values']['type'] == BRIGHTCOVE_PLAYLIST_TYPE_SMART) {
+      $active_type = BRIGHTCOVE_PLAYLIST_TYPE_SMART;
+    }
+  }
+
   $form['type'] = array(
     '#title' => t('Playlist type'),
     '#type' => 'select',
-    '#default_value' => BRIGHTCOVE_PLAYLIST_TYPE_MANUAL,
+    '#default_value' => $type_default,
     '#ajax' => array(
       'callback' => 'brightcove_playlist_edit_form_ajax_callback',
       'wrapper' => 'brightcove-playlist-settings',
@@ -152,7 +166,7 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
     '#id' => 'brightcove-playlist-settings',
   );
 
-  if (empty($form_state['values']['type']) || $form_state['values']['type'] == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
+  if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
     $videos = NULL;
     if (!empty ($playlist)) {
       foreach ($playlist->videos as $video) {
@@ -169,8 +183,7 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
       '#autocomplete_path' => 'brightcove/autocomplete/videos',
     );
   }
-
-  if (!empty($form_state['values']['type']) && $form_state['values']['type'] == BRIGHTCOVE_PLAYLIST_TYPE_SMART) {
+  else if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_SMART) {
     $form['settings']['tagInclusionRule'] = array(
       '#type' => 'select',
       '#title' => t('Smart playlist settings'),
@@ -185,6 +198,7 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
     $form['settings']['filterTags'] = array(
       '#type' => 'textfield',
       '#title' => t('Tags'),
+      '#default_value' => (isset($playlist->filterTags)) ? drupal_implode_tags($playlist->filterTags) : '',
       '#description' => t('Videos will be automatically added to this Playlist
                            based on the following settings.'),
     );
