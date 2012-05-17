@@ -111,7 +111,7 @@ function brightcove_playlist_edit_page($playlist) {
  * @return array
  */
 function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
-  if (!isset($form_state['playlist'])) {
+  if (!is_null($playlist) && !isset($form_state['playlist'])) {
     $form_state['playlist'] = $playlist;
   }
 
@@ -227,11 +227,13 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
     '#submit' => array('brightcove_playlist_edit_form_submit'),
   );
 
-  $form['actions']['delete'] = array(
-    '#type' => 'submit',
-    '#value' => t('Delete'),
-    '#submit' => array('brightcove_playlist_edit_form_delete'),
-  );
+  if (!is_null($playlist)) {
+    $form['actions']['delete'] = array(
+      '#type' => 'submit',
+      '#value' => t('Delete'),
+      '#submit' => array('brightcove_playlist_edit_form_delete'),
+    );
+  }
 
   return $form;
 }
@@ -255,7 +257,7 @@ function brightcove_playlist_edit_form_ajax_callback($form, &$form_state) {
  */
 function brightcove_playlist_edit_form_submit($form, &$form_state) {
   $metadata = array();
-  $keys_to_send = array('name', 'shortDescription', 'tagInclusionRule');
+  $keys_to_send = array('name', 'shortDescription');
   foreach ($keys_to_send as $key) {
     $metadata[$key] = $form_state['values'][$key];
   }
@@ -270,15 +272,17 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
     }
   }
   else {
+    $metadata['tagInclusionRule'] = $form_state['values']['tagInclusionRule'];
     $metadata['playlistType'] = $form_state['values']['playlistType'];
-  }
-
-  // Set the filter tags.
-  if (!is_null($form_state['values']['filterTags'])) {
     $metadata['filterTags'] = drupal_explode_tags($form_state['values']['filterTags']);
   }
 
-  brightcove_add_playlist($metadata);
+  if (isset($form_state['playlist'])) {
+    brightcove_update_playlist($metadata);
+  }
+  else {
+    brightcove_add_playlist($metadata);
+  }
   // Invalidate playlist cache.
   cache_set('bc:playlist:list', FALSE);
   // Redirect the user to the playlist listing page.
