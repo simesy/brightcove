@@ -5,6 +5,7 @@
  * This file contain the necessary javascript code to integrate
  * brightcove playlist feature in the media browser.
  */
+
 (function ($) {
 
 namespace('Drupal.media.browser');
@@ -28,7 +29,13 @@ Drupal.behaviors.brightcovePlaylistLibrary = {
         Drupal.brightcovePlaylistLibrary.loaded = true;
       }
     });
+
+    $(document).delegate('#media-tab-brightcove_playlist #media-browser-library-list a', 'mousedown', function() {
+      var uri = $(this).attr('data-uri');
+      $("input[name='submitted-video']").val(uri);
+      Drupal.media.browser.selectMedia([{uri: uri}]);
+    });
   }
-}
+};
 
 }(jQuery));
