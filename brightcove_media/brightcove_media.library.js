@@ -28,6 +28,22 @@
         }
       });
 
+      $('#media-browser-tabset').not('.bc-processed').addClass('bc-processed').bind('tabsselect', function (event, ui) {
+        if (ui.tab.hash === '#media-tab-brightcove') {
+          // Prevent reloading of media list on tabselect if already loaded in media list
+          if (!Drupal.brightcoveLibrary.loaded) {
+            var params = {};
+            for (var p in Drupal.settings.media.browser.brightcove) {
+              params[p] = Drupal.settings.media.browser.library[p];
+            }
+
+            Drupal.brightcoveLibrary.library.start($(ui.panel), params);
+            $('#scrollbox').bind('scroll', Drupal.brightcoveLibrary.library, Drupal.brightcoveLibrary.library.scrollUpdater);
+            Drupal.brightcoveLibrary.loaded = true;
+          }
+        }
+      });
+
       $('#edit-filter').not('.bc-processed').addClass('bc-processed').click(function(ev) {
         ev.preventDefault();
 

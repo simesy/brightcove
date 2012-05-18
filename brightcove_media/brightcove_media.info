@@ -12,3 +12,4 @@ files[] = MediaBrightcoveStreamWrapper.inc
 files[] = MediaInternetBrightcoveHandler.inc
 files[] = MediaBrowserBrightcove.inc
 files[] = MediaBrightcovePlaylistStreamWrapper.inc
+files[] = MediaBrowserBrightcovePlaylist.inc

@@ -13,6 +13,14 @@ function brightcove_media_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['brightcove/media/playlist/list'] = array(
+    'title' => 'Available playlist',
+    'description' => 'This menu return the available playlist in JSON.',
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('browse videos'),
+    'page callback' => 'brightcove_media_playlist_list',
+  );
+
   return $items;
 }
 
@@ -95,6 +103,9 @@ function brightcove_media_file_formatter_info() {
 function brightcove_media_theme($existing, $type, $theme, $path) {
   return array(
     'brightcove_media_browser_filter_form' => array(
+      'render element' => 'form',
+    ),
+    'brightcove_media_playlist_browser_form' => array(
       'render element' => 'form',
     ),
     'brightcove_media_image' => array(
@@ -305,6 +316,12 @@ function brightcove_media_media_browser_plugin_info() {
     'class' => 'MediaBrowserBrightcove',
   );
 
+  $info['brightcove_playlist'] = array(
+    'title' => t('Brightcove Playlist'),
+    'weight' => 2,
+    'class' => 'MediaBrowserBrightcovePlaylist',
+  );
+
   return $info;
 }
 
@@ -413,6 +430,26 @@ function theme_brightcove_media_browser_filter_form(&$variables) {
   $output .= drupal_render($form['searchform']);
   $output .= '<ul id="media-browser-library-list" class="media-list-thumbnails"></ul>';
   $output .= drupal_render($form['actions']);
+  $output .= drupal_render_children($form);
+
+  return $output;
+}
+
+/**
+ *
+ *
+ * @param $variables
+ * @return string
+ */
+function theme_brightcove_media_playlist_browser_form(&$variables) {
+  $output = '';
+  $form = $variables['form'];
+
+  $output .= '<div id="container"><div id="scrollbox">';
+  $output .= '<ul id="media-browser-library-list" class="media-list-thumbnails"></ul>';
+  $output .= '<div id="status"></div>';
+  $output .= drupal_render($form['actions']);
+  $output .= '</div></div>';
   $output .= drupal_render_children($form);
 
   return $output;
@@ -731,4 +768,58 @@ function brightcove_media_file_uri_to_object($uri, $use_existing = FALSE) {
     }
   }
   return $file;
+}
+
+/**
+ * Media browser brightcove playlist form.
+ *
+ * @param array $form
+ * @param array $form_state
+ * @return array $form
+ */
+function brightcove_media_playlist_browser_form($form, &$form_state) {
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+  return $form;
+}
+
+
+/**
+ * brightcove/media/playlist/list menu callback function.
+ *
+ * @return JSON
+ *    available playlists.
+ */
+function brightcove_media_playlist_list() {
+  $media = array();
+  module_load_include('browser.inc', 'media', 'includes/media');
+  module_load_include('inc', 'brightcove', 'brightcove.playlist');
+  $playlists = brightcove_get_playlists();
+
+  if (count($playlists)) {
+    foreach ($playlists as $playlist) {
+      $uri = file_stream_wrapper_uri_normalize("brightcove://{$playlist->id}");
+      $file = file_uri_to_object($uri);
+      $file->filename = $playlist->name;
+      $file->type = 'video';
+      if (!isset($file->fid)) {
+        $file->fid = 0;
+      }
+      media_browser_build_media_item($file);
+      $file->preview = l($file->preview, 'media/browser', array(
+        'html' => TRUE,
+        'attributes' => array(
+          'data-uri' => $uri,
+        ),
+        'query' => array('render' => 'media-popup', 'uri' => $uri),
+      ));
+//      $files[$uri] = $file;
+      $media[] = $file;
+    }
+  }
+  drupal_json_output(array('media' => $media));
+  exit;
 }
