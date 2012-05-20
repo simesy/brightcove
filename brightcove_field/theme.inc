@@ -86,7 +86,7 @@ function theme_brightcove_field_embed($variables) {
 
   if (isset($variables['video_id'])) {
     if (is_array($variables['video_id'])) {
-      if (drupal_strtolower($variables['type']) == 'video') {
+      if (drupal_strtolower($variables['type']) == 'brightcove') {
         $asset_code = '<param name="@videoPlayer" value="';
       }
       else {
@@ -101,11 +101,12 @@ function theme_brightcove_field_embed($variables) {
       $asset_code .= '" />';
     }
     else {
-      if (drupal_strtolower($variables['type']) == 'video') {
+      if (drupal_strtolower($variables['type']) == 'brightcove') {
         $asset_code = '<param name="@videoPlayer" value="' . $variables['video_id'] . '" />';
       }
-      else {
-        // TODO: Add different types than video.
+      else if (drupal_strtolower($variables['type']) == 'brightcove-playlist'){
+        $asset_code = '<param name="@playlistCombo" value="' . $variables['video_id'] . '" />';
+        $asset_code .= '<param name="@playlistTabs" value="' . $variables['video_id'] . '" />';
       }
     }
   }

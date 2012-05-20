@@ -884,7 +884,7 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
     'brightcove_field_embed' => array(
       // TODO when submitting the admin form, do a theme rebuild (form_alter)
       'variables' => array(
-        'type' => 'video',
+        'type' => 'brightcove',
         'player' => NULL,
         'video_id' => NULL,
         'params' => array(),

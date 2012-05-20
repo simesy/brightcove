@@ -1,7 +1,16 @@
 <?php
 
 /**
+ * @file
+ * This module provide the hook implementations for the integration with
+ * Media module.
+ */
+
+
+/**
  * Implements hook_menu().
+ *
+ * @return array
  */
 function brightcove_media_menu() {
   $items = array();
@@ -26,6 +35,8 @@ function brightcove_media_menu() {
 
 /**
  * Implements hook_stream_wrappers().
+ *
+ * @return array
  */
 function brightcove_media_stream_wrappers() {
   return array(
@@ -35,7 +46,7 @@ function brightcove_media_stream_wrappers() {
       'description' => t('Videos provided by Brightcove.'),
       'type' => STREAM_WRAPPERS_READ_VISIBLE,
     ),
-    'brightcoveplaylist' => array(
+    'brightcove-playlist' => array(
       'name' => t('Brightcove playlist'),
       'class' => 'MediaBrightcovePlaylistStreamWrapper',
       'description' => t('Playlists provided by Brightcove'),
@@ -46,6 +57,8 @@ function brightcove_media_stream_wrappers() {
 
 /**
  * Implements hook_media_internet_providers().
+ *
+ * @return array
  */
 function brightcove_media_internet_providers() {
   return array(
@@ -58,6 +71,9 @@ function brightcove_media_internet_providers() {
 
 /**
  * Implements hook_media_parse().
+ *
+ * @param $embed_code
+ * @return null|string
  */
 function brightcove_media_media_parse($embed_code) {
   $handler = new MediaInternetBrightcoveHandler($embed_code);
@@ -66,6 +82,8 @@ function brightcove_media_media_parse($embed_code) {
 
 /**
  * Implements hook_file_formatter_info().
+ *
+ * @return array
  */
 function brightcove_media_file_formatter_info() {
   $formatters = array();
@@ -124,9 +142,10 @@ function brightcove_media_theme($existing, $type, $theme, $path) {
  */
 function brightcove_media_file_formatter_video_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
-  if ($scheme == 'brightcove' && empty($file->override['wysiwyg'])) {
+  if (($scheme == 'brightcove' || $scheme == 'brightcove-playlist') && empty($file->override['wysiwyg'])) {
     $element = array(
       '#theme' => 'brightcove_field_embed',
+      '#type' => $scheme,
       '#video_id' => parse_url($file->uri, PHP_URL_HOST),
       '#player' => variable_get('brightcove_player_key', ''),
       '#player_key' => variable_get('brightcove_player', ''),
@@ -164,7 +183,7 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
  */
 function brightcove_media_file_formatter_image_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
-  if ($scheme == 'brightcove') {
+  if ($scheme == 'brightcove' || $scheme == 'brightcove-playlist') {
     $video_id = parse_url($file->uri, PHP_URL_HOST);
     $video = brightcove_video_load($video_id);
 
@@ -261,6 +280,8 @@ function brightcove_media_file_formatter_image_settings($form, $form_state, $set
 
 /**
  * Implements hook_file_formatter_default_displays().
+ *
+ * @return array
  */
 function brightcove_media_file_default_displays() {
   $default_displays = array();
@@ -306,6 +327,8 @@ function brightcove_media_file_default_displays() {
 
 /**
  * Implements hook_media_browser_plugin_info().
+ *
+ * @return array
  */
 function brightcove_media_media_browser_plugin_info() {
   $info = array();
@@ -356,6 +379,10 @@ function brightcove_media_upload_form($form, &$form_state) {
 
 /**
  * Filter form for brightcove media video browser.
+ *
+ * @param $form
+ * @param $form_state
+ * @return array
  */
 function brightcove_media_browser_filter_form($form, &$form_state) {
   $form['searchform'] = array(
@@ -727,6 +754,13 @@ function ajax_command_brightcove_media_upload($data, $settings = NULL) {
   );
 }
 
+/**
+ * Helper function MediaInternetBrightcoveHandler class getFileObject method.
+ *
+ * @param $uri
+ * @param bool $use_existing
+ * @return mixed|StdClass
+ */
 function brightcove_media_file_uri_to_object($uri, $use_existing = FALSE) {
   if ($use_existing) {
     $query = db_select('file_managed', 'f')
@@ -801,13 +835,16 @@ function brightcove_media_playlist_browser_form($form, &$form_state) {
  */
 function brightcove_media_playlist_list() {
   $media = array();
+  $files = array();
+
   module_load_include('browser.inc', 'media', 'includes/media');
   module_load_include('inc', 'brightcove', 'brightcove.playlist');
+
   $playlists = brightcove_get_playlists();
 
   if (count($playlists)) {
     foreach ($playlists as $playlist) {
-      $uri = file_stream_wrapper_uri_normalize("brightcove://{$playlist->id}");
+      $uri = file_stream_wrapper_uri_normalize("brightcove-playlist://{$playlist->id}");
       $file = file_uri_to_object($uri);
       $file->filename = $playlist->name;
       $file->type = 'video';
