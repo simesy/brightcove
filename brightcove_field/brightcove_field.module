@@ -150,12 +150,9 @@ function brightcove_field_browse_access($entity_type, $field_name, $entity_id_or
 function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) {
   $entities = entity_load($entity_type, array($entity_id));
   $entity = array_shift($entities);
-  $video_id = $entity->{$field_name}[isset($entity->language) ?
-    $entity->language : 'und'][$delta]['video_id'];
-  $player_name = $entity->{$field_name}[isset($entity->language) ?
-    $entity->language : 'und'][$delta]['player_id'];
-  list(,,$bundle) = entity_extract_ids($entity_type, $entity);
-  $instance = field_info_instance($entity_type, $field_name, $bundle);
+  $language = isset($entity->language) ? $entity->language : 'und';
+  $video_id = $entity->{$field_name}[$language][$delta]['video_id'];
+  $player = $entity->{$field_name}[$language][$delta]['player'];
   return array(
     '#theme' => 'brightcove_field_embed',
     '#video_id' => $video_id,
@@ -164,7 +161,7 @@ function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) 
         'http://admin.brightcove.com/js/BrightcoveExperiences.js',
       ),
     ),
-    '#player' => brightcove_field_get_value($instance, $player_name),
+    '#player' => $player,
   );
 }
 
