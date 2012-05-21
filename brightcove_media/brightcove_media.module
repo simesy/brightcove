@@ -459,9 +459,9 @@ function theme_brightcove_media_browser_filter_form(&$variables) {
   $form = $variables['form'];
 
   $output .= drupal_render($form['searchform']);
+  $output .= drupal_render($form['actions']);
   $output .= '<ul id="media-browser-library-list" class="media-list-thumbnails"></ul>';
   $output .= '<div id="status"></div>';
-  $output .= drupal_render($form['actions']);
   $output .= drupal_render_children($form);
 
   return $output;
@@ -477,10 +477,11 @@ function theme_brightcove_media_playlist_browser_form(&$variables) {
   $output = NULL;
   $form = $variables['form'];
 
-  $output .= '<div id="container"><div id="scrollbox">';
+  $output .= '<div id="container">';
+  $output .= drupal_render($form['actions']);
+  $output .= '<div id="scrollbox">';
   $output .= '<ul id="media-browser-library-list" class="media-list-thumbnails"></ul>';
   $output .= '<div id="status"></div>';
-  $output .= drupal_render($form['actions']);
   $output .= '</div></div>';
   $output .= drupal_render_children($form);
 
