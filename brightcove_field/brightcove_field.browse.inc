@@ -133,7 +133,8 @@ function brightcove_field_autocomplete($field_name, $string = '') {
   $result = array();
   try {
     $result = $bc->find('find_videos_by_text', array('text' => $string));
-  } catch (Exception $error) {
+  }
+  catch (Exception $error) {
     watchdog('brightcove', 'Finding videos in autocomplete failed.', array(), WATCHDOG_ERROR);
   }
   foreach ((array) $result as $video) {

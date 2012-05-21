@@ -1,11 +1,23 @@
 <?php
 /**
  * @file
- * Stream wrapper for Brightcove videos.
+ * Stream wrapper for Brightcove playlists.
  */
 
+class MediaBrightcovePlaylistStreamWrapper extends MediaReadOnlyStreamWrapper {
 
-class MediaBrightcoveStreamWrapper extends MediaReadOnlyStreamWrapper {
+  /**
+   * Get MIME type.
+   *
+   * @static
+   * @param string $uri
+   * @param null $mapping
+   *
+   * @return string
+   */
+  public static function getMimeType($uri, $mapping = NULL) {
+    return 'video/brightcove-playlist';
+  }
 
   /**
    * Get target.
@@ -14,18 +26,6 @@ class MediaBrightcoveStreamWrapper extends MediaReadOnlyStreamWrapper {
    */
   public function getTarget() {
     return FALSE;
-  }
-
-  /**
-   * Get MIME type.
-   *
-   * @static
-   * @param $uri
-   * @param null $mapping
-   * @return string
-   */
-  public static function getMimeType($uri, $mapping = NULL) {
-    return 'video/brightcove';
   }
 
   /**
@@ -49,7 +49,6 @@ class MediaBrightcoveStreamWrapper extends MediaReadOnlyStreamWrapper {
     }
     return NULL;
   }
-
   /**
    * Get a video id.
    *
@@ -57,7 +56,7 @@ class MediaBrightcoveStreamWrapper extends MediaReadOnlyStreamWrapper {
    */
   public function getVideoID() {
     if ($url = parse_url($this->uri)) {
-      if ($url['scheme'] == 'brightcove' && is_numeric($url['host'])) {
+      if ($url['scheme'] == 'brightcove-playlist' && is_numeric($url['host'])) {
         return $url['host'];
       }
     }
