@@ -26,7 +26,7 @@ function brightcove_media_menu() {
     'title' => 'Available playlist',
     'description' => 'This menu return the available playlist in JSON.',
     'type' => MENU_CALLBACK,
-    'access arguments' => array('browse videos'),
+    'access arguments' => array('browse playlists'),
     'page callback' => 'brightcove_media_playlist_list',
   );
 
