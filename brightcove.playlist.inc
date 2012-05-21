@@ -11,7 +11,7 @@
  *   Rendered overivew page.
  */
 function brightcove_playlist_overview_page() {
-  $table = array('header' => array('Title', 'Operations'));
+  $table = array('header' => array(t('Title'), array('colspan' => 2, 'data' => t('Operations'))));
 
   $playlists = brightcove_get_playlists();
   if ($playlists) {
@@ -42,14 +42,10 @@ function brightcove_playlist_overview_page() {
  *   @see theme_table()
  */
 function _brightcove_playlist_overview_row(stdClass $playlist) {
-  $operations = array(
-    l(t('edit'), "admin/config/media/brightcove/playlist/{$playlist->id}/edit"),
-    l(t('delete'), "admin/config/media/brightcove/playlist/{$playlist->id}/delete"),
-  );
-
   return array(
     $playlist->name,
-    implode(', ', $operations),
+    l(t('edit'), "admin/config/media/brightcove/playlist/{$playlist->id}/edit"),
+    l(t('delete'), "admin/config/media/brightcove/playlist/{$playlist->id}/delete"),
   );
 }
 

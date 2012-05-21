@@ -268,8 +268,7 @@ function brightcove_admin_players() {
       check_plain($player->name),
       check_plain($player->player_id),
       check_plain($player->player_key),
-      $default ?
-        t('Default') : l(t('Set default'), 'admin/config/media/brightcove/players/' . $player->pid . '/setdefault'),
+      $default ? t('Default') : l(t('Set default'), 'admin/config/media/brightcove/players/' . $player->pid . '/setdefault'),
       l(t('Edit'), 'admin/config/media/brightcove/players/' . $player->pid . '/edit'),
       $default ? '' : l(t('Delete'), 'admin/config/media/brightcove/players/' . $player->pid .  '/delete'),
     );

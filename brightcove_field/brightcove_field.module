@@ -1420,7 +1420,7 @@ function brightcove_field_get_value($instance, $stored) {
   }
   // If no player is set to the content and the BC video field,
   // try to get the global default player.
-  elseif($pid = variable_get('brightcove_player_pid')) {
+  elseif ($pid = variable_get('brightcove_player_pid')) {
     return $pid;
   }
   return NULL;

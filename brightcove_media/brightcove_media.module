@@ -147,8 +147,7 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
       '#theme' => 'brightcove_field_embed',
       '#type' => $scheme,
       '#video_id' => parse_url($file->uri, PHP_URL_HOST),
-      '#player' => variable_get('brightcove_player_key', ''),
-      '#player_key' => variable_get('brightcove_player', ''),
+      '#player' => variable_get('brightcove_player_pid', ''),
       '#attached' => array(
         'js' => array(
           'http://admin.brightcove.com/js/BrightcoveExperiences.js' => array(
@@ -184,9 +183,14 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
 function brightcove_media_file_formatter_image_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
   if ($scheme == 'brightcove' || $scheme == 'brightcove-playlist') {
-    $video_id = parse_url($file->uri, PHP_URL_HOST);
-    $video = brightcove_video_load($video_id);
-
+    $video = NULL;
+    $id = parse_url($file->uri, PHP_URL_HOST);
+    if ($scheme == 'brightcove') {
+      $video = brightcove_video_load($id);
+    }
+    elseif ($scheme == 'brightcove-playlist') {
+      $video = brightcove_playlist_load($id);
+    }
     $element = array(
       '#theme' => 'brightcove_media_image',
       '#video' => $video
@@ -463,13 +467,13 @@ function theme_brightcove_media_browser_filter_form(&$variables) {
 }
 
 /**
- *
+ * The media browser playlist tab theme function.
  *
  * @param $variables
  * @return string
  */
 function theme_brightcove_media_playlist_browser_form(&$variables) {
-  $output = '';
+  $output = NULL;
   $form = $variables['form'];
 
   $output .= '<div id="container"><div id="scrollbox">';
