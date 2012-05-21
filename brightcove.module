@@ -167,6 +167,12 @@ function brightcove_permission() {
     'upload videos' => array(
       'title' => t('Upload videos'),
     ),
+    'browse playlists' => array(
+      'title' => t('Browse playlists'),
+    ),
+    'administer brightcove playlists' => array(
+      'title' => t('Administer playlists'),
+    ),
   );
 }
 
