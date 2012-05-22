@@ -259,7 +259,7 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
   }
 
   if ($form_state['values']['type'] == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
-    $metadata['playlistType'] = 'EXPLICIT';
+    $metadata['playlistType'] = 'explicit';
     $videos = drupal_explode_tags($form_state['values']['videos']);
     foreach ($videos as $video) {
       // Parse the video id.
