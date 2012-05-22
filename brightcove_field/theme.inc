@@ -77,13 +77,13 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
 
   $vars['id'] = 'myExperience';
   $vars['bgcolor'] = '#FFFFFF';
-  $vars['class'] = 'BrightcoveExperience';
   foreach ($vars as $key => $value) {
     $variables[$key] = isset($variables['params'][$key]) ? $variables['params'][$key] : $vars[$key];
   }
 
   if (isset($variables['video_id'])) {
     $flashvars['domain'] = 'embed';
+    $flashvars['dynamicStreaming'] = 'true';
     $flashvars['playerID'] = $player->player_id;
     $flashvars['playerKey'] = $player->player_key;
 
