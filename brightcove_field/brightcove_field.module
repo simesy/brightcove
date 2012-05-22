@@ -841,11 +841,6 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
       ),
       'file' => 'brightcove_field.formatters.inc',
     ),
-    'brightcove_field_player' => array(
-      'variables' => array('player' => NULL, 'video_id' => NULL),
-      'template' => 'brightcove-field-player',
-      'pattern' => 'brightcove-field-player',
-    ),
     'brightcove_field_dialog' => array(
       'variables' => array(
         'output' => NULL,
@@ -877,7 +872,6 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
       'file' => 'theme.inc',
     ),
     'brightcove_field_embed' => array(
-      // TODO when submitting the admin form, do a theme rebuild (form_alter)
       'variables' => array(
         'type' => 'brightcove',
         'player' => NULL,
@@ -886,8 +880,7 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
         'width' => BRIGHTCOVE_DEFAULT_VIDEO_WIDTH,
         'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
       ),
-      'function' => 'theme_brightcove_field_embed',
-      'file' => 'theme.inc',
+      'template' => 'brightcove-field-player',
     ),
   );
 
