@@ -24,7 +24,7 @@ function theme_brightcove_field_formatter_default($variables) {
     }
 
     $params['id'] = 'myExperience' . $vidcount;
-    $player = theme('brightcove_field_embed', array(
+    $output = theme('brightcove_field_embed', array(
       'video_id' => $variables['element']['video_id'],
       'params' => $params,
       'player' => brightcove_field_get_value($variables['instance'], $variables['element']['player']),
@@ -33,11 +33,6 @@ function theme_brightcove_field_formatter_default($variables) {
     ));
 
     $vidcount++;
-
-    $output = theme('brightcove_field_player', array(
-      'player' => $player,
-      'video_id' => $variables['element']['video_id'],
-    ));
   }
 
   return $output;
