@@ -148,21 +148,21 @@ function brightcove_field_browse_access($entity_type, $field_name, $entity_id_or
  * @return array
  */
 function brightcove_field_player($entity_type, $entity_id, $field_name, $delta) {
+  module_load_include('inc', 'brightcove_field', 'theme');
+  drupal_add_js('http://admin.brightcove.com/js/BrightcoveExperiences.js', 'external');
   $entities = entity_load($entity_type, array($entity_id));
   $entity = array_shift($entities);
   $language = isset($entity->language) ? $entity->language : 'und';
   $video_id = $entity->{$field_name}[$language][$delta]['video_id'];
   $player = $entity->{$field_name}[$language][$delta]['player'];
-  return array(
-    '#theme' => 'brightcove_field_embed',
-    '#video_id' => $video_id,
-    '#attached' => array(
-      'js' => array(
-        'http://admin.brightcove.com/js/BrightcoveExperiences.js',
-      ),
-    ),
-    '#player' => $player,
-  );
+
+  return theme('brightcove_field_embed', array(
+    'video_id' => $video_id,
+    'params' => array('id' => 'brightcove-dialog-player'),
+    'player' => $player,
+    'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
+    'width' => BRIGHTCOVE_DEFAULT_VIDEO_WIDTH,
+  ));
 }
 
 /**
@@ -881,6 +881,7 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
         'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
       ),
       'template' => 'brightcove-field-player',
+      'file' => 'theme.inc',
     ),
   );
 

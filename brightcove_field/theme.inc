@@ -77,6 +77,9 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
 
   $vars['id'] = 'myExperience';
   $vars['bgcolor'] = '#FFFFFF';
+  $vars['width'] = BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
+  $vars['height'] = BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
+
   foreach ($vars as $key => $value) {
     $variables[$key] = isset($variables['params'][$key]) ? $variables['params'][$key] : $vars[$key];
   }

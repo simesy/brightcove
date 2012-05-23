@@ -2,11 +2,18 @@
 
 /**
  * @file brightcove-field-player.tpl.php
+ * Default template for embeding brightcove players.
  *
+ * Available variables:
+ * - $id
+ * - $width
+ * - $height
+ * - $classes_array
+ * - $bgcolor
+ * - $flashvars
  *
- *
+ * @see template_preprocess_brightcove_field_embed().
  */
-
 ?>
 
 <object id="<?php print $id;?>" width="<?php print $width;?>" class="<?php print join($classes_array, ',');?>"
