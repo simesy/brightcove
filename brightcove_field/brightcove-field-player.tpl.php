@@ -2,6 +2,9 @@
 
 /**
  * @file brightcove-field-player.tpl.php
+ *
+ *
+ *
  */
 
 ?>
@@ -18,7 +21,7 @@
    <param name="allowScriptAccess" value="always" />
    <param name="flashVars" value="<?php print $flashvars;?>" />
 
-   <embed src="http://c.brightcove.com/services/viewer/federated_f9/19174954001?isVid=1"
+   <embed src="http://c.brightcove.com/services/viewer/federated_f9?isVid=1&isUI=1"
      bgcolor="<?php print $bgcolor;?>"
      flashVars="<?php print $flashvars;?>"
      name='flashObj'
