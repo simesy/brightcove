@@ -263,8 +263,8 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
     $videos = drupal_explode_tags($form_state['values']['videos']);
     foreach ($videos as $video) {
       // Parse the video id.
-      preg_match('/[0-9]+/', $video, $video_id);
-      $metadata['videoIds'][] = end($video_id);
+      preg_match('/\[id:(?P<videoid>\d+)\]/', $video, $matches);
+      $metadata['videoIds'][] = $matches['videoid'];
     }
   }
   else {
