@@ -10,18 +10,16 @@
  *
  * @see brightcove_field_menu()
  *
- * @param none
- *
- * @return A list of available videos that can be attached to a field.
+ * @return string
+ *   A list of available videos that can be attached to a field.
  *
  * TODO: Allow limiting videos by user (own videos only).
  * TODO: Interesting feature would be to detect multiple values allowed in the
  *       parent field and allow attaching all videos at once.
  */
 function brightcove_field_browse() {
-  global $pager_from_array, $pager_total, $pager_page_array;
-
-  $items_per_page = 20;
+  $num_per_page = 20;
+  $page = pager_find_page();
 
   drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/browse.css');
   drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js');
@@ -29,9 +27,6 @@ function brightcove_field_browse() {
   // For all videos, get a thumbnail URL
   // Theme a table with videos and a button to attach.
   $bc = brightcove_initialize();
-  $matches = array();
-
-  $page = isset($_GET['page']) ? intval($_GET['page']) : '0';
 
   $params = array();
   if (isset($_SESSION['brightcove_field_filter'])) {
@@ -58,7 +53,7 @@ function brightcove_field_browse() {
 
   $result = NULL;
   try {
-    $params['page_size'] = $items_per_page;
+    $params['page_size'] = $num_per_page;
     $params['page_number'] = $page;
 
     $result = $bc->find($method, $params);
@@ -66,13 +61,8 @@ function brightcove_field_browse() {
     watchdog('brightcove', 'Finding videos in autocomplete failed.', array(), WATCHDOG_ERROR);
   }
 
-  $pager_page_array = explode(',', $page);
-  $pager_total[0] = ceil($bc->total_count / $items_per_page);
-  $pager_page_array[0] =
-    max(0, min(
-      (int)$pager_page_array[0],
-      ((int)$pager_total[0]) - 1)
-    );
+  // Now that we have the total number of results, initialize the pager.
+  pager_default_initialize($bc->total_count, $num_per_page);
 
   $items = array();
   if (count($result)) {
@@ -81,35 +71,17 @@ function brightcove_field_browse() {
       $item['title'] = check_plain($video->name);
       $item['video_id'] = $video->id;
       if (!empty($video->thumbnailURL)) {
-        /* if (module_exists('imagecache')) {
-          $item['thumbnail'] = theme('imagecache', 'brightcove_browser', brightcove_remote_image($video->thumbnailURL));
-        } else {*/
-          //$item['thumbnail'] = theme('image', $video->thumbnailURL, '', '', NULL, FALSE);
-          $image_vars = array('path' => $video->thumbnailURL, 'alt' => '', 'title' => '', 'attrinutes' => '');
-          $item['thumbnail'] = theme('image', $image_vars);
-          //$image_uri = file_build_uri($video->thumbnailURL);
-          //$item['thumbnail'] = theme('image_style', array('style_name' => 'thumbnail', 'path' => $image_uri));
-        //}
+        $image_vars = array('path' => $video->thumbnailURL, 'alt' => '', 'title' => '', 'attrinutes' => '');
       }
       else {
-        //$item['thumbnail'] = theme('image', brightcove_get_default_image(), '', '', array('width' => 120, 'height' => 120), FALSE);
-        //$image_uri = file_build_uri(brightcove_get_default_image());
-        //$item['thumbnail'] = theme('image_style', array('style_name' => 'thumbnail', 'path' => $image_uri));
         $image_vars = array('path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attrinutes' => '');
-        $item['thumbnail'] = theme('image', $image_vars);
       }
+      $item['thumbnail'] = theme('image', $image_vars);
       $items[] = $item;
     }
   }
 
-  $pager_vars = array(
-    'tags' => NULL,
-    'element' => 0,
-    'parameters' => array(),
-    'quantity' => $items_per_page,
-  );
-
-  $pager = theme_pager($pager_vars);
+  $pager = theme('pager');
   $filter_form = drupal_get_form('brightcove_field_filter_form');
   $filter_form = drupal_render($filter_form);
 
