@@ -31,7 +31,7 @@ function theme_brightcove_field_browse_button($element) {
  *   Themed item form.
  */
 function theme_brightcove_field_browse_item($variables) {
-  $form = drupal_get_form('brightcove_field_browser_form' . $variables['item']['video_id'], $variables['item']);
+  $form = drupal_get_form('brightcove_field_browser_form' . $variables['item']['brightcove_id'], $variables['item']);
   return drupal_render($form);
 }
 
@@ -77,25 +77,25 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
 
   $vars['id'] = 'myExperience';
   $vars['bgcolor'] = '#FFFFFF';
-  $vars['width'] = BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
-  $vars['height'] = BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
+  $vars['width'] = isset($variables['width']) ? $variables['width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
+  $vars['height'] = isset($variables['height']) ? $variables['height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
 
   foreach ($vars as $key => $value) {
     $variables[$key] = isset($variables['params'][$key]) ? $variables['params'][$key] : $vars[$key];
   }
 
-  if (isset($variables['video_id'])) {
+  if (isset($variables['brightcove_id'])) {
     $flashvars['domain'] = 'embed';
     $flashvars['dynamicStreaming'] = 'true';
     $flashvars['playerID'] = $player->player_id;
     $flashvars['playerKey'] = $player->player_key;
 
     if (drupal_strtolower($variables['type']) == 'brightcove') {
-      $flashvars['@videoPlayer'] = $variables['video_id'];
+      $flashvars['@videoPlayer'] = $variables['brightcove_id'];
     }
     elseif (drupal_strtolower($variables['type']) == 'brightcove-playlist') {
-      $flashvars['@playlistTabs'] = $variables['video_id'];
-      $flashvars['@playlistCombo'] = $variables['video_id'];
+      $flashvars['@playlistTabs'] = $variables['brightcove_id'];
+      $flashvars['@playlistCombo'] = $variables['brightcove_id'];
     }
   }
 

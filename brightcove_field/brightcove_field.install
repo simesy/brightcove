@@ -10,7 +10,7 @@
 function brightcove_field_field_schema() {
   return array(
     'columns' => array(
-      'video_id' => array(
+      'brightcove_id' => array(
         'type' => 'varchar',
         'length' => 15,
         'not null' => FALSE
@@ -22,7 +22,7 @@ function brightcove_field_field_schema() {
       ),
     ),
     'indexes' => array(
-      'video_id' => array('video_id'),
+      'brightcove_id' => array('brightcove_id'),
     ),
   );
 }
@@ -39,7 +39,7 @@ function brightcove_field_update_7201() {
     );
 
     foreach (field_info_fields() as $name => $def) {
-      if ($def['type'] == 'brightcove_video' &&
+      if ($def['type'] == 'brightcove_field' &&
           $def['storage']['type'] == 'field_sql_storage') {
         $tablename = _field_sql_storage_tablename($def);
         $revtablename = _field_sql_storage_revision_tablename($def);

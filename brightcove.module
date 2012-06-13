@@ -256,10 +256,11 @@ function brightcove_playlist_delete($playlist_id) {
  * @return bool|string
  */
 function brightcove_add_playlist($metadata) {
+  $playlist_id = FALSE;
   $bc = brightcove_initialize();
 
   try {
-    $playlist = $bc->createPlaylist('video', $metadata);
+    $playlist_id = $bc->createPlaylist('video', $metadata);
   }
   catch(Exception $error) {
     drupal_set_message(t('Playlist upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
@@ -269,7 +270,7 @@ function brightcove_add_playlist($metadata) {
   // Invalidate playlist cache.
   cache_set('bc:playlist:list', FALSE);
 
-  return $playlist;
+  return $playlist_id;
 }
 
 /**
@@ -737,6 +738,25 @@ function brightcove_video_cache_set($id, $video) {
 }
 
 /**
+ * Caches the status of a playlist for faster validation.
+ *
+ * This function also helps work around the lag in Brightcove API when
+ * videos are uploaded.
+ *
+ * @param $id
+ *   The Brightcove identifier for the playlist.
+ *
+ * @param $playlist
+ *   The playlist object to be cached.
+ */
+function brightcove_playlist_cache_set($id, $playlist) {
+  if (!isset($_SESSION['brightcove'])) {
+    $_SESSION['brightcove'] = array();
+  }
+  $_SESSION['brightcove']["playlist_{$id}"] = $playlist;
+}
+
+/**
  * Fetches a brighcove video object from the cache, if available.
  *
  * @param
@@ -747,6 +767,24 @@ function brightcove_video_cache_set($id, $video) {
  */
 function brightcove_video_cache_get($id) {
   $key = "video_{$id}";
+  if ($id && isset($_SESSION['brightcove'][$key])) {
+    return $_SESSION['brightcove'][$key];
+  }
+
+  return NULL;
+}
+
+/**
+ * Fetches a brighcove playlist object from the cache, if available.
+ *
+ * @param
+ *   The Brightcove identifier for the playlist.
+ *
+ * @return
+ *   Object the Brightcove playlist object.
+ */
+function brightcove_playlist_cache_get($id) {
+  $key = "playlist_{$id}";
   if ($id && isset($_SESSION['brightcove'][$key])) {
     return $_SESSION['brightcove'][$key];
   }
@@ -1162,4 +1200,40 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
   }
 
   return FALSE;
+}
+
+/**
+ * Create the new playlist.
+ *
+ * @param $form
+ * @param $form_state
+ * @return bool|StdClass
+ */
+function _brightcove_create_form_callback(&$form, $form_state) {
+  $metadata = array();
+  $keys_to_send = array('name', 'shortDescription');
+  foreach ($keys_to_send as $key) {
+    $metadata[$key] = $form_state['values'][$key];
+  }
+
+  if ($form_state['values']['type'] == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
+    $metadata['playlistType'] = 'explicit';
+    $videos = drupal_explode_tags($form_state['values']['videos']);
+    foreach ($videos as $video) {
+      // Parse the video id.
+      preg_match('/\[id:(?P<videoid>\d+)\]/', $video, $matches);
+      $metadata['videoIds'][] = $matches['videoid'];
+    }
+  }
+  else {
+    $metadata['tagInclusionRule'] = $form_state['values']['tagInclusionRule'];
+    $metadata['playlistType'] = $form_state['values']['playlistType'];
+    $metadata['filterTags'] = drupal_explode_tags($form_state['values']['filterTags']);
+  }
+
+  $playlist_id = brightcove_add_playlist($metadata);
+  // Invalidate playlist cache.
+  cache_set('bc:playlist:list', FALSE);
+
+  return $playlist_id;
 }

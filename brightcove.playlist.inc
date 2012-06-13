@@ -98,19 +98,7 @@ function brightcove_playlist_edit_page($playlist) {
   return drupal_get_form('brightcove_playlist_edit_form', $playlist);
 }
 
-/**
- * Playlist edit form.
- *
- * @param $form
- * @param $form_state
- * @param null $playlist
- * @return array
- */
-function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
-  if (!is_null($playlist) && !isset($form_state['playlist'])) {
-    $form_state['playlist'] = $playlist;
-  }
-
+function _brightcove_playlist_form(&$form, $form_state, $playlist = NULL) {
   $form['referenceId'] = array(
     '#type' => 'hidden',
     '#value' => isset($form_state['values']['referenceId']) ? $form_state['values']['referenceId'] : '',
@@ -214,6 +202,21 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
       '#default_value' => isset($playlist->playlistType) ? $playlist->playlistType : '',
     );
   }
+}
+
+/**
+ * Playlist edit form.
+ *
+ * @param $form
+ * @param $form_state
+ * @param null $playlist
+ * @return array
+ */
+function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
+  if (!is_null($playlist) && !isset($form_state['playlist'])) {
+    $form_state['playlist'] = $playlist;
+  }
+  _brightcove_playlist_form($form, $form_state, $playlist);
 
   $form['actions'] = array('#type' => 'actions');
 
