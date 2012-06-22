@@ -98,7 +98,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   }
 
   if ((user_access('administer brightcove playlists')) &&
-      ($instance['settings']['allow_create'])) {
+      (!empty($instance['settings']['allow_create']))) {
     $element['actions']['create'] = array(
       '#type' => 'button',
       '#attributes' => array(
