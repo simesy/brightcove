@@ -609,14 +609,14 @@ function brightcove_field_formatter_height_validate($element) {
 function brightcove_field_field_widget_info() {
   return array(
     BRIGHTCOVE_VIDEO_WIDGET => array(
-      'label' => t('Video browser & upload'),
+      'label' => t('Video (upload/browse)'),
       'field types' => array('brightcove_field'),
       'behaviors' => array(
         'default value' => FIELD_BEHAVIOR_NONE,
       ),
     ),
     BRIGHTCOVE_PLAYLIST_WIDGET => array(
-      'label' => t('Playlist browser & create'),
+      'label' => t('Playlist (create/browse)'),
       'field types' => array('brightcove_field'),
       'behaviors' => array(
         'default value' => FIELD_BEHAVIOR_NONE,
