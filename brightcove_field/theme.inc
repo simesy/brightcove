@@ -69,7 +69,7 @@ function theme_brightcove_field_browse_items($variables) {
  */
 function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
   if (!isset($variables['player'])) {
-    watchdog('brightcove', 'Video Player is missing.', array(), WATCHDOG_ERROR);
+    watchdog('brightcove', 'Brightcove player is missing.', array(), WATCHDOG_ERROR);
   }
 
   $flashvars = array();
@@ -86,8 +86,8 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
   if (isset($variables['brightcove_id'])) {
     $flashvars['domain'] = 'embed';
     $flashvars['dynamicStreaming'] = 'true';
-    $flashvars['playerID'] = $player->player_id;
-    $flashvars['playerKey'] = $player->player_key;
+    $flashvars['playerID'] = isset($player->player_id) ? $player->player_id : '';
+    $flashvars['playerKey'] = isset($player->player_key) ? $player->player_key : '';
 
     if (drupal_strtolower($variables['type']) == 'brightcove') {
       $flashvars['@videoPlayer'] = $variables['brightcove_id'];
