@@ -925,6 +925,7 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
     // The default formatter of the brightcove field.
     'brightcove_field_formatter_default' => array(
       'variables' => array(
+        'type' => 'brightcove',
         'element' => NULL,
         'instance' => array(),
         'width' => BRIGHTCOVE_DEFAULT_VIDEO_WIDTH,
@@ -1273,9 +1274,9 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
           if (isset($item['brightcove_id'])) {
             $video = brightcove_video_load($item['brightcove_id']);
           }
-
           $element[$delta] = array(
             '#theme' => $theme,
+            '#type' => 'brightcove',
             '#element' => $item,
             '#delta' => $delta,
             '#entity_type' => $entity_type,
@@ -1298,6 +1299,7 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
 
           $element[$delta] = array(
             '#theme' => $theme,
+            '#type' => 'brightcove-player',
             '#element' => $item,
             '#delta' => $delta,
             '#entity_type' => $entity_type,

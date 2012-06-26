@@ -83,7 +83,6 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
   foreach ($vars as $key => $value) {
     $variables[$key] = isset($variables['params'][$key]) ? $variables['params'][$key] : $vars[$key];
   }
-
   if (isset($variables['brightcove_id'])) {
     $flashvars['domain'] = 'embed';
     $flashvars['dynamicStreaming'] = 'true';
@@ -93,7 +92,7 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
     if (drupal_strtolower($variables['type']) == 'brightcove') {
       $flashvars['@videoPlayer'] = $variables['brightcove_id'];
     }
-    elseif (drupal_strtolower($variables['type']) == 'brightcove-playlist') {
+    elseif (drupal_strtolower($variables['type']) == 'brightcove-player') {
       $flashvars['@playlistTabs'] = $variables['brightcove_id'];
       $flashvars['@playlistCombo'] = $variables['brightcove_id'];
     }

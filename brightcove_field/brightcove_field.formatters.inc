@@ -22,9 +22,9 @@ function theme_brightcove_field_formatter_default($variables) {
     if ($vidcount == 1) {
       drupal_add_js('http://admin.brightcove.com/js/BrightcoveExperiences.js');
     }
-
     $params['id'] = 'myExperience' . $vidcount;
     $output = theme('brightcove_field_embed', array(
+      'type' => $variables['type'],
       'brightcove_id' => $variables['element']['brightcove_id'],
       'params' => $params,
       'player' => brightcove_field_get_value($variables['instance'], $variables['element']['player']),
