@@ -318,7 +318,7 @@ function brightcove_field_admin_paths() {
 function brightcove_field_field_info() {
   return array(
    'brightcove_field' => array(
-     'label' => t('Brightcove Field'),
+     'label' => t('Brightcove'),
      'description' => t('Browse and upload videos or playlists at Brightcove.'),
      'settings' => array(),
      'instance_settings' => array(
