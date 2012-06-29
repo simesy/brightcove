@@ -872,8 +872,8 @@ function brightcove_field_browser_playlist_validate($element, &$form_state) {
       }
     }
     else {
+      module_load_include('inc', 'brightcove_field', 'brightcove_field.playlist');
       $result = brightcove_field_get_matched_playlists($string);
-
       if (count($result) > 1) {
         // This title is ambiguous.
         form_error($element, t('%name: Playlist title %title matched more than one plalists. In case of doubt, use text "title [id:ID_OF_THE_PLAYLIST]"', array('%title', $value, '%name' => t($element['#title']))));
