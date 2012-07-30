@@ -45,6 +45,12 @@ function brightcove_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('brightcove_link_field', ''),
     '#description' => t('A Brightcove Custom Field to store the Drupal link of the entity where video belongs. This field must be created in BC Studio first. Read more about !link. <strong>Requires at least a Professional account</strong>', array('!link' =>  l(t('Brightcove custom metadata'), 'http://support.brightcove.com/en/docs/setting-custom-metadata'))),
   );
+  $form['account']['brightcove_custom_field_number'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Custom field number'),
+    '#default_value' => variable_get('brightcove_custom_field_number', 10),
+    '#description' => t('Basically Brightcove provides 10 fields as a default, but it supports more custom fields than 10. If you have more fields than 10 you can set it here.'),
+  );
   $form['player'] = array(
     '#type' => 'fieldset',
     '#title' => t('Player settings'),
@@ -221,7 +227,8 @@ function brightcove_admin_customfield_ajax_callback($form) {
 }
 
 function brightcove_admin_add_customfield_submit($form, &$form_state) {
-  if ($form_state['brightcove_custom_fields'] < 10) {
+  $settings_custom_field = variable_get('brightcove_custom_field_number', 10);
+  if ($form_state['brightcove_custom_fields'] < $settings_custom_field) {
     $form_state['brightcove_custom_fields']++;
   }
   $form_state['rebuild'] = TRUE;
