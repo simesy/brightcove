@@ -211,6 +211,7 @@ function _brightcove_field_video_browse() {
   try {
     $params['page_size'] = $items_per_page;
     $params['page_number'] = $page;
+    $params['get_item_count'] = 'TRUE';
 
     $result = $bc->find($method, $params);
   } catch (Exception $error) {
