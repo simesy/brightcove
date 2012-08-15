@@ -237,6 +237,13 @@ function brightcove_admin_add_customfield_submit($form, &$form_state) {
 function brightcove_admin_remove_customfield_submit($form, &$form_state) {
   if ($form_state['brightcove_custom_fields'] > 0) {
     $form_state['brightcove_custom_fields']--;
+    $field_number = $form_state['brightcove_custom_fields'];
+    variable_del("brightcove_custom_fields_{$field_number}_key");
+    variable_del("brightcove_custom_fields_{$field_number}_label");
+    variable_del("brightcove_custom_fields_{$field_number}_values");
+    variable_del("brightcove_custom_fields_{$field_number}_required");
+    variable_del("brightcove_custom_fields_{$field_number}_type");
+    variable_set('brightcove_custom_fields', $form_state['brightcove_custom_fields']);
   }
   $form_state['rebuild'] = TRUE;
 }
