@@ -18,15 +18,20 @@ class MediaBrightcoveStreamWrapper extends MediaReadOnlyStreamWrapper {
       // @todo find out how to detect this url in a nice way, it might break any time
       $pid = variable_get('brightcove_player_pid', NULL);
       $player = brightcove_player_load($pid);
-      return url('http://c.brightcove.com/services/viewer/federated_f9', array(
-          'query' => array(
-            'playerID' => $player->player_id,
-            'playerKey' => $player->player_key,
-            'isVid' => 'true',
-            'isUI' => 'true',
-            '@videoPlayer' => $video_id,
-          ),
-        ));
+      if ($player) {
+        return url('http://c.brightcove.com/services/viewer/federated_f9', array(
+            'query' => array(
+              'playerID' => $player->player_id,
+              'playerKey' => $player->player_key,
+              'isVid' => 'true',
+              'isUI' => 'true',
+              '@videoPlayer' => $video_id,
+            ),
+          ));
+      }
+      else {
+        watchdog('brightcove', 'Video Player is missing.', array(), WATCHDOG_ERROR);
+      }
     }
     return NULL;
   }

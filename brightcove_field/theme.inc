@@ -63,64 +63,66 @@ function theme_brightcove_field_browse_items($variables) {
 }
 
 function theme_brightcove_field_embed($variables) {
+  $code = '';
   if (!isset($variables['player'])) {
     watchdog('brightcove', 'Video Player is missing.', array(), WATCHDOG_ERROR);
   }
+  else {
+    $player = brightcove_player_load($variables['player']);
 
-  $player = brightcove_player_load($variables['player']);
+    $values = array(
+      'id' => 'myExperience',
+      'bgcolor' => 'FFFFFF',
+      'width' => $variables['width'],
+      'height' => $variables['height'],
+    );
 
-  $values = array(
-    'id' => 'myExperience',
-    'bgcolor' => 'FFFFFF',
-    'width' => $variables['width'],
-    'height' => $variables['height'],
-  );
-
-  foreach ($values as $key => $value) {
-    if (isset($variables['params'][$key])) {
-      $values[$key] = $variables['params'][$key];
+    foreach ($values as $key => $value) {
+      if (isset($variables['params'][$key])) {
+        $values[$key] = $variables['params'][$key];
+      }
     }
-  }
 
-  $asset_code = '';
+    $asset_code = '';
 
-  if (isset($variables['video_id'])) {
-    if (is_array($variables['video_id'])) {
-      if (drupal_strtolower($variables['type']) == 'video') {
-        $asset_code = '<param name="@videoPlayer" value="';
+    if (isset($variables['video_id'])) {
+      if (is_array($variables['video_id'])) {
+        if (drupal_strtolower($variables['type']) == 'video') {
+          $asset_code = '<param name="@videoPlayer" value="';
+        }
+        else {
+          // TODO: Add different types than video.
+        }
+
+        foreach ($variables['video_id'] as $asset_td) {
+          $asset_code .= $asset_td . ',';
+        }
+
+        $asset_code = drupal_substr($asset_code, 0, -1);
+        $asset_code .= '" />';
       }
       else {
-        // TODO: Add different types than video.
-      }
-
-      foreach ($variables['video_id'] as $asset_td) {
-        $asset_code .= $asset_td . ',';
-      }
-
-      $asset_code = drupal_substr($asset_code, 0, -1);
-      $asset_code .= '" />';
-    }
-    else {
-      if (drupal_strtolower($variables['type']) == 'video') {
-        $asset_code = '<param name="@videoPlayer" value="' . $variables['video_id'] . '" />';
-      }
-      else {
-        // TODO: Add different types than video.
+        if (drupal_strtolower($variables['type']) == 'video') {
+          $asset_code = '<param name="@videoPlayer" value="' . $variables['video_id'] . '" />';
+        }
+        else {
+          // TODO: Add different types than video.
+        }
       }
     }
+
+    $code = '
+      <object id="' . $values['id'] . '" class="BrightcoveExperience">
+      <param name="bgcolor" value="#' . $values['bgcolor'] . '" />
+      <param name="width" value="' . $values['width'] . '" />
+      <param name="height" value="' . $values['height'] . '" />
+      <param name="playerID" value="' . $player->player_id . '" />'
+      . $asset_code . '
+      <param name="isVid" value="true" />
+      <param name="isUI" value="true" />
+      <param name="playerKey" value="' . $player->player_key . '" />
+      </object>';
   }
-
-  $code = '
-    <object id="' . $values['id'] . '" class="BrightcoveExperience">
-    <param name="bgcolor" value="#' . $values['bgcolor'] . '" />
-    <param name="width" value="' . $values['width'] . '" />
-    <param name="height" value="' . $values['height'] . '" />
-    <param name="playerID" value="' . $player->player_id . '" />'
-    . $asset_code . '
-    <param name="isVid" value="true" />
-    <param name="isUI" value="true" />
-    <param name="playerKey" value="' . $player->player_key . '" />
-    </object>';
 
   return $code;
 }
