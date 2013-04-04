@@ -287,6 +287,12 @@ function brightcove_field_player($type, $entity_type, $entity_id, $field_name, $
   $brightcove_id = $entity->{$field_name}[$language][$delta]['brightcove_id'];
   $player = $entity->{$field_name}[$language][$delta]['player'];
 
+  if (!$player) {
+    $instance = field_info_instance($entity_type, $field_name, $entity->type);
+    $player = $instance['settings']['brightcove_player'] ? $instance['settings']['brightcove_player'] :
+      variable_get('brightcove_player_pid', '');
+  }
+
   $variables = array(
     'type' => ($type == 'playlist') ? 'brightcove-playlist' : 'brightcove',
     'brightcove_id' => $brightcove_id,
