@@ -71,7 +71,7 @@ function brightcove_field_menu() {
     'title' => 'Brightcove Videos Window Player',
     'page callback' => 'brightcove_field_player',
     'page arguments' => array(1, 2, 3, 4),
-    'access callback' => 'entity_access',
+    'access callback' => 'brightcove_field_entity_access',
     'access arguments' => array('view', 1, 2),
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'type' => MENU_CALLBACK,
@@ -82,7 +82,7 @@ function brightcove_field_menu() {
     'title' => '',
     'page callback' => 'brightcove_field_open_dialog',
     'page arguments' => array(2, 3, 4, 5, 6, 7),
-    'access callback' => 'entity_access',
+    'access callback' => 'brightcove_field_entity_access',
     'access arguments' => array('view', 4, 5),
     'delivery callback' => 'ajax_deliver',
     'type' => MENU_CALLBACK,
@@ -1750,4 +1750,30 @@ function _filter_brightcove_replace($videoid) {
 function _filter_brightcove_tips($filter, $format, $long = FALSE) {
   return t('To embed a brightcove video use the [brightcove:VIDEOID] syntax, ' .
   'where VIDEOID is the ID of the brightcove video what you want to embed.');
+}
+
+/**
+ * Helper function to prepare the given parameters to be able to use by entity_access().
+ *
+ * @param $op
+ *   The operation being performed. One of 'view', 'update', 'create' or
+ *   'delete'.
+ * @param $entity_type
+ *   The entity type of the entity to check for.
+ * @param $entity_id
+ *   Optionally an entity_id which belongs to the entity being checked.
+ * @param $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ *
+ * @return boolean
+ *   Whether access is allowed or not. If the entity type does not specify any
+ *   access information, NULL is returned.
+ *
+ * @see brightcove_field_menu()
+ * @see entity_access()
+ */
+function brightcove_field_entity_access($op, $entity_type, $entity_id = NULL, $account = NULL) {
+  $entity = entity_load($entity_type, array($entity_id));
+  $entity = reset($entity);
+  return entity_access($op, $entity_type, $entity, $account);
 }
