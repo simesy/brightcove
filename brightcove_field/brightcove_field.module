@@ -91,7 +91,7 @@ function brightcove_field_menu() {
     'title' => 'Brightcove Videos Window Player',
     'page callback' => 'brightcove_field_player',
     'page arguments' => array(1, 2, 3, 4, 5),
-    'access callback' => 'entity_access',
+    'access callback' => 'brightcove_field_entity_access',
     'access arguments' => array('view', 2, 3),
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'type' => MENU_CALLBACK,
@@ -102,7 +102,7 @@ function brightcove_field_menu() {
     'title' => '',
     'page callback' => 'brightcove_field_open_dialog',
     'page arguments' => array(2, 3, 4, 5, 6, 7, 8),
-    'access callback' => 'entity_access',
+    'access callback' => 'brightcove_field_entity_access',
     'access arguments' => array('view', 5, 6),
     'delivery callback' => 'ajax_deliver',
     'type' => MENU_CALLBACK,
@@ -1586,3 +1586,8 @@ function _filter_brightcove_tips($filter, $format, $long = FALSE) {
   'where VIDEOID is the ID of the brightcove video what you want to embed.');
 }
 
+function brightcove_field_entity_access($op, $entity_type, $entity_id = NULL, $account = NULL) {
+  $entity = entity_load($entity_type, array($entity_id));
+  $entity = reset($entity);
+  return entity_access($op, $entity_type, $entity, $account);
+}
