@@ -1592,6 +1592,26 @@ function _filter_brightcove_tips($filter, $format, $long = FALSE) {
   'where VIDEOID is the ID of the brightcove video what you want to embed.');
 }
 
+/**
+ * Helper function to prepare parameters to entity_access() function.
+ *
+ * @param $op
+ *   The operation being performed. One of 'view', 'update', 'create' or
+ *   'delete'.
+ * @param $entity_type
+ *   The entity type of the entity to check for.
+ * @param $entity_id
+ *   Optionally an id belonging to the checked entity.
+ * @param $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ *
+ * @return boolean
+ *   Whether access is allowed or not. If the entity type does not specify any
+ *   access information, NULL is returned.
+ *
+ * @see brightcove_field_menu()
+ * @see entity_access()
+ */
 function brightcove_field_entity_access($op, $entity_type, $entity_id = NULL, $account = NULL) {
   $entity = entity_load($entity_type, array($entity_id));
   $entity = reset($entity);
