@@ -142,11 +142,11 @@ function brightcove_media_theme($existing, $type, $theme, $path) {
  */
 function brightcove_media_file_formatter_video_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
-  if (($scheme == 'brightcove' || $scheme == 'brightcove-playlist') && empty($file->override['wysiwyg'])) {
+  if (($scheme == 'brightcove' || $scheme == 'brightcove-playlist')) {
     $element = array(
       '#theme' => 'brightcove_field_embed',
       '#type' => $scheme,
-      '#video_id' => parse_url($file->uri, PHP_URL_HOST),
+      '#brightcove_id' => parse_url($file->uri, PHP_URL_HOST),
       '#player' => variable_get('brightcove_player_pid', ''),
       '#attached' => array(
         'js' => array(
