@@ -28,18 +28,16 @@ class MediaBrowserBrightcovePlaylist extends MediaBrowserPlugin {
     return array(
       '#title' => t('Brightcove playlists'),
       '#settings' => array(
-        'viewMode' => 'thumbnails',
+//        'viewMode' => 'thumbnails',
         'getMediaUrl' => url('brightcove/media/playlist/list'),
       ),
       '#attached' => array(
         'js' => array(
-          $media_path . '/js/plugins/media.library.js',
-          $bcpath . '/brightcove_media.playlist.js',
+          $bcpath . '/js/brightcove_media.js',
+          $bcpath . '/js/brightcove_media.playlist.js',
         ),
         'css' => array(
-          //@todo: should move this.
-          $media_path . '/js/plugins/media.library.css',
-          $bcpath . '/brightcove_media.library.css',
+          $bcpath . '/brightcove_media.css',
         ),
       ),
       // If the #form and #markup parameters are not empty the media module will not

@@ -7,9 +7,8 @@ dependencies[] = media
 dependencies[] = brightcove_field
 dependencies[] = media_internet
 
-files[] = brightcove_media.module
-files[] = MediaBrightcoveStreamWrapper.inc
-files[] = MediaInternetBrightcoveHandler.inc
-files[] = MediaBrowserBrightcove.inc
-files[] = MediaBrightcovePlaylistStreamWrapper.inc
-files[] = MediaBrowserBrightcovePlaylist.inc
+files[] = includes/MediaBrightcoveVideoStreamWrapper.inc
+files[] = includes/MediaInternetBrightcoveHandler.inc
+files[] = includes/MediaBrowserBrightcoveVideo.inc
+files[] = includes/MediaBrightcovePlaylistStreamWrapper.inc
+files[] = includes/MediaBrowserBrightcovePlaylist.inc

@@ -42,7 +42,7 @@ function brightcove_media_stream_wrappers() {
   return array(
     'brightcove' => array(
       'name' => t('Brightcove videos'),
-      'class' => 'MediaBrightcoveStreamWrapper',
+      'class' => 'MediaBrightcoveVideoStreamWrapper',
       'description' => t('Videos provided by Brightcove.'),
       'type' => STREAM_WRAPPERS_READ_VISIBLE,
     ),
@@ -282,52 +282,52 @@ function brightcove_media_file_formatter_image_settings($form, $form_state, $set
   return $element;
 }
 
-/**
- * Implements hook_file_formatter_default_displays().
- *
- * @return array
- */
-function brightcove_media_file_default_displays() {
-  $default_displays = array();
-
-  $video_display_settings = array(
-    'media_large' => array(),
-    'media_original' => array(),
-    'media_gallery_detail' => array(),
-    'media_gallery_lightbox' => array(),
-  );
-  foreach ($video_display_settings as $view_mode => $settings) {
-    $display_name = "video__{$view_mode}__brightcove_media_video";
-    $default_displays[$display_name] = (object) array(
-      'api_version' => 1,
-      'name' => $display_name,
-      'status' => 1,
-      'weight' => 1,
-      'settings' => $settings,
-    );
-  }
-
-  $image_display_styles = array(
-    'media_preview' => '',
-    'media_large' => '',
-    'media_original' => '',
-    'media_gallery_thumbnail' => '',
-    'media_gallery_block_thumbnail' => '',
-    'media_gallery_collection_thumbnail' => '',
-  );
-  foreach ($image_display_styles as $view_mode => $image_style) {
-    $display_name = "video__{$view_mode}__brightcove_media_image";
-    $default_displays[$display_name] = (object) array(
-      'api_version' => 1,
-      'name' => $display_name,
-      'status' => 1,
-      'weight' => 2,
-      'settings' => array('image_style' => $image_style),
-    );
-  }
-
-  return $default_displays;
-}
+///**
+// * Implements hook_file_formatter_default_displays().
+// *
+// * @return array
+// */
+//function brightcove_media_file_default_displays() {
+//  $default_displays = array();
+//
+//  $video_display_settings = array(
+//    'media_large' => array(),
+//    'media_original' => array(),
+//    'media_gallery_detail' => array(),
+//    'media_gallery_lightbox' => array(),
+//  );
+//  foreach ($video_display_settings as $view_mode => $settings) {
+//    $display_name = "video__{$view_mode}__brightcove_media_video";
+//    $default_displays[$display_name] = (object) array(
+//      'api_version' => 1,
+//      'name' => $display_name,
+//      'status' => 1,
+//      'weight' => 1,
+//      'settings' => $settings,
+//    );
+//  }
+//
+//  $image_display_styles = array(
+//    'media_preview' => '',
+//    'media_large' => '',
+//    'media_original' => '',
+//    'media_gallery_thumbnail' => '',
+//    'media_gallery_block_thumbnail' => '',
+//    'media_gallery_collection_thumbnail' => '',
+//  );
+//  foreach ($image_display_styles as $view_mode => $image_style) {
+//    $display_name = "video__{$view_mode}__brightcove_media_image";
+//    $default_displays[$display_name] = (object) array(
+//      'api_version' => 1,
+//      'name' => $display_name,
+//      'status' => 1,
+//      'weight' => 2,
+//      'settings' => array('image_style' => $image_style),
+//    );
+//  }
+//
+//  return $default_displays;
+//}
 
 /**
  * Implements hook_media_browser_plugin_info().
@@ -340,7 +340,7 @@ function brightcove_media_media_browser_plugin_info() {
   $info['brightcove'] = array(
     'title' => t('Brightcove'),
     'weight' => 0,
-    'class' => 'MediaBrowserBrightcove',
+    'class' => 'MediaBrowserBrightcoveVideo',
   );
 
   $info['brightcove_playlist'] = array(
@@ -596,7 +596,7 @@ function brightcove_media_list() {
   }
 
   drupal_add_js(array('brightcove' => array('files' => $files)), 'setting');
-  drupal_json_output(array('media' => $media));
+  drupal_json_output($media);
   exit;
 }
 
@@ -868,7 +868,26 @@ function brightcove_media_playlist_list() {
     }
   }
 
-  drupal_json_output(array('media' => $media));
   drupal_add_js(array('brightcove_playlist' => array('files' => $files)), 'setting');
+  drupal_json_output($media);
   exit;
+}
+
+/**
+ * Implements hook_file_type_alter().
+ */
+function brightcove_media_file_type_alter(&$types, $file) {
+  if (strpos($file->filemime, 'brightcove')) {
+    $types = array('video');
+  }
+}
+
+/**
+ * Implements hook_media_file_presave().
+ */
+function brightcove_media_file_presave($file) {
+  if (strpos($file->filemime, 'brightcove') && $file->filename == basename($file->uri)) {
+    $bc_file = brightcove_video_load($file->filename);
+    $file->filename = $bc_file->name;
+  }
 }
