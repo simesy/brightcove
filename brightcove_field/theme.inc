@@ -31,7 +31,7 @@ function theme_brightcove_field_browse_button($element) {
  *   Themed item form.
  */
 function theme_brightcove_field_browse_item($variables) {
-  $form = drupal_get_form('brightcove_field_browser_form' . $variables['item']['video_id'], $variables['item']);
+  $form = drupal_get_form('brightcove_field_browser_form' . $variables['item']['brightcove_id'], $variables['item']);
   return drupal_render($form);
 }
 
@@ -62,67 +62,42 @@ function theme_brightcove_field_browse_items($variables) {
   return theme('table', array('header' => array(), 'rows' => $rows));
 }
 
-function theme_brightcove_field_embed($variables) {
-  $code = '';
+/**
+ * The brightcove_field_embed theme function preprocess function.
+ *
+ * @param $variables
+ */
+function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
   if (!isset($variables['player'])) {
-    watchdog('brightcove', 'Video Player is missing.', array(), WATCHDOG_ERROR);
-  }
-  else {
-    $player = brightcove_player_load($variables['player']);
-
-    $values = array(
-      'id' => 'myExperience',
-      'bgcolor' => 'FFFFFF',
-      'width' => $variables['width'],
-      'height' => $variables['height'],
-    );
-
-    foreach ($values as $key => $value) {
-      if (isset($variables['params'][$key])) {
-        $values[$key] = $variables['params'][$key];
-      }
-    }
-
-    $asset_code = '';
-
-    if (isset($variables['video_id'])) {
-      if (is_array($variables['video_id'])) {
-        if (drupal_strtolower($variables['type']) == 'video') {
-          $asset_code = '<param name="@videoPlayer" value="';
-        }
-        else {
-          // TODO: Add different types than video.
-        }
-
-        foreach ($variables['video_id'] as $asset_td) {
-          $asset_code .= $asset_td . ',';
-        }
-
-        $asset_code = drupal_substr($asset_code, 0, -1);
-        $asset_code .= '" />';
-      }
-      else {
-        if (drupal_strtolower($variables['type']) == 'video') {
-          $asset_code = '<param name="@videoPlayer" value="' . $variables['video_id'] . '" />';
-        }
-        else {
-          // TODO: Add different types than video.
-        }
-      }
-    }
-
-    $code = '
-      <object id="' . $values['id'] . '" class="BrightcoveExperience">
-      <param name="bgcolor" value="#' . $values['bgcolor'] . '" />
-      <param name="width" value="' . $values['width'] . '" />
-      <param name="height" value="' . $values['height'] . '" />
-      <param name="playerID" value="' . $player->player_id . '" />'
-      . $asset_code . '
-      <param name="isVid" value="true" />
-      <param name="isUI" value="true" />
-      <param name="playerKey" value="' . $player->player_key . '" />
-      </object>';
+    watchdog('brightcove', 'Brightcove player is missing.', array(), WATCHDOG_ERROR);
   }
 
-  return $code;
+  $flashvars = array();
+  $player = brightcove_player_load($variables['player']);
+
+  $vars['id'] = 'myExperience';
+  $vars['bgcolor'] = '#FFFFFF';
+  $vars['width'] = isset($variables['width']) ? $variables['width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
+  $vars['height'] = isset($variables['height']) ? $variables['height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
+
+  foreach ($vars as $key => $value) {
+    $variables[$key] = isset($variables['params'][$key]) ? $variables['params'][$key] : $vars[$key];
+  }
+  if (isset($variables['brightcove_id'])) {
+    $flashvars['domain'] = 'embed';
+    $flashvars['dynamicStreaming'] = 'true';
+    $flashvars['playerID'] = isset($player->player_id) ? $player->player_id : '';
+    $flashvars['playerKey'] = isset($player->player_key) ? $player->player_key : '';
+
+    if (drupal_strtolower($variables['type']) == 'brightcove') {
+      $flashvars['@videoPlayer'] = $variables['brightcove_id'];
+    }
+    elseif (drupal_strtolower($variables['type']) == 'brightcove-player') {
+      $flashvars['@playlistTabs'] = $variables['brightcove_id'];
+      $flashvars['@playlistCombo'] = $variables['brightcove_id'];
+    }
+  }
+
+  array_walk($flashvars, create_function('&$item, $key', '$item = urlencode($key) . "=" . urlencode($item);'));
+  $variables['flashvars'] = join($flashvars, '&');
 }

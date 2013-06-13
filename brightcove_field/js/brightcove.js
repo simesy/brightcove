@@ -20,7 +20,9 @@
       remove_button.click(Drupal.brightcove_field.actions.remove);
       $('.brightcove-field-browse-button', context).click(Drupal.brightcove_field.actions.browse);
       $('.brightcove-field-upload-button', context).click(Drupal.brightcove_field.actions.upload);
+      $('.brightcove-field-create-button', context).click(Drupal.brightcove_field.actions.create);
       $('.form-text.brightcove-video-field').change(Drupal.brightcove_field.actions.change);
+      $('.form-text.brightcove-playlist-field').change(Drupal.brightcove_field.actions.change);
 
       if ($('.' + remove_button.attr('rel')).val() != '') {
         remove_button.attr('disabled', '').removeClass('form-button-disabled');
@@ -49,55 +51,15 @@
   };
 
   Drupal.brightcove_field.actions.upload = function() {
-    //event.preventDefault();
-    //var id = $(this).attr('rel');
-    //var field_name = $('.' + id).attr('data-field-name');
-    //var frame = $('iframe[rel=' + id + ']');
-    /*frame.attr('src', src);*/
-
-    /*var path = Drupal.settings.basePath + 'brightcove_field/upload/' +
-     brightcove_field_settings.brightcove_field[field_name].entity_type + '/' +
-     brightcove_field_settings.brightcove_field[field_name].field_name + '/' +
-     brightcove_field_settings.brightcove_field[field_name].entity_id + ' #brightcove-field-upload-form';*/
-
-    /*if( !$('fieldset[rel="' + id + '"]').length ) {
-     $('.brightcove-field-remove-button[rel="' + id + '"]').after('<fieldset rel="' + id + '" id="' + id + '"><legend>Upload form</legend><div class="content"></div></fieldset>');
-     console.log($('fieldset#' + id));
-     $('fieldset#' + id + ' .content').load(path, function() {
-
-     Drupal.attachBehaviors($(this));
-     });
-     }*/
-
-    /*var dialog = $('<div>').dialog({
-     autoOpen: false,
-     modal: true,
-     open: function() {
-     $(this).load(Drupal.settings.basePath + 'brightcove_field/upload/' +
-     brightcove_field_settings.brightcove_field[field_name].entity_type + '/' +
-     brightcove_field_settings.brightcove_field[field_name].field_name + '/' +
-     brightcove_field_settings.brightcove_field[field_name].entity_id + ' #brightcove-field-upload-form',
-     function() {
-     Drupal.attachBehaviors($(this));
-     });
-     },
-     height: 600,
-     width: 950,
-     close: function() {
-     Drupal.brightcove_field.submit(id);
-     $(this).remove();
-     }
-     });
-
-     dialog.dialog('open');*/
-
-
-    //Drupal.modalFrame.open({onSubmit: Drupal.brightcove_field.submit(id), url: Drupal.settings.basePath + 'brightcove_field/upload/' + Drupal.settings.brightcove_field[field_name].node_type + '/' + Drupal.settings.brightcove_field[field_name].field_name + '/' + Drupal.settings.brightcove_field[field_name].nid, width: 950, height: 600, autoFit: false});
     return false;
+  };
+
+  Drupal.brightcove_field.actions.create = function() {
   };
 
   Drupal.brightcove_field.submit_browse = function(field_rel, data) {
     parent.jQuery("." + field_rel).val(data).triggerHandler('change');
+    parent.jQuery("." + field_rel).val(data).triggerHandler('blur');
     parent.jQuery('.brightcove-field-remove-button[rel="' + field_rel + '"]').attr('disabled', '').removeClass('form-button-disabled');
   };
 
@@ -199,6 +161,9 @@
           Drupal.brightcove_field.submit_browse(dialog.attr('rel'), response.data);
           break;
         case 'upload':
+          Drupal.brightcove_field.submit_browse(dialog.attr('rel'), response.data);
+          break;
+        case 'create':
           Drupal.brightcove_field.submit_browse(dialog.attr('rel'), response.data);
           break;
       }

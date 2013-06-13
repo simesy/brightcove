@@ -10,7 +10,7 @@
 function brightcove_field_field_schema() {
   return array(
     'columns' => array(
-      'video_id' => array(
+      'brightcove_id' => array(
         'type' => 'varchar',
         'length' => 15,
         'not null' => FALSE
@@ -22,7 +22,7 @@ function brightcove_field_field_schema() {
       ),
     ),
     'indexes' => array(
-      'video_id' => array('video_id'),
+      'brightcove_id' => array('brightcove_id'),
     ),
   );
 }
@@ -39,7 +39,7 @@ function brightcove_field_update_7201() {
     );
 
     foreach (field_info_fields() as $name => $def) {
-      if ($def['type'] == 'brightcove_video' &&
+      if ($def['type'] == 'brightcove_field' &&
           $def['storage']['type'] == 'field_sql_storage') {
         $tablename = _field_sql_storage_tablename($def);
         $revtablename = _field_sql_storage_revision_tablename($def);
@@ -54,3 +54,57 @@ function brightcove_field_update_7201() {
       ->execute();
   }
 }
+
+/**
+ * Update the available Brightcove video fields with the new type and new widget
+ * values.
+ */
+function brightcove_field_update_7401() {
+  if (module_exists('field_sql_storage')) {
+    $params = array(
+      'type' => 'brightcove_video',
+      'module' => 'brightcove_field',
+    );
+    // Get all brightcove_video fields.
+    $fields = field_read_fields($params);
+    foreach ($fields as $field_name => $field) {
+      // Update field type for the checked field. We cannot use field_update_field(),
+      // because the function throw an error, if we want to modify an exsisting
+      // field's type.
+      $query = db_update('field_config')
+        ->fields(array('type' => 'brightcove_field'))
+        ->condition('field_name', $field_name)
+        ->execute();
+      // Get instances belong to the field.
+      $instances = field_read_instances(array('field_id' => $field['id']));
+      foreach ($instances as $instance) {
+        // Update the depricated field widget type to the new one.
+        $instance['widget']['type'] = 'brightcove_field_video_browser';
+        field_update_instance($instance);
+      }
+      // Update actual field's tables.
+      $tablename = _field_sql_storage_tablename($field);
+      $revtablename = _field_sql_storage_revision_tablename($field);
+      $old_col_name = _field_sql_storage_columnname($field_name, 'video_id');
+      $new_col_name = _field_sql_storage_columnname($field_name, 'brightcove_id');
+      $coldef = array(
+        'type' => 'varchar',
+        'length' =>  15,
+        'not null' => TRUE
+      );
+
+      $new_keys = array('primary key' => array('entity_type', 'entity_id', 'deleted', 'delta', 'language'));
+      db_drop_primary_key($tablename);
+      db_change_field($tablename, $old_col_name, $new_col_name, $coldef, $new_keys);
+
+      if (db_table_exists($revtablename)) {
+        $new_keys['primary key'][] = 'revision_id';
+        db_drop_primary_key($revtablename);
+        db_change_field($revtablename, $old_col_name, $new_col_name, $coldef, $new_keys);
+      }
+    }
+    // Clear caches.
+    field_cache_clear();
+  }
+}
+
