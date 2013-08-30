@@ -16,7 +16,7 @@ class MediaBrightcovePlaylistStreamWrapper extends MediaReadOnlyStreamWrapper {
    * @return string
    */
   public static function getMimeType($uri, $mapping = NULL) {
-    return 'video/brightcove-playlist';
+    return 'video/brightcove';
   }
 
   /**
