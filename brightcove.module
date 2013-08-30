@@ -356,6 +356,15 @@ function brightcove_mapi_path() {
 }
 
 /**
+ * Implements hook_file_mimetype_mapping_alter().
+ *
+ * Regsiter the video/brightcove mimetype.
+ */
+function brightcove_file_mimetype_mapping_alter(&$mapping) {
+  $mapping['mimetypes'][] = 'video/brightcove';
+}
+
+/**
  * Initializes the Brightcove Media API and returns an instance of the object.
  *
  * @param string $read_token
