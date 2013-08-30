@@ -96,6 +96,14 @@ function brightcove_media_file_formatter_info() {
     'settings callback' => 'brightcove_media_file_formatter_video_settings',
   );
 
+  $formatters['brightcove_media_playlist'] = array(
+    'label' => t('Brightcove Playlist'),
+    'file types' => array('video'),
+    'default settings' => array(),
+    'view callback' => 'brightcove_media_file_formatter_playlist_view',
+    'settings callback' => 'brightcove_media_file_formatter_video_settings',
+  );
+
   $formatters['brightcove_media_image'] = array(
     'label' => t('Brightcove Preview Image'),
     'file types' => array('video'),
@@ -133,7 +141,7 @@ function brightcove_media_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * The brightcove_media_video file_formatter view callback.
+ * The brightcove_media_video_file_formatter view callback.
  *
  * @param $file
  * @param $display
@@ -142,7 +150,47 @@ function brightcove_media_theme($existing, $type, $theme, $path) {
  */
 function brightcove_media_file_formatter_video_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
-  if (($scheme == 'brightcove' || $scheme == 'brightcove-playlist')) {
+  if ($scheme == 'brightcove') {
+    $element = array(
+      '#theme' => 'brightcove_field_embed',
+      '#type' => $scheme,
+      '#brightcove_id' => parse_url($file->uri, PHP_URL_HOST),
+      '#player' => variable_get('brightcove_player_pid', ''),
+      '#attached' => array(
+        'js' => array(
+          'http://admin.brightcove.com/js/BrightcoveExperiences.js' => array(
+            'type' => 'external',
+          ),
+        ),
+      ),
+    );
+    // add player override
+    if (isset($display['settings']['player']) && $display['settings']['player']) {
+      $element['#player'] = $display['settings']['player'];
+    }
+    foreach (array('width', 'height') as $setting) {
+      if (isset($display['settings'][$setting]) && $display['settings'][$setting]) {
+        $element['#params'][$setting] = $display['settings'][$setting];
+      }
+    }
+
+    return $element;
+  }
+
+  return NULL;
+}
+
+/**
+ * The brightcove_media_playlist_file_formatter view callback.
+ *
+ * @param $file
+ * @param $display
+ * @param $langcode
+ * @return array|null
+ */
+function brightcove_media_file_formatter_playlist_view($file, $display, $langcode) {
+  $scheme = file_uri_scheme($file->uri);
+  if ($scheme == 'brightcove-playlist') {
     $element = array(
       '#theme' => 'brightcove_field_embed',
       '#type' => $scheme,
