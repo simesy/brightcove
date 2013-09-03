@@ -412,7 +412,7 @@ function brightcove_media_upload_form($form, &$form_state) {
     '#description' => t('It takes several minutes (depending on processing time in Brightcove cloud), until video is available after upload. Clicking \'Upload and attach\' uploads video to Brightcove then closes the dialog and attaches the video.'),
   );
 
-  $form['uploadform'] += _brightcove_upload_form($form, &$form_state);
+  $form['uploadform'] += _brightcove_upload_form($form, $form_state);
 
   $form['uploadform']['upload'] = array(
     '#type' => 'button',
