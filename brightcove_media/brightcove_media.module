@@ -727,8 +727,8 @@ function brightcove_media_media_element_process(&$element, &$form_state) {
  */
 function brightcove_media_node_presave($node) {
   global $user;
-  if (isset($node->media_gallery_media['und'])) {
-    foreach ($node->media_gallery_media['und'] as &$file) {
+  if (isset($node->media_gallery_media[LANGUAGE_NONE])) {
+    foreach ($node->media_gallery_media[LANGUAGE_NONE] as &$file) {
       if (isset($file['fid']) && strpos($file['fid'], 'v') === 0) {
         $video_id = substr($file['fid'], 1);
         $candidates = file_load_multiple(array(),
