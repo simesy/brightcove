@@ -55,6 +55,9 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   $entity_info = entity_get_info($entity_type);
   $eid = isset($form[$entity_info['entity keys']['id']]['#value']) ? $form[$entity_info['entity keys']['id']]['#value'] : NULL;
   $bundle = isset($form[$entity_info['entity keys']['bundle']]['#value']) ? $form[$entity_info['entity keys']['bundle']]['#value'] : NULL;
+  // It needs to be able to work with field collection.
+  $parent_delta = array_pop($element['#field_parents']);
+
   $element['brightcove_id'] = array(
     '#type' => 'textfield',
     '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : NULL,
@@ -64,8 +67,8 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       $element['#entity_type'] . '/' . $element['#field_name'] . '/' .
       ($eid ? $eid : ($bundle ? $bundle : 0)),
     '#attributes' => array(
-      'rel' => array($element['#field_name'] . '-' . $delta),
-      'class' => array('brightcove-video-field', $element['#field_name'] . '-' . $delta),
+      'rel' => array($element['#field_name'] . '-' . $parent_delta . '-' . $delta),
+      'class' => array('brightcove-video-field', $element['#field_name'] . '-' . $parent_delta . '-' . $delta),
       'data-field-name' => $element['#field_name'],
     ),
     '#element_validate' => array(
@@ -80,7 +83,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       '#type' => 'button',
       '#attributes' => array(
         'class' => array('brightcove-field-browse-video-button'),
-        'rel' => $element['#field_name'] . '-' . $delta,
+        'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
         'data-entity-type' => $entity_type,
         'data-bundle' => $element['#bundle'],
         'data-field-name' => $element['#field_name'],
@@ -93,7 +96,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       '#ajax' => array(
         'callback' => 'ajax_browse_video_dialog_callback',
       ),
-      '#name' => $element['#field_name'] . '-' . $delta,
+      '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
     );
   }
 
@@ -103,7 +106,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       '#type' => 'button',
       '#attributes' => array(
         'class' => array('brightcove-field-upload-button'),
-        'rel' => $element['#field_name'] . '-' . $delta,
+        'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
         'data-entity-type' => $entity_type,
         'data-bundle' => $element['#bundle'],
         'data-field-name' => $element['#field_name'],
@@ -115,7 +118,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       '#ajax' => array(
         'callback' => 'ajax_upload_video_dialog_callback',
       ),
-      '#name' => $element['#field_name'] . '-' . $delta,
+      '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
     );
   }
 
@@ -123,14 +126,14 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     '#type' => 'button',
     '#attributes' => array(
       'class' => array('brightcove-field-remove-button'),
-      'rel' => $element['#field_name'] . '-' . $delta,
+      'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
       'data-entity-type' => $entity_type,
       'data-field-name' => $element['#field_name'],
       'data-entity-id' => is_null($eid) ? '0' : $eid,
     ),
     '#default_value' => t('Remove'),
     '#value_callback' => 'brightcove_field_button_value_callback',
-    '#name' => $element['#field_name'] . '-' . $delta,
+    '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
   );
 
   $element['player'] = array(

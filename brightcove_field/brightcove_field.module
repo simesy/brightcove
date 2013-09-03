@@ -248,7 +248,7 @@ function brightcove_field_browse_access($entity_type, $field_name, $entity_id_or
   $field = field_info_field($field_name);
 
   if ($entity_id_or_bundle) {
-    if (is_numeric($entity_id_or_bundle)) { // entity id is given
+    if (is_numeric($entity_id_or_bundle)) {
       $entity = entity_load($entity_type, array($entity_id_or_bundle));
       if (count($entity)) {
         $entity = array_shift($entity);
@@ -256,12 +256,7 @@ function brightcove_field_browse_access($entity_type, $field_name, $entity_id_or
           field_access('edit', $field, $entity_type));
       }
     }
-    else { // bundle is given
-      return (entity_access('create', $entity_type, $entity_id_or_bundle) &&
-        field_access('edit', $field, $entity_type));
-    }
   }
-
   return entity_access('create', $entity_type) &&
     field_access('edit', $field, $entity_type);
 }
