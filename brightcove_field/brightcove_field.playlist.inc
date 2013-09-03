@@ -232,7 +232,7 @@ function _brightcove_field_playlist_browse() {
   // No possibility to search any parameter of the playlist.(Only ID).
   $content['filter_form'] = '';
   $content['items'] = $items;
-  $content['pager'] = theme_pager($pager_vars);
+  $content['pager'] = theme('pager', $pager_vars);
 
   return $content;
 }

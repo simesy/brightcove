@@ -252,7 +252,7 @@ function _brightcove_field_video_browse() {
   );
 
   $content['items'] = $items;
-  $content['pager'] = theme_pager($pager_vars);
+  $content['pager'] = theme('pager', $pager_vars);
   $filter_form = drupal_get_form('brightcove_field_filter_form');
   $content['filter_form'] = drupal_render($filter_form);
 
