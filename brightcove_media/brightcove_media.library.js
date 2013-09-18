@@ -81,6 +81,15 @@
         // Reload the media list
         Drupal.brightcoveLibrary.library.loadMedia();
       });
+
+      $(document).delegate('#media-browser-library-list a', 'mousedown', function() {
+        var uri = $(this).attr('data-uri');
+        $("input[name='submitted-video']").val(uri);
+        var file = {uri: uri};
+        var files = new Array();
+        files.push(file);
+        Drupal.media.browser.selectMedia(files);
+      });
     }
   };
 
