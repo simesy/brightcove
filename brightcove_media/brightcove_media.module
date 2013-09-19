@@ -85,6 +85,9 @@ function brightcove_media_theme() {
     'brightcove_media_image' => array(
       'render element' => 'elements',
     ),
+    'brightcove_media_browser_filter_form' => array(
+      'render element' => 'form',
+    ),
   );
 }
 
@@ -101,7 +104,7 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
   if ($scheme == 'brightcove' && empty($file->override['wysiwyg'])) {
     $element = array(
       '#theme' => 'brightcove_field_embed',
-      '#video_id' => parse_url($file->uri, PHP_URL_HOST),
+      '#brightcove_id' => parse_url($file->uri, PHP_URL_HOST),
       '#attached' => array(
         'js' => array(
           'http://admin.brightcove.com/js/BrightcoveExperiences.js' => array(
@@ -335,15 +338,79 @@ function brightcove_media_browser_filter_form($form, &$form_state) {
     '#name' => 'reset',
     '#value' => t('Reset'),
   );
-  $form['submitted-video'] = array(
-    '#type' => 'hidden',
-    '#default_value' => FALSE,
-  );
 
   $form['#prefix'] = '<div id="bc-filter-form">';
   $form['#suffix'] = '</div>';
 
+  $form['submitted-video'] = array(
+    '#type' => 'hidden',
+    '#default_value' => FALSE,
+  );
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#submit' => array('brightcove_media_browser_form_submit'),
+    '#value' => t('Submit'),
+  );
+  $form['actions']['cancel'] = array(
+    '#type' => 'link',
+    '#title' => t('Cancel'),
+    '#href' => '',
+    '#attributes' => array(
+      'class' => array('button', 'button-no', 'fake-cancel', 'brightcove')
+    ),
+    '#weight' => 100,
+  );
+
   return $form;
+}
+
+/**
+ * The brightcove_media_browser_filter_form form theme function.
+ *
+ * @param $variables
+ * @return string
+ */
+function theme_brightcove_media_browser_filter_form(&$variables) {
+  $output = '';
+  $form = $variables['form'];
+
+  $output .= drupal_render($form['searchform']);
+  $output .= drupal_render($form['actions']);
+  $output .= '<ul id="media-browser-library-list" class="media-list-thumbnails"></ul>';
+  $output .= '<div id="status"></div>';
+  $output .= drupal_render_children($form);
+
+  return $output;
+}
+
+/**
+ * The brightcove_media_browser_filter_form submit callback function.
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function brightcove_media_browser_form_submit($form, &$form_state) {
+  $uri = $form_state['values']['submitted-video'];
+  try {
+    // Save the remote file
+    $file = file_uri_to_object($uri, TRUE);
+    file_save($file);
+  }
+  catch (Exception $e) {
+    form_set_error('url', $e->getMessage());
+    return;
+  }
+
+  if (!$file->fid) {
+    form_set_error('url', t('The file %file could not be saved. An unknown error has occurred.', array('%file' => $uri)));
+    return;
+  }
+  else {
+    $form_state['file'] = $file;
+    $form_state['redirect'] = array('media/browser', array('query' => array('render' => 'media-popup', 'fid' => $file->fid)));
+  }
 }
 
 /**
@@ -363,8 +430,7 @@ function brightcove_media_media_browser_plugin_view($plugin_name, $params) {
         '#settings' => array(
           'viewMode' => 'thumbnails',
           'getMediaUrl' => url('brightcove/media/list'),
-          'multiselect' => isset($params['multiselect']) &&
-                           $params['multiselect'] != 'false',
+          'multiselect' => isset($params['multiselect']) && $params['multiselect'] != 'false',
           'types' => isset($params['types']) ? $params['types'] : array(),
         ),
         '#attached' => array(
