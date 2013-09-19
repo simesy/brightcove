@@ -10,13 +10,9 @@
       var proxied = Drupal.media.browser.validateButtons;
       Drupal.media.browser.validateButtons = function() {
         if (this.id === 'media-tab-brightcove') {
-          if (!($('.fake-ok', this).length > 0)) {
-            $('<a class="button fake-ok">Submit</a>').appendTo(this).bind('click', Drupal.media.browser.submit);
-          }
-          if (!($('.fake-cancel', this).length > 0)) {
-            $('<a class="button fake-cancel">Cancel</a>').appendTo(this).bind('click', Drupal.media.browser.submit);
-          }
-        } else {
+          $('a.fake-cancel').bind('click', Drupal.media.browser.submit);
+        }
+        else {
           return proxied.apply(this);
         }
       };

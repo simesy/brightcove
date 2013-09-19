@@ -357,7 +357,7 @@ function brightcove_media_browser_filter_form($form, &$form_state) {
     '#title' => t('Cancel'),
     '#href' => '',
     '#attributes' => array(
-      'class' => array('button', 'button-no', 'fake-cancel', 'brightcove')
+      'class' => array('button', 'button-no', 'fake-cancel', 'brightcove'),
     ),
     '#weight' => 100,
   );
