@@ -34,11 +34,11 @@ class MediaBrightcoveVideoStreamWrapper extends MediaReadOnlyStreamWrapper {
    * @return null|string
    */
   public function interpolateUrl() {
-    if ($video_id = $this->getVideoID()) {
-      // @todo find out how to detect this url in a nice way, it might break
-      //   any time
-      $pid = variable_get('brightcove_player_pid', NULL);
-      $player = brightcove_player_load($pid);
+    // Load the default brightcove player.
+    $player = brightcove_default_player();
+    // Parse the video id.
+    $video_id = $this->getVideoID();
+    if (!is_null($video_id) && !is_null($player)) {
       return url('http://c.brightcove.com/services/viewer/federated_f9', array(
           'query' => array(
             'playerID' => $player->player_id,

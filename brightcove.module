@@ -875,6 +875,22 @@ function brightcove_player_list() {
 }
 
 /**
+ * Get the default player.
+ *
+ * @return mixed|null
+ */
+function brightcove_default_player() {
+  $pid = variable_get('brightcove_player_pid', NULL);
+
+  if (is_null($pid)) {
+    drupal_set_message(t("The default brightcove player has not been defined yet."), 'warning');
+    return NULL;
+  }
+
+  return brightcove_player_load($pid);
+}
+
+/**
  * Save a player.
  *
  * @param $player
