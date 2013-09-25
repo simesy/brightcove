@@ -1267,12 +1267,10 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
   }
 
   if (isset($settings['brightcove_image_link']) && $settings['brightcove_image_link'] == 'dialog') {
-    $variables['#attached']['js'][] = 'misc/ajax.js';
-    $variables['#attached']['js'][] =
-      drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js';
+    $variables['#attached']['library'][] = array('system', 'drupal.ajax');
     $variables['#attached']['library'][] = array('system', 'ui.dialog');
-    $variables['#attached']['css'][] =
-      drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css';
+    $variables['#attached']['js'][] = drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js';
+    $variables['#attached']['css'][] = drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css';
   }
 
   if ($theme) {
