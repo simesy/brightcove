@@ -28,7 +28,7 @@
           if (!Drupal.brightcoveLibrary.loaded) {
             var params = {};
             for (var p in Drupal.settings.media.browser.brightcove) {
-              params[p] = Drupal.settings.media.browser.library[p];
+              params[p] = Drupal.settings.media.browser.brightcove[p];
             }
 
             Drupal.brightcoveLibrary.library.start($(ui.panel), params);
