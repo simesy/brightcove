@@ -286,7 +286,7 @@ function brightcove_field_player($type, $entity_type, $entity_id, $field_name, $
   drupal_add_js('http://admin.brightcove.com/js/BrightcoveExperiences.js', 'external');
   $entities = entity_load($entity_type, array($entity_id));
   $entity = array_shift($entities);
-  $language = isset($entity->language) ? $entity->language : 'und';
+  $language = isset($entity->language) ? $entity->language : LANGUAGE_NONE;
   $brightcove_id = $entity->{$field_name}[$language][$delta]['brightcove_id'];
   $player = $entity->{$field_name}[$language][$delta]['player'];
 
