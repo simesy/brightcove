@@ -15,33 +15,34 @@
  * @see template_preprocess_brightcove_field_embed().
  */
 ?>
+<!-- Start of Brightcove Player -->
 
-<object id="<?php print $id;?>" width="<?php print $width;?>" class="<?php print join($classes_array, ',');?>"
-     height="<?php print $height;?>" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
-     codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,47,0">
-   <param name="movie" value="http://c.brightcove.com/services/viewer/federated_f9?isVid=1&isUI=1" />
-   <param name="bgcolor" value="<?php print $bgcolor;?>" />
-   <param name="base" value="http://admin.brightcove.com" />
-   <param name="seamlesstabbing" value="false" />
-   <param name="allowFullScreen" value="true" />
-   <param name="swLiveConnect" value="true" />
-   <param name="allowScriptAccess" value="always" />
-   <param name="flashVars" value="<?php print $flashvars;?>" />
+<div style="display:none">
 
-   <embed src="http://c.brightcove.com/services/viewer/federated_f9?isVid=1&isUI=1"
-     bgcolor="<?php print $bgcolor;?>"
-     flashVars="<?php print $flashvars;?>"
-     name='flashObj'
-     wmode="transparent"
-     base="http://admin.brightcove.com"
-     width="<?php print $width;?>"
-     height="<?php print $height;?>"
-     seamlesstabbing="false"
-     type="application/x-shockwave-flash"
-     allowFullScreen="true"
-     swLiveConnect="true"
-     allowScriptAccess="always"
-     pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash">
-   </embed>
+</div>
+
+<!--
+By use of this code snippet, I agree to the Brightcove Publisher T and C
+found at https://accounts.brightcove.com/en/terms-and-conditions/.
+-->
+
+<object id="<?php print $id;?>" class="BrightcoveExperience <?php print join($classes_array, ',');?>">
+  <param name="bgcolor" value="<?php print $bgcolor;?>" />
+  <param name="width" value="<?php print $width;?>" />
+  <param name="height" value="<?php print $height;?>" />
+  <param name="playerID" value="<?php print $player_id;?>" />
+  <param name="playerKey" value="<?php print $player_key;?>" />
+  <?php if ($is_vid): ?>
+    <param name="isVid" value="true" />
+    <param name="@videoPlayer" value="<?php print $brightcove_id; ?>" />
+  <?php else: ?>
+    <param name="@videoList" value="<?php print $brightcove_id; ?>" />
+    <param name="@playlistTab" value="<?php print $brightcove_id; ?>" />
+    <param name="@playlistCombo" value="<?php print $brightcove_id; ?>" />
+  <?php endif; ?>
+  <param name="isUI" value="true" />
+  <param name="dynamicStreaming" value="true" />
 
 </object>
+
+<!-- End of Brightcove Player -->
