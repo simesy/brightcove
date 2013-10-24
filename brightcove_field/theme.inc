@@ -75,29 +75,22 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
   $flashvars = array();
   $player = brightcove_player_load($variables['player']);
 
-  $vars['id'] = 'myExperience';
-  $vars['bgcolor'] = '#FFFFFF';
-  $vars['width'] = isset($variables['width']) ? $variables['width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
-  $vars['height'] = isset($variables['height']) ? $variables['height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
+  $variables['id'] = 'myExperience';
+  $variables['bgcolor'] = '#FFFFFF';
+  $variables['width'] = isset($variables['width']) ? $variables['width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
+  $variables['height'] = isset($variables['height']) ? $variables['height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
 
-  foreach ($vars as $key => $value) {
-    $variables[$key] = isset($variables['params'][$key]) ? $variables['params'][$key] : $vars[$key];
-  }
   if (isset($variables['brightcove_id'])) {
-    $flashvars['domain'] = 'embed';
-    $flashvars['dynamicStreaming'] = 'true';
-    $flashvars['playerID'] = isset($player->player_id) ? $player->player_id : '';
-    $flashvars['playerKey'] = isset($player->player_key) ? $player->player_key : '';
+    $variables['player_id'] = isset($player->player_id) ? $player->player_id : '';
+    $variables['player_key'] = isset($player->player_key) ? $player->player_key : '';
 
     if (drupal_strtolower($variables['type']) == 'brightcove') {
-      $flashvars['@videoPlayer'] = $variables['brightcove_id'];
+      $variables['is_vid'] = TRUE;
+      $variables['brightcove_id'] = $variables['brightcove_id'];
     }
     elseif (drupal_strtolower($variables['type']) == 'brightcove-player') {
-      $flashvars['@playlistTabs'] = $variables['brightcove_id'];
-      $flashvars['@playlistCombo'] = $variables['brightcove_id'];
+      $variables['is_vid'] = FALSE;
+      $variables['brightcove_id'] = $variables['brightcove_id'];
     }
   }
-
-  array_walk($flashvars, create_function('&$item, $key', '$item = urlencode($key) . "=" . urlencode($item);'));
-  $variables['flashvars'] = join($flashvars, '&');
 }
