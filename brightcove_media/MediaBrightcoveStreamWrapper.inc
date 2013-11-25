@@ -51,12 +51,55 @@ class MediaBrightcoveStreamWrapper extends MediaReadOnlyStreamWrapper {
   }
 
   function getOriginalThumbnailPath() {
-    if ($video_id = $this->getVideoID()) {
-      if ($video = brightcove_video_load($video_id)) {
-        return isset($video['thumbnailURL']) ? $video['thumbnailURL'] : NULL;
+    $video = brightcove_video_load($this->getVideoID());
+
+    if (!empty($video->videoStillURL)) {
+      return $video->videoStillURL;
+    }
+
+    if (!empty($video->thumbnailURL)) {
+      return $video->thumbnailURL;
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Get the local thumbnail path of the bc video.
+   *
+   * @return string
+   *  The local path of the thumbnail image.
+   */
+  function getLocalThumbnailPath() {
+    $video_id = $this->getVideoID();
+    $thumbnail_path = 'public://media-brightcove/' . $video_id . '.jpg';
+    $default_path = 'public://media-brightcove/default.jpg';
+
+    if (!file_exists($thumbnail_path)) {
+      $dirname = drupal_dirname($thumbnail_path);
+      file_prepare_directory($dirname, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+      $original_path = $this->getOriginalThumbnailPath();
+
+      // If a thumbnail can be identified, download it.
+      if (!empty($original_path)) {
+        $response = drupal_http_request($original_path);
+        if (!empty($response->data)) {
+          file_unmanaged_save_data($response->data, $thumbnail_path, FILE_EXISTS_ERROR);
+        }
+      }
+      // If there was no thumbnail obtained, use a default icon.
+      else {
+        if (!file_exists($default_path)) {
+          $bc_default_thumbnail = variable_get('brightcove_default_thumbnail', brightcove_get_default_image());
+          $args = new StdClass();
+          $args->filemime = $this->getMimeType(NULL);
+          file_unmanaged_copy(file_icon_path($args, $bc_default_thumbnail), $default_path, FILE_EXISTS_ERROR);
+        }
+
+        return $default_path;
       }
     }
 
-    return NULL;
-  }
+    return $thumbnail_path;
+   }
 }

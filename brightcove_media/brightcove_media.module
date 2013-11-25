@@ -139,19 +139,27 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
  */
 function brightcove_media_file_formatter_image_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
-  if ($scheme == 'brightcove' || $scheme == 'brightcove-playlist') {
-    $video = NULL;
-    $id = parse_url($file->uri, PHP_URL_HOST);
-    if ($scheme == 'brightcove') {
-      $video = brightcove_video_load($id);
+
+  if (in_array($scheme, array('brightcove', 'brightcove-playlist'))) {
+    $wrapper = file_stream_wrapper_get_instance_by_uri($file->uri);
+    $image_style = $display['settings']['image_style'];
+    $valid_image_styles = image_style_options(FALSE);
+
+    if (empty($image_style) || !isset($valid_image_styles[$image_style])) {
+      $element = array(
+        '#theme' => 'image',
+        '#path' => $wrapper->getLocalThumbnailPath(),
+        '#attributes' => isset($file->override['attributes']) ? $file->override['attributes'] : array(),
+      );
     }
-    elseif ($scheme == 'brightcove-playlist') {
-      $video = brightcove_playlist_load($id);
+    else {
+      $element = array(
+        '#theme' => 'image_style',
+        '#style_name' => $image_style,
+        '#path' => $wrapper->getLocalThumbnailPath(),
+        '#attributes' => isset($file->override['attributes']) ? $file->override['attributes'] : array(),
+      );
     }
-    $element = array(
-      '#theme' => 'brightcove_media_image',
-      '#video' => $video
-    );
 
     return $element;
   }
