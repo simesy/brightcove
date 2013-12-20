@@ -271,7 +271,7 @@ function brightcove_field_player($type, $entity_type, $entity_id, $field_name, $
   if (!$player) {
     $instance = field_info_instance($entity_type, $field_name, $entity->type);
     $player = $instance['settings']['brightcove_player'] ? $instance['settings']['brightcove_player'] :
-      variable_get('brightcove_player_pid', '');
+      variable_get('brightcove_player_default', '');
   }
 
   $variables = array(
@@ -1493,7 +1493,7 @@ function brightcove_field_get_value($instance, $stored) {
   }
   // If no player is set to the content and the BC video field,
   // try to get the global default player.
-  elseif ($pid = variable_get('brightcove_player_pid')) {
+  elseif ($pid = variable_get('brightcove_player_default')) {
     return $pid;
   }
   return NULL;
@@ -1510,7 +1510,7 @@ function brightcove_field_filter_info() {
     'process callback' => '_filter_brightcove',
     'settings callback' => '_filter_brightcove_settings',
     'default settings' => array(
-      'player' => variable_get('brightcove_player_pid'),
+      'player' => variable_get('brightcove_player_default'),
     ),
     'tips callback' => '_filter_brightcove_tips',
   );
@@ -1556,7 +1556,7 @@ function _filter_brightcove_replace($videoid) {
   $filter = &drupal_static('_filter_brightcove');
   return theme('brightcove_field_embed', array(
     'player' => $filter && $filter->settings['player'] ?
-      $filter->settings['player'] : variable_get('brightcove_player_pid'),
+      $filter->settings['player'] : variable_get('brightcove_player_default'),
     'video_id' => $videoid[1],
   ));
 }

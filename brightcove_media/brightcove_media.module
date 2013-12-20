@@ -155,7 +155,7 @@ function brightcove_media_file_formatter_video_view($file, $display, $langcode) 
       '#theme' => 'brightcove_field_embed',
       '#type' => $scheme,
       '#brightcove_id' => parse_url($file->uri, PHP_URL_HOST),
-      '#player' => variable_get('brightcove_player_pid', ''),
+      '#player' => variable_get('brightcove_player_default', ''),
       '#attached' => array(
         'js' => array(
           'http://admin.brightcove.com/js/BrightcoveExperiences.js' => array(
@@ -195,7 +195,7 @@ function brightcove_media_file_formatter_playlist_view($file, $display, $langcod
       '#theme' => 'brightcove_field_embed',
       '#type' => $scheme,
       '#brightcove_id' => parse_url($file->uri, PHP_URL_HOST),
-      '#player' => variable_get('brightcove_player_pid', ''),
+      '#player' => variable_get('brightcove_player_default', ''),
       '#attached' => array(
         'js' => array(
           'http://admin.brightcove.com/js/BrightcoveExperiences.js' => array(

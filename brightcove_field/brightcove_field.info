@@ -7,3 +7,10 @@ dependencies[] = brightcove
 dependencies[] = field
 dependencies[] = entity
 dependencies[] = image
+
+; Information added by drupal.org packaging script on 2013-10-11
+version = "7.x-4.0-alpha2+1-dev"
+core = "7.x"
+project = "brightcove"
+datestamp = "1381494257"
+
