@@ -38,6 +38,8 @@ function brightcove_schema() {
     'primary key' => array('pid'),
   );
 
+  $schema['cache_brightcove'] = drupal_get_schema_unprocessed('system', 'cache');
+
   return $schema;
 }
 
@@ -66,39 +68,6 @@ function brightcove_update_7001() {
     ),
     'primary key' => array('name'),
   ));
-}
-
-/**
- * Migrates old player id and key to the table.
- */
-function brightcove_update_7002() {
-  $t = get_t();
-
-  $player_id = variable_get('brightcove_player');
-  $player_key = variable_get('brightcove_player_key');
-
-  brightcove_player_save((object) array(
-    'name' => $t('Default'),
-    'player_id' => $player_id,
-    'player_key' => $player_key,
-  ));
-
-  variable_del('brightcove_player');
-  variable_del('brightcove_player_key');
-}
-
-/**
- * Create individual primary key for players.
- */
-function brightcove_update_7003() {
-  $spec = array(
-    'type' => 'serial',
-    'unsigned' => TRUE,
-    'not null' => TRUE,
-  );
-
-  db_drop_primary_key('brightcove_player');
-  db_add_field('brightcove_player', 'pid', $spec, array('primary key' => array('pid')));
 }
 
 /**
@@ -161,4 +130,51 @@ function brightcove_uninstall() {
   variable_del('brightcove_status_display_unavailable');
   variable_del('brightcove_user_field');
   variable_del('brightcove_write_api_key');
+  // Cache variables.
+  variable_del('brightcove_cache_enabled');
+  variable_del('brightcove_cache_type');
+  variable_del('brightcove_cache_db');
+  variable_del('brightcove_cache_file');
+  variable_del('brightcove_cache_memcached');
+}
+
+/**
+ * Migrates old player id and key to the table.
+ */
+function brightcove_update_7002() {
+  $t = get_t();
+
+  $player_id = variable_get('brightcove_player');
+  $player_key = variable_get('brightcove_player_key');
+
+  brightcove_player_save((object) array(
+    'name' => $t('Default'),
+    'player_id' => $player_id,
+    'player_key' => $player_key,
+  ));
+
+  variable_del('brightcove_player');
+  variable_del('brightcove_player_key');
+}
+
+/**
+ * Create individual primary key for players.
+ */
+function brightcove_update_7003() {
+  $spec = array(
+    'type' => 'serial',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+
+  db_drop_primary_key('brightcove_player');
+  db_add_field('brightcove_player', 'pid', $spec, array('primary key' => array('pid')));
+}
+
+/**
+ * Create cache table for Brightcove objects.
+ */
+function brightcove_update_7004() {
+  $cache_table = drupal_get_schema_unprocessed('system', 'cache');
+  db_create_table('cache_brightcove', $cache_table);
 }

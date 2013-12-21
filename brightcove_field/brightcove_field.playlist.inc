@@ -182,60 +182,77 @@ function _brightcove_field_playlist_browse() {
   $items_per_page = 20;
   $page = isset($_GET['page']) ? intval($_GET['page']) : '0';
 
-  // Issue a BC request to list videos
-  // For all videos, get a thumbnail URL
-  // Theme a table with videos and a button to attach.
-  $bc = brightcove_initialize();
-
   $params = array();
   $method = 'find_all_playlists';
   $result = NULL;
 
-  try {
-    $params['page_size'] = $items_per_page;
-    $params['page_number'] = $page;
+  // Add parameters.
+  $params['page_size'] = $items_per_page;
+  $params['page_number'] = $page;
 
-    $result = $bc->find($method, $params);
-  } catch (Exception $error) {
-    watchdog('brightcove', 'Finding playlists in browse failed.', array(), WATCHDOG_ERROR);
+  // Try to load the data from cache.
+  $cid = 'brightcove:playlist:list';
+  foreach ($params as $key => $param) {
+    $cid .= ":{$key}:{$param}";
   }
+  $content = brightcove_cache_get($cid);
 
-  $pager_page_array = explode(',', $page);
-  $pager_total[0] = ceil($bc->total_count / $items_per_page);
-  $pager_page_array[0] =
-    max(0, min(
-      (int)$pager_page_array[0],
-      ((int)$pager_total[0]) - 1)
-    );
+  if (!$content) {
+    try {
+      $bc = brightcove_initialize();
+      $result = $bc->find($method, $params);
+    } catch (Exception $error) {
+      watchdog('brightcove', 'Finding playlists in browse failed.', array(), WATCHDOG_ERROR);
+    }
 
-  $items = array();
-  if (count($result)) {
-    foreach ($result as $playlist) {
-      $item = array();
-      $item['title'] = check_plain($playlist->name);
-      $item['brightcove_id'] = $playlist->id;
-      if (!empty($playlist->thumbnailURL)) {
+    $pager_page_array = explode(',', $page);
+    $pager_total[0] = ceil($bc->total_count / $items_per_page);
+    $pager_page_array[0] =
+      max(0, min(
+          (int) $pager_page_array[0],
+          ((int) $pager_total[0]) - 1)
+      );
+
+    $items = array();
+    if (count($result)) {
+      foreach ($result as $playlist) {
+        $item = array();
+        $item['title'] = check_plain($playlist->name);
+        $item['brightcove_id'] = $playlist->id;
+        if (!empty($playlist->thumbnailURL)) {
           $image_vars = array('path' => $playlist->thumbnailURL, 'alt' => '', 'title' => '', 'attributes' => '');
           $item['thumbnail'] = theme('image', $image_vars);
+        }
+        else {
+          $image_vars = array(
+            'path' => brightcove_get_default_image(),
+            'alt' => '',
+            'title' => '',
+            'attributes' => '',
+            'width' => '120',
+            'height' => ''
+          );
+          $item['thumbnail'] = theme('image', $image_vars);
+        }
+        $items[] = $item;
       }
-      else {
-        $image_vars = array('path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attributes' => '', 'width' => '120', 'height' => '');
-        $item['thumbnail'] = theme('image', $image_vars);
-      }
-      $items[] = $item;
     }
-  }
 
-  $pager_vars = array(
-    'tags' => NULL,
-    'element' => 0,
-    'parameters' => array(),
-    'quantity' => $items_per_page,
-  );
-  // No possibility to search any parameter of the playlist.(Only ID).
-  $content['filter_form'] = '';
-  $content['items'] = $items;
-  $content['pager'] = theme('pager', $pager_vars);
+    $pager_vars = array(
+      'tags' => NULL,
+      'element' => 0,
+      'parameters' => array(),
+      'quantity' => $items_per_page,
+    );
+    // No possibility to search any parameter of the playlist.(Only ID).
+    $content['filter_form'] = array();
+    $content['items'] = $items;
+    $content['pager'] = theme('pager', $pager_vars);
+
+    // Save the output to the cache record(not only the video objects),
+    // because we also need data for pagination.
+    brightcove_cache_set($cid, $content);
+  }
 
   return $content;
 }

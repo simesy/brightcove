@@ -585,8 +585,6 @@ function brightcove_media_list() {
 
   $media = array();
 
-  $bc = brightcove_initialize();
-
   $bc_find_params = array();
   if (isset($params['filter'])) {
     switch ($params['filter']['search']) {
@@ -609,38 +607,48 @@ function brightcove_media_list() {
   else {
     $method = 'find_all_videos';
   }
+  $bc_find_params['page_size'] = $limit;
+  $bc_find_params['page_number'] = $start;
 
-  $result = NULL;
-  try {
-    $bc_find_params['page_size'] = $limit;
-    $bc_find_params['page_number'] = $start;
+  // Try to load the data from cache. It uses different key than the cache of field browse results,
+  // because it has a different output.
+  $cid = 'brightcove:video:list:media';
+  foreach ($bc_find_params as $key => $param) {
+    $cid .= ":{$key}:{$param}";
+  }
+  $result = brightcove_cache_get($cid);
 
-    $result = $bc->find($method, $bc_find_params);
-    if (count($result)) {
-      foreach ($result as $video) {
-        $uri = file_stream_wrapper_uri_normalize("brightcove://{$video->id}");
-        $file = file_uri_to_object($uri);
-        $file->filename = $video->name;
-        $file->type = 'video';
-        if (!isset($file->fid)) {
-          $file->fid = 0;
-        }
-        media_browser_build_media_item($file);
-        $file->preview = l($file->preview, 'media/browser', array(
-          'html' => TRUE,
-          'attributes' => array(
-            'data-uri' => $uri,
-          ),
-          'query' => array('render' => 'media-popup', 'uri' => $uri),
-        ));
-        $files[$uri] = $file;
-        $media[] = $file;
-      }
+  if (!$result) {
+    try {
+      $bc = brightcove_initialize();
+      $result = $bc->find($method, $bc_find_params);
+      brightcove_cache_set($cid, $result);
+    }
+    catch (Exception $e) {
+      watchdog('brightcove', 'Retrieving media list failed.', array(),
+        WATCHDOG_ERROR);
     }
   }
-  catch (Exception $e) {
-    watchdog('brightcove', 'Retrieving media list failed.', array(),
-      WATCHDOG_ERROR);
+  if (count($result)) {
+    foreach ($result as $video) {
+      $uri = file_stream_wrapper_uri_normalize("brightcove://{$video->id}");
+      $file = file_uri_to_object($uri);
+      $file->filename = $video->name;
+      $file->type = 'video';
+      if (!isset($file->fid)) {
+        $file->fid = 0;
+      }
+      media_browser_build_media_item($file);
+      $file->preview = l($file->preview, 'media/browser', array(
+        'html' => TRUE,
+        'attributes' => array(
+          'data-uri' => $uri,
+        ),
+        'query' => array('render' => 'media-popup', 'uri' => $uri),
+      ));
+      $files[$uri] = $file;
+      $media[] = $file;
+    }
   }
 
   drupal_add_js(array('brightcove' => array('files' => $files)), 'setting');
@@ -886,16 +894,44 @@ function brightcove_media_playlist_browser_form($form, &$form_state) {
  *    available playlists.
  */
 function brightcove_media_playlist_list() {
+  module_load_include('browser.inc', 'media', 'includes/media');
   $media = array();
   $files = array();
+  $default_items_per_page = 20;
 
-  module_load_include('browser.inc', 'media', 'includes/media');
-  module_load_include('inc', 'brightcove', 'brightcove.playlist');
+  $params = drupal_get_query_parameters();
 
-  $playlists = brightcove_get_playlists();
+  $limit = isset($params['limit']) ? $params['limit'] : $default_items_per_page;
+  $start = isset($params['start']) ? ceil($params['start'] / $limit) : 0;
 
-  if (count($playlists)) {
-    foreach ($playlists as $playlist) {
+  $method = 'find_all_playlists';
+
+  $bc_find_params = array();
+  $bc_find_params['page_size'] = $limit;
+  $bc_find_params['page_number'] = $start;
+
+  // Try to load the data from cache. It uses different key than the cache of field browse results,
+  // because it has a different output.
+  $cid = 'brightcove:playlist:list:media';
+  foreach ($bc_find_params as $key => $param) {
+    $cid .= ":{$key}:{$param}";
+  }
+  $result = brightcove_cache_get($cid);
+
+  if (!$result) {
+    try {
+      $bc = brightcove_initialize();
+      $result = $bc->find($method, $bc_find_params);
+      brightcove_cache_set($cid, $result);
+    }
+    catch (Exception $e) {
+      watchdog('brightcove', 'Retrieving media list failed.', array(),
+        WATCHDOG_ERROR);
+    }
+  }
+
+  if (count($result)) {
+    foreach ($result as $playlist) {
       $uri = file_stream_wrapper_uri_normalize("brightcove-playlist://{$playlist->id}");
       $file = file_uri_to_object($uri);
       $file->filename = $playlist->name;

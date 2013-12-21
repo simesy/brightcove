@@ -182,11 +182,6 @@ function _brightcove_field_video_browse() {
   $items_per_page = 20;
   $page = isset($_GET['page']) ? intval($_GET['page']) : '0';
 
-  // Issue a BC request to list videos
-  // For all videos, get a thumbnail URL
-  // Theme a table with videos and a button to attach.
-  $bc = brightcove_initialize();
-
   $params = array();
   if (isset($_SESSION['brightcove_field_filter'])) {
     switch ($_SESSION['brightcove_field_filter']['search']) {
@@ -209,55 +204,70 @@ function _brightcove_field_video_browse() {
   else {
     $method = 'find_all_videos';
   }
+  $params['page_size'] = $items_per_page;
+  $params['page_number'] = $page;
+  $params['get_item_count'] = 'TRUE';
 
   $result = NULL;
-  try {
-    $params['page_size'] = $items_per_page;
-    $params['page_number'] = $page;
-    $params['get_item_count'] = 'TRUE';
 
-    $result = $bc->find($method, $params);
-  } catch (Exception $error) {
-    watchdog('brightcove', 'Finding videos in browse failed.', array(), WATCHDOG_ERROR);
+  // Try to load the data from cache.
+  $cid = 'brightcove:video:list';
+  foreach ($params as $key => $param) {
+    $cid .= ":{$key}:{$param}";
   }
+  $content = brightcove_cache_get($cid);
 
-  $pager_page_array = explode(',', $page);
-  $pager_total[0] = ceil($bc->total_count / $items_per_page);
-  $pager_page_array[0] =
-    max(0, min(
-      (int)$pager_page_array[0],
-      ((int)$pager_total[0]) - 1)
+  // If no cached data is available.
+  if (!$content) {
+    $bc = brightcove_initialize();
+
+    try {
+      $result = $bc->find($method, $params);
+    } catch (Exception $error) {
+      watchdog('brightcove', 'Finding videos in browse failed.', array(), WATCHDOG_ERROR);
+    }
+
+    $pager_page_array = explode(',', $page);
+    $pager_total[0] = ceil($bc->total_count / $items_per_page);
+    $pager_page_array[0] =
+      max(0, min(
+        (int)$pager_page_array[0],
+        ((int)$pager_total[0]) - 1)
+      );
+
+    $items = array();
+    if (count($result)) {
+      foreach ($result as $video) {
+        $item = array();
+        $item['title'] = check_plain($video->name);
+        $item['brightcove_id'] = $video->id;
+        if (!empty($video->thumbnailURL)) {
+            $image_vars = array('path' => $video->thumbnailURL, 'alt' => '', 'title' => '', 'attributes' => '');
+            $item['thumbnail'] = theme('image', $image_vars);
+        }
+        else {
+          $image_vars = array('path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attributes' => '','width' => '120', 'height' => '90');
+          $item['thumbnail'] = theme('image', $image_vars);
+        }
+        $items[] = $item;
+      }
+    }
+
+    $pager_vars = array(
+      'tags' => NULL,
+      'element' => 0,
+      'parameters' => array(),
+      'quantity' => $items_per_page,
     );
 
-  $items = array();
-  if (count($result)) {
-    foreach ($result as $video) {
-      $item = array();
-      $item['title'] = check_plain($video->name);
-      $item['brightcove_id'] = $video->id;
-      if (!empty($video->thumbnailURL)) {
-          $image_vars = array('path' => $video->thumbnailURL, 'alt' => '', 'title' => '', 'attributes' => '');
-          $item['thumbnail'] = theme('image', $image_vars);
-      }
-      else {
-        $image_vars = array('path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attributes' => '','width' => '120', 'height' => '90');
-        $item['thumbnail'] = theme('image', $image_vars);
-      }
-      $items[] = $item;
-    }
+    $content['items'] = $items;
+    $content['pager'] = theme('pager', $pager_vars);
+    $content['filter_form'] = drupal_get_form('brightcove_field_filter_form');;
+
+    // Save the output to the cache record(not only the video objects),
+    // because we also need data for pagination.
+    brightcove_cache_set($cid, $content);
   }
-
-  $pager_vars = array(
-    'tags' => NULL,
-    'element' => 0,
-    'parameters' => array(),
-    'quantity' => $items_per_page,
-  );
-
-  $content['items'] = $items;
-  $content['pager'] = theme('pager', $pager_vars);
-  $filter_form = drupal_get_form('brightcove_field_filter_form');
-  $content['filter_form'] = drupal_render($filter_form);
 
   return $content;
 }

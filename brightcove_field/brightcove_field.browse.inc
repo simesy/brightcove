@@ -34,7 +34,7 @@ function brightcove_field_browse($type) {
       $content = _brightcove_field_playlist_browse();
       break;
   }
-  return '<div class="brightcove-browse-table">' . $content['filter_form'] . $content['pager'] . theme('brightcove_field_browse_items', array('items' => $content['items'])) . $content['pager'] . '</div>';
+  return '<div class="brightcove-browse-table">' . drupal_render($content['filter_form']) . $content['pager'] . theme('brightcove_field_browse_items', array('items' => $content['items'])) . $content['pager'] . '</div>';
 }
 
 /**

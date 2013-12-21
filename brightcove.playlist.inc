@@ -62,8 +62,8 @@ function _brightcove_playlist_overview_row(stdClass $playlist) {
  *   @see http://support.brightcove.com/en/docs/media-api-objects-reference#Playlist
  */
 function brightcove_get_playlists($cache_reset = FALSE) {
-
-  $cache = cache_get('bc:playlist:list', 'cache');
+  $cid = 'brightcove:playlist:list';
+  $cache = brightcove_cache_get($cid);
   if (!$cache_reset && $cache && !empty($cache->data)) {
     return $cache->data;
   }
@@ -78,7 +78,7 @@ function brightcove_get_playlists($cache_reset = FALSE) {
   }
 
   if ($playlists) {
-    cache_set('bc:playlist:list', $playlists, 'cache', REQUEST_TIME + 300);
+    brightcove_cache_set($cid, $playlists);
   }
 
   return $playlists;
@@ -277,13 +277,12 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
   }
 
   if (isset($form_state['playlist'])) {
+    $metadata['id'] = $form_state['playlist']->id;
     brightcove_update_playlist($metadata);
   }
   else {
     brightcove_add_playlist($metadata);
   }
-  // Invalidate playlist cache.
-  cache_set('bc:playlist:list', FALSE);
   // Redirect the user to the playlist listing page.
   $form_state['redirect'] = array('admin/config/media/brightcove/playlist');
 }
