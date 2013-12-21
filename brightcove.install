@@ -13,16 +13,36 @@ function brightcove_schema() {
 
   $schema['brightcove_player'] = array(
     'description' => 'Stores brightcove players.',
+    'export' => array(
+      'key' => 'name',
+      'key name' => 'Name',
+      'primary key' => 'pid',
+      'identifier' => 'preset',
+      'default hook' => 'brightcove_player',
+      'api' => array(
+        'owner' => 'brightcove',
+        'api' => 'brightcove',
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
     'fields' => array(
       'pid' => array(
         'type' => 'serial',
         'not null' => TRUE,
         'unsigned' => TRUE,
+        'no export' => TRUE,
       ),
       'name' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
+      ),
+      'display_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
       ),
       'player_id' => array(
         'type' => 'varchar',
@@ -36,6 +56,9 @@ function brightcove_schema() {
       ),
     ),
     'primary key' => array('pid'),
+    'unique keys' => array(
+      'name' => array('name'),
+    ),
   );
 
   $schema['cache_brightcove'] = drupal_get_schema_unprocessed('system', 'cache');
@@ -67,6 +90,9 @@ function brightcove_update_7001() {
       ),
     ),
     'primary key' => array('name'),
+    'unique keys' => array(
+      'name' => array('name'),
+    ),
   ));
 }
 
@@ -124,6 +150,7 @@ function brightcove_uninstall() {
   variable_del('brightcove_mapi_path');
   variable_del('brightcove_player');
   variable_del('brightcove_player_pid');
+  variable_del('brightcove_player_default');
   variable_del('brightcove_player_key');
   variable_del('brightcove_preserve_source_rendition');
   variable_del('brightcove_read_api_key');
@@ -172,9 +199,46 @@ function brightcove_update_7003() {
 }
 
 /**
- * Create cache table for Brightcove objects.
+ * Make name column unique.
  */
 function brightcove_update_7004() {
+  db_add_unique_key('brightcove_player', 'name', array('name'));
+}
+
+/**
+ * Adding a "Display name" column.  Move existing "Name" data into that and
+ * make "Name" machine-readable.
+ */
+function brightcove_update_7005() {
+  $default_player = variable_get('brightcove_player_pid', '');
+
+  db_add_field('brightcove_player', 'display_name', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE,
+    'default' => ''));
+
+  $players = brightcove_player_load_all();
+  if (!empty($players)) {
+    foreach ($players as $id => $player) {
+      // Make display name the name, and restrict the name to machine-readable.
+      $player->display_name = $player->name;
+      $player->name = preg_replace('/_+/', '_', preg_replace('/[^a-z0-9]+/', '_', strtolower($player->name)));
+
+      // Save the new name.
+      brightcove_player_save($player);
+
+      //
+      if ($player->id == $default_player) {
+        $default_player = $player->name;
+      }
+    }
+  }
+
+  variable_set('brightcove_player_default', $default_player);
+}
+
+/**
+ * Create cache table for Brightcove objects.
+ */
+function brightcove_update_7006() {
   $cache_table = drupal_get_schema_unprocessed('system', 'cache');
   db_create_table('cache_brightcove', $cache_table);
 }

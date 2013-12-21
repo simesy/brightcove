@@ -387,124 +387,31 @@ function brightcove_admin_settings_validate($form, &$form_state) {
   }
 }
 
-function brightcove_admin_players() {
-  $players = brightcove_player_load_all();
-
-  $header = array(
-    t('Name'),
-    t('Player ID'),
-    t('Player Key'),
-    array(
-      'data' => t('Operations'),
-      'colspan' => 3,
-    ),
-  );
-
-  $rows = array();
-  foreach ($players as $player) {
-    $default = _brightcove_player_is_default($player);
-    $rows[] = array(
-      check_plain($player->name),
-      check_plain($player->player_id),
-      check_plain($player->player_key),
-      $default ? t('Default') : l(t('Set default'), 'admin/config/media/brightcove/players/' . $player->pid . '/setdefault'),
-      l(t('Edit'), 'admin/config/media/brightcove/players/' . $player->pid . '/edit'),
-      $default ? '' : l(t('Delete'), 'admin/config/media/brightcove/players/' . $player->pid .  '/delete'),
-    );
-  }
-
-  return array(
-    '#theme' => 'table',
-    '#header' => $header,
-    '#rows' => $rows,
-  );
-}
 
 function _brightcove_player_is_default($player) {
-  $ret = 1;
-  $ret &= (int) (variable_get('brightcove_player_pid') == $player->pid);
-
-  return (bool) $ret;
-}
-
-function brightcove_player_editor_form($form, &$form_state, $player = NULL) {
-  if (!$player) {
-    $player = new stdClass();
-  }
-  else {
-    $form['pid'] = array(
-      '#type' => 'hidden',
-      '#value' => $player->pid,
-    );
-  }
-
-  $titles = array(
-    'name' => 'Name',
-    'player_id' => 'Player ID',
-    'player_key' => 'Player Key',
-  );
-
-  $required = array(
-    'name' => TRUE,
-    'player_id' => TRUE,
-    'player_key' => FALSE,
-  );
-
-  foreach (array('name', 'player_id', 'player_key') as $item) {
-    $form[$item] = array(
-      '#title' => check_plain(t($titles[$item])),
-      '#type' => 'textfield',
-      '#default_value' => isset($player->$item) ?
-        $player->$item : NULL,
-      '#required' => $required[$item],
-    );
-  }
-
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
-
-  return $form;
-}
-
-function brightcove_player_editor_form_submit($form, &$form_state) {
-  brightcove_player_save((object) $form_state['values']);
-  $form_state['redirect'] = 'admin/config/media/brightcove/players';
-}
-
-function brightcove_player_delete_form($form, &$form_state, $player) {
-  $form['pid'] = array(
-    '#type' => 'value',
-    '#value' => $player->pid,
-  );
-
-  return confirm_form($form,
-    t('Are you sure that you want to delete "@name" player?', array(
-        '@name' => $player->name,
-      )),
-    'admin/config/media/brightcove/players');
-}
-
-function brightcove_player_delete_form_submit($form, &$form_state) {
-  brightcove_player_delete($form_state['values']['pid']);
-  $form_state['redirect'] = 'admin/config/media/brightcove/players';
+  return (bool) (variable_get('brightcove_player_default') == $player->name);
 }
 
 function brightcove_player_setdefault_form($form, &$form_state, $player) {
-  $form['pid'] = array(
+  $form['name'] = array(
     '#type' => 'value',
-    '#value' => $player->pid,
+    '#value' => $player->name,
   );
 
   return confirm_form($form,
     t('Are you sure that you want to set "@name" player default?', array(
-        '@name' => $player->name,
+        '@name' => $player->display_name,
       )),
     'admin/config/media/brightcove/players');
 }
 
 function brightcove_player_setdefault_form_submit($form, &$form_state) {
-  variable_set('brightcove_player_pid', $form_state['values']['pid']);
+  variable_set('brightcove_player_default', $form_state['values']['name']);
   $form_state['redirect'] = 'admin/config/media/brightcove/players';
+}
+
+function brightcove_player_form_validate_field($element, &$form_state) {
+  if (!preg_match('!^[a-z0-9_]+$!', $element['#value'])) {
+    form_error($element, t('The machine-readable name must contain only lowercase letters, numbers, and underscores.'));
+  }
 }

@@ -77,50 +77,6 @@ function brightcove_menu() {
     'access arguments' => array('administer brightcove settings'),
   );
 
-  $items["{$base}/players"] = array(
-    'title' => 'Players',
-    'page callback' => 'brightcove_admin_players',
-    'type' => MENU_LOCAL_TASK,
-    'access arguments' => array('administer brightcove settings'),
-    'file' => 'brightcove.admin.inc',
-  );
-
-  $items["{$base}/players/new"] = array(
-    'title' => 'Add player',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('brightcove_player_editor_form'),
-    'access arguments' => array('administer brightcove settings'),
-    'type' => MENU_LOCAL_ACTION,
-    'file' => 'brightcove.admin.inc',
-  );
-
-  $items["{$base}/players/%brightcove_player/edit"] = array(
-    'title' => 'Edit player',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('brightcove_player_editor_form', 5),
-    'access arguments' => array('administer brightcove settings'),
-    'type' => MENU_CALLBACK,
-    'file' => 'brightcove.admin.inc',
-  );
-
-  $items["{$base}/players/%brightcove_player/delete"] = array(
-    'title' => 'Delete player',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('brightcove_player_delete_form', 5),
-    'access arguments' => array('administer brightcove settings'),
-    'type' => MENU_CALLBACK,
-    'file' => 'brightcove.admin.inc',
-  );
-
-  $items["{$base}/players/%brightcove_player/setdefault"] = array(
-    'title' => 'Set player default',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('brightcove_player_setdefault_form', 5),
-    'access arguments' => array('administer brightcove settings'),
-    'type' => MENU_CALLBACK,
-    'file' => 'brightcove.admin.inc',
-  );
-
   $items["{$base}/playlist"] = array(
     'title' => 'Playlists',
     'page callback' => 'brightcove_playlist_overview_page',
@@ -181,6 +137,27 @@ function brightcove_permission() {
       'title' => t('Administer playlists'),
     ),
   );
+}
+
+/**
+ * Implementation of hook_ctools_plugin_api().
+ *
+ * Tell CTools that we support the default_mymodule_presets API.
+ */
+function brightcove_ctools_plugin_api($owner, $api) {
+  if ($owner == 'brightcove' && $api == 'brightcove') {
+    return array('version' => 1);
+  }
+}
+
+/**
+ * Implementation of hook_ctools_plugin_directory().
+ */
+function brightcove_ctools_plugin_directory($module, $type) {
+  // Load the export_ui plugin.
+  if ($type =='export_ui') {
+    return 'plugins/export_ui';
+  }
 }
 
 /**
@@ -778,19 +755,12 @@ function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
 /**
  * Load a player.
  *
- * @param $pid
+ * @param $name
  * @return mixed
  */
-function brightcove_player_load($pid) {
-  return is_numeric($pid) ?
-    db_query('SELECT * FROM {brightcove_player} WHERE pid = :pid',
-      array(
-        ':pid' => $pid,
-      ))->fetch() :
-    db_query('SELECT * FROM {brightcove_player} WHERE name = :name',
-      array(
-        ':name' => $pid,
-      ))->fetch();
+function brightcove_player_load($name) {
+  $players = brightcove_player_load_all();
+  return $players[$name];
 }
 
 /**
@@ -799,8 +769,8 @@ function brightcove_player_load($pid) {
  * @return mixed
  */
 function brightcove_player_load_all() {
-  return db_query('SELECT * FROM {brightcove_player} ORDER BY name')
-    ->fetchAll();
+  ctools_include('export');
+  return ctools_export_crud_load_all('brightcove_player');
 }
 
 /**
@@ -809,8 +779,12 @@ function brightcove_player_load_all() {
  * @return mixed
  */
 function brightcove_player_list() {
-  return db_query('SELECT pid, name FROM {brightcove_player} ORDER BY name')
-    ->fetchAllKeyed(0, 1);
+  $players = brightcove_player_load_all();
+  $return = array();
+  foreach ($players as $id => $player) {
+    $return[$id] = $player->display_name;
+  }
+  return $return;
 }
 
 /**
@@ -819,14 +793,14 @@ function brightcove_player_list() {
  * @return mixed|null
  */
 function brightcove_default_player() {
-  $pid = variable_get('brightcove_player_pid', NULL);
+  $default = variable_get('brightcove_player_default', NULL);
 
-  if (is_null($pid)) {
+  if (is_null($default)) {
     drupal_set_message(t("The default brightcove player has not been defined yet."), 'warning');
     return NULL;
   }
 
-  return brightcove_player_load($pid);
+  return brightcove_player_load($default);
 }
 
 /**
@@ -836,37 +810,19 @@ function brightcove_default_player() {
  * @return DatabaseStatementInterface|int|null
  */
 function brightcove_player_save($player) {
-  if (empty($player->pid)) {
-    return db_insert('brightcove_player')
-      ->fields(array(
-        'name' => $player->name,
-        'player_id' => $player->player_id,
-        'player_key' => $player->player_key,
-      ))
-      ->execute();
-  }
-  else {
-    return db_update('brightcove_player')
-      ->fields(array(
-        'name' => $player->name,
-        'player_id' => $player->player_id,
-        'player_key' => $player->player_key,
-      ))
-      ->condition('pid', $player->pid)
-      ->execute();
-  }
+  ctools_include('export');
+  return ctools_export_crud_save('brightcove_player', $player);
 }
 
 /**
  * Delete a player.
  *
- * @param $pid
+ * @param $player
  * @return DatabaseStatementInterface
  */
-function brightcove_player_delete($pid) {
-  return db_delete('brightcove_player')
-    ->condition('pid', $pid)
-    ->execute();
+function brightcove_player_delete($player) {
+  ctools_include('export');
+  return ctools_export_crud_delete('brightcove_player', $player);
 }
 
 /**
