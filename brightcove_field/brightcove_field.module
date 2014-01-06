@@ -161,12 +161,7 @@ function ajax_upload_video_dialog_callback($form, $form_state) {
 }
 
 function ajax_upload_video_dialog_close_callback($form, $form_state) {
-  $video = _brightcove_upload_form_callback($form, $form_state);
-  if (is_array($video) || is_bool($video)) {
-    return $video;
-  }
-
-  $id = $video->id;
+  $id = _brightcove_upload_form_callback($form, $form_state);
 
   $selector = '#upload-dialog';
   $data_title = check_plain($form_state['values']['title']);
@@ -349,16 +344,14 @@ function brightcove_field_field_validate($entity_type, $entity,
       foreach ($items as $delta => $item) {
         if (!empty($item['brightcove_id'])) {
           $video = brightcove_video_load($item['brightcove_id']);
-          if (empty($video->id)) {
-            if (brightcove_video_cache_get($item['brightcove_id']) === NULL) {
-              $errors[$field['field_name']][$langcode][$delta][] = array(
-                'error' => 'brightcove_field',
-                'message' => t('%name: invalid video.', array(
-                  '%name' => t(isset($field['widget']['label']) ?
-                    $field['widget']['label'] : ''),
-                )),
-              );
-            }
+          if (empty($video->id) && empty($_SESSION['brightcove']['video'][$item['brightcove_id']])) {
+            $errors[$field['field_name']][$langcode][$delta][] = array(
+              'error' => 'brightcove_field',
+              'message' => t('%name: invalid video.', array(
+                '%name' => t(isset($field['widget']['label']) ?
+                  $field['widget']['label'] : ''),
+              )),
+            );
           }
         }
       }
@@ -367,16 +360,14 @@ function brightcove_field_field_validate($entity_type, $entity,
       foreach ($items as $delta => $item) {
         if (!empty($item['brightcove_id'])) {
           $video = brightcove_playlist_load($item['brightcove_id']);
-          if (empty($video->id)) {
-            if (brightcove_playlist_cache_get($item['brightcove_id']) === NULL) {
-              $errors[$field['field_name']][$langcode][$delta][] = array(
-                'error' => 'brightcove_field',
-                'message' => t('%name: invalid playlist.', array(
-                  '%name' => t(isset($field['widget']['label']) ?
-                    $field['widget']['label'] : ''),
-                )),
-              );
-            }
+          if (empty($video->id) && empty($_SESSION['brightcove']['playlist'][$item['brightcove_id']])) {
+            $errors[$field['field_name']][$langcode][$delta][] = array(
+              'error' => 'brightcove_field',
+              'message' => t('%name: invalid playlist.', array(
+                '%name' => t(isset($field['widget']['label']) ?
+                  $field['widget']['label'] : ''),
+              )),
+            );
           }
         }
       }
@@ -761,11 +752,6 @@ function brightcove_field_video_browser_value($element, $value, $form_state) {
     if (!empty($video->id)) {
       $value = check_plain($video->name) . " [id:{$video->id}]";
     }
-    else if (!is_null(brightcove_video_cache_get($value))) {
-      $value = check_plain(brightcove_video_cache_get($value)->name) .
-        " [id:{$value}]";
-    }
-
   }
   return $value;
 }
@@ -784,11 +770,6 @@ function brightcove_field_playlist_browser_value($element, $value, $form_state) 
     if (!empty($playlist->id)) {
       $value = check_plain($playlist->name) . " [id:{$playlist->id}]";
     }
-    else if (!is_null(brightcove_playlist_cache_get($value))) {
-      $value = check_plain(brightcove_playlist_cache_get($value)->name) .
-        " [id:{$value}]";
-    }
-
   }
   return $value;
 }
@@ -807,8 +788,8 @@ function brightcove_field_browser_video_validate($element, &$form_state) {
     if (is_numeric($id)) {
       // Matched ID, check if the video exists.
       $video = brightcove_video_load($id);
-      $video_cache = brightcove_video_cache_get($id);
-      if (empty($video) && empty($video_cache)) {
+      // Check value in session variable for newly uploaded video.
+      if (empty($video) && empty($_SESSION['brightcove']['video'][$id])) {
         form_error($element, t('%name: Found no valid video with that name. Please note that it might take several minutes after the video has been uploaded in Brightcove Studio to appear in the API.', array('%name' => t($element['#title']))));
       }
     }
@@ -850,16 +831,16 @@ function brightcove_field_browser_playlist_validate($element, &$form_state) {
     // Assign ID to the value.
     // 231289 [id:72431493001]
     $id = brightcove_parse_id($value);
+
     if (is_numeric($id)) {
       // Matched ID, check if the video exists.
       $playlist = brightcove_playlist_load($id);
-      $playlist_cache = brightcove_playlist_cache_get($id);
-      if (empty($playlist) && empty($playlist_cache)) {
+      if (empty($playlist) && empty($_SESSION['brightcove']['playlist'][$id])) {
         form_error($element, t('%name: Found no valid playlist with that name.', array('%name' => t($element['#title']))));
       }
     }
     else {
-      $result = brightcove_field_get_matched_playlists($string);
+      $result = brightcove_field_get_matched_playlists($value);
 
       if (count($result) > 1) {
         // This title is ambiguous.
@@ -1015,6 +996,7 @@ function brightcove_field_filter_form($form, &$form_state) {
     '#default_value' => t('Reset'),
   );
 
+  $form['#submit'] = array('brightcove_field_filter_form_submit');
   return $form;
 }
 
