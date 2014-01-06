@@ -55,35 +55,28 @@ class brightcove_player_ui extends ctools_export_ui {
    * Edit for for Brightcove Player preset.
    */
   function edit_form(&$form, &$form_state) {
-    drupal_add_js(drupal_get_path('module', 'brightcove') . '/plugins/export_ui/brightcove_player_admin.js');
-
     parent::edit_form($form, $form_state);
+    unset($form['info']);
 
-    $form['info']['name'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Machine-readable name'),
-      '#description' => t('Example: my_player') . '<br/>' . t('May only contain lowercase letters, numbers and underscores. <strong>Try to avoid conflicts with the names of existing Drupal projects.</strong>'),
-      '#required' => TRUE,
-      '#default_value' => !empty($form_state['item']->name) ? $form_state['item']->name : '',
-      '#attributes' => array('class' => array('brightcove-player-name')),
-      '#element_validate' => array('brightcove_player_form_validate_field'),
-      '#weight' => 0,
-    );
-    // If recreating this feature, disable machine name field and blank out
-    // js-attachment classes to ensure the machine name cannot be changed.
-    if (isset($form_state['item']->name)) {
-      $form['info']['name']['#value'] = $form_state['item']->name;
-      $form['info']['name']['#disabled'] = TRUE;
-      $form['info']['display_name']['#attributes'] = array();
-    }
-
-    $form['info']['display_name'] = array(
+    $form['display_name'] = array(
       '#title' => t('Name'),
       '#description' => t('Example: My Player') . ' (' . t('Do not begin name with numbers.') . ')',
       '#type' => 'textfield',
       '#default_value' => !empty($form_state['item']->display_name) ? $form_state['item']->display_name : '',
-      '#attributes' => array('class' => array('brightcove-player-display-name')),
-      '#weight' => 1,
+      '#required' => TRUE,
+    );
+
+    $form['name'] = array(
+      '#type' => 'machine_name',
+      '#title' => t('Machine-readable name'),
+      '#description' => t('Example: my_player') . '<br/>' . t('May only contain lowercase letters, numbers and underscores. <strong>Try to avoid conflicts with the names of existing Drupal projects.</strong>'),
+      '#required' => TRUE,
+      '#default_value' => !empty($form_state['item']->name) ? $form_state['item']->name : '',
+      '#disabled' => !empty($form_state['item']->name) ? TRUE : FALSE,
+      '#machine_name' => array(
+        'exists' => 'brightcove_player_form_validate_field',
+        'source' => array('display_name'),
+      ),
     );
 
     $form['player_id'] = array(
