@@ -1226,7 +1226,11 @@ function brightcove_cache_set($cid, $data) {
  * Implements hook_flush_caches().
  */
 function brightcove_flush_caches() {
-  return array('cache_brightcove');
+  // If a user updates the module from an older version which is not include the cache table,
+  // the update method will be broken, because the system will try to flush the cache from the
+  // unexisting table as well.
+  $tables = db_table_exists('cache_brightcove') ? array('cache_brightcove') : array();
+  return $tables;
 }
 
 /**
@@ -1374,7 +1378,7 @@ function brightcove_cache_initialize($type = NULL, $time = NULL, $location = NUL
 }
 
 /**
- * Helper function to be able to add the closing "/" character, if doesn't exist.
+ * Helper function to be able to add the closing "/" character, if it doesn't exist.
  *
  * @param $location
  * @return string
