@@ -242,3 +242,26 @@ function brightcove_update_7006() {
   $cache_table = drupal_get_schema_unprocessed('system', 'cache');
   db_create_table('cache_brightcove', $cache_table);
 }
+
+/**
+ * Fix default players for Brightcove field instances.
+ */
+function brightcove_update_7007() {
+  // Get all of the brightcove fields.
+  $fields = field_read_fields(array('type' => 'brightcove_field'));
+  foreach ($fields as $field) {
+    // Update the value of the default player for brightcove field instances.
+    $instances = field_read_instances(array('field_name' => $field['field_name']));
+    foreach ($instances as $instance) {
+      $players = brightcove_player_load_all();
+      if (!empty($players)) {
+        foreach ($players as $player) {
+          if ($instance['settings']['brightcove_player'] == $player->id) {
+            $instance['settings']['brightcove_player'] = $player->name;
+            field_update_instance($instance);
+          }
+        }
+      }
+    }
+  }
+}
