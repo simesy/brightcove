@@ -142,6 +142,7 @@ function brightcove_uninstall() {
   variable_del('brightcove_allow_public');
   variable_del('brightcove_check_for_unavailable');
   variable_del('brightcove_create_multiple_renditions');
+  variable_del('brightcove_custom_field_number');
   variable_del('brightcove_default_image');
   variable_del('brightcove_default_thumbnail');
   // Remove legacy library path too.
