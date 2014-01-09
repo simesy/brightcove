@@ -14,6 +14,7 @@
  *
  * @see template_preprocess_brightcove_field_embed().
  */
+global $is_https;
 ?>
 <!-- Start of Brightcove Player -->
 
@@ -27,12 +28,15 @@ found at https://accounts.brightcove.com/en/terms-and-conditions/.
 -->
 
 <object id="<?php print $id;?>" class="BrightcoveExperience <?php print join($classes_array, ',');?>">
-  <param name="wmode" value="transparent" />
   <param name="bgcolor" value="<?php print $bgcolor;?>" />
   <param name="width" value="<?php print $width;?>" />
   <param name="height" value="<?php print $height;?>" />
   <param name="playerID" value="<?php print $player_id;?>" />
   <param name="playerKey" value="<?php print $player_key;?>" />
+  <?php if ($is_https): ?>
+    <param name="secureConnections" value="true" />
+    <param name="secureHTMLConnections" value="true" />
+  <?php endif; ?>
   <?php if ($is_vid): ?>
     <param name="isVid" value="true" />
     <param name="@videoPlayer" value="<?php print $brightcove_id; ?>" />
