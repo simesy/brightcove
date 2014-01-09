@@ -14,6 +14,7 @@
  *
  * @see template_preprocess_brightcove_field_embed().
  */
+global $is_https;
 ?>
 <object id="<?php print $id;?>" class="BrightcoveExperience <?php print join($classes_array, ',');?>">
   <param name="bgcolor" value="<?php print $bgcolor;?>" />
@@ -21,6 +22,10 @@
   <param name="height" value="<?php print $height;?>" />
   <param name="playerID" value="<?php print $player_id;?>" />
   <param name="playerKey" value="<?php print $player_key;?>" />
+  <?php if ($is_https): ?>
+    <param name="secureConnections" value="true" />
+    <param name="secureHTMLConnections" value="true" />
+  <?php endif; ?>
   <?php if ($is_vid): ?>
     <param name="isVid" value="true" />
     <param name="@videoPlayer" value="<?php print $brightcove_id; ?>" />

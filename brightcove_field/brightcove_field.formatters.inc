@@ -20,7 +20,14 @@ function theme_brightcove_field_formatter_default($variables) {
   if (isset($variables['element']['brightcove_id'])) {
     $vidcount = &drupal_static(__FUNCTION__, 1);
     if ($vidcount == 1) {
-      drupal_add_js('http://admin.brightcove.com/js/BrightcoveExperiences.js');
+      global $is_https;
+      if ($is_https) {
+        $domain = 'https://sadmin.brightcove.com';
+      }
+      else {
+        $domain = 'http://admin.brightcove.com';
+      }
+      drupal_add_js($domain . '/js/BrightcoveExperiences.js', array('type' => 'external', 'defer' => false, 'async' => true));
     }
     $params['id'] = 'myExperience' . $vidcount;
     $output = theme('brightcove_field_embed', array(
