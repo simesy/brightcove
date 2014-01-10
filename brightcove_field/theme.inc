@@ -75,7 +75,7 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
   $flashvars = array();
   $player = brightcove_player_load($variables['player']);
 
-  $variables['id'] = 'myExperience';
+  $variables['id'] = 'myExperience-' . $variables['id'];
   $variables['bgcolor'] = '#FFFFFF';
   $variables['width'] = isset($variables['width']) ? $variables['width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
   $variables['height'] = isset($variables['height']) ? $variables['height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
