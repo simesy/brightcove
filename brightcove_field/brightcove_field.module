@@ -1407,7 +1407,7 @@ function brightcove_field_deliver_dialog($page) {
   if (is_array($page)) {
     $page = drupal_render($page);
   }
-  $output = '<html><head><title></title>' . drupal_get_css() . drupal_get_js() . '</head><body class="dialog">' . $page . '</body></html>';
+  $output = '<html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><title></title>' . drupal_get_css() . drupal_get_js() . '</head><body class="dialog">' . $page . '</body></html>';
   print $output;
 }
 
