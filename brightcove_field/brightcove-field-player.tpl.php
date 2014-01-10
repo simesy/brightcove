@@ -16,17 +16,6 @@
  */
 global $is_https;
 ?>
-<!-- Start of Brightcove Player -->
-
-<div style="display:none">
-
-</div>
-
-<!--
-By use of this code snippet, I agree to the Brightcove Publisher T and C
-found at https://accounts.brightcove.com/en/terms-and-conditions/.
--->
-
 <object id="<?php print $id;?>" class="BrightcoveExperience <?php print join($classes_array, ',');?>">
   <param name="bgcolor" value="<?php print $bgcolor;?>" />
   <param name="width" value="<?php print $width;?>" />
@@ -49,5 +38,3 @@ found at https://accounts.brightcove.com/en/terms-and-conditions/.
   <param name="dynamicStreaming" value="true" />
 
 </object>
-
-<!-- End of Brightcove Player -->
