@@ -1378,6 +1378,47 @@ function brightcove_cache_initialize($type = NULL, $time = NULL, $location = NUL
 }
 
 /**
+ * Returns the appropriate external URL to the BrightcoveExperiences.js file.
+ *
+ * @return string
+ *  The appropriate external js URL.
+ *
+ * @see http://support.brightcove.com/en/video-cloud/docs/publishing-video-cloud-player-https-page
+ */
+function brightcove_get_experiences_js_url() {
+  global $is_https;
+
+  $path = 'http://admin.brightcove.com/js/BrightcoveExperiences.js';
+  if ($is_https) {
+    $path = 'https://sadmin.brightcove.com/js/BrightcoveExperiences.js';
+  }
+
+  return $path;
+}
+
+/**
+ * Returns the appropriate URL to the Brightcove viewer.
+ *
+ * The calling function should append appropriate query strings to this URL to
+ * control the video and player.
+ *
+ * @return string
+ *  Brightcove viewer path.
+ *
+ * @todo Find out how to detect this URL in a nice way;
+ */
+function brightcove_get_viewer_url() {
+  global $is_https;
+
+  $path = 'http://c.brightcove.com/services/viewer/federated_f9';
+  if ($is_https) {
+    $path = 'https://secure.brightcove.com/services/viewer/federated_f9';
+  }
+
+  return $path;
+}
+
+/**
  * Helper function to be able to add the closing "/" character, if it doesn't exist.
  *
  * @param $location

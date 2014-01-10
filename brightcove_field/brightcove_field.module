@@ -29,14 +29,8 @@ define('BRIGHTCOVE_ECONOMICS_AD_SUPPORTED', 'AD_SUPPORTED');
  * Implements hook_init().
  */
 function brightcove_field_init() {
-  global $is_https;
-  if ($is_https) {
-    $domain = 'https://sadmin.brightcove.com';
-  }
-  else {
-    $domain = 'http://admin.brightcove.com';
-  }
-  drupal_add_js($domain . '/js/BrightcoveExperiences.js', array('type' => 'external', 'defer' => false, 'async' => true));
+  $path = brightcove_get_experiences_js_url();
+  drupal_add_js($path, array('type' => 'external', 'defer' => false, 'async' => true));
 }
 
 /**
@@ -262,14 +256,10 @@ function brightcove_field_browse_access($entity_type, $field_name, $entity_id_or
  */
 function brightcove_field_player($type, $entity_type, $entity_id, $field_name, $delta) {
   module_load_include('inc', 'brightcove_field', 'theme');
-  global $is_https;
-  if ($is_https) {
-    $domain = 'https://sadmin.brightcove.com';
-  }
-  else {
-    $domain = 'http://admin.brightcove.com';
-  }
-  drupal_add_js($domain . '/js/BrightcoveExperiences.js', array('type' => 'external', 'defer' => false, 'async' => true));
+
+  $path = brightcove_get_experiences_js_url();
+  drupal_add_js($path, array('type' => 'external', 'defer' => false, 'async' => true));
+
   $entities = entity_load($entity_type, array($entity_id));
   $entity = array_shift($entities);
   $language = isset($entity->language) ? $entity->language : LANGUAGE_NONE;
