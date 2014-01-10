@@ -53,8 +53,8 @@ function theme_brightcove_field_formatter_default($variables) {
 function theme_brightcove_field_image($variables) {
   $output = NULL;
   $elements = $variables['elements'];
-  $dialog_width = isset($elements['width']) ? $elements['width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
-  $dialog_height = isset($elements['height']) ? $elements['height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
+  $dialog_width = isset($elements['#width']) ? $elements['#width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
+  $dialog_height = isset($elements['#height']) ? $elements['#height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
 
   $entity_type = (isset($elements['#entity_type'])) ? $elements['#entity_type'] : NULL;
   $delta = (isset($elements['#delta'])) ? $elements['#delta'] : NULL;
