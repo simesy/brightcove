@@ -57,6 +57,8 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   $bundle = isset($form[$entity_info['entity keys']['bundle']]['#value']) ? $form[$entity_info['entity keys']['bundle']]['#value'] : NULL;
   // It needs to be able to work with field collection.
   $parent_delta = array_pop($element['#field_parents']);
+  // We need this mixed variable in access checking.
+  $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
 
   $element['brightcove_id'] = array(
     '#type' => 'textfield',
@@ -77,7 +79,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     '#field_name' => $element['#field_name'],
   );
 
-  if (user_access('browse videos')) {
+  if (brightcove_field_browse_access('browse videos', $entity_type, $field['field_name'], $entity_id_or_bundle)) {
     // Button to browse videos.
     $element['actions']['browse'] = array(
       '#type' => 'button',
@@ -100,8 +102,9 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     );
   }
 
-  if ((user_access('upload videos')) &&
-      ($instance['settings']['allow_upload'])) {
+  if (brightcove_field_browse_access('upload videos', $entity_type, $field['field_name'], $entity_id_or_bundle) &&
+    $instance['settings']['allow_upload']
+  ) {
     $element['actions']['upload'] = array(
       '#type' => 'button',
       '#attributes' => array(

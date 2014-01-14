@@ -57,6 +57,8 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   $bundle = isset($form[$entity_info['entity keys']['bundle']]['#value']) ? $form[$entity_info['entity keys']['bundle']]['#value'] : NULL;
   // It needs to be able to work with field collection.
   $parent_delta = array_pop($element['#field_parents']);
+  // We need this mixed variable in access checking.
+  $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
 
   $element['brightcove_id'] = array(
     '#type' => 'textfield',
@@ -77,7 +79,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     '#field_name' => $element['#field_name'],
   );
 
-  if (user_access('browse playlists')) {
+  if (brightcove_field_browse_access('browse playlists', $entity_type, $field['field_name'], $entity_id_or_bundle)) {
     // Button to browse playlists.
     $element['actions']['browse'] = array(
       '#type' => 'button',
@@ -100,7 +102,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     );
   }
 
-  if ((user_access('administer brightcove playlists')) &&
+  if (brightcove_field_browse_access('administer brightcove playlists', $entity_type, $field['field_name'], $entity_id_or_bundle) &&
       (!empty($instance['settings']['allow_create']))) {
     $element['actions']['create'] = array(
       '#type' => 'button',

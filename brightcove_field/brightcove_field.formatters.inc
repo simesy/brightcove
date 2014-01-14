@@ -79,7 +79,7 @@ function theme_brightcove_field_image($variables) {
       return $image;
     }
 
-    if ($elements['#brightcove_image_link'] == 'dialog') {
+    elseif ($elements['#brightcove_image_link'] == 'dialog') {
       $destination = "brightcove_dialog/nojs/{$type}/{$dialog_width}/{$dialog_height}/{$entity_type}/{$entity_id}/{$field['field_name']}/{$delta}";
       $output = l($image, $destination, array(
         'attributes' => array(
@@ -91,7 +91,7 @@ function theme_brightcove_field_image($variables) {
       ));
     }
 
-    if ($elements['#brightcove_image_link'] == 'entity' && !is_null($entity_info)) {
+    elseif ($elements['#brightcove_image_link'] == 'entity' && !is_null($entity_info)) {
       $uri = $entity_info['uri callback']($entity);
       $output = l($image, $uri['path'], array(
         'attributes' => array(
