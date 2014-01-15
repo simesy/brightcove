@@ -12,6 +12,7 @@
  * @see system_settings_form()
  */
 function brightcove_admin_settings($form, &$form_state) {
+  // Account
   $form['account'] = array(
     '#type' => 'fieldset',
     '#title' => t('Account settings'),
@@ -51,6 +52,125 @@ function brightcove_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('brightcove_custom_field_number', 10),
     '#description' => t('Basically Brightcove provides 10 fields as a default, but it supports more custom fields than 10. If you have more fields than 10 you can set it here.'),
   );
+
+  // Caching.
+  $form['cache'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Caching'),
+    '#collapsible' => TRUE,
+  );
+  $form['cache']['brightcove_cache_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cache enabled'),
+    '#description' => t('Will temporarily cache results retrieved from Brightcove.'),
+    '#default_value' => variable_get('brightcove_cache_enabled', TRUE),
+  );
+  $form['cache']['brightcove_cache_type'] = array(
+    '#type' => 'select',
+    '#title' => t('Cache type'),
+    '#options' => array(
+      'db' => t('Database'),
+      'file' => t('File'),
+      'memcached' => t('Memcached'),
+    ),
+    '#default_value' => variable_get('brightcove_cache_type', 'database'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="brightcove_cache_enabled"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+  // Database
+  $cache_settings = variable_get('brightcove_cache_db', array());
+  $form['cache']['brightcove_cache_db'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Database cache configuration'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="brightcove_cache_enabled"]' => array('checked' => TRUE),
+        ':input[name="brightcove_cache_type"]' => array('value' => 'db'),
+      ),
+    ),
+  );
+  $form['cache']['brightcove_cache_db']['cache_time'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Max cache age'),
+    '#field_suffix' => ' ' . t('seconds'),
+    '#element_validate' => array('element_validate_integer_positive'),
+    '#default_value' => isset($cache_settings['cache_time']) ? $cache_settings['cache_time'] : BRIGHTCOVE_CACHE_LIFETIME,
+  );
+  // File
+  $cache_settings = variable_get('brightcove_cache_file', array());
+  $form['cache']['brightcove_cache_file'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('File-based cache configuration'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="brightcove_cache_enabled"]' => array('checked' => TRUE),
+        ':input[name="brightcove_cache_type"]' => array('value' => 'file'),
+      ),
+    ),
+  );
+  $form['cache']['brightcove_cache_file']['cache_time'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Max cache age'),
+    '#field_suffix' => ' ' . t('seconds'),
+    '#element_validate' => array('element_validate_integer_positive'),
+    '#default_value' => isset($cache_settings['cache_time']) ? $cache_settings['cache_time'] : BRIGHTCOVE_CACHE_LIFETIME,
+  );
+  $form['cache']['brightcove_cache_file']['path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Path to cache directory'),
+    '#maxlength' => 255,
+    '#description' => t('A local file system path where the file cache will be stored. This directory must exist and be writable by Drupal. This directory must be an absolute path or relative to the Drupal installation directory.'),
+    '#after_build' => array('system_check_directory'),
+    '#default_value' => isset($cache_settings['path']) ? $cache_settings['path'] : BRIGHTCOVE_CACHE_FILE_PATH,
+  );
+  $form['cache']['brightcove_cache_file']['ext'] = array(
+    '#type' => 'textfield',
+    '#title' => t('File extension'),
+    '#field_prefix' => '.',
+    '#default_value' => isset($cache_settings['ext']) ? $cache_settings['ext'] : BRIGHTCOVE_CACHE_FILE_EXT,
+  );
+  // Memcached
+  $cache_settings = variable_get('brightcove_cache_memcached', array());
+  $form['cache']['brightcove_cache_memcached'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Memcached configuration'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="brightcove_cache_enabled"]' => array('checked' => TRUE),
+        ':input[name="brightcove_cache_type"]' => array('value' => 'memcached'),
+      ),
+    ),
+  );
+  $form['cache']['brightcove_cache_memcached']['cache_time'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Max cache age'),
+    '#field_suffix' => ' ' . t('seconds'),
+    '#element_validate' => array('element_validate_integer_positive'),
+    '#default_value' => isset($cache_settings['cache_time']) ? $cache_settings['cache_time'] : BRIGHTCOVE_CACHE_LIFETIME,
+  );
+  $form['cache']['brightcove_cache_memcached']['host'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Host'),
+    '#default_value' => isset($cache_settings['host']) ? $cache_settings['host'] : BRIGHTCOVE_CACHE_MEMCACHE_PATH,
+  );
+  $form['cache']['brightcove_cache_memcached']['port'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Port'),
+    '#default_value' => isset($cache_settings['port']) ? $cache_settings['port'] : BRIGHTCOVE_CACHE_MEMCACHE_PORT,
+  );
+
   $form['player'] = array(
     '#type' => 'fieldset',
     '#title' => t('Player settings'),
@@ -63,6 +183,8 @@ function brightcove_admin_settings($form, &$form_state) {
     '#description' => t("In case a video doesn't have a thumbnail or still image, display an image from this path"),
     '#default_value' => variable_get('brightcove_default_thumbnail', brightcove_get_default_image()),
   );
+
+  //Upload
   //see: http://support.brightcove.com/en/docs/creating-videos-multi-bitrate-streaming-media-api
   $form['upload'] = array(
     '#type' => 'fieldset',
@@ -106,6 +228,8 @@ function brightcove_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('brightcove_preserve_source_rendition', 0),
     '#disabled' => !variable_get('brightcove_create_multiple_renditions', TRUE)
   );
+
+  // Status
   $form['status'] = array(
     '#type' => 'fieldset',
     '#title' => t('Status settings'),
@@ -125,6 +249,7 @@ function brightcove_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('brightcove_status_display_unavailable', 'This video is unavailable for the moment.'),
   );
 
+  // Custom fields
   $num_customfields = empty($form_state['brightcove_custom_fields']) ?
     $form_state['brightcove_custom_fields'] =
       variable_get('brightcove_custom_fields', 0) :
@@ -296,90 +421,29 @@ function brightcove_admin_players() {
 }
 
 function _brightcove_player_is_default($player) {
-  $ret = 1;
-  $ret &= (int) (variable_get('brightcove_player_pid') == $player->pid);
-
-  return (bool) $ret;
-}
-
-function brightcove_player_editor_form($form, &$form_state, $player = NULL) {
-  if (!$player) {
-    $player = new stdClass();
-  }
-  else {
-    $form['pid'] = array(
-      '#type' => 'hidden',
-      '#value' => $player->pid,
-    );
-  }
-
-  $titles = array(
-    'name' => 'Name',
-    'player_id' => 'Player ID',
-    'player_key' => 'Player Key',
-  );
-
-  $required = array(
-    'name' => TRUE,
-    'player_id' => TRUE,
-    'player_key' => FALSE,
-  );
-
-  foreach (array('name', 'player_id', 'player_key') as $item) {
-    $form[$item] = array(
-      '#title' => check_plain(t($titles[$item])),
-      '#type' => 'textfield',
-      '#default_value' => isset($player->$item) ?
-        $player->$item : NULL,
-      '#required' => $required[$item],
-    );
-  }
-
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
-
-  return $form;
-}
-
-function brightcove_player_editor_form_submit($form, &$form_state) {
-  brightcove_player_save((object) $form_state['values']);
-  $form_state['redirect'] = 'admin/config/media/brightcove/players';
-}
-
-function brightcove_player_delete_form($form, &$form_state, $player) {
-  $form['pid'] = array(
-    '#type' => 'value',
-    '#value' => $player->pid,
-  );
-
-  return confirm_form($form,
-    t('Are you sure that you want to delete "@name" player?', array(
-        '@name' => $player->name,
-      )),
-    'admin/config/media/brightcove/players');
-}
-
-function brightcove_player_delete_form_submit($form, &$form_state) {
-  brightcove_player_delete($form_state['values']['pid']);
-  $form_state['redirect'] = 'admin/config/media/brightcove/players';
+  return (bool) (variable_get('brightcove_player_default') == $player->name);
 }
 
 function brightcove_player_setdefault_form($form, &$form_state, $player) {
-  $form['pid'] = array(
+  $form['name'] = array(
     '#type' => 'value',
-    '#value' => $player->pid,
+    '#value' => $player->name,
   );
 
   return confirm_form($form,
     t('Are you sure that you want to set "@name" player default?', array(
-        '@name' => $player->name,
+        '@name' => $player->display_name,
       )),
     'admin/config/media/brightcove/players');
 }
 
 function brightcove_player_setdefault_form_submit($form, &$form_state) {
-  variable_set('brightcove_player_pid', $form_state['values']['pid']);
+  variable_set('brightcove_player_default', $form_state['values']['name']);
   $form_state['redirect'] = 'admin/config/media/brightcove/players';
+}
+
+function brightcove_player_form_validate_field($element, &$form_state) {
+  if (!preg_match('!^[a-z0-9_]+$!', $element['#value'])) {
+    form_error($element, t('The machine-readable name must contain only lowercase letters, numbers, and underscores.'));
+  }
 }

@@ -14,17 +14,8 @@
  *
  * @see template_preprocess_brightcove_field_embed().
  */
+global $is_https;
 ?>
-<!-- Start of Brightcove Player -->
-
-<div style="display:none">
-
-</div>
-
-<!--
-By use of this code snippet, I agree to the Brightcove Publisher T and C
-found at https://accounts.brightcove.com/en/terms-and-conditions/.
--->
 
 <object id="<?php print $id;?>" class="BrightcoveExperience <?php print join($classes_array, ',');?>">
   <param name="bgcolor" value="<?php print $bgcolor;?>" />
@@ -32,6 +23,10 @@ found at https://accounts.brightcove.com/en/terms-and-conditions/.
   <param name="height" value="<?php print $height;?>" />
   <param name="playerID" value="<?php print $player_id;?>" />
   <param name="playerKey" value="<?php print $player_key;?>" />
+  <?php if ($is_https): ?>
+    <param name="secureConnections" value="true" />
+    <param name="secureHTMLConnections" value="true" />
+  <?php endif; ?>
   <?php if ($is_vid): ?>
     <param name="isVid" value="true" />
     <param name="@videoPlayer" value="<?php print $brightcove_id; ?>" />
@@ -42,7 +37,4 @@ found at https://accounts.brightcove.com/en/terms-and-conditions/.
   <?php endif; ?>
   <param name="isUI" value="true" />
   <param name="dynamicStreaming" value="true" />
-
 </object>
-
-<!-- End of Brightcove Player -->

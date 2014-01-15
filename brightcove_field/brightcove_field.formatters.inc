@@ -20,7 +20,8 @@ function theme_brightcove_field_formatter_default($variables) {
   if (isset($variables['element']['brightcove_id'])) {
     $vidcount = &drupal_static(__FUNCTION__, 1);
     if ($vidcount == 1) {
-      drupal_add_js('http://admin.brightcove.com/js/BrightcoveExperiences.js');
+      $path = brightcove_get_experiences_js_url();
+      drupal_add_js($path, array('type' => 'external', 'defer' => false, 'async' => true));
     }
     $params['id'] = 'myExperience' . $vidcount;
     $output = theme('brightcove_field_embed', array(
@@ -46,8 +47,9 @@ function theme_brightcove_field_formatter_default($variables) {
 function theme_brightcove_field_image($variables) {
   $output = NULL;
   $elements = $variables['elements'];
-  $dialog_width = isset($elements['width']) ? $elements['width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
-  $dialog_height = isset($elements['height']) ? $elements['height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
+  $dialog_width = isset($elements['#width']) ? $elements['#width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
+  $dialog_height = isset($elements['#height']) ? $elements['#height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
+
 
   $entity_type = (isset($elements['#entity_type'])) ? $elements['#entity_type'] : NULL;
   $delta = (isset($elements['#delta'])) ? $elements['#delta'] : NULL;
@@ -78,7 +80,7 @@ function theme_brightcove_field_image($variables) {
       return $image;
     }
 
-    if ($elements['#brightcove_image_link'] == 'dialog') {
+    elseif ($elements['#brightcove_image_link'] == 'dialog') {
       $destination = "brightcove_dialog/nojs/{$type}/{$dialog_width}/{$dialog_height}/{$entity_type}/{$entity_id}/{$field['field_name']}/{$delta}";
       $output = l($image, $destination, array(
         'attributes' => array(
@@ -90,7 +92,7 @@ function theme_brightcove_field_image($variables) {
       ));
     }
 
-    if ($elements['#brightcove_image_link'] == 'entity' && !is_null($entity_info)) {
+    elseif ($elements['#brightcove_image_link'] == 'entity' && !is_null($entity_info)) {
       $uri = $entity_info['uri callback']($entity);
       $output = l($image, $uri['path'], array(
         'attributes' => array(

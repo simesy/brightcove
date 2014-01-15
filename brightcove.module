@@ -32,6 +32,13 @@ define('BRIGHTCOVE_LOGO_IMAGE_TYPE', 'LOGO_OVERLAY');
 define('BRIGHTCOVE_PLAYLIST_TYPE_MANUAL', 'PLAYLIST_MANUAL');
 define('BRIGHTCOVE_PLAYLIST_TYPE_SMART', 'PLAYLIST_SMART');
 
+// Default values
+define('BRIGHTCOVE_CACHE_LIFETIME', 600);
+define('BRIGHTCOVE_CACHE_FILE_PATH', 'sites/default/files/cache/');
+define('BRIGHTCOVE_CACHE_FILE_EXT', 'cache');
+define('BRIGHTCOVE_CACHE_MEMCACHE_PATH', 'localhost');
+define('BRIGHTCOVE_CACHE_MEMCACHE_PORT', 11211);
+
 /**
  * Settings needed:
  *  - API key
@@ -70,48 +77,40 @@ function brightcove_menu() {
     'access arguments' => array('administer brightcove settings'),
   );
 
-  $items["{$base}/players"] = array(
-    'title' => 'Players',
-    'page callback' => 'brightcove_admin_players',
+  $items["{$base}/playlist"] = array(
+    'title' => 'Playlists',
+    'page callback' => 'brightcove_playlist_overview_page',
     'type' => MENU_LOCAL_TASK,
-    'access arguments' => array('administer brightcove settings'),
-    'file' => 'brightcove.admin.inc',
+    'file' => 'brightcove.playlist.inc',
+    'access arguments' => array('administer brightcove playlists'),
   );
 
-  $items["{$base}/players/new"] = array(
-    'title' => 'Add player',
+  $items["{$base}/playlist/add"] = array(
+    'title' => 'Add playlist',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('brightcove_player_editor_form'),
-    'access arguments' => array('administer brightcove settings'),
+    'page arguments' => array('brightcove_playlist_edit_form'),
     'type' => MENU_LOCAL_ACTION,
-    'file' => 'brightcove.admin.inc',
+    'file' => 'brightcove.playlist.inc',
+    'access arguments' => array('administer brightcove playlists'),
   );
 
-  $items["{$base}/players/%brightcove_player/edit"] = array(
-    'title' => 'Edit player',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('brightcove_player_editor_form', 5),
-    'access arguments' => array('administer brightcove settings'),
+  $items["{$base}/playlist/%brightcove_playlist/edit"] = array(
+    'title callback' => 'brightcove_playlist_title',
+    'title arguments' => array(5),
+    'page callback' => 'brightcove_playlist_edit_page',
+    'page arguments' => array(5),
     'type' => MENU_CALLBACK,
-    'file' => 'brightcove.admin.inc',
+    'file' => 'brightcove.playlist.inc',
+    'access arguments' => array('administer brightcove playlists'),
   );
 
-  $items["{$base}/players/%brightcove_player/delete"] = array(
-    'title' => 'Delete player',
+  $items["{$base}/playlist/%brightcove_playlist/delete"] = array(
+    'title' => 'Playlists',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('brightcove_player_delete_form', 5),
-    'access arguments' => array('administer brightcove settings'),
+    'page arguments' => array('brightcove_playlist_delete_form', 5),
     'type' => MENU_CALLBACK,
-    'file' => 'brightcove.admin.inc',
-  );
-
-  $items["{$base}/players/%brightcove_player/setdefault"] = array(
-    'title' => 'Set player default',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('brightcove_player_setdefault_form', 5),
-    'access arguments' => array('administer brightcove settings'),
-    'type' => MENU_CALLBACK,
-    'file' => 'brightcove.admin.inc',
+    'file' => 'brightcove.playlist.inc',
+    'access arguments' => array('administer brightcove playlists'),
   );
 
   $items["{$base}/playlist"] = array(
@@ -177,6 +176,27 @@ function brightcove_permission() {
 }
 
 /**
+ * Implementation of hook_ctools_plugin_api().
+ *
+ * Tell CTools that we support the default_mymodule_presets API.
+ */
+function brightcove_ctools_plugin_api($owner, $api) {
+  if ($owner == 'brightcove' && $api == 'brightcove') {
+    return array('version' => 1);
+  }
+}
+
+/**
+ * Implementation of hook_ctools_plugin_directory().
+ */
+function brightcove_ctools_plugin_directory($module, $type) {
+  // Load the export_ui plugin.
+  if ($type =='export_ui') {
+    return 'plugins/export_ui';
+  }
+}
+
+/**
  * Title callback of the playlist edit page.
  *
  * @param $brightcove_playlist
@@ -228,7 +248,8 @@ function brightcove_autocomplete_videos($videos_typed) {
 function brightcove_playlist_delete_form_submit($form, &$form_state) {
   brightcove_playlist_delete($form_state['values']['playlist_id']);
   // Invalidate playlist cache.
-  cache_set('bc:playlist:list', FALSE);
+  brightcove_invalidate_cache('brightcove:playlist:' . $form_state['values']['playlist_id']);
+  brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
   // Redirect the user the playlists listing page.
   $form_state['redirect'] = array('admin/config/media/brightcove/playlist');
 }
@@ -268,7 +289,7 @@ function brightcove_add_playlist($metadata) {
   }
 
   // Invalidate playlist cache.
-  cache_set('bc:playlist:list', FALSE);
+  brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
 
   return $playlist_id;
 }
@@ -291,7 +312,8 @@ function brightcove_update_playlist($metadata) {
   }
 
   // Invalidate playlist cache.
-  cache_set('bc:playlist:list', FALSE);
+  brightcove_invalidate_cache('brightcove:playlist:' . $playlist->id);
+  brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
 
   return $playlist;
 }
@@ -302,13 +324,12 @@ function brightcove_update_playlist($metadata) {
  * @return bool|object
  */
 function brightcove_playlist_load($playlist_id, $reset = FALSE) {
-  $cache = cache_get("bc:playlist:$playlist_id", 'cache');
-  if (!$reset && $cache && !empty($cache->data)) {
-    return $cache->data;
+  $cid = 'brightcove:playlist:' . $playlist_id;
+  $cache = brightcove_cache_get($cid);
+  if (!$reset && $cache) {
+    return (object)$cache;
   }
-
   $playlist = FALSE;
-
   $bc = brightcove_initialize();
   try {
     $playlist = $bc->find('playlistbyid', array('playlist_id' => $playlist_id));
@@ -318,9 +339,8 @@ function brightcove_playlist_load($playlist_id, $reset = FALSE) {
   }
 
   if ($playlist) {
-    cache_set("bc:playlist:$playlist_id", $playlist);
+    brightcove_cache_set($cid, $playlist);
   }
-
   return $playlist;
 }
 
@@ -353,6 +373,15 @@ function brightcove_mapi_path() {
   }
 
   return $path;
+}
+
+/**
+ * Implements hook_file_mimetype_mapping_alter().
+ *
+ * Regsiter the video/brightcove mimetype.
+ */
+function brightcove_file_mimetype_mapping_alter(&$mapping) {
+  $mapping['mimetypes'][] = 'video/brightcove';
 }
 
 /**
@@ -405,14 +434,16 @@ function brightcove_write_api_access() {
  * Loads Brightcove video from BC Media API. Uses a 5 minutes cache to speed up lookups.
  *
  * @param $video_id
+ * @param $reset
  *
- * @return $video
+ * @return mixed
  * Video object or FALSE if video not found.
  */
-function brightcove_video_load($video_id) {
-  $cache = cache_get('bc:video:' . $video_id, 'cache');
-  if (!empty($cache->data->id)) {
-    return $cache->data;
+function brightcove_video_load($video_id, $reset = FALSE) {
+  $cid = 'brightcove:video:' . $video_id;
+  $cache = brightcove_cache_get($cid);
+  if (!empty($cache) && !$reset) {
+    return (object)$cache;
   }
   else {
     $bc = brightcove_initialize();
@@ -424,7 +455,7 @@ function brightcove_video_load($video_id) {
       return FALSE;
     }
     if (!empty($video->id)) {
-      cache_set('bc:video:' . $video_id, $video, 'cache', $_SERVER['REQUEST_TIME'] + 300);
+      brightcove_cache_set($cid, $video);
       return $video;
     }
   }
@@ -590,7 +621,8 @@ function brightcove_status($code, $reset = FALSE) {
     $status = array();
   }
   if (!isset($status[$code])) {
-    if (($cache = cache_get('brightcove:status:' . $code, 'cache'))) {
+    $cid = 'brightcove:status:' . $code;
+    if (($cache = brightcove_cache_get($cid))) {
       $status[$code] = $cache->data;
     }
     else {
@@ -603,7 +635,7 @@ function brightcove_status($code, $reset = FALSE) {
         watchdog('brightcove', 'Unhandled error from Brightcove when retrieving the status of video ID %video: %error', array('%video' => $code, '%error' => $error->getMessage()), WATCHDOG_ERROR);
         $status[$code] = 'ERROR';
       }
-      cache_set('brightcove:status:' . $code, $status[$code], 'cache', CACHE_TEMPORARY);
+      brightcove_cache_set($cid, $status[$code], 'cache');
     }
   }
   return $status[$code];
@@ -719,80 +751,6 @@ function brightcove_generate_reference($account = NULL) {
 }
 
 /**
- * Caches the status of a video for faster validation.
- *
- * This function also helps work around the lag in Brightcove API when
- * videos are uploaded.
- *
- * @param $id
- *   The Brightcove identifier for the video.
- *
- * @param $video
- *   The video object to be cached.
- */
-function brightcove_video_cache_set($id, $video) {
-  if (!isset($_SESSION['brightcove'])) {
-    $_SESSION['brightcove'] = array();
-  }
-  $_SESSION['brightcove']["video_{$id}"] = $video;
-}
-
-/**
- * Caches the status of a playlist for faster validation.
- *
- * This function also helps work around the lag in Brightcove API when
- * videos are uploaded.
- *
- * @param $id
- *   The Brightcove identifier for the playlist.
- *
- * @param $playlist
- *   The playlist object to be cached.
- */
-function brightcove_playlist_cache_set($id, $playlist) {
-  if (!isset($_SESSION['brightcove'])) {
-    $_SESSION['brightcove'] = array();
-  }
-  $_SESSION['brightcove']["playlist_{$id}"] = $playlist;
-}
-
-/**
- * Fetches a brighcove video object from the cache, if available.
- *
- * @param
- *   The Brightcove identifier for the video.
- *
- * @return
- *   Object the Brightcove video object.
- */
-function brightcove_video_cache_get($id) {
-  $key = "video_{$id}";
-  if ($id && isset($_SESSION['brightcove'][$key])) {
-    return $_SESSION['brightcove'][$key];
-  }
-
-  return NULL;
-}
-
-/**
- * Fetches a brighcove playlist object from the cache, if available.
- *
- * @param
- *   The Brightcove identifier for the playlist.
- *
- * @return
- *   Object the Brightcove playlist object.
- */
-function brightcove_playlist_cache_get($id) {
-  $key = "playlist_{$id}";
-  if ($id && isset($_SESSION['brightcove'][$key])) {
-    return $_SESSION['brightcove'][$key];
-  }
-
-  return NULL;
-}
-
-/**
  * Verifies the brightcove API keys.
  *
  * @param string $read_token
@@ -830,19 +788,12 @@ function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
 /**
  * Load a player.
  *
- * @param $pid
+ * @param $name
  * @return mixed
  */
-function brightcove_player_load($pid) {
-  return is_numeric($pid) ?
-    db_query('SELECT * FROM {brightcove_player} WHERE pid = :pid',
-      array(
-        ':pid' => $pid,
-      ))->fetch() :
-    db_query('SELECT * FROM {brightcove_player} WHERE name = :name',
-      array(
-        ':name' => $pid,
-      ))->fetch();
+function brightcove_player_load($name) {
+  $players = brightcove_player_load_all();
+  return $players[$name];
 }
 
 /**
@@ -851,8 +802,8 @@ function brightcove_player_load($pid) {
  * @return mixed
  */
 function brightcove_player_load_all() {
-  return db_query('SELECT * FROM {brightcove_player} ORDER BY name')
-    ->fetchAll();
+  ctools_include('export');
+  return ctools_export_crud_load_all('brightcove_player');
 }
 
 /**
@@ -861,8 +812,28 @@ function brightcove_player_load_all() {
  * @return mixed
  */
 function brightcove_player_list() {
-  return db_query('SELECT pid, name FROM {brightcove_player} ORDER BY name')
-    ->fetchAllKeyed(0, 1);
+  $players = brightcove_player_load_all();
+  $return = array();
+  foreach ($players as $id => $player) {
+    $return[$id] = $player->display_name;
+  }
+  return $return;
+}
+
+/**
+ * Get the default player.
+ *
+ * @return mixed|null
+ */
+function brightcove_default_player() {
+  $default = variable_get('brightcove_player_default', NULL);
+
+  if (is_null($default)) {
+    drupal_set_message(t("The default brightcove player has not been defined yet."), 'warning');
+    return NULL;
+  }
+
+  return brightcove_player_load($default);
 }
 
 /**
@@ -872,37 +843,19 @@ function brightcove_player_list() {
  * @return DatabaseStatementInterface|int|null
  */
 function brightcove_player_save($player) {
-  if (empty($player->pid)) {
-    return db_insert('brightcove_player')
-      ->fields(array(
-        'name' => $player->name,
-        'player_id' => $player->player_id,
-        'player_key' => $player->player_key,
-      ))
-      ->execute();
-  }
-  else {
-    return db_update('brightcove_player')
-      ->fields(array(
-        'name' => $player->name,
-        'player_id' => $player->player_id,
-        'player_key' => $player->player_key,
-      ))
-      ->condition('pid', $player->pid)
-      ->execute();
-  }
+  ctools_include('export');
+  return ctools_export_crud_save('brightcove_player', $player);
 }
 
 /**
  * Delete a player.
  *
- * @param $pid
+ * @param $player
  * @return DatabaseStatementInterface
  */
-function brightcove_player_delete($pid) {
-  return db_delete('brightcove_player')
-    ->condition('pid', $pid)
-    ->execute();
+function brightcove_player_delete($player) {
+  ctools_include('export');
+  return ctools_export_crud_delete('brightcove_player', $player);
 }
 
 /**
@@ -1117,7 +1070,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
     'file_validate_extensions' => array($limits['extensions']),
   );
 
-  $file = file_save_upload('file_upload', $validators, drupal_realpath(file_default_scheme() . ':/'));
+  $file = file_save_upload('file_upload', $validators, file_default_scheme() . '://');
 
   if (!$file) {
     drupal_set_message(t('Only Video files are allowed here.'), 'error');
@@ -1184,19 +1137,14 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
       }
     }
 
-    // Construct Video object with ID - we need to cache it and save to
-    // session. Brightcove Media API doesn't clear it's cache when a new
+    // We need to cache it and save it to session.
+    // Brightcove Media API doesn't clear its cache when a new
     // video is uploaded, therefore the node save would fail.
-    $video = new StdClass();
-    $video->id = $id;
-    foreach ($meta as $key => $data) {
-      $video->$key = $data;
-    }
-    brightcove_video_cache_set($id, $video);
-    // Invalidate brightcove video load cache.
-    cache_set("bc:video:{$id}", FALSE, 'cache');
+    $_SESSION['brightcove']['video'][$id] = $id;
+    // Invalidate BC cache
+    brightcove_invalidate_cache('brightcove:video:list', TRUE);
 
-    return $video;
+    return $id;
   }
 
   return FALSE;
@@ -1231,9 +1179,284 @@ function _brightcove_create_form_callback(&$form, $form_state) {
     $metadata['filterTags'] = drupal_explode_tags($form_state['values']['filterTags']);
   }
 
-  $playlist_id = brightcove_add_playlist($metadata);
-  // Invalidate playlist cache.
-  cache_set('bc:playlist:list', FALSE);
+  $id = brightcove_add_playlist($metadata);
+  // We need to cache it and save it to session.
+  // Brightcove Media API doesn't clear its cache when a new
+  // playlist is created, therefore the node save would fail.
+  $_SESSION['brightcove']['playlist'][$id] = $id;
+  // Invalidate BC cache
+  brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
 
-  return $playlist_id;
+  return $id;
+}
+
+/**
+ * Return the cached data based on the type of the caching.
+ *
+ * @param $cid
+ *   The id of the cache.
+ *
+ * @return mixed
+ *   The cached data, if exists, FALSE otherwise.
+ */
+function brightcove_cache_get($cid) {
+  // If cache is enabled.
+  if ( variable_get('brightcove_cache_enabled', TRUE)) {
+    // Get the type of cache being set.
+    $type = variable_get('brightcove_cache_type', 'db');
+    switch ($type) {
+      case 'db':
+        $cache = cache_get($cid, 'cache_brightcove');
+        if ($cache) {
+          return $cache->data;
+        }
+        break;
+      case 'file':
+      case 'memcached':
+        $bc_cache = brightcove_cache_initialize();
+        $cache = $bc_cache->get($cid);
+        return json_decode($cache, TRUE);
+        break;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Cache Brightcove data according to the type of caching being set.
+ *
+ * @param $cid
+ *   The id of the cache.
+ * @param $data
+ *   The data going to be cached
+ * .
+ * @return mixed
+ *   The cached data, if exists, NULL otherwise.
+ */
+function brightcove_cache_set($cid, $data) {
+  // If cache is enabled.
+  if ( variable_get('brightcove_cache_enabled', TRUE)) {
+    // Get the type of cache being set.
+    $type = variable_get('brightcove_cache_type', 'db');
+    switch ($type) {
+      case 'db':
+        // Get type related settings.
+        $cache_settings = variable_get('brightcove_cache_db', array());
+        $cache_time = isset($cache_settings['cache_time']) ? $cache_settings['cache_time'] : 600;
+        // Save data to cache table.
+        cache_set($cid, $data, 'cache_brightcove', time() + $cache_time);
+        break;
+      case 'file':
+      case 'memcached':
+        $bc_cache = brightcove_cache_initialize();
+        $bc_cache->set($cid, $data);
+        break;
+    }
+  }
+}
+
+/**
+ * Implements hook_flush_caches().
+ */
+function brightcove_flush_caches() {
+  // If a user updates the module from an older version which is not include the cache table,
+  // the update method will be broken, because the system will try to flush the cache from the
+  // unexisting table as well.
+  $tables = db_table_exists('cache_brightcove') ? array('cache_brightcove') : array();
+  return $tables;
+}
+
+/**
+ * Invalidate outdated cache records.
+ *
+ * @param $cid
+ * @param bool $wildcard
+ */
+function brightcove_invalidate_cache($cid, $wildcard = FALSE) {
+  // If cache is enabled.
+  if (variable_get('brightcove_cache_enabled', TRUE)) {
+    // Get the type of cache being set.
+    $type = variable_get('brightcove_cache_type', 'db');
+    switch ($type) {
+      case 'db':
+        cache_clear_all($cid, 'cache_brightcove', $wildcard);
+        break;
+      case 'file':
+        if ($wildcard) {
+          // Remove all the cache files, when new file is added or an existing one is deleted, because we can't use
+          // wildcard like we can when we cache to database.
+          _brightcove_delete_cache_files();
+        }
+        else {
+          _brightcove_delete_cache_files($cid);
+        }
+        break;
+      case 'memcached':
+        if ($wildcard) {
+          // Remove all the cache files, when new file is added or an existing one is deleted, because we can't use
+          // wildcard like we can when we cache to database.
+          _brightcove_delete_memcached();
+        }
+        else {
+          _brightcove_delete_memcached($cid);
+        }
+        break;
+    }
+  }
+}
+
+/**
+ * Helper function to be able to delete unnecessary cache files.
+ *
+ * @param null $cid
+ */
+function _brightcove_delete_cache_files($cid = NULL) {
+  $cache_settings = variable_get('brightcove_cache_file', array());
+  $path = isset($cache_settings['path']) ? _brightcove_cache_fix_file_path($cache_settings['path']) : BRIGHTCOVE_CACHE_FILE_PATH;
+
+  if ($cid) {
+    $ext = isset($cache_settings['ext']) ? $cache_settings['ext'] : BRIGHTCOVE_CACHE_FILE_EXT;
+    // Delete affected cache file.
+    $file = $path . md5($cid) . '.' . $ext;
+    unlink($file);
+  }
+  else {
+    // If no cache id given, the module deletes all the cache files from the cache folder.
+    $files = glob($path . '*');
+    foreach ($files as $file) {
+      if (is_file($file)) {
+        unlink($file);
+      }
+    }
+  }
+}
+
+/**
+ * Helper function to be able to delete outdated memcached items.
+ *
+ * @param $cid
+ */
+function _brightcove_delete_memcached($cid = NULL) {
+  $cache_settings = variable_get('brightcove_cache_memcached', array());
+  $location = isset($cache_settings['path']) ? $cache_settings['path'] : BRIGHTCOVE_CACHE_MEMCACHE_PATH;
+  $port = isset($cache_settings['port']) ? $cache_settings['port'] : BRIGHTCOVE_CACHE_MEMCACHE_PORT;
+
+  $memcached = new Memcached();
+  $memcached->addServer($location, $port);
+
+  if ($cid) {
+    $memcached->delete($cid);
+  }
+  else {
+    // Remove all cache item.
+    $memcached->flush();
+  }
+
+}
+
+/**
+ * Initialize Brightcove API Cache.
+ *
+ * @param null $type
+ * @param null $time
+ * @param null $location
+ * @param null $extension
+ * @param null $port
+ * @return BCMAPICache|bool
+ */
+function brightcove_cache_initialize($type = NULL, $time = NULL, $location = NULL, $extension = NULL, $port = NULL) {
+  include_once brightcove_mapi_path() . '/bc-mapi-cache.php';
+  // Cache type.
+  if (!$type) {
+    $type = variable_get('brightcove_cache_type', 'db');
+    if (!in_array($type, array('file', 'memcached'))) {
+      drupal_set_message(t('Cannot initialize Brightcove API Cache. Contact site administrators.'), 'error');
+      watchdog('brightcove', 'The given @type cache type is not supported by Brightcove MAPI SDK.', array('@type' => $type), WATCHDOG_ERROR);
+      return FALSE;
+    }
+    else {
+      $cache_settings = variable_get('brightcove_cache_' . $type, array());
+    }
+  }
+  // Cache lifetime in seconds.
+  if (!$time) {
+    $time = isset($cache_settings['cache_time']) ? $cache_settings['cache_time'] : BRIGHTCOVE_CACHE_LIFETIME;
+  }
+  // Location of the cache dir or the Memcache server.
+  if (!$location) {
+    $default_path = ($type === 'file') ? BRIGHTCOVE_CACHE_FILE_PATH : BRIGHTCOVE_CACHE_MEMCACHE_PATH;
+    $location = isset($cache_settings['path']) ? $cache_settings['path'] : $default_path;
+  }
+  // Check that the path of the cache directory has the closing "/" character.
+  if ($type === 'file') {
+    $location = _brightcove_cache_fix_file_path($location);
+  }
+  // Extension of the cache files.
+  if (!$extension) {
+    $extension = '.';
+    $extension .= isset($cache_settings['ext']) ? $cache_settings['ext'] : BRIGHTCOVE_CACHE_FILE_EXT;
+  }
+  // Memcache port.
+  if (!$port) {
+    $port = isset($cache_settings['port']) ? $cache_settings['port'] : BRIGHTCOVE_CACHE_MEMCACHE_PORT;
+  }
+   try {
+    $bc_cache = new BCMAPICache($type, $time, $location, $extension, $port);
+  } catch (Exception $e) {
+    watchdog_exception('brightcove', $e);
+    return FALSE;
+  }
+
+  return $bc_cache;
+}
+
+/**
+ * Returns the appropriate external URL to the BrightcoveExperiences.js file.
+ *
+ * @return string
+ *  The appropriate external js URL.
+ *
+ * @see http://support.brightcove.com/en/video-cloud/docs/publishing-video-cloud-player-https-page
+ */
+function brightcove_get_experiences_js_url() {
+  global $is_https;
+
+  $path = 'http://admin.brightcove.com/js/BrightcoveExperiences.js';
+  if ($is_https) {
+    $path = 'https://sadmin.brightcove.com/js/BrightcoveExperiences.js';
+  }
+
+  return $path;
+}
+
+/**
+ * Returns the appropriate URL to the Brightcove viewer.
+ *
+ * The calling function should append appropriate query strings to this URL to
+ * control the video and player.
+ *
+ * @return string
+ *  Brightcove viewer path.
+ *
+ * @todo Find out how to detect this URL in a nice way;
+ */
+function brightcove_get_viewer_url() {
+  global $is_https;
+
+  $path = 'http://c.brightcove.com/services/viewer/federated_f9';
+  if ($is_https) {
+    $path = 'https://secure.brightcove.com/services/viewer/federated_f9';
+  }
+
+  return $path;
+}
+
+/**
+ * Helper function to be able to add the closing "/" character, if it doesn't exist.
+ *
+ * @param $location
+ * @return string
+ */
+function _brightcove_cache_fix_file_path($location) {
+  return (substr($location, -1) === '/') ? $location : $location . '/';
 }

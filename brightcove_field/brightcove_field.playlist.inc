@@ -55,6 +55,11 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   $entity_info = entity_get_info($entity_type);
   $eid = isset($form[$entity_info['entity keys']['id']]['#value']) ? $form[$entity_info['entity keys']['id']]['#value'] : NULL;
   $bundle = isset($form[$entity_info['entity keys']['bundle']]['#value']) ? $form[$entity_info['entity keys']['bundle']]['#value'] : NULL;
+  // It needs to be able to work with field collection.
+  $parent_delta = array_pop($element['#field_parents']);
+  // We need this mixed variable in access checking.
+  $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
+
   $element['brightcove_id'] = array(
     '#type' => 'textfield',
     '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : NULL,
@@ -64,8 +69,8 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
       $element['#entity_type'] . '/' . $element['#field_name'] . '/' .
       ($eid ? $eid : ($bundle ? $bundle : 0)),
     '#attributes' => array(
-      'rel' => array($element['#field_name'] . '-' . $delta),
-      'class' => array('brightcove-playlist-field', $element['#field_name'] . '-' . $delta),
+      'rel' => array($element['#field_name'] . '-' . $parent_delta . '-' . $delta),
+      'class' => array('brightcove-playlist-field', $element['#field_name'] . '-' . $parent_delta . '-' . $delta),
       'data-field-name' => $element['#field_name'],
     ),
     '#element_validate' => array(
@@ -74,13 +79,13 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     '#field_name' => $element['#field_name'],
   );
 
-  if (user_access('browse playlists')) {
+  if (brightcove_field_browse_access('browse playlists', $entity_type, $field['field_name'], $entity_id_or_bundle)) {
     // Button to browse playlists.
     $element['actions']['browse'] = array(
       '#type' => 'button',
       '#attributes' => array(
         'class' => array('brightcove-field-browse-button'),
-        'rel' => $element['#field_name'] . '-' . $delta,
+        'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
         'data-entity-type' => $entity_type,
         'data-bundle' => $element['#bundle'],
         'data-field-name' => $element['#field_name'],
@@ -93,17 +98,17 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
       '#ajax' => array(
         'callback' => 'ajax_browse_playlist_dialog_callback',
       ),
-      '#name' => $element['#field_name'] . '-' . $delta,
+      '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
     );
   }
 
-  if ((user_access('administer brightcove playlists')) &&
+  if (brightcove_field_browse_access('administer brightcove playlists', $entity_type, $field['field_name'], $entity_id_or_bundle) &&
       (!empty($instance['settings']['allow_create']))) {
     $element['actions']['create'] = array(
       '#type' => 'button',
       '#attributes' => array(
         'class' => array('brightcove-field-create-button'),
-        'rel' => $element['#field_name'] . '-' . $delta,
+        'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
         'data-entity-type' => $entity_type,
         'data-bundle' => $element['#bundle'],
         'data-field-name' => $element['#field_name'],
@@ -115,7 +120,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
       '#ajax' => array(
         'callback' => 'ajax_create_playlist_dialog_callback',
       ),
-      '#name' => $element['#field_name'] . '-' . $delta,
+      '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
     );
   }
 
@@ -123,14 +128,14 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     '#type' => 'button',
     '#attributes' => array(
       'class' => array('brightcove-field-remove-button'),
-      'rel' => $element['#field_name'] . '-' . $delta,
+      'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
       'data-entity-type' => $entity_type,
       'data-field-name' => $element['#field_name'],
       'data-entity-id' => is_null($eid) ? '0' : $eid,
     ),
     '#default_value' => t('Remove'),
     '#value_callback' => 'brightcove_field_button_value_callback',
-    '#name' => $element['#field_name'] . '-' . $delta,
+    '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
   );
 
   $element['player'] = array(
@@ -179,60 +184,77 @@ function _brightcove_field_playlist_browse() {
   $items_per_page = 20;
   $page = isset($_GET['page']) ? intval($_GET['page']) : '0';
 
-  // Issue a BC request to list videos
-  // For all videos, get a thumbnail URL
-  // Theme a table with videos and a button to attach.
-  $bc = brightcove_initialize();
-
   $params = array();
   $method = 'find_all_playlists';
   $result = NULL;
 
-  try {
-    $params['page_size'] = $items_per_page;
-    $params['page_number'] = $page;
+  // Add parameters.
+  $params['page_size'] = $items_per_page;
+  $params['page_number'] = $page;
 
-    $result = $bc->find($method, $params);
-  } catch (Exception $error) {
-    watchdog('brightcove', 'Finding playlists in browse failed.', array(), WATCHDOG_ERROR);
+  // Try to load the data from cache.
+  $cid = 'brightcove:playlist:list';
+  foreach ($params as $key => $param) {
+    $cid .= ":{$key}:{$param}";
   }
+  $content = brightcove_cache_get($cid);
 
-  $pager_page_array = explode(',', $page);
-  $pager_total[0] = ceil($bc->total_count / $items_per_page);
-  $pager_page_array[0] =
-    max(0, min(
-      (int)$pager_page_array[0],
-      ((int)$pager_total[0]) - 1)
-    );
+  if (!$content) {
+    try {
+      $bc = brightcove_initialize();
+      $result = $bc->find($method, $params);
+    } catch (Exception $error) {
+      watchdog('brightcove', 'Finding playlists in browse failed.', array(), WATCHDOG_ERROR);
+    }
 
-  $items = array();
-  if (count($result)) {
-    foreach ($result as $playlist) {
-      $item = array();
-      $item['title'] = check_plain($playlist->name);
-      $item['brightcove_id'] = $playlist->id;
-      if (!empty($playlist->thumbnailURL)) {
+    $pager_page_array = explode(',', $page);
+    $pager_total[0] = ceil($bc->total_count / $items_per_page);
+    $pager_page_array[0] =
+      max(0, min(
+          (int) $pager_page_array[0],
+          ((int) $pager_total[0]) - 1)
+      );
+
+    $items = array();
+    if (count($result)) {
+      foreach ($result as $playlist) {
+        $item = array();
+        $item['title'] = check_plain($playlist->name);
+        $item['brightcove_id'] = $playlist->id;
+        if (!empty($playlist->thumbnailURL)) {
           $image_vars = array('path' => $playlist->thumbnailURL, 'alt' => '', 'title' => '', 'attributes' => '');
           $item['thumbnail'] = theme('image', $image_vars);
+        }
+        else {
+          $image_vars = array(
+            'path' => brightcove_get_default_image(),
+            'alt' => '',
+            'title' => '',
+            'attributes' => '',
+            'width' => '120',
+            'height' => ''
+          );
+          $item['thumbnail'] = theme('image', $image_vars);
+        }
+        $items[] = $item;
       }
-      else {
-        $image_vars = array('path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attributes' => '', 'width' => '120', 'height' => '');
-        $item['thumbnail'] = theme('image', $image_vars);
-      }
-      $items[] = $item;
     }
-  }
 
-  $pager_vars = array(
-    'tags' => NULL,
-    'element' => 0,
-    'parameters' => array(),
-    'quantity' => $items_per_page,
-  );
-  // No possibility to search any parameter of the playlist.(Only ID).
-  $content['filter_form'] = '';
-  $content['items'] = $items;
-  $content['pager'] = theme_pager($pager_vars);
+    $pager_vars = array(
+      'tags' => NULL,
+      'element' => 0,
+      'parameters' => array(),
+      'quantity' => $items_per_page,
+    );
+    // No possibility to search any parameter of the playlist.(Only ID).
+    $content['filter_form'] = array();
+    $content['items'] = $items;
+    $content['pager'] = theme('pager', $pager_vars);
+
+    // Save the output to the cache record(not only the video objects),
+    // because we also need data for pagination.
+    brightcove_cache_set($cid, $content);
+  }
 
   return $content;
 }
