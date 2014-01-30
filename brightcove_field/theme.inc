@@ -72,7 +72,6 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
     watchdog('brightcove', 'Brightcove player is missing.', array(), WATCHDOG_ERROR);
   }
 
-  $flashvars = array();
   $player = brightcove_player_load($variables['player']);
 
   $variables['id'] = 'myExperience-' . $variables['id'];
@@ -86,11 +85,9 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
 
     if (drupal_strtolower($variables['type']) == 'brightcove') {
       $variables['is_vid'] = TRUE;
-      $variables['brightcove_id'] = $variables['brightcove_id'];
     }
     elseif (drupal_strtolower($variables['type']) == 'brightcove-player') {
       $variables['is_vid'] = FALSE;
-      $variables['brightcove_id'] = $variables['brightcove_id'];
     }
   }
 }
