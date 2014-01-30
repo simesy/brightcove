@@ -386,7 +386,7 @@ function brightcove_field_field_info() {
        'per_content_player' => FALSE,
      ),
      'default_widget' => 'brightcove_field_browser',
-     'default_formatter' => 'default',
+     'default_formatter' => 'brightcove_default',
     ),
   );
 }
@@ -465,7 +465,7 @@ function brightcove_field_field_is_empty($item, $field) {
 function brightcove_field_field_formatter_info() {
   $formatters = array();
 
-  $formatters['default'] = array(
+  $formatters['brightcove_default'] = array(
     'label' => t('Standard video player'),
     'field types' => array('brightcove_field'),
     'settings' => array(
@@ -509,7 +509,7 @@ function brightcove_field_field_formatter_settings_summary($field, $instance, $v
 
   $summary = '';
 
-  if ($display['type'] == 'default') {
+  if ($display['type'] == 'brightcove_default') {
     $summary = t('Size: @width x @height', array(
       '@width' => $settings['width'],
       '@height' => $settings['height'],
@@ -559,7 +559,7 @@ function brightcove_field_field_formatter_settings_form($field, $instance, $view
   $element = array();
 
 
-  if ($display['type'] == 'default') {
+  if ($display['type'] == 'brightcove_default') {
     $element['width'] = array(
       '#title' => t('Width'),
       '#type' => 'textfield',
@@ -1314,7 +1314,7 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
   $settings = $display['settings'];
   $variables['#brightcove_widget_type'] = $instance['widget']['type'];
 
-  if ($display['type'] == 'default') {
+  if ($display['type'] == 'brightcove_default') {
     $theme = 'brightcove_field_formatter_default';
   }
 
