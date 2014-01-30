@@ -598,7 +598,7 @@ function brightcove_field_field_formatter_settings_form($field, $instance, $view
       '#default_value' => $settings['brightcove_image_link'],
       '#empty_option' => t('Nothing'),
       '#options' => $link_types,
-      '#attributes' => array('name' => 'brightcove-image-link')
+      '#attributes' => array('class' => array('brightcove-image-link')),
     );
 
     $element['width'] = array(
@@ -609,7 +609,7 @@ function brightcove_field_field_formatter_settings_form($field, $instance, $view
       '#formatter_type' => $display['type'],
       '#states' => array(
         'visible' => array(
-          ':input[name="brightcove-image-link"]' => array('value' => 'dialog'),
+          ':input[class="brightcove-image-link"]' => array('value' => 'dialog'),
         ),
       ),
     );
