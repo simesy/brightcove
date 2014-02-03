@@ -75,7 +75,7 @@ function theme_brightcove_field_image($variables) {
       ));
     }
 
-    if ($elements['#brightcove_image_link'] == 'none') {
+    if (empty($elements['#brightcove_image_link'])) {
       return $image;
     }
 
