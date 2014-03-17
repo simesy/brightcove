@@ -129,7 +129,6 @@ function brightcove_admin_settings($form, &$form_state) {
     '#title' => t('Path to cache directory'),
     '#maxlength' => 255,
     '#description' => t('A local file system path where the file cache will be stored. This directory must exist and be writable by Drupal. This directory must be an absolute path or relative to the Drupal installation directory.'),
-    '#after_build' => array('system_check_directory'),
     '#default_value' => isset($cache_settings['path']) ? $cache_settings['path'] : BRIGHTCOVE_CACHE_FILE_PATH,
   );
   $form['cache']['brightcove_cache_file']['ext'] = array(
@@ -384,6 +383,9 @@ function brightcove_admin_settings_validate($form, &$form_state) {
   }
   if ($form_state['values']['brightcove_write_api_key'] && !$can_write) {
     form_set_error('brightcove_write_api_key', t('Invalid write key'));
+  }
+  if ($form_state['values']['brightcove_cache_enabled'] && $form_state['values']['brightcove_cache_type'] === 'file') {
+    system_check_directory($form['cache']['brightcove_cache_file']['path']);
   }
 }
 
