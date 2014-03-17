@@ -410,8 +410,8 @@ function brightcove_player_setdefault_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/config/media/brightcove/players';
 }
 
-function brightcove_player_form_validate_field($element, &$form_state) {
-  if (!preg_match('!^[a-z0-9_]+$!', $element['#value'])) {
-    form_error($element, t('The machine-readable name must contain only lowercase letters, numbers, and underscores.'));
-  }
+function brightcove_player_form_validate_field($name) {
+  ctools_include('export');
+  $result = ctools_export_load_object('brightcove_player', 'names', array($name));
+  return isset($result[$name]) ? TRUE : FALSE;
 }
