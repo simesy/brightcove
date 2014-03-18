@@ -1104,10 +1104,12 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
       }
     }
 
-    // We need to cache it and save it to session.
-    // Brightcove Media API doesn't clear its cache when a new
-    // video is uploaded, therefore the node save would fail.
-    $_SESSION['brightcove']['video'][$id] = $id;
+    // Cache video temporary, because Brightcove cache is not cleared promptly, so we
+    // might not get the video object for a while.
+    $video = (object)$meta;
+    $video->id = $id;
+    brightcove_cache_set('brightcove:video:' . $id, $video);
+
     // Invalidate BC cache
     brightcove_invalidate_cache('brightcove:video:list', TRUE);
 
@@ -1147,10 +1149,13 @@ function _brightcove_create_form_callback(&$form, $form_state) {
   }
 
   $id = brightcove_add_playlist($metadata);
-  // We need to cache it and save it to session.
-  // Brightcove Media API doesn't clear its cache when a new
-  // playlist is created, therefore the node save would fail.
-  $_SESSION['brightcove']['playlist'][$id] = $id;
+
+  // Cache video temporary, because Brightcove cache is not cleared promptly, so we
+  // might not get the video object for a while.
+  $playlist = (object)$metadata;
+  $playlist->id = $id;
+  brightcove_cache_set('brightcove:playlist:' . $id, $playlist);
+
   // Invalidate BC cache
   brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
 
