@@ -17,6 +17,7 @@
 global $is_https;
 ?>
 <object id="<?php print $id;?>" class="BrightcoveExperience <?php print join($classes_array, ',');?>">
+  <param name="wmode" value="transparent" />
   <param name="bgcolor" value="<?php print $bgcolor;?>" />
   <param name="width" value="<?php print $width;?>" />
   <param name="height" value="<?php print $height;?>" />
