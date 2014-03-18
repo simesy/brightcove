@@ -182,6 +182,12 @@ function brightcove_admin_settings($form, &$form_state) {
     '#description' => t("In case a video doesn't have a thumbnail or still image, display an image from this path"),
     '#default_value' => variable_get('brightcove_default_thumbnail', brightcove_get_default_image()),
   );
+  $form['player']['brightcove_player_full_api'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Load full JavaScript API'),
+    '#description' => t("Optionally load the <a href=\"!url\">full Brightcove JavaScript API</a> rather than just the bare player logic.", array('!url' => 'http://support.brightcove.com/en/video-cloud/docs/using-javascript-flash-only-player-api')),
+    '#default_value' => variable_get('brightcove_player_full_api', FALSE),
+  );
 
   //Upload
   //see: http://support.brightcove.com/en/docs/creating-videos-multi-bitrate-streaming-media-api

@@ -150,6 +150,7 @@ function brightcove_uninstall() {
   variable_del('brightcove_encode_to');
   variable_del('brightcove_mapi_path');
   variable_del('brightcove_player');
+  variable_del('brightcove_player_full_api');
   variable_del('brightcove_player_pid');
   variable_del('brightcove_player_default');
   variable_del('brightcove_player_key');

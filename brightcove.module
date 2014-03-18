@@ -1393,9 +1393,16 @@ function brightcove_cache_initialize($type = NULL, $time = NULL, $location = NUL
 function brightcove_get_experiences_js_url() {
   global $is_https;
 
-  $path = 'http://admin.brightcove.com/js/BrightcoveExperiences.js';
+  // Set the filename we want to load.
+  $filename = 'BrightcoveExperiences.js';
+  if (variable_get('brightcove_player_full_api', FALSE)) {
+    $filename = 'BrightcoveExperiences_all.js';
+  }
+
+  // Set the appropriate protocol.
+  $path = 'http://admin.brightcove.com/js/' . $filename;
   if ($is_https) {
-    $path = 'https://sadmin.brightcove.com/js/BrightcoveExperiences.js';
+    $path = 'https://sadmin.brightcove.com/js/' . $filename;
   }
 
   return $path;
