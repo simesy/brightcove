@@ -1658,3 +1658,16 @@ function _filter_brightcove_tips($filter, $format, $long = FALSE) {
   return t('To embed a brightcove video use the [brightcove:VIDEOID] syntax, ' .
   'where VIDEOID is the ID of the brightcove video what you want to embed.');
 }
+
+/*
+ * Implements hook_migrate_api().
+ */
+function brightcove_field_migrate_api() {
+  $api = array(
+    'api' => MIGRATE_API_VERSION,
+    'field handlers' => array(
+      'MigrateBrightcoveFieldHandler',
+    ),
+  );
+  return $api;
+}
