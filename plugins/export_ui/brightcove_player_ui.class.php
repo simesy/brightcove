@@ -49,6 +49,10 @@ class brightcove_player_ui extends ctools_export_ui {
     if (_brightcove_player_is_default($item)) {
       $this->rows[$name]['data'][0]['data'] .= ' ' . t('(Default)');
     }
+
+    if (!empty($item->responsive)) {
+      $this->rows[$name]['data'][0]['data'] .= ' ' . t('(Responsive)');
+    }
   }
 
   /**
@@ -91,6 +95,14 @@ class brightcove_player_ui extends ctools_export_ui {
       '#type' => 'textfield',
       '#default_value' => isset($form_state['item']->player_key) ? $form_state['item']->player_key : '',
       '#required' => FALSE,
+    );
+
+    $form['responsive'] = array(
+      '#title' => t('Responsive'),
+      '#type' => 'checkbox',
+      '#default_value' => isset($form_state['item']->responsive) ? $form_state['item']->responsive : 0,
+      '#required' => FALSE,
+      '#description' => t('Make the player responsive. Please note that the player will use a different template in this case. This setting can be overwritten by the global player setting.')
     );
   }
 

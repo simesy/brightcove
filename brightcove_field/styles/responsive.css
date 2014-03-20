@@ -1,0 +1,22 @@
+/*
+ * Responsive layout
+ *
+ * http://support.brightcove.com/en/video-cloud/docs/responsive-sizing-video-players
+ */
+.BCLcontainingBlock {
+width: 100%;
+}
+
+.BCLvideoWrapper {
+position: relative;
+padding-bottom: 56.25%;
+}
+
+.BrightcoveExperience {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+}
+

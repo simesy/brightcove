@@ -16,6 +16,11 @@
  */
 global $is_https;
 ?>
+<?php if ($responsive): ?>
+<div class="BCLcontainingBlock">
+  <div class="BCLvideoWrapper">
+<?php endif; ?>
+
 <object id="<?php print $id;?>" class="BrightcoveExperience <?php print join($classes_array, ',');?>">
   <param name="wmode" value="transparent" />
   <param name="bgcolor" value="<?php print $bgcolor;?>" />
@@ -27,9 +32,11 @@ global $is_https;
     <param name="secureConnections" value="true" />
     <param name="secureHTMLConnections" value="true" />
   <?php endif; ?>
+  <!-- for single video players -->
   <?php if ($is_vid): ?>
     <param name="isVid" value="true" />
     <param name="@videoPlayer" value="<?php print $brightcove_id; ?>" />
+  <!-- for playlist players -->
   <?php else: ?>
     <param name="@videoList" value="<?php print $brightcove_id; ?>" />
     <param name="@playlistTab" value="<?php print $brightcove_id; ?>" />
@@ -37,5 +44,15 @@ global $is_https;
   <?php endif; ?>
   <param name="isUI" value="true" />
   <param name="dynamicStreaming" value="true" />
-
+  <!-- smart player api params -->
+  <?php if ($smart_api): ?>
+  <param name="includeAPI" value="true" />
+  <param name="templateLoadHandler" value="Drupal.brightcoveField.templateLoader" />
+  <param name="templateReadyHandler" value="Drupal.brightcoveField.templateReady" />
+  <?php endif; ?>
 </object>
+
+<?php if ($responsive): ?>
+  </div>
+</div>
+<?php endif; ?>

@@ -182,11 +182,33 @@ function brightcove_admin_settings($form, &$form_state) {
     '#description' => t("In case a video doesn't have a thumbnail or still image, display an image from this path"),
     '#default_value' => variable_get('brightcove_default_thumbnail', brightcove_get_default_image()),
   );
+  $form['player']['brightcove_player_responsive'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Make all players responsive'),
+    '#description' => t("Global setting to make all players responsive. Please note that this will change the template of the player."),
+    '#default_value' => variable_get('brightcove_player_responsive', FALSE),
+  );
   $form['player']['brightcove_player_full_api'] = array(
     '#type' => 'checkbox',
     '#title' => t('Load full JavaScript API'),
     '#description' => t("Optionally load the <a href=\"!url\">full Brightcove JavaScript API</a> rather than just the bare player logic.", array('!url' => 'http://support.brightcove.com/en/video-cloud/docs/using-javascript-flash-only-player-api')),
     '#default_value' => variable_get('brightcove_player_full_api', FALSE),
+    '#states' => array(
+      'disabled' => array(
+        ':input[name="brightcove_player_smart_api"]' => array('checked' => TRUE),
+      ),
+    )
+  );
+  $form['player']['brightcove_player_smart_api'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use Smart Palyer API'),
+    '#description' => t("Optionally use the <a href=\"!url\">Brightcove Smart Player API</a>. You can only use it, if you avoid to load the full JavaScript API. Smart Player API doesn't support playlist players.", array('!url' => 'http://support.brightcove.com/en/video-cloud/docs/using-smart-player-api')),
+    '#default_value' => variable_get('brightcove_player_smart_api', FALSE),
+    '#states' => array(
+      'disabled' => array(
+        ':input[name="brightcove_player_full_api"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   //Upload

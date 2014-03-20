@@ -78,6 +78,30 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
   $variables['bgcolor'] = '#FFFFFF';
   $variables['width'] = isset($variables['width']) ? $variables['width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
   $variables['height'] = isset($variables['height']) ? $variables['height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
+  $variables['responsive'] = FALSE;
+  $variables['smart_api'] = FALSE;
+
+  // If player should be responsive.
+  if ($player->responsive || variable_get('brightcove_player_responsive', FALSE)) {
+    $variables['responsive'] = TRUE;
+    drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/responsive.css');
+  }
+
+  // If we should use Smart player API.
+  if (variable_get('brightcove_player_smart_api', FALSE)) {
+    $variables['smart_api'] = TRUE;
+    // Add width and height to client side to be able to use it by Smart Player API.
+    drupal_add_js(array(
+        'brightcoveField' => array(
+          $variables['id'] => array(
+            'width' => $variables['width'],
+            'height' => $variables['height']
+          ),
+        ),
+      ),
+      'setting'
+    );
+  }
 
   if (isset($variables['brightcove_id'])) {
     $variables['player_id'] = isset($player->player_id) ? $player->player_id : '';
@@ -90,4 +114,5 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
       $variables['is_vid'] = FALSE;
     }
   }
+
 }
