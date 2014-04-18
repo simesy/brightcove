@@ -34,14 +34,14 @@ global $is_https;
   <?php endif; ?>
   <!-- for single video players -->
   <?php if ($is_vid): ?>
-    <param name="isVid" value="true" />
     <param name="@videoPlayer" value="<?php print $brightcove_id; ?>" />
   <!-- for playlist players -->
   <?php else: ?>
     <param name="@videoList" value="<?php print $brightcove_id; ?>" />
-    <param name="@playlistTab" value="<?php print $brightcove_id; ?>" />
+    <param name="@playlistTabs" value="<?php print $brightcove_id; ?>" />
     <param name="@playlistCombo" value="<?php print $brightcove_id; ?>" />
   <?php endif; ?>
+  <param name="isVid" value="true" />
   <param name="isUI" value="true" />
   <param name="dynamicStreaming" value="true" />
   <!-- smart player api params -->
