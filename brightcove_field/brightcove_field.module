@@ -1101,6 +1101,7 @@ function brightcove_field_filter_form($form, &$form_state) {
   $form['search']['submit'] = array(
     '#type' => 'submit',
     '#name' => 'submit',
+    '#attributes' => array('id' => 'filter-submit'),
     '#default_value' => t('Filter'),
   );
 
