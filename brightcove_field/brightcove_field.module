@@ -1620,15 +1620,20 @@ function brightcove_field_filter_info() {
  */
 function _filter_brightcove_settings($form, &$form_state, $filter, $format, $defaults) {
   $filter->settings += $defaults;
-
+  $player_list = brightcove_player_list();
   $settings = array();
 
   $settings['player'] = array(
     '#type' => 'radios',
     '#title' => t('Player'),
-    '#options' => brightcove_player_list(),
-    '#default_value' => $filter->settings['player'],
+    '#options' => $player_list,
   );
+
+  //Only set default value if value exists in list of players
+  if(array_key_exists($filter->settings['player'], $player_list)){
+      $settings['player']['#default_value'] = $filter->settings['player'];
+  }
+
 
   return $settings;
 }
