@@ -749,6 +749,7 @@ function brightcove_field_browser_process($element, $form_state, $form) {
     '#type' => 'textfield',
     '#default_value' => isset($element['#value'][$field_key]) ? $element['#value'][$field_key] : '',
     '#autocomplete_path' => 'brightcove_field/autocomplete/'. $element['#field_name'] . '/' . $element['#entity_type']. '/' . $eid,
+    '#maxlength' => 256,
     // The following values were set by the content module and need
     // to be passed down to the nested element.
     '#title' => $element['#title'],
