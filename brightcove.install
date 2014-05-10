@@ -234,7 +234,7 @@ function brightcove_update_7005() {
       brightcove_player_save($player);
 
       //
-      if ($player->id == $default_player) {
+      if ($player->pid == $default_player) {
         $default_player = $player->name;
       }
     }
