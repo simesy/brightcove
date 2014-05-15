@@ -390,7 +390,7 @@ function brightcove_field_field_info() {
        'brightcove_player' => '',
        'per_content_player' => FALSE,
      ),
-     'default_widget' => 'brightcove_field_browser',
+     'default_widget' => BRIGHTCOVE_VIDEO_WIDGET,
      'default_formatter' => 'brightcove_default',
     ),
   );
