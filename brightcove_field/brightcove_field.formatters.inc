@@ -69,13 +69,17 @@ function theme_brightcove_field_image($variables) {
     }
     else {
       $remote_file = brightcove_remote_image($elements["#{$type}"]->{$elements['#brightcove_image_type']});
-      $image = theme('image_style', array(
-        'style_name' => $elements['#brightcove_image_style'],
-        'path' => $remote_file,
-      ));
+      if ($elements['#brightcove_image_style']){
+        $image = theme('image_style', array(
+          'style_name' => $elements['#brightcove_image_style'],
+          'path' => $remote_file,
+        ));
+      }else{
+        $image = theme('image', array('path' => $remote_file));
+      }
     }
 
-    if (empty($elements['#brightcove_image_link'])) {
+    if (($elements['#brightcove_image_link'] == 'none') || (empty($elements['#brightcove_image_link']))) {
       return $image;
     }
 
