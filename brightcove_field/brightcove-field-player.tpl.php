@@ -32,11 +32,9 @@ global $is_https;
     <param name="secureConnections" value="true" />
     <param name="secureHTMLConnections" value="true" />
   <?php endif; ?>
-  <!-- for single video players -->
-  <?php if ($is_vid): ?>
+  <?php if ($is_vid): // for single video players ?>
     <param name="@videoPlayer" value="<?php print $brightcove_id; ?>" />
-  <!-- for playlist players -->
-  <?php else: ?>
+  <?php else: // for playlist players ?>
     <param name="@videoList" value="<?php print $brightcove_id; ?>" />
     <param name="@playlistTabs" value="<?php print $brightcove_id; ?>" />
     <param name="@playlistCombo" value="<?php print $brightcove_id; ?>" />
@@ -44,8 +42,7 @@ global $is_https;
   <param name="isVid" value="true" />
   <param name="isUI" value="true" />
   <param name="dynamicStreaming" value="true" />
-  <!-- smart player api params -->
-  <?php if ($smart_api): ?>
+  <?php if ($smart_api): // smart player api params ?>
   <param name="includeAPI" value="true" />
   <param name="templateLoadHandler" value="Drupal.brightcoveField.templateLoader" />
   <param name="templateReadyHandler" value="Drupal.brightcoveField.templateReady" />
