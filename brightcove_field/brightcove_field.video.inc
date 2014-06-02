@@ -264,14 +264,17 @@ function _brightcove_field_video_browse() {
       'quantity' => $items_per_page,
     );
 
-    $content['items'] = $items;
     $content['pager'] = theme('pager', $pager_vars);
-    $content['filter_form'] = drupal_get_form('brightcove_field_filter_form');;
+    $content['items'] = $items;
 
     // Save the output to the cache record(not only the video objects),
     // because we also need data for pagination.
     brightcove_cache_set($cid, $content);
   }
+
+  // The filter form should not be cached,
+  // because it wouldn't invoke the submit handler in this case.
+  $content['filter_form'] = drupal_get_form('brightcove_field_filter_form');;
 
   return $content;
 }
