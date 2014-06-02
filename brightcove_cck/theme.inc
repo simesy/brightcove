@@ -62,9 +62,7 @@ function theme_brightcove_cck_embed($type, $playerId, $playerKey, $assetIds, $pa
     if(!isset($playerKey)) {
     watchdog('brightcove', 'Video Player KEY is missing.', array(), WATCHDOG_ERROR);
   }
-
-  $values = array('id' => 'myExperience', 'bgcolor' => 'FFFFFF', 'width' => 486, 'height' => 412);
-
+  $values = array('id' => 'myExperience', 'bgcolor' => 'FFFFFF', 'width' => 486, 'height' => 412, 'wmode' => 'window');
   foreach($values as $key => $value) {
     if(isset($params[$key])) {
       $values[$key] = $params[$key];
@@ -101,6 +99,7 @@ function theme_brightcove_cck_embed($type, $playerId, $playerKey, $assetIds, $pa
     <param name="bgcolor" value="#' . $values['bgcolor'] . '" />
     <param name="width" value="' . $values['width'] . '" />
     <param name="height" value="' . $values['height'] . '" />
+    <param name="wmode" value="' . $values['wmode'] . '" />
     <param name="playerID" value="' . $playerId . '" />'
     . $assetCode . '
     <param name="isVid" value="true" />
