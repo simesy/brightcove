@@ -223,15 +223,24 @@ function brightcove_update_7005() {
   db_add_field('brightcove_player', 'display_name', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE,
     'default' => ''));
 
-  $players = brightcove_player_load_all();
+  // We are not using brightcove_player_load_all() here because that, being
+  // based on CTools Export, is using the table schema. But new fields might be
+  // added to the table schema in future updates and that will break the
+  // execution with an 'Unknown column' fatal error.
+  $players = db_query("SELECT pid, name FROM {brightcove_player}")->fetchAll();
+
   if (!empty($players)) {
-    foreach ($players as $id => $player) {
+    foreach ($players as $player) {
       // Make display name the name, and restrict the name to machine-readable.
       $player->display_name = $player->name;
       $player->name = preg_replace('/_+/', '_', preg_replace('/[^a-z0-9]+/', '_', strtolower($player->name)));
 
-      // Save the new name.
-      brightcove_player_save($player);
+      // Save the new name. We are not using brightcove_player_save() because
+      // $player is not a full CTools Export object.
+      db_update('brightcove_player')
+        ->fields(array('name' => $player->name, 'display_name' => $player->display_name))
+        ->condition('pid', $player->pid)
+        ->execute();
 
       //
       if ($player->pid == $default_player) {
