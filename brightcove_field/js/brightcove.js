@@ -21,11 +21,11 @@
       $('.brightcove-field-browse-button', context).click(Drupal.brightcove_field.actions.browse);
       $('.brightcove-field-upload-button', context).click(Drupal.brightcove_field.actions.upload);
       $('.brightcove-field-create-button', context).click(Drupal.brightcove_field.actions.create);
-      $('.form-text.brightcove-video-field').change(Drupal.brightcove_field.actions.change);
-      $('.form-text.brightcove-playlist-field').change(Drupal.brightcove_field.actions.change);
+      $('.form-text.brightcove-video-field', context).change(Drupal.brightcove_field.actions.change);
+      $('.form-text.brightcove-playlist-field', context).change(Drupal.brightcove_field.actions.change);
 
       if ($('.' + remove_button.attr('rel')).val() != '') {
-        remove_button.attr('disabled', '').removeClass('form-button-disabled');
+        remove_button.attr('disabled', false).removeClass('form-button-disabled');
       }
 
       var messages = $('.messages').parent().not('.jquery-processed');
@@ -36,15 +36,13 @@
   Drupal.brightcove_field.actions.change = function() {
     var filt = $(this).attr('rel');
     var button = $('.brightcove-field-remove-button[rel*="' + filt + '"]');
-    button.attr('disabled', '');
-    button.removeClass('form-button-disabled');
+    button.attr('disabled', false).removeClass('form-button-disabled');
   };
 
   Drupal.brightcove_field.actions.remove = function(event) {
     event.preventDefault();
     $('.' + $(this).attr('rel')).val('');
-    $(this).attr('disabled', '');
-    $(this).addClass('form-button-disabled');
+    $(this).attr('disabled', true).addClass('form-button-disabled');
   };
 
   Drupal.brightcove_field.actions.browse = function() {
@@ -60,7 +58,7 @@
   Drupal.brightcove_field.submit_browse = function(field_rel, data) {
     parent.jQuery("." + field_rel).val(data).triggerHandler('change');
     parent.jQuery("." + field_rel).val(data).triggerHandler('blur');
-    parent.jQuery('.brightcove-field-remove-button[rel="' + field_rel + '"]').attr('disabled', '').removeClass('form-button-disabled');
+    parent.jQuery('.brightcove-field-remove-button[rel="' + field_rel + '"]').attr('disabled', false).removeClass('form-button-disabled');
   };
 
   Drupal.ajax.prototype.commands.ui_dialog = function (ajax, response, status) {
