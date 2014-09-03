@@ -168,7 +168,8 @@ function ajax_browse_video_dialog_callback($form, $form_state) {
   $entity = $form['#entity'];
   $entity_type = $form['#entity_type'];
   $bundle = $form['#bundle'];
-  $eid = array_shift(entity_extract_ids($entity_type, $entity));
+  $eid_extracted = entity_extract_ids($entity_type, $entity);
+  $eid = array_shift($eid_extracted);
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
 
   $title = 'Brightcove Video Browser';
@@ -188,7 +189,8 @@ function ajax_upload_video_dialog_callback($form, $form_state) {
   $entity = $form['#entity'];
   $entity_type = $form['#entity_type'];
   $bundle = $form['#bundle'];
-  $eid = array_shift(entity_extract_ids($entity_type, $entity));
+  $eid_extracted = entity_extract_ids($entity_type, $entity);
+  $eid = array_shift($eid_extracted);
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
 
   $title = 'Upload Video to Brightcove';
@@ -222,7 +224,8 @@ function ajax_browse_playlist_dialog_callback($form, $form_state) {
   $entity = $form['#entity'];
   $entity_type = $form['#entity_type'];
   $bundle = $form['#bundle'];
-  $eid = array_shift(entity_extract_ids($entity_type, $entity));
+  $eid_extracted = entity_extract_ids($entity_type, $entity);
+  $eid = array_shift($eid_extracted);
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
 
   $title = 'Brightcove Playlist Browser';
@@ -242,7 +245,8 @@ function ajax_create_playlist_dialog_callback($form, $form_state) {
   $entity = $form['#entity'];
   $entity_type = $form['#entity_type'];
   $bundle = $form['#bundle'];
-  $eid = array_shift(entity_extract_ids($entity_type, $entity));
+  $eid_extracted = entity_extract_ids($entity_type, $entity);
+  $eid = array_shift($eid_extracted);
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
 
   $title = 'Create Playlist to Brightcove';
