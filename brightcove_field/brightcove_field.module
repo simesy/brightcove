@@ -341,9 +341,9 @@ function brightcove_field_player($type, $entity_type, $entity_id, $field_name, $
   $path = brightcove_get_experiences_js_url();
   drupal_add_js($path, array('type' => 'external', 'defer' => false, 'async' => true));
 
-  $language = isset($entity->language) ? $entity->language : LANGUAGE_NONE;
-  $brightcove_id = $entity->{$field_name}[$language][$delta]['brightcove_id'];
-  $player = $entity->{$field_name}[$language][$delta]['player'];
+  $field = field_get_items($entity_type, $entity, $field_name);
+  $brightcove_id = $field[$delta]['brightcove_id'];
+  $player = $field[$delta]['player'];
 
   if (!$player) {
     $instance = field_info_instance($entity_type, $field_name, $entity->type);
