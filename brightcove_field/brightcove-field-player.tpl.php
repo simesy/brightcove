@@ -47,6 +47,7 @@ global $is_https;
   <param name="templateLoadHandler" value="Drupal.brightcoveField.templateLoader" />
   <param name="templateReadyHandler" value="Drupal.brightcoveField.templateReady" />
   <?php endif; ?>
+  This object displays a Brightcove video
 </object>
 
 <?php if ($responsive): ?>
