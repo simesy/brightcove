@@ -396,6 +396,8 @@ function brightcove_field_field_info() {
      ),
      'default_widget' => BRIGHTCOVE_VIDEO_WIDGET,
      'default_formatter' => 'brightcove_default',
+     'property_type' => 'brightcove_field',
+     'property_callbacks' => array('brightcove_field_property_info_callback'),
     ),
   );
 }
@@ -1688,4 +1690,50 @@ function brightcove_field_migrate_api() {
     ),
   );
   return $api;
+}
+
+/**
+ * Callback for generating entity metadata property info.
+ */
+function brightcove_field_property_info_callback(&$info, $entity_type, $field, $instance, $field_type) {
+  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
+
+  $property['getter callback'] = 'entity_metadata_field_verbatim_get';
+  $property['setter callback'] = 'entity_metadata_field_verbatim_set';
+  unset($property['query callback']);
+
+  // For formatted text we use the type name 'text_formatted'.
+  $property['type'] = ($field['cardinality'] != 1) ? 'list<brightcove_field>' : 'brightcove_field';
+  $property['auto creation'] = 'brightcove_field_auto_creation';
+
+  $property['property info'] = array(
+    'brightcove_id' => array(
+      'type' => 'integer',
+      'label' => t('Brightcove ID'),
+      'sanitized' => TRUE,
+      'getter callback' => 'entity_metadata_verbatim_get',
+      'setter callback' => 'entity_property_verbatim_set',
+      'setter permission' => 'administer nodes',
+      'raw getter callback' => 'entity_property_verbatim_get',
+    ),
+    'player' => array(
+      'type' => 'text',
+      'label' => t('Player'),
+      'sanitized' => TRUE,
+      'getter callback' => 'entity_metadata_field_verbatim_get',
+      'setter callback' => 'entity_property_verbatim_set',
+      'setter permission' => 'administer nodes',
+      'raw getter callback' => 'entity_property_verbatim_get',
+    ),
+  );
+}
+
+/**
+ * Callback for entity auto creation.
+ */
+function brightcove_field_auto_creation() {
+  return array(
+    'brightcove_id' => 0,
+    'player' => variable_get('brightcove_player_default', ''),
+  );
 }
