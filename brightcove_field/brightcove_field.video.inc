@@ -12,17 +12,12 @@ function _brightcove_field_video_instance_settings_form(&$form, $field, $instanc
       '#type' => 'checkbox',
       '#title' => t('Allow upload'),
       '#description' => t('Whether to allow uploading new videos to ' .
-                          'Brightcove Studio from this field. ' .
-                          'Requires Write API keys with at least a ' .
-                          '!link-to-editions-and-pricing',
-                          array(
-                            '!link-to-editions-and-pricing' => l(
-                              t('Professional account'),
-              'http://www.brightcove.com/en/video-platform/editions-and-pricing'
-                            ),
-                          )),
-      '#default_value' => isset($instance['settings']['allow_upload']) ?
-        $instance['settings']['allow_upload'] : 0,
+        'Brightcove Studio from this field. Requires Write API keys with at least a ' .
+        '!link-to-editions-and-pricing', array(
+          '!link-to-editions-and-pricing' => l(t('Professional account'), 'http://www.brightcove.com/en/video-platform/editions-and-pricing'),
+        )
+      ),
+      '#default_value' => isset($instance['settings']['allow_upload']) ? $instance['settings']['allow_upload'] : 0,
     );
   }
   else {
