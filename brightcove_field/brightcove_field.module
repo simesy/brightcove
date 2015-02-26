@@ -1712,7 +1712,7 @@ function brightcove_field_property_info_callback(&$info, $entity_type, $field, $
       'type' => 'integer',
       'label' => t('Brightcove ID'),
       'sanitized' => TRUE,
-      'getter callback' => 'entity_metadata_verbatim_get',
+      'getter callback' => 'entity_property_verbatim_get',
       'setter callback' => 'entity_property_verbatim_set',
       'setter permission' => 'administer nodes',
       'raw getter callback' => 'entity_property_verbatim_get',
