@@ -73,6 +73,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       'brightcove_field_browser_video_validate',
     ),
     '#field_name' => $element['#field_name'],
+    '#description' => $element['#description'],
   );
 
   if (brightcove_field_browse_access('browse videos', $entity_type, $field['field_name'], $entity_id_or_bundle)) {
