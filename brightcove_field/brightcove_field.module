@@ -1662,11 +1662,12 @@ function _filter_brightcove($text, $filter) {
  */
 function _filter_brightcove_replace($videoid) {
   $filter = &drupal_static('_filter_brightcove');
-  return theme('brightcove_field_embed', array(
+  $variables = array(
     'player' => $filter && $filter->settings['player'] ?
-      $filter->settings['player'] : variable_get('brightcove_player_default'),
-    'video_id' => $videoid[1],
-  ));
+        $filter->settings['player'] : variable_get('brightcove_player_default'),
+    'brightcove_id' => $videoid[1],
+  );
+  return theme('brightcove_field_embed', $variables);
 }
 
 /**
