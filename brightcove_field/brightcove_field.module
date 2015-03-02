@@ -410,9 +410,11 @@ function brightcove_field_field_instance_settings_form($field, $instance) {
 
   switch ($instance['widget']['type']) {
     case BRIGHTCOVE_VIDEO_WIDGET:
-       module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
+      module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
       _brightcove_field_video_instance_settings_form($form, $field, $instance);
+      $form['#element_validate'] = array('_brightcove_field_video_widget_validate');
       break;
+
     case BRIGHTCOVE_PLAYLIST_WIDGET:
        module_load_include('inc', 'brightcove_field', 'brightcove_field.playlist');
       _brightcove_field_playlist_instance_settings_form($form, $field, $instance);
@@ -422,11 +424,21 @@ function brightcove_field_field_instance_settings_form($field, $instance) {
 }
 
 /**
+ * Element validate callback for brightcove_field_field_instance_settings_form.
+ */
+function _brightcove_field_video_widget_validate($element, &$form_state) {
+  // If the default is selected check if there is a default player is set.
+  if (empty($form_state['input']['instance']['settings']['brightcove_player'])) {
+    if (is_null(variable_get('brightcove_player_default', NULL))) {
+      form_error($element, t('A default player must be selected to use global settings for the Brightcove player on the !link page.', array('!link' => l(t('Brightcove settings'), 'admin/config/media/brightcove/players'))));
+    }
+  }
+}
+
+/**
  * Implements hook_field_validate().
  */
-function brightcove_field_field_validate($entity_type, $entity,
-                                         $field, $instance,
-                                         $langcode, $items, &$errors) {
+function brightcove_field_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
   switch ($instance['widget']['type']) {
     case BRIGHTCOVE_VIDEO_WIDGET:
       foreach ($items as $delta => $item) {
@@ -436,8 +448,7 @@ function brightcove_field_field_validate($entity_type, $entity,
             $errors[$field['field_name']][$langcode][$delta][] = array(
               'error' => 'brightcove_field',
               'message' => t('%name: invalid video.', array(
-                '%name' => t(isset($field['widget']['label']) ?
-                  $field['widget']['label'] : ''),
+                '%name' => t(isset($field['widget']['label']) ? $field['widget']['label'] : ''),
               )),
             );
           }
@@ -1635,7 +1646,7 @@ function _filter_brightcove_settings($form, &$form_state, $filter, $format, $def
     '#options' => $player_list,
   );
 
-  //Only set default value if value exists in list of players
+  // Only set default value if value exists in list of players
   if(array_key_exists($filter->settings['player'], $player_list)){
       $settings['player']['#default_value'] = $filter->settings['player'];
   }

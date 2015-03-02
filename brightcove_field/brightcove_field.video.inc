@@ -34,7 +34,7 @@ function _brightcove_field_video_instance_settings_form(&$form, $field, $instanc
     '#default_value' => isset($instance['settings']['brightcove_player']) ?
       $instance['settings']['brightcove_player'] : NULL,
     '#options' => brightcove_player_list(),
-    '#description' => t('Leave empty if you don\'t want to override the global settings.'),
+    '#description' => t('Leave value on "Default" to use global settings.'),
   );
 
   $form['per_content_player'] = array(
@@ -140,7 +140,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     '#type' => $instance['settings']['per_content_player'] ?
       'select' : 'value',
     '#title' => t('Player'),
-    '#options' => brightcove_player_list(),
+    '#options' => brightcove_player_list($instance),
     '#default_value' => isset($items[$delta]['player']) ?
       $items[$delta]['player'] : NULL,
   );

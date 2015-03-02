@@ -82,7 +82,7 @@ function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
   $variables['smart_api'] = FALSE;
 
   // If player should be responsive.
-  if ($player->responsive || variable_get('brightcove_player_responsive', FALSE)) {
+  if ((!is_null($player) && $player->responsive) || variable_get('brightcove_player_responsive', FALSE)) {
     $variables['responsive'] = TRUE;
     drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/responsive.css');
   }

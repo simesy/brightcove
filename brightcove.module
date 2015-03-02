@@ -759,6 +759,19 @@ function brightcove_verify_tokens($read_token = NULL, $write_token = NULL) {
  * @return mixed
  */
 function brightcove_player_load($name) {
+  // Try to get the default player.
+  if (empty($name)) {
+    $default_player = variable_get('brightcove_player_default', NULL);
+
+    // If no default player is set, show an error message.
+    if (is_null($default_player)) {
+      drupal_set_message(t('Default player is not set, please set one on the !link page.', array('!link' => l(t('Brightcove settings'), 'admin/config/media/brightcove/players'))), 'error');
+    }
+
+    return $default_player;
+  }
+
+  // Return the player with the given name.
   $players = brightcove_player_load_all();
   return $players[$name];
 }
@@ -776,11 +789,28 @@ function brightcove_player_load_all() {
 /**
  * Get players list.
  *
+ * @param array $instance
+ *   Entity specific instance.
+ *
  * @return mixed
  */
-function brightcove_player_list() {
+function brightcove_player_list($instance = NULL) {
   $players = brightcove_player_load_all();
-  $return = array();
+
+  // Get the entity specific default player.
+  if (!is_null($instance) && isset($players[$instance['settings']['brightcove_player']])) {
+    $default_player = $players[$instance['settings']['brightcove_player']]->display_name;
+  }
+  // Otherwise if not set get the globally set default player.
+  else {
+    $default_player = variable_get('brightcove_player_default', t('none'));
+    if (isset($players[$default_player])) {
+      $default_player = $players[$default_player]->display_name;
+    }
+  }
+
+
+  $return = array('' => t('Default (@default_player)', array('@default_player' => $default_player)));
   foreach ($players as $id => $player) {
     $return[$id] = $player->display_name;
   }

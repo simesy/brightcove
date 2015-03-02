@@ -12,17 +12,12 @@ function _brightcove_field_playlist_instance_settings_form(&$form, $field, $inst
       '#type' => 'checkbox',
       '#title' => t('Create playlists'),
       '#description' => t('Whether to allow create new playlists to ' .
-                          'Brightcove Studio from this field. ' .
-                          'Requires Write API keys with at least a ' .
-                          '!link-to-editions-and-pricing',
-                          array(
-                            '!link-to-editions-and-pricing' => l(
-                              t('Professional account'),
-              'http://www.brightcove.com/en/video-platform/editions-and-pricing'
-                            ),
-                          )),
-      '#default_value' => isset($instance['settings']['allow_create']) ?
-        $instance['settings']['allow_create'] : 0,
+        'Brightcove Studio from this field. Requires Write API keys with at least a ' .
+        '!link-to-editions-and-pricing', array(
+          '!link-to-editions-and-pricing' => l(t('Professional account'), 'http://www.brightcove.com/en/video-platform/editions-and-pricing'),
+        )
+      ),
+      '#default_value' => isset($instance['settings']['allow_create']) ? $instance['settings']['allow_create'] : 0,
     );
   }
   else {
@@ -39,7 +34,7 @@ function _brightcove_field_playlist_instance_settings_form(&$form, $field, $inst
     '#default_value' => isset($instance['settings']['brightcove_player']) ?
       $instance['settings']['brightcove_player'] : NULL,
     '#options' => brightcove_player_list(),
-    '#description' => t('Leave empty if you don\'t want to override the global settings.'),
+    '#description' => t('Leave value on "Default" to use global settings.'),
   );
 
   $form['per_content_player'] = array(
@@ -143,9 +138,8 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     '#type' => $instance['settings']['per_content_player'] ?
       'select' : 'value',
     '#title' => t('Player'),
-    '#options' => brightcove_player_list(),
-    '#default_value' => isset($items[$delta]['player']) ?
-      $items[$delta]['player'] : NULL,
+    '#options' => brightcove_player_list($instance),
+    '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : NULL,
   );
 
   if (!isset($element['#default_value'])) {
