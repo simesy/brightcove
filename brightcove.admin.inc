@@ -38,13 +38,13 @@ function brightcove_admin_settings($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Brightcove Drupal User Custom Field'),
     '#default_value' => variable_get('brightcove_user_field', ''),
-    '#description' => t('A Brightcove Custom Field to store the Drupal username of the user who uploaded a video - useful to determine which Drupal user uploaded a given video in BC Studio. This field must be created in BC Studio first. Read more about !link. <strong>Requires at least a Professional account</strong>', array('!link' =>  l(t('Brightcove custom metadata'), 'http://support.brightcove.com/en/docs/setting-custom-metadata'))),
+    '#description' => t('A Brightcove Custom Field to store the Drupal username of the user who uploaded a video - useful to determine which Drupal user uploaded a given video in BC Studio. This field must be created in BC Studio first. Read more about !link. <strong>Requires at least a Professional account</strong>', array('!link' =>  l(t('Brightcove custom metadata'), 'http://support.brightcove.com/en/video-cloud/docs/creating-custom-metadata-fields'))),
   );
   $form['account']['brightcove_link_field'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Drupal Entity Link Custom Field'),
     '#default_value' => variable_get('brightcove_link_field', ''),
-    '#description' => t('A Brightcove Custom Field to store the Drupal link of the entity where video belongs. This field must be created in BC Studio first. Read more about !link. <strong>Requires at least a Professional account</strong>', array('!link' =>  l(t('Brightcove custom metadata'), 'http://support.brightcove.com/en/docs/setting-custom-metadata'))),
+    '#description' => t('A Brightcove Custom Field to store the Drupal link of the entity where video belongs. This field must be created in BC Studio first. Read more about !link. <strong>Requires at least a Professional account</strong>', array('!link' =>  l(t('Brightcove custom metadata'), 'http://support.brightcove.com/en/video-cloud/docs/creating-custom-metadata-fields'))),
   );
   $form['account']['brightcove_custom_field_number'] = array(
     '#type' => 'textfield',
