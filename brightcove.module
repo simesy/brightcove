@@ -73,7 +73,7 @@ function brightcove_menu() {
 
   $items["{$base}/general"] = array(
     'title' => 'General',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'type' => MENU_LOCAL_TASK,
     'access arguments' => array('administer brightcove settings'),
   );
 
@@ -114,6 +114,64 @@ function brightcove_menu() {
   );
 
   return $items;
+}
+
+
+/**
+ * Implements hook_entity_info().
+ */
+function brightcove_entity_info() {
+  $entity_info = array();
+
+  $entity_info['brightcove_client'] = array(
+    'label' => t('Brightcove client'),
+    'base table' => 'brightcove_client',
+    'revision table' => 'brightcove_client_revision',
+    'uri callback' => 'brightcove_client_uri',
+    'controller class' => 'BrightcoveClientEntityController',
+    'entity class' => 'Entity',
+    'entity keys' => array(
+      'id' => 'bcid',
+      'label' => 'label',
+      'revision' => 'revision_id',
+    ),
+    'admin ui' => array(
+      'path' => 'admin/config/media/brightcove/brightcove_client',
+      'controller class' => 'BrightcoveClientEntityUIController',
+      'file' => 'brightcove.admin.inc',
+    ),
+    'module' => 'brightcove',
+    'access callback' => 'brightcove_client_access',
+    'permission labels' => array(
+      'singular' => t('client'),
+      'plural' => t('clients')
+    ),
+  );
+
+  return $entity_info;
+}
+
+/**
+ * URI callback for brightcove_client entity.
+ */
+function brightcove_account_uri($entity) {
+  return array(
+    'path' => 'admin/config/media/brightcove/brightcove_client/' . entity_id('brightcove_client', $entity),
+  );
+}
+
+/**
+ * Access callback for brightcove_client entity.
+ */
+function brightcove_client_access($op, $entity = NULL, $account = NULL) {
+  return TRUE;
+}
+
+/**
+ * Saves a brightcove_client.
+ */
+function brightcove_client_save($client) {
+  entity_get_controller('brightcove_client')->save($client);
 }
 
 /**

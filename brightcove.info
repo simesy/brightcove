@@ -5,7 +5,8 @@ core = 7.x
 configure = admin/config/media/brightcove
 
 dependencies[] = ctools
+dependencies[] = entity
 
 files[] = brightcove.module
 files[] = brightcove.admin.inc
-
+files[] = includes/brightcove.entity.inc

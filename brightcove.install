@@ -69,6 +69,172 @@ function brightcove_schema() {
 
   $schema['cache_brightcove'] = drupal_get_schema_unprocessed('system', 'cache');
 
+  $schema['brightcove_client'] = array(
+    'description' => 'The base table for brightcove clients.',
+    'fields' => array(
+      'bcid' => array(
+        'description' => 'The primary identifier for a brightcove client, used internally only.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'revision_id' => array(
+        'description' => 'The current {brightcove_client_revision}.revision_id version identifier.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+      'label' => array(
+        'description' => 'The label of this client.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'account_id' => array(
+        'description' => 'The ID of the account this client belongs to.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'client_id' => array(
+        'description' => 'The client ID.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'client_secret' => array(
+        'description' => 'The client secret key.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid that created this client.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the client was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the client was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+    ),
+    'primary key' => array('bcid'),
+    'unique keys' => array(
+      'client_id' => array('client_id'),
+      'revision_id' => array('revision_id'),
+    ),
+    'creator' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    'foreign keys' => array(
+      'current_revision' => array(
+        'table' => 'brightcove_client_revision',
+        'columns'=> array('revision_id' => 'revision_id'),
+      ),
+    ),
+  );
+
+  $schema['brightcove_client_revision'] = array(
+    'description' => 'Saves information about each saved revision of a {brightcove_client}.',
+    'fields' => array(
+      'bcid' => array(
+        'description' => 'The brightcove_client.bcid of the client this revision belongs to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'revision_id' => array(
+        'description' => 'The primary identifier for this revision.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The unique, human-readable identifier of a client for this revision.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'account_id' => array(
+        'description' => 'The ID of the account this client revision belongs to.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'client_id' => array(
+        'description' => 'The client ID of this revision.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'client_secret' => array(
+        'description' => 'The client secret key of this revision.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'revision_uid' => array(
+        'description' => 'The {users}.uid that owns the client at this revision.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'log' => array(
+        'description' => 'The log entry explaining the changes in this version.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+      ),
+      'revision_timestamp' => array(
+        'description' => 'The Unix timestamp when this revision was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data for this revision.',
+      ),
+    ),
+    'primary key' => array('revision_id'),
+    'indexes' => array(
+      'bcid' => array('bcid'),
+      'revision_uid' => array('revision_uid'),
+    ),
+    'foreign keys' => array(
+      'client' => array(
+        'table' => 'brightcove_client',
+        'columns' => array('bcid' => 'bcid'),
+      ),
+      'owner' => array(
+        'table' => 'users',
+        'columns' => array('revision_uid' => 'uid'),
+      ),
+    ),
+  );
+
   return $schema;
 }
 

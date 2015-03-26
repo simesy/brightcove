@@ -19,21 +19,6 @@ function brightcove_admin_settings($form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
-  $form['account']['brightcove_read_api_key'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Brightcove Read API key'),
-    '#maxlength' => 255,
-    '#required' => TRUE,
-    '#default_value' => variable_get('brightcove_read_api_key', ''),
-    '#description' => t('A Brightcove Read API key from your account at Brightcove Studio. Please check at !link page.', array('!link' => l(t('Brightcove studio'), 'http://my.brightcove.com'))),
-  );
-  $form['account']['brightcove_write_api_key'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Brightcove Write API key'),
-    '#maxlength' => 255,
-    '#default_value' => variable_get('brightcove_write_api_key', ''),
-    '#description' => t('A Brightcove Write API key from your account at Brightcove Studio. Please check at !link page. <strong>Requires at least a Professional account</strong>.', array('!link' =>  l(t('Brightcove studio'), 'http://my.brightcove.com'))),
-  );
   $form['account']['brightcove_user_field'] = array(
     '#type' => 'textfield',
     '#title' => t('Brightcove Drupal User Custom Field'),
@@ -401,17 +386,6 @@ function brightcove_admin_remove_customfield_submit($form, &$form_state) {
 }
 
 function brightcove_admin_settings_validate($form, &$form_state) {
-  list($can_read, $can_write) = brightcove_verify_tokens(
-    $form_state['values']['brightcove_read_api_key'],
-    $form_state['values']['brightcove_write_api_key']
-  );
-
-  if (!$can_read) {
-    form_set_error('brightcove_read_api_key', t('Invalid read key'));
-  }
-  if ($form_state['values']['brightcove_write_api_key'] && !$can_write) {
-    form_set_error('brightcove_write_api_key', t('Invalid write key'));
-  }
   if ($form_state['values']['brightcove_cache_enabled'] && $form_state['values']['brightcove_cache_type'] === 'file') {
     system_check_directory($form['cache']['brightcove_cache_file']['path']);
   }
@@ -444,4 +418,159 @@ function brightcove_player_form_validate_field($name) {
   ctools_include('export');
   $result = ctools_export_load_object('brightcove_player', 'names', array($name));
   return isset($result[$name]) ? TRUE : FALSE;
+}
+
+
+/**
+ * Form callback: create or edit a brightcove client.
+ *
+ * @param $client
+ *   The client object to edit or for a create form NULL.
+ */
+function brightcove_client_form($form, &$form_state, $client = NULL) {
+  $form['label'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Client label'),
+    '#description' => t('The label of the client.'),
+    '#default_value' => isset($client->label) ? $client->label : '',
+    '#maxlength' => 128,
+    '#required' => TRUE,
+    '#weight' => -10,
+  );
+
+  $form['account_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Account id'),
+    '#default_value' => isset($client->account_id) ? $client->account_id : '',
+    '#maxlength' => 255,
+    '#required' => TRUE,
+    '#weight' => -5,
+  );
+
+  $form['client_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Client id'),
+    '#default_value' => isset($client->client_id) ? $client->client_id : '',
+    '#maxlength' => 255,
+    '#required' => TRUE,
+    '#weight' => 0,
+  );
+
+  $form['client_secret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Client secret key'),
+    '#default_value' => isset($client->client_secret) ? $client->client_secret : '',
+    '#maxlength' => 255,
+    '#required' => TRUE,
+    '#weight' => 5,
+  );
+
+  // When updating a client, do not collapse the Change History fieldset.
+  $form['change_history'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Change history'),
+    '#collapsible' => TRUE,
+    '#collapsed' => empty($client->bcid),
+    '#weight' => 350,
+  );
+  if (!empty($client->bcid)) {
+    $form['change_history']['revision'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Create new revision on update'),
+      '#description' => t('If an update log message is entered, a revision will be created even if this is unchecked.'),
+    );
+  }
+  $form['change_history']['log'] = array(
+    '#type' => 'textarea',
+    '#title' => !empty($client->bcid) ? t('Update log message') : t('Creation log message'),
+    '#rows' => 4,
+    '#description' => t('Provide an explanation of the changes you are making. This will provide a meaningful history of changes to this client.'),
+  );
+
+  $form['actions'] = array(
+    '#type' => 'actions',
+    '#weight' => 400,
+  );
+
+  // We add the form's #submit array to this button along with the actual submit
+  // handler to preserve any submit handlers added by a form callback_wrapper.
+  $submit = array();
+
+  if (!empty($form['#submit'])) {
+    $submit += $form['#submit'];
+  }
+
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save client'),
+    '#submit' => array_merge($submit, array('brightcove_client_form_submit')),
+  );
+
+  // We append the validate handler to #validate in case a form callback_wrapper
+  // is used to add validate handlers earlier.
+  $form['#validate'][] = 'brightcove_client_form_validate';
+
+  return $form;
+}
+
+/**
+ * Validation callback for brightcove_client_form().
+ */
+function brightcove_client_form_validate($form, &$form_state) {
+  $client = $form_state['brightcove_client'];
+
+  // Until the above is resolved, simply use the SKU as entered with no tokens.
+  $client_id = $form_state['values']['client_id'];
+
+  // Ensure the proposed client id is unique or reused only during client
+  // updates.
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'brightcove_client')->propertyCondition('client_id', $client_id);
+  $result = $query->execute();
+
+  if (!empty($result)) {
+    $bcid = key($result['brightcove_client']);
+    if (empty($client->bcid) || $bcid != $client->bcid) {
+      form_set_error('client_id', t('This client id is <a href="!url">already in use</a> and must be unique. Please supply another value.', array(
+          '!url' => url('admin/config/media/brightcove/brightcove_client/manage/' . $bcid)
+      )));
+    }
+  }
+  // Trim leading and trailing whitespace from the SKU.
+  form_set_value($form['client_id'], trim($client_id), $form_state);
+}
+
+/**
+ * Submit callback for brightcove_client_form().
+ */
+function brightcove_client_form_submit($form, &$form_state) {
+  global $user;
+
+  $client = &$form_state['brightcove_client'];
+
+  $properties = array(
+    'label',
+    'client_id',
+    'client_secret',
+    'account_id',
+  );
+  foreach ($properties as $property) {
+    $client->{$property} = $form_state['values'][$property];
+  }
+
+  // Set the client uid if it's being created at this time.
+  if (empty($client->uid)) {
+    $client->uid = $user->uid;
+  }
+
+  // Trigger a new revision if the checkbox was enabled or a log message supplied.
+  if (!empty($form_state['values']['revision']) || !empty($form['change_history']['revision']['#default_value']) ||
+    !empty($form_state['values']['log'])) {
+    $client->revision = TRUE;
+    $client->log = $form_state['values']['log'];
+  }
+
+  // Save the client.
+  brightcove_client_save($client);
+  drupal_set_message(t('Client saved.'));
 }
