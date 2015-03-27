@@ -136,7 +136,7 @@ function brightcove_entity_info() {
       'revision' => 'revision_id',
     ),
     'admin ui' => array(
-      'path' => 'admin/config/media/brightcove/brightcove_client',
+      'path' => 'admin/config/media/brightcove/client',
       'controller class' => 'BrightcoveClientEntityUIController',
       'file' => 'brightcove.admin.inc',
     ),

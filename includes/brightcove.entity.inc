@@ -11,9 +11,9 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
 
   public function hook_menu() {
     $items = parent::hook_menu();
-    $items['admin/config/media/brightcove/brightcove_client']['type'] = MENU_LOCAL_TASK;
-    $items['admin/config/media/brightcove/brightcove_client']['weight'] = 0.1;
-    $items['admin/config/media/brightcove/brightcove_client']['title'] = 'Clients';
+    $items['admin/config/media/brightcove/client']['type'] = MENU_LOCAL_TASK;
+    $items['admin/config/media/brightcove/client']['weight'] = 0.1;
+    $items['admin/config/media/brightcove/client']['title'] = 'Clients';
     return $items;
   }
 }
