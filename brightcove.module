@@ -164,7 +164,7 @@ function brightcove_account_uri($entity) {
  * Access callback for brightcove_client entity.
  */
 function brightcove_client_access($op, $entity = NULL, $account = NULL) {
-  return TRUE;
+  return user_access('administer brightcove settings');
 }
 
 /**
@@ -178,7 +178,7 @@ function brightcove_client_save($client) {
  * Implements hook_permission().
  */
 function brightcove_permission() {
-  return array(
+  $permissions = array(
     'administer brightcove settings' => array(
       'title' => t('Administer brightcove'),
     ),
@@ -195,6 +195,19 @@ function brightcove_permission() {
       'title' => t('Administer playlists'),
     ),
   );
+
+  // There's a separate permission for each brightcove client to use them.
+  $clients = db_select('brightcove_client', 'bc')
+    ->fields('bc', array('bcid', 'label'))
+    ->execute()
+    ->fetchAllKeyed();
+  foreach ($clients as $bcid => $label) {
+    $permissions['use brightcove client ' . $bcid] = array(
+      'title' => t('Use the @label client', array('@label' => $label)),
+    );
+  }
+
+  return $permissions;
 }
 
 /**
