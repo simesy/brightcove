@@ -9,231 +9,250 @@
  * Implements hook_schema().
  */
 function brightcove_schema() {
-  $schema = array();
+  $schema = [];
 
-  $schema['brightcove_player'] = array(
+  $schema['brightcove_player'] = [
     'description' => 'Stores brightcove players.',
-    'export' => array(
+    'export' => [
       'key' => 'name',
       'key name' => 'Name',
       'primary key' => 'pid',
       'identifier' => 'preset',
       'default hook' => 'brightcove_player',
-      'api' => array(
+      'api' => [
         'owner' => 'brightcove',
         'api' => 'brightcove',
         'minimum_version' => 1,
         'current_version' => 1,
-      ),
-    ),
-    'fields' => array(
-      'pid' => array(
+      ],
+    ],
+    'fields' => [
+      'pid' => [
         'type' => 'serial',
         'not null' => TRUE,
         'unsigned' => TRUE,
         'no export' => TRUE,
-      ),
-      'name' => array(
+      ],
+      'name' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'display_name' => array(
+      ],
+      'display_name' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-      ),
-      'player_id' => array(
+      ],
+      'player_id' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'player_key' => array(
+      ],
+      'player_key' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'responsive' => array(
+      ],
+      'responsive' => [
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
         'default' => 0,
-      ),
-    ),
-    'primary key' => array('pid'),
-    'unique keys' => array(
-      'name' => array('name'),
-    ),
-  );
+      ],
+    ],
+    'primary key' => ['pid'],
+    'unique keys' => [
+      'name' => ['name'],
+    ],
+  ];
 
   $schema['cache_brightcove'] = drupal_get_schema_unprocessed('system', 'cache');
 
-  $schema['brightcove_client'] = array(
+  $schema['brightcove_client'] = [
     'description' => 'The base table for brightcove clients.',
-    'fields' => array(
-      'bcid' => array(
+    'fields' => [
+      'bcid' => [
         'description' => 'The primary identifier for a brightcove client, used internally only.',
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
-      ),
-      'revision_id' => array(
+      ],
+      'revision_id' => [
         'description' => 'The current {brightcove_client_revision}.revision_id version identifier.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => FALSE,
-      ),
-      'label' => array(
+      ],
+      'label' => [
         'description' => 'The label of this client.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-      ),
-      'account_id' => array(
+      ],
+      'account_id' => [
         'description' => 'The ID of the account this client belongs to.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'client_id' => array(
+      ],
+      'client_id' => [
         'description' => 'The client ID.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'client_secret' => array(
+      ],
+      'client_secret' => [
         'description' => 'The client secret key.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'uid' => array(
+      ],
+      'uid' => [
         'description' => 'The {users}.uid that created this client.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
-      ),
-      'created' => array(
+      ],
+      'created' => [
         'description' => 'The Unix timestamp when the client was created.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
-      ),
-      'changed' => array(
+      ],
+      'changed' => [
         'description' => 'The Unix timestamp when the client was most recently saved.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
-      ),
-      'data' => array(
+      ],
+      'data' => [
         'type' => 'blob',
         'not null' => FALSE,
         'size' => 'big',
         'serialize' => TRUE,
         'description' => 'A serialized array of additional data.',
-      ),
-    ),
-    'primary key' => array('bcid'),
-    'unique keys' => array(
-      'client_id' => array('client_id'),
-      'revision_id' => array('revision_id'),
-    ),
-    'creator' => array(
+      ],
+    ],
+    'primary key' => ['bcid'],
+    'unique keys' => [
+      'client_id' => ['client_id'],
+      'revision_id' => ['revision_id'],
+    ],
+    'creator' => [
         'table' => 'users',
-        'columns' => array('uid' => 'uid'),
-      ),
-    'foreign keys' => array(
-      'current_revision' => array(
+        'columns' => ['uid' => 'uid'],
+    ],
+    'foreign keys' => [
+      'current_revision' => [
         'table' => 'brightcove_client_revision',
-        'columns'=> array('revision_id' => 'revision_id'),
-      ),
-    ),
-  );
+        'columns'=> ['revision_id' => 'revision_id'],
+      ],
+    ],
+  ];
 
-  $schema['brightcove_client_revision'] = array(
+  $schema['brightcove_client_revision'] = [
     'description' => 'Saves information about each saved revision of a {brightcove_client}.',
-    'fields' => array(
-      'bcid' => array(
+    'fields' => [
+      'bcid' => [
         'description' => 'The brightcove_client.bcid of the client this revision belongs to.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
-      ),
-      'revision_id' => array(
+      ],
+      'revision_id' => [
         'description' => 'The primary identifier for this revision.',
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
-      ),
-      'label' => array(
+      ],
+      'label' => [
         'description' => 'The unique, human-readable identifier of a client for this revision.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'account_id' => array(
+      ],
+      'account_id' => [
         'description' => 'The ID of the account this client revision belongs to.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'client_id' => array(
+      ],
+      'client_id' => [
         'description' => 'The client ID of this revision.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'client_secret' => array(
+      ],
+      'client_secret' => [
         'description' => 'The client secret key of this revision.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'revision_uid' => array(
+      ],
+      'revision_uid' => [
         'description' => 'The {users}.uid that owns the client at this revision.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
-      ),
-      'log' => array(
+      ],
+      'log' => [
         'description' => 'The log entry explaining the changes in this version.',
         'type' => 'text',
         'not null' => TRUE,
         'size' => 'big',
-      ),
-      'revision_timestamp' => array(
+      ],
+      'revision_timestamp' => [
         'description' => 'The Unix timestamp when this revision was created.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
-      ),
-      'data' => array(
+      ],
+      'data' => [
         'type' => 'blob',
         'not null' => FALSE,
         'size' => 'big',
         'serialize' => TRUE,
         'description' => 'A serialized array of additional data for this revision.',
-      ),
-    ),
-    'primary key' => array('revision_id'),
-    'indexes' => array(
-      'bcid' => array('bcid'),
-      'revision_uid' => array('revision_uid'),
-    ),
-    'foreign keys' => array(
-      'client' => array(
+      ],
+    ],
+    'primary key' => ['revision_id'],
+    'indexes' => [
+      'bcid' => ['bcid'],
+      'revision_uid' => ['revision_uid'],
+    ],
+    'foreign keys' => [
+      'client' => [
         'table' => 'brightcove_client',
-        'columns' => array('bcid' => 'bcid'),
-      ),
-      'owner' => array(
+        'columns' => ['bcid' => 'bcid'],
+      ],
+      'owner' => [
         'table' => 'users',
-        'columns' => array('revision_uid' => 'uid'),
-      ),
-    ),
-  );
+        'columns' => ['revision_uid' => 'uid'],
+      ],
+    ],
+  ];
+
+  $schema['brightcove_callback'] = [
+    'fields' => [
+      'id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'fid' => [
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'expires' => [
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+  ];
 
   return $schema;
 }
@@ -242,37 +261,37 @@ function brightcove_schema() {
  * Adds brightcove_player table.
  */
 function brightcove_update_7001() {
-  db_create_table('brightcove_player', array(
+  db_create_table('brightcove_player', [
     'description' => 'Stores brightcove players.',
-    'fields' => array(
-      'name' => array(
+    'fields' => [
+      'name' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'player_id' => array(
+      ],
+      'player_id' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'player_key' => array(
+      ],
+      'player_key' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-      ),
-    ),
-    'primary key' => array('name'),
-    'unique keys' => array(
-      'name' => array('name'),
-    ),
-  ));
+      ],
+    ],
+    'primary key' => ['name'],
+    'unique keys' => [
+      'name' => ['name'],
+    ],
+  ]);
 }
 
 /**
  * Implements hook_requirements().
  */
 function brightcove_requirements($phase) {
-  $requirements = array();
+  $requirements = [];
   $t = get_t();
 
   if ($phase != 'install') {
@@ -286,7 +305,7 @@ function brightcove_requirements($phase) {
 
     if (!$path) {
       $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
-      $requirements['bc_mapi']['description'] = $t('Brightcove MAPI SDK is missing. Please install it to sites/all/libraries from !url and enable the module again.', array('!url' => l('http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/', 'http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/')));
+      $requirements['bc_mapi']['description'] = $t('Brightcove MAPI SDK is missing. Please install it to sites/all/libraries from !url and enable the module again.', ['!url' => l('http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/', 'http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/')]);
       $requirements['bc_mapi']['severity'] = REQUIREMENT_ERROR;
       $requirements['bc_mapi']['value'] = $t('Missing');
     }
@@ -303,6 +322,13 @@ function brightcove_requirements($phase) {
     $requirements['curl']['severity'] = REQUIREMENT_ERROR;
     $requirements['curl']['value'] = $t(': missing');
   }
+
+  $api_wrapper_installed = (($api_wrapper_library = libraries_detect('brightcove')) && !empty($api_wrapper_library['installed']));
+  $requirements['brightcove'] = [
+    'title' => $t('Brightcove API Wrapper'),
+    'value' => $api_wrapper_library['version'],
+    'severity' => $api_wrapper_installed ? REQUIREMENT_OK : REQUIREMENT_ERROR,
+  ];
 
   return $requirements;
 }
@@ -348,11 +374,11 @@ function brightcove_update_7002() {
   $player_id = variable_get('brightcove_player');
   $player_key = variable_get('brightcove_player_key');
 
-  brightcove_player_save((object) array(
+  brightcove_player_save((object) [
     'name' => $t('Default'),
     'player_id' => $player_id,
     'player_key' => $player_key,
-  ));
+  ]);
 
   variable_del('brightcove_player');
   variable_del('brightcove_player_key');
@@ -362,21 +388,21 @@ function brightcove_update_7002() {
  * Create individual primary key for players.
  */
 function brightcove_update_7003() {
-  $spec = array(
+  $spec = [
     'type' => 'serial',
     'unsigned' => TRUE,
     'not null' => TRUE,
-  );
+  ];
 
   db_drop_primary_key('brightcove_player');
-  db_add_field('brightcove_player', 'pid', $spec, array('primary key' => array('pid')));
+  db_add_field('brightcove_player', 'pid', $spec, ['primary key' => ['pid']]);
 }
 
 /**
  * Make name column unique.
  */
 function brightcove_update_7004() {
-  db_add_unique_key('brightcove_player', 'name', array('name'));
+  db_add_unique_key('brightcove_player', 'name', ['name']);
 }
 
 /**
@@ -386,8 +412,10 @@ function brightcove_update_7004() {
 function brightcove_update_7005() {
   $default_player = variable_get('brightcove_player_pid', '');
 
-  db_add_field('brightcove_player', 'display_name', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE,
-    'default' => ''));
+  db_add_field('brightcove_player', 'display_name', [
+    'type' => 'varchar', 'length' => 255, 'not null' => TRUE,
+    'default' => ''
+  ]);
 
   // We are not using brightcove_player_load_all() here because that, being
   // based on CTools Export, is using the table schema. But new fields might be
@@ -404,7 +432,7 @@ function brightcove_update_7005() {
       // Save the new name. We are not using brightcove_player_save() because
       // $player is not a full CTools Export object.
       db_update('brightcove_player')
-        ->fields(array('name' => $player->name, 'display_name' => $player->display_name))
+        ->fields(['name' => $player->name, 'display_name' => $player->display_name])
         ->condition('pid', $player->pid)
         ->execute();
 
@@ -432,10 +460,10 @@ function brightcove_update_7006() {
 function brightcove_update_7007() {
   $players = brightcove_player_load_all();
   // Get all of the brightcove fields.
-  $fields = field_read_fields(array('type' => 'brightcove_field'));
+  $fields = field_read_fields(['type' => 'brightcove_field']);
   foreach ($fields as $field) {
     // Update the value of the default player for brightcove field instances.
-    $instances = field_read_instances(array('field_name' => $field['field_name']));
+    $instances = field_read_instances(['field_name' => $field['field_name']]);
     foreach ($instances as $instance) {
       if (!empty($players)) {
         foreach ($players as $player) {
@@ -453,12 +481,12 @@ function brightcove_update_7007() {
  * Add responsive flag to players.
  */
 function brightcove_update_7008() {
-  $spec = array(
+  $spec = [
     'type' => 'int',
     'size' => 'tiny',
     'not null' => TRUE,
     'default' => 0,
-  );
+  ];
 
   db_add_field('brightcove_player', 'responsive', $spec);
 

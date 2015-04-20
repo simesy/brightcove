@@ -14,16 +14,16 @@ class brightcove_player_ui extends ctools_export_ui {
   function init($plugin) {
     // Adding a menu op for setting default player.
     $prefix_count = count(explode('/', $plugin['menu']['menu prefix']));
-    $plugin['menu']['items']['set-default'] = array(
+    $plugin['menu']['items']['set-default'] = [
       'path' => 'list/%ctools_export_ui/set-default',
       'title' => 'Set default',
       'page callback' => 'ctools_export_ui_switcher_page',
-      'page arguments' => array($plugin['name'], 'set_default', $prefix_count + 2),
-      'load arguments' => array($plugin['name']),
+      'page arguments' => [$plugin['name'], 'set_default', $prefix_count + 2],
+      'load arguments' => [$plugin['name']],
       'access callback' => 'ctools_export_ui_task_access',
-      'access arguments' => array($plugin['name'], 'set_default', $prefix_count + 2),
+      'access arguments' => [$plugin['name'], 'set_default', $prefix_count + 2],
       'type' => MENU_CALLBACK,
-    );
+    ];
 
     $plugin['menu']['items']['list callback']['type'] = MENU_LOCAL_TASK;
 
@@ -62,48 +62,48 @@ class brightcove_player_ui extends ctools_export_ui {
     parent::edit_form($form, $form_state);
     unset($form['info']);
 
-    $form['display_name'] = array(
+    $form['display_name'] = [
       '#title' => t('Name'),
       '#description' => t('Example: My Player') . ' (' . t('Do not begin name with numbers.') . ')',
       '#type' => 'textfield',
       '#default_value' => !empty($form_state['item']->display_name) ? $form_state['item']->display_name : '',
       '#required' => TRUE,
-    );
+    ];
 
-    $form['name'] = array(
+    $form['name'] = [
       '#type' => 'machine_name',
       '#title' => t('Machine-readable name'),
       '#description' => t('Example: my_player') . '<br/>' . t('May only contain lowercase letters, numbers and underscores. <strong>Try to avoid conflicts with the names of existing Drupal projects.</strong>'),
       '#required' => TRUE,
       '#default_value' => !empty($form_state['item']->name) ? $form_state['item']->name : '',
       '#disabled' => !empty($form_state['item']->name) ? TRUE : FALSE,
-      '#machine_name' => array(
+      '#machine_name' => [
         'exists' => 'brightcove_player_form_validate_field',
-        'source' => array('display_name'),
-      ),
-    );
+        'source' => ['display_name'],
+      ],
+    ];
 
-    $form['player_id'] = array(
+    $form['player_id'] = [
       '#title' => t('Player ID'),
       '#type' => 'textfield',
       '#default_value' => isset($form_state['item']->player_id) ? $form_state['item']->player_id : '',
       '#required' => TRUE,
-    );
+    ];
 
-    $form['player_key'] = array(
+    $form['player_key'] = [
       '#title' => t('Player Key'),
       '#type' => 'textfield',
       '#default_value' => isset($form_state['item']->player_key) ? $form_state['item']->player_key : '',
       '#required' => FALSE,
-    );
+    ];
 
-    $form['responsive'] = array(
+    $form['responsive'] = [
       '#title' => t('Responsive'),
       '#type' => 'checkbox',
       '#default_value' => isset($form_state['item']->responsive) ? $form_state['item']->responsive : 0,
       '#required' => FALSE,
       '#description' => t('Make the player responsive. Please note that the player will use a different template in this case. This setting can be overwritten by the global player setting.')
-    );
+    ];
   }
 
   /**

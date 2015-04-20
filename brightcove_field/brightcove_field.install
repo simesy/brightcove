@@ -8,23 +8,23 @@
  * Implements hook_field_schema().
  */
 function brightcove_field_field_schema() {
-  return array(
-    'columns' => array(
-      'brightcove_id' => array(
+  return [
+    'columns' => [
+      'brightcove_id' => [
         'type' => 'varchar',
         'length' => 15,
         'not null' => FALSE
-      ),
-      'player' => array(
+      ],
+      'player' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-      ),
-    ),
-    'indexes' => array(
-      'brightcove_id' => array('brightcove_id'),
-    ),
-  );
+      ],
+    ],
+    'indexes' => [
+      'brightcove_id' => ['brightcove_id'],
+    ],
+  ];
 }
 
 /**
@@ -32,11 +32,11 @@ function brightcove_field_field_schema() {
  */
 function brightcove_field_update_7201() {
   if (module_exists('field_sql_storage')) {
-    $coldef = array(
+    $coldef = [
       'type' => 'varchar',
       'length' => 255,
       'not null' => FALSE,
-    );
+    ];
 
     foreach (field_info_fields() as $name => $def) {
       if ($def['type'] == 'brightcove_field' &&
@@ -61,10 +61,10 @@ function brightcove_field_update_7201() {
  */
 function brightcove_field_update_7401() {
   if (module_exists('field_sql_storage')) {
-    $params = array(
+    $params = [
       'type' => 'brightcove_video',
       'module' => 'brightcove_field',
-    );
+    ];
     // Get all brightcove_video fields.
     $fields = field_read_fields($params);
     foreach ($fields as $field_name => $field) {
@@ -72,11 +72,11 @@ function brightcove_field_update_7401() {
       // because the function throw an error, if we want to modify an exsisting
       // field's type.
       $query = db_update('field_config')
-        ->fields(array('type' => 'brightcove_field'))
+        ->fields(['type' => 'brightcove_field'])
         ->condition('field_name', $field_name)
         ->execute();
       // Get instances belong to the field.
-      $instances = field_read_instances(array('field_id' => $field['id']));
+      $instances = field_read_instances(['field_id' => $field['id']]);
       foreach ($instances as $instance) {
         // Update the depricated field widget type to the new one.
         $instance['widget']['type'] = 'brightcove_field_video_browser';
@@ -87,13 +87,13 @@ function brightcove_field_update_7401() {
       $revtablename = _field_sql_storage_revision_tablename($field);
       $old_col_name = _field_sql_storage_columnname($field_name, 'video_id');
       $new_col_name = _field_sql_storage_columnname($field_name, 'brightcove_id');
-      $coldef = array(
+      $coldef = [
         'type' => 'varchar',
         'length' =>  15,
         'not null' => TRUE
-      );
+      ];
 
-      $new_keys = array('primary key' => array('entity_type', 'entity_id', 'deleted', 'delta', 'language'));
+      $new_keys = ['primary key' => ['entity_type', 'entity_id', 'deleted', 'delta', 'language']];
       db_drop_primary_key($tablename);
       db_change_field($tablename, $old_col_name, $new_col_name, $coldef, $new_keys);
 

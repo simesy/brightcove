@@ -6,6 +6,7 @@ configure = admin/config/media/brightcove
 
 dependencies[] = ctools
 dependencies[] = entity
+dependencies[] = libraries
 
 files[] = brightcove.module
 files[] = brightcove.admin.inc

@@ -24,7 +24,7 @@
       $('.form-text.brightcove-video-field', context).change(Drupal.brightcove_field.actions.change);
       $('.form-text.brightcove-playlist-field', context).change(Drupal.brightcove_field.actions.change);
 
-      if ($('.' + remove_button.attr('rel')).val() != '') {
+      if ($('.' + remove_button.attr('rel')).val() !== '') {
         remove_button.attr('disabled', false).removeClass('form-button-disabled');
       }
 
@@ -72,7 +72,7 @@
       Drupal.brightcove_field.dialog_field_rel = response.field_rel;
       Drupal.detachBehaviors(wrapper, settings);
 
-      if (Drupal.brightcove_field.dialog == null) {
+      if (Drupal.brightcove_field.dialog === null) {
         if (response.iframe) {
           loading = true;
           new_content = $('<iframe id="' + response.id + '-iframe"/>').attr('src', response.data);
@@ -87,7 +87,7 @@
           var new_content_wrapped = $('<div></div>').html(response.data);
           new_content = new_content_wrapped.contents();
 
-          if (new_content.length != 1 || new_content.get(0).nodeType != 1) {
+          if (new_content.length !== 1 || new_content.get(0).nodeType !== 1) {
             new_content = new_content_wrapped;
           }
         }
@@ -123,7 +123,7 @@
         });
 
         // Immediately hide the new content if we're using any effects.
-        if (effect.showEffect != 'show') {
+        if (effect.showEffect !== 'show') {
           new_content.hide();
         }
 
@@ -134,7 +134,7 @@
           new_content.show();
           $('.ajax-new-content', new_content)[effect.showEffect](effect.showSpeed);
         }
-        else if (effect.showEffect != 'show') {
+        else if (effect.showEffect !== 'show') {
           new_content[effect.showEffect](effect.showSpeed);
         }
 

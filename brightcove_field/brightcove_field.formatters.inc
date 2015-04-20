@@ -21,17 +21,17 @@ function theme_brightcove_field_formatter_default($variables) {
     $vidcount = &drupal_static(__FUNCTION__, 1);
     if ($vidcount == 1) {
       $path = brightcove_get_experiences_js_url();
-      drupal_add_js($path, array('type' => 'external', 'defer' => false, 'async' => true));
+      drupal_add_js($path, ['type' => 'external', 'defer' => FALSE, 'async' => TRUE]);
     }
     $params['id'] = 'myExperience' . $vidcount;
-    $output = theme('brightcove_field_embed', array(
+    $output = theme('brightcove_field_embed', [
       'type' => $variables['type'],
       'brightcove_id' => $variables['element']['brightcove_id'],
       'params' => $params,
       'player' => brightcove_field_get_value($variables['instance'], $variables['element']['player']),
       'width' => $variables['width'],
       'height' => $variables['height'],
-    ));
+    ]);
 
     $vidcount++;
   }
@@ -65,17 +65,17 @@ function theme_brightcove_field_image($variables) {
       $styled_path = image_style_path($elements['#brightcove_image_style'], 'default-image.png');
       $style = image_style_load($elements['#brightcove_image_style']);
       image_style_create_derivative($style, $path, $styled_path);
-      $image = theme('image', array('path' => $styled_path));
+      $image = theme('image', ['path' => $styled_path]);
     }
     else {
       $remote_file = brightcove_remote_image($elements["#{$type}"]->{$elements['#brightcove_image_type']});
       if ($elements['#brightcove_image_style']){
-        $image = theme('image_style', array(
+        $image = theme('image_style', [
           'style_name' => $elements['#brightcove_image_style'],
           'path' => $remote_file,
-        ));
+        ]);
       }else{
-        $image = theme('image', array('path' => $remote_file));
+        $image = theme('image', ['path' => $remote_file]);
       }
     }
 
@@ -85,25 +85,25 @@ function theme_brightcove_field_image($variables) {
 
     elseif ($elements['#brightcove_image_link'] == 'dialog') {
       $destination = "brightcove_dialog/nojs/{$type}/{$dialog_width}/{$dialog_height}/{$entity_type}/{$entity_id}/{$field['field_name']}/{$delta}";
-      $output = l($image, $destination, array(
-        'attributes' => array(
+      $output = l($image, $destination, [
+        'attributes' => [
           'rel' => $field['field_name'],
-          'class' => array($field['field_name'], 'use-ajax'),
+          'class' => [$field['field_name'], 'use-ajax'],
           'title' => $elements["#{$type}"] ? check_plain($elements["#{$type}"]->name) : '',
-        ),
+        ],
         'html' => TRUE,
-      ));
+      ]);
     }
 
     elseif ($elements['#brightcove_image_link'] == 'entity' && !is_null($entity_info)) {
       $uri = $entity_info['uri callback']($entity);
-      $output = l($image, $uri['path'], array(
-        'attributes' => array(
-          'class' => array($field['field_name']),
+      $output = l($image, $uri['path'], [
+        'attributes' => [
+          'class' => [$field['field_name']],
           'title' => $elements["#{$type}"] ? check_plain($elements["#{$type}"]->name) : '',
-        ),
+        ],
         'html' => TRUE,
-      ));
+      ]);
     }
   }
   return $output;

@@ -11,7 +11,7 @@
  *   Rendered overivew page.
  */
 function brightcove_playlist_overview_page() {
-  $table = array('header' => array(t('Title'), array('colspan' => 2, 'data' => t('Operations'))));
+  $table = ['header' => [t('Title'), ['colspan' => 2, 'data' => t('Operations')]]];
 
   $playlists = brightcove_get_playlists();
   if ($playlists) {
@@ -20,12 +20,12 @@ function brightcove_playlist_overview_page() {
     }
   }
   else {
-    $table['rows'][] = array(
-      array(
+    $table['rows'][] = [
+      [
         'data' => t('No playlist found.'),
         'colspan' => count($table['header']),
-      ),
-    );
+      ],
+    ];
   }
 
   return theme('table', $table);
@@ -42,11 +42,11 @@ function brightcove_playlist_overview_page() {
  *   @see theme_table()
  */
 function _brightcove_playlist_overview_row(stdClass $playlist) {
-  return array(
+  return [
     $playlist->name,
     l(t('edit'), "admin/config/media/brightcove/playlist/{$playlist->id}/edit"),
     l(t('delete'), "admin/config/media/brightcove/playlist/{$playlist->id}/delete"),
-  );
+  ];
 }
 
 /**
@@ -74,7 +74,7 @@ function brightcove_get_playlists($cache_reset = FALSE) {
     $playlists = $bc ? $bc->find('allplaylists') : NULL;
   }
   catch (Exception $e) {
-    watchdog('brightcove', 'Loading brightcove playlists failed.', array(), WATCHDOG_ERROR);
+    watchdog('brightcove', 'Loading brightcove playlists failed.', [], WATCHDOG_ERROR);
   }
 
   if ($playlists) {
@@ -99,10 +99,10 @@ function brightcove_playlist_edit_page($playlist) {
 }
 
 function _brightcove_playlist_form(&$form, $form_state, $playlist = NULL) {
-  $form['referenceId'] = array(
+  $form['referenceId'] = [
     '#type' => 'hidden',
     '#value' => isset($form_state['values']['referenceId']) ? $form_state['values']['referenceId'] : '',
-  );
+  ];
 
   $type_default = BRIGHTCOVE_PLAYLIST_TYPE_MANUAL;
   if (!is_null($playlist) && $playlist->playlistType != 'EXPLICIT') {
@@ -119,36 +119,36 @@ function _brightcove_playlist_form(&$form, $form_state, $playlist = NULL) {
     }
   }
 
-  $form['type'] = array(
+  $form['type'] = [
     '#title' => t('Playlist type'),
     '#type' => 'select',
     '#default_value' => $type_default,
-    '#ajax' => array(
+    '#ajax' => [
       'callback' => 'brightcove_playlist_edit_form_ajax_callback',
       'wrapper' => 'brightcove-playlist-settings',
-    ),
-    '#options' => array(
+    ],
+    '#options' => [
       BRIGHTCOVE_PLAYLIST_TYPE_MANUAL => t('Manual'),
       BRIGHTCOVE_PLAYLIST_TYPE_SMART => t('Smart'),
-    ),
-  );
+    ],
+  ];
 
-  $form['name'] = array(
+  $form['name'] = [
     '#type' => 'textfield',
     '#title' => 'Name',
     '#default_value' => isset($playlist->name) ? $playlist->name : '',
-  );
+  ];
 
-  $form['shortDescription'] = array(
+  $form['shortDescription'] = [
     '#type' => 'textarea',
     '#title' => 'Short description',
     '#default_value' => isset($playlist->shortDescription) ? $playlist->shortDescription : '',
-  );
+  ];
 
-  $form['settings'] = array(
+  $form['settings'] = [
     '#type' => 'container',
     '#id' => 'brightcove-playlist-settings',
-  );
+  ];
 
   if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
     $videos = NULL;
@@ -160,37 +160,37 @@ function _brightcove_playlist_form(&$form, $form_state, $playlist = NULL) {
         }
       }
     }
-    $form['settings']['videos'] = array(
+    $form['settings']['videos'] = [
       '#type' => 'textfield',
       '#title' => 'Videos',
       '#default_value' => !is_null($videos) ? $videos : '',
       '#autocomplete_path' => 'brightcove/autocomplete/videos',
-    );
+    ];
   }
   else if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_SMART) {
-    $form['settings']['tagInclusionRule'] = array(
+    $form['settings']['tagInclusionRule'] = [
       '#type' => 'select',
       '#title' => t('Smart playlist settings'),
       '#field_suffix' => t('of the following'),
       '#default_value' => 'OR',
-      '#options' => array(
+      '#options' => [
         'OR' => t('Contain one or more'),
         'AND' => t('Contain all'),
-      ),
-    );
+      ],
+    ];
 
-    $form['settings']['filterTags'] = array(
+    $form['settings']['filterTags'] = [
       '#type' => 'textfield',
       '#title' => t('Tags'),
       '#default_value' => (isset($playlist->filterTags)) ? drupal_implode_tags($playlist->filterTags) : '',
       '#description' => t('Videos will be automatically added to this Playlist
                            based on the following settings.'),
-    );
+    ];
 
-    $form['settings']['playlistType'] = array(
+    $form['settings']['playlistType'] = [
       '#type' => 'select',
       '#title' => t('Playlist ordering'),
-      '#options' => array(
+      '#options' => [
         'OLDEST_TO_NEWEST' => t('Oldest to newest (by activation date)'),
         'NEWEST_TO_OLDEST' => t('Newest to oldest (by activation date)'),
         'START_DATE_OLDEST_TO_NEWEST' => t('Oldest to newest'),
@@ -198,9 +198,9 @@ function _brightcove_playlist_form(&$form, $form_state, $playlist = NULL) {
         'ALPHABETICAL' => t('Alphabetical (by video name)'),
         'PLAYS_TOTAL' => t('Total plays'),
         'PLAYS_TRAILING_WEEK' => t('Plays trailing week'),
-      ),
+      ],
       '#default_value' => isset($playlist->playlistType) ? $playlist->playlistType : '',
-    );
+    ];
   }
 }
 
@@ -218,20 +218,20 @@ function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
   }
   _brightcove_playlist_form($form, $form_state, $playlist);
 
-  $form['actions'] = array('#type' => 'actions');
+  $form['actions'] = ['#type' => 'actions'];
 
-  $form['actions']['submit'] = array(
+  $form['actions']['submit'] = [
     '#type' => 'submit',
     '#value' => t('Save'),
-    '#submit' => array('brightcove_playlist_edit_form_submit'),
-  );
+    '#submit' => ['brightcove_playlist_edit_form_submit'],
+  ];
 
   if (!is_null($playlist)) {
-    $form['actions']['delete'] = array(
+    $form['actions']['delete'] = [
       '#type' => 'submit',
       '#value' => t('Delete'),
-      '#submit' => array('brightcove_playlist_edit_form_delete'),
-    );
+      '#submit' => ['brightcove_playlist_edit_form_delete'],
+    ];
   }
 
   return $form;
@@ -255,8 +255,8 @@ function brightcove_playlist_edit_form_ajax_callback($form, &$form_state) {
  * @param $form_state
  */
 function brightcove_playlist_edit_form_submit($form, &$form_state) {
-  $metadata = array();
-  $keys_to_send = array('name', 'shortDescription');
+  $metadata = [];
+  $keys_to_send = ['name', 'shortDescription'];
   foreach ($keys_to_send as $key) {
     $metadata[$key] = $form_state['values'][$key];
   }
@@ -284,7 +284,7 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
     brightcove_add_playlist($metadata);
   }
   // Redirect the user to the playlist listing page.
-  $form_state['redirect'] = array('admin/config/media/brightcove/playlist');
+  $form_state['redirect'] = ['admin/config/media/brightcove/playlist'];
 }
 
 /**
@@ -294,7 +294,7 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
  * @param $form_state
  */
 function brightcove_playlist_edit_form_delete($form, &$form_state) {
-  $form_state['redirect'] = array("admin/config/media/brightcove/playlist/" . $form_state['playlist']->id . "/delete");
+  $form_state['redirect'] = ["admin/config/media/brightcove/playlist/" . $form_state['playlist']->id . "/delete"];
 }
 
 /**
@@ -306,21 +306,21 @@ function brightcove_playlist_edit_form_delete($form, &$form_state) {
  * @return array
  */
 function brightcove_playlist_delete_form($form, &$form_state, $playlist) {
-  $form = array();
+  $form = [];
 
   if (!$playlist) {
     drupal_set_message(t('Playlist not found!', 'error'));
     return $form;
   }
 
-  $form['playlist_id'] = array(
+  $form['playlist_id'] = [
     '#type' => 'hidden',
     '#value' => $playlist->id,
-  );
+  ];
 
   return confirm_form(
     $form,
-    t('Are you sure you want to delete playlist "%name"', array('%name' => $playlist->name)),
+    t('Are you sure you want to delete playlist "%name"', ['%name' => $playlist->name]),
     'admin/config/media/brightcove/playlist',
     t('This action annot be undone'),
     t('Delete'),

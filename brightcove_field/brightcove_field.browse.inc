@@ -19,7 +19,7 @@
  *       parent field and allow attaching all videos at once.
  */
 function brightcove_field_browse($type) {
-  $content = array();
+  $content = [];
 
   drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/browse.css');
   drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js');
@@ -34,7 +34,7 @@ function brightcove_field_browse($type) {
       $content = _brightcove_field_playlist_browse();
       break;
   }
-  return '<div class="brightcove-browse-table">' . drupal_render($content['filter_form']) . $content['pager'] . theme('brightcove_field_browse_items', array('items' => $content['items'])) . $content['pager'] . '</div>';
+  return '<div class="brightcove-browse-table">' . drupal_render($content['filter_form']) . $content['pager'] . theme('brightcove_field_browse_items', ['items' => $content['items']]) . $content['pager'] . '</div>';
 }
 
 /**
@@ -49,16 +49,16 @@ function brightcove_field_browse($type) {
  */
 function brightcove_field_autocomplete($type, $field_name, $string = '') {
   $bc = brightcove_initialize();
-  $matches = array();
-  $result = array();
+  $matches = [];
+  $result = [];
 
   switch ($type) {
     case 'video':
       try {
-        $result = $bc->find('find_videos_by_text', array('text' => $string));
+        $result = $bc->find('find_videos_by_text', ['text' => $string]);
       }
       catch (Exception $error) {
-        watchdog('brightcove', 'Finding videos in autocomplete failed.', array(), WATCHDOG_ERROR);
+        watchdog('brightcove', 'Finding videos in autocomplete failed.', [], WATCHDOG_ERROR);
       }
       break;
     case 'playlist':

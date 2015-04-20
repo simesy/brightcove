@@ -14,7 +14,7 @@
  */
 class MigrateBrightcoveFieldHandler extends MigrateFieldHandler {
   public function __construct() {
-    $this->registerTypes(array('brightcove_field'));
+    $this->registerTypes(['brightcove_field']);
   }
 
   public function fields($type, $instance, $migration = NULL) {
@@ -24,7 +24,7 @@ class MigrateBrightcoveFieldHandler extends MigrateFieldHandler {
   }
 
   public function prepare($entity, array $field_info, array $instance, array $values) {
-    $arguments = array();
+    $arguments = [];
     if (isset($values['arguments'])) {
       $arguments = array_filter($values['arguments']);
       unset($values['arguments']);
