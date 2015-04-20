@@ -314,6 +314,14 @@ function brightcove_requirements($phase) {
       $requirements['bc_mapi']['severity'] = REQUIREMENT_OK;
       $requirements['bc_mapi']['value'] = $t('Installed');
     }
+
+    $api_wrapper_installed = (($api_wrapper_library = libraries_detect('brightcove')) && !empty($api_wrapper_library['installed']));
+    $requirements['brightcove'] = [
+      'title' => $t('Brightcove API Wrapper'),
+      'value' => $api_wrapper_library['version'],
+      'severity' => $api_wrapper_installed ? REQUIREMENT_OK : REQUIREMENT_ERROR,
+      'description' => $api_wrapper_installed ? '' : $t('The Brightcove PHP Wrapper is missing.'),
+    ];
   }
 
   if (!function_exists('curl_init')) {
@@ -322,14 +330,6 @@ function brightcove_requirements($phase) {
     $requirements['curl']['severity'] = REQUIREMENT_ERROR;
     $requirements['curl']['value'] = $t(': missing');
   }
-
-  $api_wrapper_installed = (($api_wrapper_library = libraries_detect('brightcove')) && !empty($api_wrapper_library['installed']));
-  $requirements['brightcove'] = [
-    'title' => $t('Brightcove API Wrapper'),
-    'value' => $api_wrapper_library['version'],
-    'severity' => $api_wrapper_installed ? REQUIREMENT_OK : REQUIREMENT_ERROR,
-    'description' => $api_wrapper_installed ? '' : $t('The Brightcove PHP Wrapper is missing.'),
-  ];
 
   return $requirements;
 }
