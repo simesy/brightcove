@@ -755,6 +755,15 @@ function _brightcove_create_client($client_entity) {
   return BrightcoveClient::authorize($client_id, $client_secret);
 }
 
+function _brightcove_create_classes($client_entity) {
+  $client = _brightcove_create_client($client_entity);
+  $account = $client_entity->account_id;
+  $cms = new BrightcoveCMS($client, $account);
+  $di = new BrightcoveDI($client, $account);
+
+  return [$cms, $di];
+}
+
 /**
  * @param $client_entity
  * @param $url
@@ -765,10 +774,7 @@ function _brightcove_create_client($client_entity) {
  */
 function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, callable $metadata_callback = NULL) {
   libraries_load('brightcove');
-  $client = _brightcove_create_client($client_entity);
-  $account = $client_entity->account_id;
-  $cms = new BrightcoveCMS($client, $account);
-  $di = new BrightcoveDI($client, $account);
+  list($cms, $di) = _brightcove_create_classes($client_entity);
 
   $video = new BrightcoveVideo();
   if ($metadata_callback !== NULL) {
