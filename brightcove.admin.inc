@@ -212,6 +212,7 @@ function brightcove_admin_settings($form, &$form_state) {
   $form['upload']['brightcove_auto_callback'] = [
     '#type' => 'checkbox',
     '#title' => t('Allow Drupal to automatically determine the callback'),
+    '#description' => t('The current callback is: %callback', ['%callback' => _brightcove_get_ingest_callback('')]),
     '#default_value' => variable_get('brightcove_auto_callback', TRUE),
     '#states' => [
       'visible' => [
