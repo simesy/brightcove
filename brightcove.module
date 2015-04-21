@@ -1052,6 +1052,21 @@ function brightcove_player_delete($player) {
 }
 
 /**
+ * Loads all clients which belong to a given or current user.
+ *
+ * @param null|stdClass $account
+ * @return array
+ */
+function _brightcove_load_my_clients($account = NULL) {
+  $clients = entity_load('brightcove_client');
+  $clients = array_filter($clients, function ($client) use ($account) {
+    return user_access("use brightcove client {$client->bcid}", $account);
+  });
+
+  return $clients;
+}
+
+/**
  * Base brightcove upload form.
  *
  * This is not a complete form, and should not be called directly.
@@ -1062,10 +1077,7 @@ function brightcove_player_delete($player) {
 function _brightcove_upload_form($form, &$form_state) {
   $form = [];
 
-  $clients = entity_load('brightcove_client');
-  $clients = array_filter($clients, function ($client) {
-    return user_access("use brightcove client {$client->bcid}");
-  });
+  $clients = _brightcove_load_my_clients();
 
   switch (count($clients)) {
     case 0:
