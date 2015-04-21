@@ -180,7 +180,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
 }
 
 function _brightcove_field_video_browse() {
-  global $pager_from_array, $pager_total, $pager_page_array;
+  global $pager_total, $pager_page_array;
   $items_per_page = 20;
   $page = isset($_GET['page']) ? intval($_GET['page']) : '0';
 
