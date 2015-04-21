@@ -192,23 +192,16 @@ function _brightcove_field_video_browse() {
   if (isset($_SESSION['brightcove_field_filter'])) {
     switch ($_SESSION['brightcove_field_filter']['search']) {
       case 'tags':
-        $method = 'find_videos_by_tags';
-        $params = ['or_tags' => $_SESSION['brightcove_field_filter']['keywords']];
-        break;
-      case 'and_tags':
-        $method = 'find_videos_by_tags';
-        $params = ['and_tags' => $_SESSION['brightcove_field_filter']['keywords']];
+        $params = ['tags' => $_SESSION['brightcove_field_filter']['keywords']];
+        $search = "tags:{$_SESSION['brightcove_field_filter']['keywords']}";
         break;
 
-      case 'name':
+      case 'everything':
       default:
-        $method = 'find_videos_by_text';
         $params = ['text' => join(' ', explode(',', $_SESSION['brightcove_field_filter']['keywords']))];
+        $search = $_SESSION['brightcove_field_filter']['keywords'];
         break;
     }
-  }
-  else {
-    $method = 'find_all_videos';
   }
   $params['page_size'] = $items_per_page;
   $params['page_number'] = $page;
@@ -221,57 +214,64 @@ function _brightcove_field_video_browse() {
   foreach ($params as $key => $param) {
     $cid .= ":{$key}:{$param}";
   }
-  $content = brightcove_cache_get($cid);
+  if (isset($_SESSION['brightcove_field_filter']['client'])) {
+    $client_id = $_SESSION['brightcove_field_filter']['client'];
+    $cid .= ":$client_id";
+    $content = brightcove_cache_get($cid);
 
-  // If no cached data is available.
-  if (!$content) {
-    $bc = brightcove_initialize();
+    // If no cached data is available.
+    if (!$content) {
+      $client = brightcove_client_load($client_id);
+      list($cms, $di) = _brightcove_create_classes($client);
 
-    try {
-      $result = $bc->find($method, $params);
-    } catch (Exception $error) {
-      watchdog('brightcove', 'Finding videos in browse failed.', [], WATCHDOG_ERROR);
-    }
-
-    $pager_page_array = explode(',', $page);
-    $pager_total[0] = ceil($bc->total_count / $items_per_page);
-    $pager_page_array[0] =
-      max(0, min(
-        (int)$pager_page_array[0],
-        ((int)$pager_total[0]) - 1)
-      );
-
-    $items = [];
-    if (count($result)) {
-      foreach ($result as $video) {
-        $item = [];
-        $item['title'] = check_plain($video->name);
-        $item['brightcove_id'] = $video->id;
-        if (!empty($video->thumbnailURL)) {
-            $image_vars = ['path' => $video->thumbnailURL, 'alt' => '', 'title' => '', 'attributes' => ''];
-            $item['thumbnail'] = theme('image', $image_vars);
-        }
-        else {
-          $image_vars = ['path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attributes' => '','width' => '120', 'height' => '90'];
-          $item['thumbnail'] = theme('image', $image_vars);
-        }
-        $items[] = $item;
+      try {
+        $result = $cms->listVideos($search);
       }
+      catch (Exception $error) {
+        watchdog('brightcove', 'Finding videos in browse failed.', [], WATCHDOG_ERROR);
+      }
+
+      $pager_page_array = explode(',', $page);
+      $pager_total[0] = ceil($cms->countVideos($search) / $items_per_page);
+      $pager_page_array[0] =
+        max(0, min(
+          (int)$pager_page_array[0],
+          ((int)$pager_total[0]) - 1)
+        );
+
+      $items = [];
+      if (count($result)) {
+        foreach ($result as $video) {
+          $item = [];
+          $item['title'] = check_plain($video->getName());
+          $item['brightcove_id'] = $video->getId();
+          $video_images = $video->getImages();
+          if (!empty($video_images)) {
+              $image_vars = ['path' => $video_images['thumbnail']->getSrc(), 'alt' => '', 'title' => '', 'attributes' => ''];
+              $item['thumbnail'] = theme('image', $image_vars);
+          }
+          else {
+            $image_vars = ['path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attributes' => '','width' => '120', 'height' => '90'];
+            $item['thumbnail'] = theme('image', $image_vars);
+          }
+          $items[] = $item;
+        }
+      }
+
+      $pager_vars = [
+        'tags' => NULL,
+        'element' => 0,
+        'parameters' => [],
+        'quantity' => $items_per_page,
+      ];
+
+      $content['pager'] = theme('pager', $pager_vars);
+      $content['items'] = $items;
+
+      // Save the output to the cache record(not only the video objects),
+      // because we also need data for pagination.
+      brightcove_cache_set($cid, $content);
     }
-
-    $pager_vars = [
-      'tags' => NULL,
-      'element' => 0,
-      'parameters' => [],
-      'quantity' => $items_per_page,
-    ];
-
-    $content['pager'] = theme('pager', $pager_vars);
-    $content['items'] = $items;
-
-    // Save the output to the cache record(not only the video objects),
-    // because we also need data for pagination.
-    brightcove_cache_set($cid, $content);
   }
 
   // The filter form should not be cached,

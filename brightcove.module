@@ -220,9 +220,9 @@ function brightcove_client_access($op, $entity = NULL, $account = NULL) {
     $account = $user;
   }
   switch ($op) {
-    case 'use' :
+    case 'use':
       return user_access('use brightcove client ' . $entity->bcid) || user_access('administer brightcove settings');
-    default :
+    default:
       return user_access('administer brightcove settings');
   }
 }
