@@ -210,9 +210,21 @@ function brightcove_account_uri($entity) {
 
 /**
  * Access callback for brightcove_client entity.
+ *
+ * @param $op
+ *  Can be 'edit' or 'use'.
  */
 function brightcove_client_access($op, $entity = NULL, $account = NULL) {
-  return user_access('administer brightcove settings');
+  if (empty($account)) {
+    global $user;
+    $account = $user;
+  }
+  switch ($op) {
+    case 'use' :
+      return user_access('use brightcove client ' . $entity->bcid) || user_access('administer brightcove settings');
+    default :
+      return user_access('administer brightcove settings');
+  }
 }
 
 /**
@@ -1060,7 +1072,7 @@ function brightcove_player_delete($player) {
 function _brightcove_load_my_clients($account = NULL) {
   $clients = entity_load('brightcove_client');
   $clients = array_filter($clients, function ($client) use ($account) {
-    return user_access("use brightcove client {$client->bcid}", $account);
+    return brightcove_client_access('use', $client, $account);
   });
 
   return $clients;
