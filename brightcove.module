@@ -234,6 +234,28 @@ function brightcove_client_save($client) {
   entity_get_controller('brightcove_client')->save($client);
 }
 
+function brightcove_client_load($client_id) {
+  return entity_load_single('brightcove_client', $client_id);
+}
+
+function brightcove_client_load_or_default($client_id = NULL) {
+  if ($client_id) {
+    $client = brightcove_client_load($client_id);
+    if ($client) {
+      return $client;
+    }
+  }
+
+  if (($default_client_id = variable_get('brightcove_client_default'))) {
+    $client = brightcove_client_load($default_client_id);
+    if ($client) {
+      return $client;
+    }
+  }
+
+  return FALSE;
+}
+
 /**
  * Implements hook_permission().
  */
@@ -529,33 +551,37 @@ function brightcove_write_api_access() {
 }
 
 /**
- * Loads Brightcove video from BC Media API. Uses a 5 minutes cache to speed up lookups.
+ * Loads Brightcove video from CMS API.
  *
- * @param $video_id
- * @param $reset
+ * Uses a 5 minutes cache to speed up lookups.
  *
- * @return mixed
+ * @param string $video_id
+ * @param stdClass $client_entity
+ * @param bool $reset
+ * @return BrightcoveVideo|bool Video object or FALSE if video not found.
  * Video object or FALSE if video not found.
  */
-function brightcove_video_load($video_id, $reset = FALSE) {
-  $cid = 'brightcove:video:' . $video_id;
+function brightcove_video_load($video_id, $client_entity, $reset = FALSE) {
+  if (!$client_entity) {
+    return FALSE;
+  }
+
+  libraries_load('brightcove');
+  $cid = "brightcove:video:{$video_id}:{$client_entity->bcid}";
   $cache = brightcove_cache_get($cid);
   if (!empty($cache) && !$reset) {
-    return (object)$cache;
+    return $cache;
   }
   else {
-    $bc = brightcove_initialize();
+    list($cms,) = _brightcove_create_classes($client_entity);
     try {
-      $video = $bc ? $bc->find('find_video_by_id', $video_id) : NULL;
+      $video = $cms->getVideo($video_id);
+      if ($video) {
+        brightcove_cache_set($cid, $video);
+        return $video;
+      }
     }
-    catch (Exception $error) {
-      watchdog('brightcove', 'Loading Brightcove video failed.', [], WATCHDOG_ERROR);
-      return FALSE;
-    }
-    if (!empty($video->id)) {
-      brightcove_cache_set($cid, $video);
-      return $video;
-    }
+    catch (Exception $e) {}
   }
   return FALSE;
 }
@@ -1078,6 +1104,16 @@ function _brightcove_load_my_clients($account = NULL) {
   return $clients;
 }
 
+function _brightcove_my_client_select_options($account = NULL) {
+  $clients = _brightcove_load_my_clients($account);
+  $clients_options = [];
+  foreach ($clients as $client) {
+    $clients_options[$client->bcid] = $client->label;
+  }
+
+  return $clients_options;
+}
+
 /**
  * Base brightcove upload form.
  *
@@ -1103,10 +1139,7 @@ function _brightcove_upload_form($form, &$form_state) {
       ];
       break;
     default:
-      $clients_options = [];
-      foreach ($clients as $client) {
-        $clients_options[$client->bcid] = $client->label;
-      }
+      $clients_options = _brightcove_my_client_select_options();
       $form['client'] = [
         '#type' => 'select',
         '#title' => t('Client'),

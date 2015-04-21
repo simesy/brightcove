@@ -55,15 +55,19 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   // We need this mixed variable in access checking.
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
 
+  $element['client_id'] = [
+    '#type' => 'select',
+    '#options' => _brightcove_my_client_select_options(),
+    '#title' => t('Account'),
+    '#default_value' => isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : NULL,
+  ];
+
   $element['brightcove_id'] = [
     '#type' => 'textfield',
     '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : NULL,
     '#title' => $element['#title'],
     '#maxlength' => 256,
     '#value_callback' => 'brightcove_field_video_browser_value',
-    '#autocomplete_path' => 'brightcove_field/autocomplete/video/' .
-      $element['#entity_type'] . '/' . $element['#field_name'] . '/' .
-      ($eid ? $eid : ($bundle ? $bundle : 0)),
     '#attributes' => [
       'rel' => [$element['#field_name'] . '-' . $parent_delta . '-' . $delta],
       'class' => ['brightcove-video-field', $element['#field_name'] . '-' . $parent_delta . '-' . $delta],

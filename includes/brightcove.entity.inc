@@ -18,6 +18,43 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
     $items['admin/config/media/brightcove/client/add']['title callback'] = 't';
     return $items;
   }
+
+  protected function overviewTableRow($conditions, $id, $entity, $additional_cols = []) {
+    if (variable_get('brightcove_client_default') !== $id) {
+      $additional_cols[] = l(t('set default'), "{$this->path}/manage/{$id}/setdefault");
+    }
+    return parent::overviewTableRow($conditions, $id, $entity, $additional_cols);
+  }
+
+  public function operationForm($form, &$form_state, $entity, $op) {
+    switch ($op) {
+      case 'setdefault':
+        $label = entity_label($this->entityType, $entity);
+        $confirm_question = t('Are you sure you want to set default the %entity %label?', [
+          '%entity' => $this->entityInfo['label'],
+          '%label' => $label
+        ]);
+        return confirm_form($form, $confirm_question, $this->path, '');
+      default:
+        return parent::operationForm($form, $form_state, $entity, $op);
+    }
+  }
+
+  protected function operationCount() {
+    return parent::operationCount() + 1;
+  }
+
+  public function applyOperation($op, $entity) {
+    $label = entity_label($this->entityType, $entity);
+    $vars = ['%entity' => $this->entityInfo['label'], '%label' => $label];
+    switch ($op) {
+      case 'setdefault':
+        variable_set('brightcove_client_default', $entity->bcid);
+        return t('%entity %label is now the default.', $vars);
+      default:
+        return parent::applyOperation($op, $entity);
+    }
+  }
 }
 
 /**

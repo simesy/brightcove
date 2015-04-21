@@ -442,8 +442,10 @@ function brightcove_field_field_validate($entity_type, $entity, $field, $instanc
     case BRIGHTCOVE_VIDEO_WIDGET:
       foreach ($items as $delta => $item) {
         if (!empty($item['brightcove_id'])) {
-          $video = brightcove_video_load($item['brightcove_id']);
-          if (empty($video->id)) {
+          $client_id = $item['client_id'];
+          $client = entity_load_single('brightcove_client', $client_id);
+          $video = brightcove_video_load($item['brightcove_id'], $client);
+          if (!$video || !$video->getId()) {
             $errors[$field['field_name']][$langcode][$delta][] = [
               'error' => 'brightcove_field',
               'message' => t('%name: invalid video.', [
@@ -880,10 +882,28 @@ function brightcove_field_video_browser_value($element, $value, $form_state) {
   if (!$value && $input === NULL) {
     $value = $element['#default_value'];
   }
+
+  $client_parents = $element['#parents'];
+  array_pop($client_parents);
+  array_push($client_parents, 'client_id');
+  $client_id = drupal_array_get_nested_value($form_state['input'], $element['#parents']);
+  if ($client_id === NULL) {
+    $parent_elements = $element['#parents'];
+    array_pop($parent_elements);
+    $current_form = &$form_state['complete form'];
+    while ($parent_elements) {
+      $key = array_shift($parent_elements);
+      $current_form = &$current_form[$key];
+    }
+    $client_element = &$current_form['client_id'];
+    $client_id = $client_element['#default_value'];
+  }
+
   if (((int) $value) > 1) {
-    $video = brightcove_video_load($value);
-    if (!empty($video->id)) {
-      $value = check_plain($video->name) . " [id:{$video->id}]";
+    $client = brightcove_client_load_or_default($client_id);
+    $video = brightcove_video_load($value, $client);
+    if ($video) {
+      $value = check_plain($video->getName()) . " [id:{$video->getId()}]";
     }
   }
   return $value;
@@ -921,7 +941,12 @@ function brightcove_field_browser_video_validate($element, &$form_state) {
 
     if (is_numeric($id)) {
       // Matched ID, check if the video exists.
-      $video = brightcove_video_load($id);
+      $client_parents = $element['#parents'];
+      array_pop($client_parents);
+      array_push($client_parents, 'client_id');
+      $client_id = drupal_array_get_nested_value($form_state['input'], $client_parents);
+      $client = brightcove_client_load_or_default($client_id);
+      $video = brightcove_video_load($id, $client);
       // Check value in session variable for newly uploaded video.
       if (empty($video)) {
         form_error($element, t('%name: Found no valid video with that name. Please note that it might take several minutes after the video has been uploaded in Brightcove Studio to appear in the API.', ['%name' => t($element['#title'])]));
@@ -1374,7 +1399,8 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
         foreach ($items as $delta => $item) {
           $video = FALSE;
           if (isset($item['brightcove_id'])) {
-            $video = brightcove_video_load($item['brightcove_id']);
+            $client = brightcove_client_load_or_default($item['client_id']);
+            $video = brightcove_video_load($item['brightcove_id'], $client);
           }
           $element[$delta] = [
             '#theme' => $theme,
