@@ -21,9 +21,6 @@
 function brightcove_field_browse($type) {
   $content = [];
 
-  drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/browse.css');
-  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js');
-
   switch ($type) {
     case 'video':
       module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
@@ -34,6 +31,19 @@ function brightcove_field_browse($type) {
       $content = _brightcove_field_playlist_browse();
       break;
   }
+
+  $content['filter_form']['css_and_js'] = [
+    '#type' => 'container',
+    '#attached' => [
+      'js' => [
+        drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
+      ],
+      'css' => [
+        drupal_get_path('module', 'brightcove_field') . '/styles/browse.css',
+      ],
+    ],
+  ];
+
   return '<div class="brightcove-browse-table">' . drupal_render($content['filter_form']) . $content['pager'] . theme('brightcove_field_browse_items', ['items' => $content['items']]) . $content['pager'] . '</div>';
 }
 
