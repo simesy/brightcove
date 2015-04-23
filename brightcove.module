@@ -1096,7 +1096,11 @@ function brightcove_player_delete($player) {
  * @return array
  */
 function _brightcove_load_my_clients($account = NULL) {
-  $clients = entity_load('brightcove_client');
+  // Load all brightcove_client entities.
+  // We need $reset = TRUE otherwise we get no clients in an AJAX call.
+  $clients = entity_load('brightcove_client', FALSE, [], TRUE);
+
+  // Keep only the clients $account has access to.
   $clients = array_filter($clients, function ($client) use ($account) {
     return brightcove_client_access('use', $client, $account);
   });

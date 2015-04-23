@@ -1112,21 +1112,36 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
  */
 function brightcove_field_filter_form($form, &$form_state) {
   $clients = _brightcove_load_my_clients();
-  $client_options = [];
-  foreach ($clients as $client) {
-     $client_options[$client->bcid] = $client->label;
+  $number_of_clients = count($clients);
+  if ($number_of_clients > 1) {
+    $client_options = [];
+    foreach ($clients as $client) {
+       $client_options[$client->bcid] = $client->label;
+    }
+    $_SESSION['brightcove_field_filter']['client'] = isset($_SESSION['brightcove_field_filter']['client']) ? $_SESSION['brightcove_field_filter']['client'] : $client->bcid;
+    $form['client'] = [
+      '#type' => 'select',
+      '#options' => $client_options,
+      '#default_value' => $_SESSION['brightcove_field_filter']['client'],
+      '#required' => TRUE,
+      '#title' => t('Client'),
+      '#ajax' => [
+        'wrapper' => 'brightcove-browse-table',
+        'callback' => 'brightcove_field_client_select_ajax_callback',
+      ],
+    ];
   }
-  $_SESSION['brightcove_field_filter']['client'] = isset($_SESSION['brightcove_field_filter']['client']) ? $_SESSION['brightcove_field_filter']['client'] : $client->client_id;
-  $form['client'] = [
-    '#type' => 'select',
-    '#options' => $client_options,
-    '#default_value' => $_SESSION['brightcove_field_filter']['client'],
-    '#required' => TRUE,
-    '#ajax' => [
-      'wrapper' => 'browse-dialog',
-      'callback' => 'brightcove_field_client_select_ajax_callback',
-    ],
-  ];
+  elseif ($number_of_clients == 1) {
+    $client = reset($clients);
+    $_SESSION['brightcove_field_filter']['client'] = $client->bcid;
+  }
+  else {
+    $form['warning'] = [
+      '#markup' => t('To browse videos create some bricghtcove clients first.'),
+    ];
+    return $form;
+  }
+
   $form['search'] = [
     '#type' => 'fieldset',
     '#title' => t('Filter videos'),
@@ -1152,7 +1167,7 @@ function brightcove_field_filter_form($form, &$form_state) {
     '#type' => 'radios',
     '#title' => t('Search in'),
     '#options' => ['everything' => t('Search in everything'), 'tags' => t('Tags: at least one of these')],
-    '#default_value' => isset($_SESSION['brightcove_field_filter']['search']) ? $_SESSION['brightcove_field_filter']['search'] : 'name',
+    '#default_value' => isset($_SESSION['brightcove_field_filter']['search']) ? $_SESSION['brightcove_field_filter']['search'] : 'everything',
     '#attributes' => [
       'class' => ['search-radio'],
     ],
@@ -1176,10 +1191,9 @@ function brightcove_field_filter_form($form, &$form_state) {
   return $form;
 }
 
-function brightcove_field_client_select_ajax_callback($form, $form_state) {
-  $_SESSION['brightcove_field_filter']['client'] = $form_state['values']['client'];;
-
-  return;
+function brightcove_field_client_select_ajax_callback($form, &$form_state) {
+  $_SESSION['brightcove_field_filter']['client'] = $form_state['values']['client'];
+  return brightcove_field_browse('video');
 }
 
 /**
@@ -1190,13 +1204,13 @@ function brightcove_field_client_select_ajax_callback($form, $form_state) {
  * @see brightcove_field_browse().
  */
 function brightcove_field_filter_form_submit($form, &$form_state) {
-
   $keywords = $form_state['values']['keywords'];
   $search = $form_state['values']['search'];
 
   // Reset the form if keywords are empty or reset button was clicked.
   if ((empty($keywords)) || $form_state['clicked_button']['#name'] == 'reset') {
-    unset($_SESSION['brightcove_field_filter']);
+    unset($_SESSION['brightcove_field_filter']['search']);
+    unset($_SESSION['brightcove_field_filter']['keywords']);
     return;
   }
 

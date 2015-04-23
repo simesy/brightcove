@@ -189,7 +189,8 @@ function _brightcove_field_video_browse() {
   $page = isset($_GET['page']) ? intval($_GET['page']) : '0';
 
   $params = [];
-  if (isset($_SESSION['brightcove_field_filter'])) {
+  $search = '';
+  if (isset($_SESSION['brightcove_field_filter']['search'])) {
     switch ($_SESSION['brightcove_field_filter']['search']) {
       case 'tags':
         $params = ['tags' => $_SESSION['brightcove_field_filter']['keywords']];
@@ -222,7 +223,7 @@ function _brightcove_field_video_browse() {
     // If no cached data is available.
     if (!$content) {
       $client = brightcove_client_load($client_id);
-      list($cms, $di) = _brightcove_create_classes($client);
+      list($cms,) = _brightcove_create_classes($client);
 
       try {
         $result = $cms->listVideos($search);
@@ -276,7 +277,6 @@ function _brightcove_field_video_browse() {
 
   // The filter form should not be cached,
   // because it wouldn't invoke the submit handler in this case.
-  $content['filter_form'] = drupal_get_form('brightcove_field_filter_form');;
-
+  $content['filter_form'] = drupal_get_form('brightcove_field_filter_form');
   return $content;
 }
