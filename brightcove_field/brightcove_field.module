@@ -1207,7 +1207,6 @@ function brightcove_field_client_select_ajax_callback($form, &$form_state) {
  */
 function brightcove_field_filter_form_submit($form, &$form_state) {
   $keywords = $form_state['values']['keywords'];
-  $search = $form_state['values']['search'];
 
   // Reset the form if keywords are empty or reset button was clicked.
   if ((empty($keywords)) || $form_state['clicked_button']['#name'] == 'reset') {
@@ -1219,7 +1218,9 @@ function brightcove_field_filter_form_submit($form, &$form_state) {
   // The only thing we do is set session variables based on the selection.
   // Browse callback will take care of the rest.
   $_SESSION['brightcove_field_filter']['keywords'] = $keywords;
-  $_SESSION['brightcove_field_filter']['search'] = $search;
+  $_SESSION['brightcove_field_filter']['search'] = $form_state['values']['search'];
+  // Go to the first page of results.
+  unset($_GET['page']);
 }
 
 /**

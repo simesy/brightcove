@@ -226,7 +226,7 @@ function _brightcove_field_video_browse() {
       list($cms,) = _brightcove_create_classes($client);
 
       try {
-        $result = $cms->listVideos($search);
+        $result = $cms->listVideos($search, NULL, $items_per_page, $items_per_page * $page);
       }
       catch (Exception $error) {
         watchdog('brightcove', 'Finding videos in browse failed.', [], WATCHDOG_ERROR);
