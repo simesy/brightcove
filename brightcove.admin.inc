@@ -549,8 +549,7 @@ function brightcove_client_form($form, &$form_state, $client = NULL) {
  */
 function brightcove_client_form_validate($form, &$form_state) {
   $client = $form_state['brightcove_client'];
-
-  // Until the above is resolved, simply use the SKU as entered with no tokens.
+  $bcid = empty($client->bcid) ? NULL : $client->bcid;
   $client_id = $form_state['values']['client_id'];
   $client_secret = $form_state['values']['client_secret'];
 
@@ -568,9 +567,13 @@ function brightcove_client_form_validate($form, &$form_state) {
   // Ensure the proposed client id is unique or reused only during client
   // updates.
   $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', 'brightcove_client')->propertyCondition('client_id', $client_id);
-  $result = $query->execute();
+  $query->entityCondition('entity_type', 'brightcove_client')
+    ->propertyCondition('client_id', $client_id);
+  if (!empty($bcid)) {
+    $query->entityCondition('entity_id', $bcid, '!=');
+  }
 
+  $result = $query->execute();
   if (!empty($result)) {
     $bcid = key($result['brightcove_client']);
     if (empty($client->bcid) || $bcid != $client->bcid) {
@@ -579,7 +582,7 @@ function brightcove_client_form_validate($form, &$form_state) {
       ]));
     }
   }
-  // Trim leading and trailing whitespace from the SKU.
+  // Trim leading and trailing whitespace from the client_id.
   form_set_value($form['client_id'], trim($client_id), $form_state);
 }
 
