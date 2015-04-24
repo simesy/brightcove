@@ -59,7 +59,7 @@ function theme_brightcove_field_browse_items($variables) {
     $rows[$activerow][] = $themed;
   }
   // TODO test these after field port is stable
-  return theme('table', ['header' => [], 'rows' => $rows]);
+  return '<div id="brightcove-browse-table-table">' . theme('table', ['header' => [], 'rows' => $rows]) . '</div>';
 }
 
 /**

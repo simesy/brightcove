@@ -1126,7 +1126,7 @@ function brightcove_field_filter_form($form, &$form_state) {
       '#required' => TRUE,
       '#title' => t('Client'),
       '#ajax' => [
-        'wrapper' => 'brightcove-browse-table',
+        'wrapper' => 'brightcove-browse-table-table',
         'callback' => 'brightcove_field_client_select_ajax_callback',
       ],
     ];
@@ -1193,7 +1193,9 @@ function brightcove_field_filter_form($form, &$form_state) {
 
 function brightcove_field_client_select_ajax_callback($form, &$form_state) {
   $_SESSION['brightcove_field_filter']['client'] = $form_state['values']['client'];
-  return brightcove_field_browse('video');
+  module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
+  $content = _brightcove_field_video_browse();
+  return theme('brightcove_field_browse_items', ['items' => $content['items']]);
 }
 
 /**
