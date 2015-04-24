@@ -45,6 +45,9 @@ function _brightcove_field_playlist_instance_settings_form(&$form, $field, $inst
   ];
 }
 
+/**
+ * Helper function to return the playlist widget form.
+ */
 function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, &$element) {
   $entity_type = $element['#entity_type'];
   $entity_info = entity_get_info($entity_type);
@@ -54,10 +57,8 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   $parent_delta = array_pop($element['#field_parents']);
   // We need this mixed variable in access checking.
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
-  // Pass on the selected client.
-  $id = 'bc-playlist-' . str_replace('_', '-', $field['field_name']) . '-' . $element['#delta'];
-  $element['#prefix'] = '<div id="' . $id . '">';
-  $element['#suffix'] = '</div>';
+  // Select the client.
+  $element['#tree'] = TRUE;
   $client_options =  _brightcove_my_client_select_options();
   if (count($client_options) > 1) {
     $element['client_id'] = [
@@ -78,7 +79,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   }
   else {
     $element['warning'] = [
-      '#markup' => t('To add videos you need to have access to some bricghtcove clients first.'),
+      '#markup' => t('To add playlists you need to have access to some brightcove clients first.'),
     ];
     return $element;
   }

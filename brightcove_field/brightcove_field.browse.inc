@@ -10,11 +10,12 @@
  *
  * @see brightcove_field_menu()
  *
- * @param none
+ * @param $type
+ * $param Entity $client
+ *   The brightcove client entity to display the videos for.
  *
  * @return A list of available videos that can be attached to a field.
  *
- * TODO: Allow limiting videos by user (own videos only).
  * TODO: Interesting feature would be to detect multiple values allowed in the
  *       parent field and allow attaching all videos at once.
  */
