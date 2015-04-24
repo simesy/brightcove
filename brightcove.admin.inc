@@ -557,10 +557,10 @@ function brightcove_client_form_validate($form, &$form_state) {
   try {
     $client = BrightcoveClient::authorize($client_id, $client_secret);
     if (!$client->isAuthorized()) {
-      form_set_error(NULL, t('Failed to authorize.'));
+      form_error($form, t('Failed to authorize.'));
     }
   } catch (BrightcoveAuthenticationException $ex) {
-    form_set_error(NULL, t('Failed to authorize.'));
+    form_error($form, t('Failed to authorize.'));
     watchdog_exception('brightcove', $ex, 'Brightcove client validation');
   }
 
