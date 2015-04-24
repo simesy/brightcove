@@ -54,6 +54,35 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   $parent_delta = array_pop($element['#field_parents']);
   // We need this mixed variable in access checking.
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
+  // Pass on the selected client.
+  $id = 'bc-playlist-' . str_replace('_', '-', $field['field_name']) . '-' . $element['#delta'];
+  $element['#prefix'] = '<div id="' . $id . '">';
+  $element['#suffix'] = '</div>';
+  $client_options =  _brightcove_my_client_select_options();
+  if (count($client_options) > 1) {
+    $element['client_id'] = [
+      '#type' => 'select',
+      '#options' => $client_options,
+      '#title' => t('Client'),
+      '#default_value' => isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : array_keys($client_options)[0],
+    ];
+    $client_id = isset($form_state['values'][$field['field_name']]['client_id']) ? $form_state['values'][$field['field_name']]['client_id'] : $element['client_id']['#default_value'];
+  }
+  elseif (count($client_options) == 1) {
+    $client_id = array_keys($client_options)[0];
+    $element['client_id'] = [
+      '#type' => 'value',
+      '#value' => $client_id,
+      '#default_value' => $client_id,
+    ];
+  }
+  else {
+    $element['warning'] = [
+      '#markup' => t('To add videos you need to have access to some bricghtcove clients first.'),
+    ];
+    return $element;
+  }
+  $client = brightcove_client_load($client_id);
 
   $element['brightcove_id'] = [
     '#type' => 'textfield',
@@ -75,7 +104,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     '#field_name' => $element['#field_name'],
   ];
 
-  if (brightcove_field_browse_access('browse playlists', $entity_type, $field['field_name'], $entity_id_or_bundle)) {
+  if (brightcove_field_browse_access('browse playlists', $entity_type, $field['field_name'], $entity_id_or_bundle, $client)) {
     // Button to browse playlists.
     $element['actions']['browse'] = [
       '#type' => 'button',
@@ -98,7 +127,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     ];
   }
 
-  if (brightcove_field_browse_access('administer brightcove playlists', $entity_type, $field['field_name'], $entity_id_or_bundle) &&
+  if (brightcove_field_browse_access('administer brightcove playlists', $entity_type, $field['field_name'], $entity_id_or_bundle, $client) &&
       (!empty($instance['settings']['allow_create']))) {
     $element['actions']['create'] = [
       '#type' => 'button',
@@ -177,7 +206,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
 }
 
 function _brightcove_field_playlist_browse() {
-  global $pager_from_array, $pager_total, $pager_page_array;
+  global $pager_total, $pager_page_array;
   $items_per_page = 20;
   $page = isset($_GET['page']) ? intval($_GET['page']) : '0';
 

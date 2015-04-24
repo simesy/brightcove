@@ -54,13 +54,36 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   $parent_delta = array_pop($element['#field_parents']);
   // We need this mixed variable in access checking.
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
-
-  $element['client_id'] = [
-    '#type' => 'select',
-    '#options' => _brightcove_my_client_select_options(),
-    '#title' => t('Account'),
-    '#default_value' => isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : NULL,
-  ];
+  // Pass on the selected client.
+  $id = 'bc-video-' . str_replace('_', '-', $field['field_name']) . '-' . $element['#delta'];
+  $element['#prefix'] = '<div id="' . $id . '">';
+  $element['#suffix'] = '</div>';
+  $element['#tree'] = TRUE;
+  $client_options =  _brightcove_my_client_select_options();
+  if (count($client_options) > 1) {
+    $element['client_id'] = [
+      '#type' => 'select',
+      '#options' => $client_options,
+      '#title' => t('Client'),
+      '#default_value' => isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : array_keys($client_options)[0],
+    ];
+    $client_id = isset($form_state['values'][$field['field_name']]['client_id']) ? $form_state['values'][$field['field_name']]['client_id'] : $element['client_id']['#default_value'];
+  }
+  elseif (count($client_options) == 1) {
+    $client_id = array_keys($client_options)[0];
+    $element['client_id'] = [
+      '#type' => 'value',
+      '#value' => $client_id,
+      '#default_value' => $client_id,
+    ];
+  }
+  else {
+    $element['warning'] = [
+      '#markup' => t('To add videos you need to have access to some bricghtcove clients first.'),
+    ];
+    return $element;
+  }
+  $client = brightcove_client_load($client_id);
 
   $element['brightcove_id'] = [
     '#type' => 'textfield',
@@ -80,7 +103,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     '#description' => $element['#description'],
   ];
 
-  if (brightcove_field_browse_access('browse videos', $entity_type, $field['field_name'], $entity_id_or_bundle)) {
+  if (brightcove_field_browse_access('browse videos', $entity_type, $field['field_name'], $entity_id_or_bundle, $client)) {
     // Button to browse videos.
     $element['actions']['browse'] = [
       '#type' => 'button',
@@ -103,7 +126,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     ];
   }
 
-  if (brightcove_field_browse_access('upload videos', $entity_type, $field['field_name'], $entity_id_or_bundle) &&
+  if (brightcove_field_browse_access('upload videos', $entity_type, $field['field_name'], $entity_id_or_bundle, $client) &&
     $instance['settings']['allow_upload']
   ) {
     $element['actions']['upload'] = [
@@ -183,7 +206,15 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   ];
 }
 
-function _brightcove_field_video_browse() {
+function _brightcove_field_video_widget_client_ajax($form, $form_state) {
+  return $form;
+}
+/**
+ *
+ * @param Entity $client
+ *   The brightcove client entity object.
+ */
+function _brightcove_field_video_browse($client) {
   global $pager_total, $pager_page_array;
   $items_per_page = 20;
   $page = isset($_GET['page']) ? intval($_GET['page']) : '0';
@@ -215,68 +246,61 @@ function _brightcove_field_video_browse() {
   foreach ($params as $key => $param) {
     $cid .= ":{$key}:{$param}";
   }
-  if (isset($_SESSION['brightcove_field_filter']['client'])) {
-    $client_id = $_SESSION['brightcove_field_filter']['client'];
-    $cid .= ":$client_id";
-    $content = brightcove_cache_get($cid);
+  $cid .= ":$client->bcid";
+  $content = brightcove_cache_get($cid);
 
-    // If no cached data is available.
-    if (!$content) {
-      $client = brightcove_client_load($client_id);
-      list($cms,) = _brightcove_create_classes($client);
-
-      try {
-        $result = $cms->listVideos($search, NULL, $items_per_page, $items_per_page * $page);
-      }
-      catch (Exception $error) {
-        watchdog('brightcove', 'Finding videos in browse failed.', [], WATCHDOG_ERROR);
-      }
-
-      $pager_page_array = explode(',', $page);
-      $pager_total[0] = ceil($cms->countVideos($search) / $items_per_page);
-      $pager_page_array[0] =
-        max(0, min(
-          (int)$pager_page_array[0],
-          ((int)$pager_total[0]) - 1)
-        );
-
-      $items = [];
-      if (count($result)) {
-        foreach ($result as $video) {
-          $item = [];
-          $item['title'] = check_plain($video->getName());
-          $item['brightcove_id'] = $video->getId();
-          $video_images = $video->getImages();
-          if (!empty($video_images)) {
-              $image_vars = ['path' => $video_images['thumbnail']->getSrc(), 'alt' => '', 'title' => '', 'attributes' => ''];
-              $item['thumbnail'] = theme('image', $image_vars);
-          }
-          else {
-            $image_vars = ['path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attributes' => '','width' => '120', 'height' => '90'];
-            $item['thumbnail'] = theme('image', $image_vars);
-          }
-          $items[] = $item;
-        }
-      }
-
-      $pager_vars = [
-        'tags' => NULL,
-        'element' => 0,
-        'parameters' => [],
-        'quantity' => $items_per_page,
-      ];
-
-      $content['pager'] = theme('pager', $pager_vars);
-      $content['items'] = $items;
-
-      // Save the output to the cache record(not only the video objects),
-      // because we also need data for pagination.
-      brightcove_cache_set($cid, $content);
+  // If no cached data is available.
+  if (!$content) {
+    list($cms,) = _brightcove_create_classes($client);
+    try {
+      $result = $cms->listVideos($search, NULL, $items_per_page, $items_per_page * $page);
     }
+    catch (Exception $error) {
+      watchdog('brightcove', 'Finding videos in browse failed.', [], WATCHDOG_ERROR);
+    }
+
+    $pager_page_array = explode(',', $page);
+    $pager_total[0] = ceil($cms->countVideos($search) / $items_per_page);
+    $pager_page_array[0] = max(0, min(
+      (int)$pager_page_array[0],
+      ((int)$pager_total[0]) - 1)
+    );
+    $items = [];
+    if (count($result)) {
+      foreach ($result as $video) {
+        $item = [];
+        $item['title'] = check_plain($video->getName());
+        $item['brightcove_id'] = $video->getId();
+        $video_images = $video->getImages();
+        if (!empty($video_images)) {
+          $image_vars = ['path' => $video_images['thumbnail']->getSrc(), 'alt' => '', 'title' => '', 'attributes' => ''];
+          $item['thumbnail'] = theme('image', $image_vars);
+        }
+        else {
+          $image_vars = ['path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attributes' => '','width' => '120', 'height' => '90'];
+          $item['thumbnail'] = theme('image', $image_vars);
+        }
+        $items[] = $item;
+      }
+    }
+
+    $pager_vars = [
+      'tags' => NULL,
+      'element' => 0,
+      'parameters' => [],
+      'quantity' => $items_per_page,
+    ];
+
+    $content['pager'] = theme('pager', $pager_vars);
+    $content['items'] = $items;
+
+    // Save the output to the cache record(not only the video objects),
+    // because we also need data for pagination.
+    brightcove_cache_set($cid, $content);
   }
 
   // The filter form should not be cached,
   // because it wouldn't invoke the submit handler in this case.
-  $content['filter_form'] = drupal_get_form('brightcove_field_filter_form');
+  $content['filter_form'] = drupal_get_form('brightcove_field_filter_form', $client);
   return $content;
 }

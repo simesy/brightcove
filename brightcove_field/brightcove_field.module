@@ -45,34 +45,34 @@ function brightcove_field_menu() {
   $items = [];
 
   // bc object type, entity type, field name
-  $items['brightcove_field/autocomplete/video/%/%'] = [
+  $items['brightcove_field/autocomplete/video/%/%/%/%brightcove_client'] = [
     'title' => 'Brightcove field autocomplete',
     'page callback' => 'brightcove_field_autocomplete',
-    'page arguments' => [2, 4, 6],
+    'page arguments' => [2, 4, 6, 7],
     'access callback' => 'brightcove_field_browse_access',
-    'access arguments' => ['browse videos', 3, 4, 5],
+    'access arguments' => ['browse videos', 3, 4, 5, 6],
     'file' => 'brightcove_field.browse.inc',
     'type' => MENU_CALLBACK,
   ];
 
-  $items['brightcove_field/autocomplete/playlist/%/%'] = [
+  $items['brightcove_field/autocomplete/playlist/%/%/%/%brightcove_client'] = [
     'title' => 'Brightcove field autocomplete',
     'page callback' => 'brightcove_field_autocomplete',
-    'page arguments' => [2, 4, 6],
+    'page arguments' => [2, 4, 6, 7],
     'access callback' => 'brightcove_field_browse_access',
-    'access arguments' => ['browse playlists', 3, 4, 5],
+    'access arguments' => ['browse playlists', 3, 4, 5, 6],
     'file' => 'brightcove_field.browse.inc',
     'type' => MENU_CALLBACK,
   ];
 
   // bc object type, entity type, field name, entity id or bundle
-  $items['brightcove_field/browse/video/%/%'] = [
+  $items['brightcove_field/browse/video/%/%/%/%brightcove_client'] = [
     'title' => 'Brightcove Videos Browser',
-    'page arguments' => [2],
+    'page arguments' => [2, 6],
     'page callback' => 'brightcove_field_browse',
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
-    'access arguments' => ['browse videos', 3, 4, 5],
+    'access arguments' => ['browse videos', 3, 4, 5, 6],
     'file' => 'brightcove_field.browse.inc',
     'type' => MENU_CALLBACK,
   ];
@@ -170,11 +170,16 @@ function ajax_browse_video_dialog_callback($form, $form_state) {
   $eid_extracted = entity_extract_ids($entity_type, $entity);
   $eid = array_shift($eid_extracted);
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
+  $client_id_parents = $form_state['triggering_element']['#parents'];
+  $client_id_parents[3] = 'client_id';
+  unset($client_id_parents[4]);
+  $client_id = drupal_array_get_nested_value($form_state['values'], $client_id_parents);
+  $client = brightcove_client_load($client_id);
 
-  $title = 'Brightcove Video Browser';
+  $title = t('Brightcove Video Browser for client @client', ['@client' => $client->label]);
   $id = 'browse-dialog';
   $selector = '<div id="' . $id . '">';
-  $path = url("brightcove_field/browse/video/{$entity_type}/{$field_name}/{$entity_id_or_bundle}");
+  $path = url("brightcove_field/browse/video/{$entity_type}/{$field_name}/{$entity_id_or_bundle}/{$client_id}");
 
   $commands = [];
   $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
@@ -275,7 +280,10 @@ function ajax_create_playlist_dialog_close_callback($form, $form_state) {
 /**
  * Access callback for brightcove browser.
  */
-function brightcove_field_browse_access($perm, $entity_type, $field_name, $entity_id_or_bundle = NULL) {
+function brightcove_field_browse_access($perm, $entity_type, $field_name, $entity_id_or_bundle = NULL, $client) {
+  if (!brightcove_client_access('use', $client)) {
+    return FALSE;
+  }
   if (user_access($perm)) {
     $field = field_info_field($field_name);
 
@@ -1110,38 +1118,7 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
 /**
  * Filter form for video browser.
  */
-function brightcove_field_filter_form($form, &$form_state) {
-  $clients = _brightcove_load_my_clients();
-  $number_of_clients = count($clients);
-  if ($number_of_clients > 1) {
-    $client_options = [];
-    foreach ($clients as $client) {
-       $client_options[$client->bcid] = $client->label;
-    }
-    $_SESSION['brightcove_field_filter']['client'] = isset($_SESSION['brightcove_field_filter']['client']) ? $_SESSION['brightcove_field_filter']['client'] : $client->bcid;
-    $form['client'] = [
-      '#type' => 'select',
-      '#options' => $client_options,
-      '#default_value' => $_SESSION['brightcove_field_filter']['client'],
-      '#required' => TRUE,
-      '#title' => t('Client'),
-      '#ajax' => [
-        'wrapper' => 'brightcove-browse-table-table',
-        'callback' => 'brightcove_field_client_select_ajax_callback',
-      ],
-    ];
-  }
-  elseif ($number_of_clients == 1) {
-    $client = reset($clients);
-    $_SESSION['brightcove_field_filter']['client'] = $client->bcid;
-  }
-  else {
-    $form['warning'] = [
-      '#markup' => t('To browse videos create some bricghtcove clients first.'),
-    ];
-    return $form;
-  }
-
+function brightcove_field_filter_form($form, &$form_state, $client) {
   $form['search'] = [
     '#type' => 'fieldset',
     '#title' => t('Filter videos'),
@@ -1189,13 +1166,6 @@ function brightcove_field_filter_form($form, &$form_state) {
 
   $form['#submit'] = ['brightcove_field_filter_form_submit'];
   return $form;
-}
-
-function brightcove_field_client_select_ajax_callback($form, &$form_state) {
-  $_SESSION['brightcove_field_filter']['client'] = $form_state['values']['client'];
-  module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
-  $content = _brightcove_field_video_browse();
-  return theme('brightcove_field_browse_items', ['items' => $content['items']]);
 }
 
 /**
