@@ -442,16 +442,19 @@ function brightcove_update_playlist($metadata) {
  * @param bool $reset
  * @return bool|object
  */
-function brightcove_playlist_load($playlist_id, $reset = FALSE) {
+function brightcove_playlist_load($playlist_id, $client_id, $reset = FALSE) {
   $cid = 'brightcove:playlist:' . $playlist_id;
   $cache = brightcove_cache_get($cid);
   if (!$reset && $cache) {
     return (object)$cache;
   }
   $playlist = FALSE;
-  $bc = brightcove_initialize();
+  $client = brightcove_client_load($client_id);
+
+
   try {
-    $playlist = $bc->find('playlistbyid', ['playlist_id' => $playlist_id]);
+    list($cms, ) = _brightcove_create_classes($client);
+    $playlist = $cms->getPlaylist($playlist_id);
   }
   catch (Exception $e) {
     watchdog('brightcove', 'Loading brightcove playlists failed.', [], WATCHDOG_ERROR);
@@ -463,7 +466,6 @@ function brightcove_playlist_load($playlist_id, $reset = FALSE) {
 
   return $playlist;
 }
-
 
 /**
  * Return the path to the Brightcove MAPI library.

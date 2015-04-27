@@ -6,27 +6,12 @@
  */
 
 function _brightcove_field_video_instance_settings_form(&$form, $field, $instance) {
-  // Only allow Upload if this site has Write API keys.
-  if (brightcove_write_api_access()) {
-    $form['allow_upload'] = [
-      '#type' => 'checkbox',
-      '#title' => t('Allow upload'),
-      '#description' => t('Whether to allow uploading new videos to ' .
-        'Brightcove Studio from this field. Requires Write API keys with at least a ' .
-        '!link-to-editions-and-pricing', [
-          '!link-to-editions-and-pricing' => l(t('Professional account'), 'http://www.brightcove.com/en/video-platform/editions-and-pricing'),
-        ]
-      ),
-      '#default_value' => isset($instance['settings']['allow_upload']) ? $instance['settings']['allow_upload'] : 0,
-    ];
-  }
-  else {
-    $form['allow_upload'] = [
-      '#type' => 'value',
-      '#value' => isset($instance['settings']['allow_upload']) ?
-        $instance['settings']['allow_upload'] : 0,
-    ];
-  }
+  $form['allow_upload'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Allow upload if client has the Brightcove permission for it.'),
+    '#description' => t('Whether to allow uploading new videos to Brightcove from this field. Requires exposure of the "Video Read/Write" API at the Brightcove API Authentication page.'),
+    '#default_value' => isset($instance['settings']['allow_upload']) ? $instance['settings']['allow_upload'] : 0,
+  ];
 
   $form['brightcove_player'] = [
     '#type' => 'select',

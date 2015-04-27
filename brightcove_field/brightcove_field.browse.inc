@@ -19,19 +19,11 @@
  * TODO: Interesting feature would be to detect multiple values allowed in the
  *       parent field and allow attaching all videos at once.
  */
-function brightcove_field_browse($type, $client) {
+function brightcove_field_browse($client) {
   $content = [];
-
-  switch ($type) {
-    case 'video':
-      module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
-      $content = _brightcove_field_video_browse($client);
-      break;
-    case 'playlist':
-      module_load_include('inc', 'brightcove_field', 'brightcove_field.playlist');
-      $content = _brightcove_field_playlist_browse($client);
-      break;
-  }
+  module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
+  $content = _brightcove_field_video_browse($client);
+  break;
 
   $content['filter_form']['css_and_js'] = [
     '#type' => 'container',
