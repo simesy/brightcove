@@ -1131,21 +1131,19 @@ function _brightcove_my_client_select_options($account = NULL) {
 function _brightcove_upload_form($form, &$form_state) {
   $form = [];
 
-  $clients = _brightcove_load_my_clients();
+  $clients_options = _brightcove_my_client_select_options();
 
-  switch (count($clients)) {
+  switch (count($clients_options)) {
     case 0:
       drupal_set_message(t('No clients configured'), 'error');
       return $form;
     case 1:
-      $client = reset($clients);
       $form['client'] = [
         '#type' => 'hidden',
-        '#value' => $client->bcid,
+        '#value' => array_keys($clients_options)[0],
       ];
       break;
     default:
-      $clients_options = _brightcove_my_client_select_options();
       $form['client'] = [
         '#type' => 'select',
         '#title' => t('Client'),
