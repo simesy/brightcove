@@ -90,7 +90,7 @@ function brightcove_field_menu() {
   ];
 
   // entity type, field name, entity id or bundle
-  $items['brightcove_field/upload/video/%/%/%brightcove_client'] = [
+  $items['brightcove_field/upload/video/%/%/%/%brightcove_client'] = [
     'title' => 'Upload video to Brightcove',
     'page callback' => 'brightcove_field_upload',
     'page arguments' => [6],
@@ -1013,7 +1013,7 @@ function brightcove_field_browser_playlist_validate($element, &$form_state) {
 
       if (count($result) > 1) {
         // This title is ambiguous.
-        form_error($element, t('%name: Playlist title %title matched more than one plalists. In case of doubt, use text "title [id:ID_OF_THE_PLAYLIST]"', ['%title', $value, '%name' => t($element['#title'])]));
+        form_error($element, t('%name: Playlist title %title matched more than one playlist. In case of doubt, use text "title [id:ID_OF_THE_PLAYLIST]"', ['%title', $value, '%name' => t($element['#title'])]));
       }
       elseif (count($result) == 0) {
         // No video found.
