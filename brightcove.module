@@ -1131,26 +1131,17 @@ function _brightcove_my_client_select_options($account = NULL) {
 function _brightcove_upload_form($form, &$form_state) {
   $form = [];
 
-  $clients_options = _brightcove_my_client_select_options();
-
-  switch (count($clients_options)) {
-    case 0:
-      drupal_set_message(t('No clients configured'), 'error');
-      return $form;
-    case 1:
-      $form['client'] = [
-        '#type' => 'hidden',
-        '#value' => array_keys($clients_options)[0],
-      ];
-      break;
-    default:
-      $form['client'] = [
-        '#type' => 'select',
-        '#title' => t('Client'),
-        '#options' => $clients_options,
-        '#required' => TRUE,
-      ];
-      break;
+  // Check for existing clients.
+  $clients = _brightcove_load_my_clients();
+  if (empty($clients)) {
+    drupal_set_message(t('No clients configured'), 'error');
+    return $form;
+  }
+  else {
+    $form['client'] = [
+      '#type' => 'hidden',
+      '#value' => $form_state['build_info']['args'][0],
+    ];
   }
 
   $form['title'] = [
@@ -1256,7 +1247,18 @@ function _brightcove_upload_form($form, &$form_state) {
     '#description' => t('Encoding profile'),
   ];
 
+  $form['#validate'][] = '_brightcove_upload_form_validate';
+
   return $form;
+}
+
+/**
+ * Validate callback for _brightcove_upload_form().
+ */
+function _brightcove_upload_form_validate($form, &$form_state) {
+  if (!in_array($form_state['values']['client'], array_keys(_brightcove_load_my_clients()))) {
+    form_error($form['client'], t('Invalid client selected.'));
+  }
 }
 
 /**

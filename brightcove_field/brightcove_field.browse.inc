@@ -76,10 +76,10 @@ function brightcove_field_autocomplete($type, $field_name, $client, $string = ''
   drupal_json_output($matches);
 }
 
-function brightcove_field_upload() {
+function brightcove_field_upload($client) {
   drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css');
 
-  $form = drupal_get_form('brightcove_field_upload_form');
+  $form = drupal_get_form('brightcove_field_upload_form', $client);
   return drupal_render($form);
 }
 

@@ -72,18 +72,31 @@ function brightcove_field_menu() {
     'page callback' => 'brightcove_field_browse',
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
-    'access arguments' => ['browse videos', 2, 3, 4, 5],
+    'access arguments' => ['browse videos', 3, 4, 5, 6],
+    'file' => 'brightcove_field.browse.inc',
+    'type' => MENU_CALLBACK,
+  ];
+
+  // bc object type, entity type, field name, entity id or bundle
+  $items['brightcove_field/browse/playlist/%/%'] = [
+    'title' => 'Brightcove Videos Browser',
+    'page callback' => 'brightcove_field_browse',
+    'page arguments' => [2],
+    'delivery callback' => 'brightcove_field_deliver_dialog',
+    'access callback' => 'brightcove_field_browse_access',
+    'access arguments' => ['browse playlists', 3, 4, 5],
     'file' => 'brightcove_field.browse.inc',
     'type' => MENU_CALLBACK,
   ];
 
   // entity type, field name, entity id or bundle
-  $items['brightcove_field/upload/video/%/%'] = [
+  $items['brightcove_field/upload/video/%/%/%brightcove_client'] = [
     'title' => 'Upload video to Brightcove',
     'page callback' => 'brightcove_field_upload',
+    'page arguments' => [6],
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
-    'access arguments' => ['upload videos', 3, 4, 5],
+    'access arguments' => ['upload videos', 3, 4, 5, 6],
     'file' => 'brightcove_field.browse.inc',
     'type' => MENU_CALLBACK,
   ];
@@ -181,11 +194,11 @@ function ajax_upload_video_dialog_callback($form, $form_state) {
   $eid_extracted = entity_extract_ids($entity_type, $entity);
   $eid = array_shift($eid_extracted);
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
-
+  $client_id = $form_state['values']['field_video'][LANGUAGE_NONE][0]['client_id'];
   $title = 'Upload Video to Brightcove';
   $id = 'upload-dialog';
   $selector = '<div id="' . $id . '">';
-  $path = url("brightcove_field/upload/video/{$entity_type}/{$field_name}/{$entity_id_or_bundle}");
+  $path = url("brightcove_field/upload/video/{$entity_type}/{$field_name}/{$entity_id_or_bundle}/{$client_id}");
 
   $commands = [];
   $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
