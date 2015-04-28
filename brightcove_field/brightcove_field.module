@@ -939,7 +939,6 @@ function brightcove_field_browser_video_validate($element, &$form_state) {
       // Matched ID, check if the video exists.
       $client_parents = $element['#parents'];
       array_pop($client_parents);
-      array_pop($client_parents);
       array_push($client_parents, 'client_id');
       $client_id = drupal_array_get_nested_value($form_state['input'], $client_parents);
       $client = brightcove_client_load_or_default($client_id);
