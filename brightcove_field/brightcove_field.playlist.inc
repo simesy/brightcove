@@ -35,37 +35,28 @@ function _brightcove_field_playlist_instance_settings_form(&$form, $field, $inst
  */
 function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, &$element) {
   // Select the client.
-  $element['#tree'] = TRUE;
-  $client_options =  _brightcove_my_client_select_options();
-  $client_options['_none'] = t('- Select a client -');
+  //$element['#tree'] = TRUE;
   $wrapper_id = "bc-playlist-{$field['field_name']}-$delta";
-  if (count($client_options) > 2) {
-    $element['client_id'] = [
-      '#type' => 'select',
-      '#options' => $client_options,
-      '#title' => t('Client'),
-      '#default_value' => isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : '_none',
-      '#ajax' => [
+  module_load_include('inc', 'brightcove', 'brightcove.client');
+  $element['client_id'] = brightcove_client_select_element();
+  switch ($element['client_id']['#type']) {
+    case 'select':
+      $element['client_id']['#default_value'] = isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : '_none';
+      $element['client_id']['#ajax'] = [
         'wrapper' => $wrapper_id,
         'callback' => 'brightcove_field_playlist_client_ajax_callback',
-      ],
-    ];
-    $client_id = isset($form_state['values'][$field['field_name']][$langcode][$delta]['client_id']) ? $form_state['values'][$field['field_name']][$langcode][$delta]['client_id'] : $element['client_id']['#default_value'];
+      ];
+      $client_id = isset($form_state['values'][$field['field_name']][$langcode][$delta]['client_id']) ? $form_state['values'][$field['field_name']][$langcode][$delta]['client_id'] : $element['client_id']['#default_value'];
+      break;
+
+    case 'value':
+      $client_id = $element['client_id']['#value'];
+      break;
+
+    default :
+      return $element;
   }
-  elseif (count($client_options) == 2) {
-    $client_id = array_keys($client_options)[1];
-    $element['client_id'] = [
-      '#type' => 'value',
-      '#value' => $client_id,
-      '#default_value' => $client_id,
-    ];
-  }
-  else {
-    $element['warning'] = [
-      '#markup' => t('To add playlists you need to have access to some brightcove clients first.'),
-    ];
-    return $element;
-  }
+
   $playlists = [];
   if ($client_id != '_none') {
     $client = brightcove_client_load($client_id);

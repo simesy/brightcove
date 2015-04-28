@@ -158,16 +158,13 @@ function ajax_browse_video_dialog_callback($form, $form_state) {
   $eid_extracted = entity_extract_ids($entity_type, $entity);
   $eid = array_shift($eid_extracted);
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
-  $client_id_parents = $form_state['triggering_element']['#parents'];
-  $client_id_parents[3] = 'client_id';
-  unset($client_id_parents[4]);
-  $client_id = drupal_array_get_nested_value($form_state['values'], $client_id_parents);
+  $client_id = $form_state['triggering_element']['#attributes']['data-client-id'];
   $client = brightcove_client_load($client_id);
 
   $title = t('Brightcove Video Browser for client @client', ['@client' => $client->label]);
   $id = 'browse-dialog';
   $selector = '<div id="' . $id . '">';
-  $path = url("brightcove_field/browse/video/{$entity_type}/{$field_name}/{$entity_id_or_bundle}/{$client_id}");
+  $path = url("brightcove_field/browse_video/{$entity_type}/{$field_name}/{$entity_id_or_bundle}/{$client_id}");
 
   $commands = [];
   $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
@@ -941,6 +938,7 @@ function brightcove_field_browser_video_validate($element, &$form_state) {
     if (is_numeric($id)) {
       // Matched ID, check if the video exists.
       $client_parents = $element['#parents'];
+      array_pop($client_parents);
       array_pop($client_parents);
       array_push($client_parents, 'client_id');
       $client_id = drupal_array_get_nested_value($form_state['input'], $client_parents);

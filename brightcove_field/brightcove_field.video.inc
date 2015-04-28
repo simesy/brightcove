@@ -44,151 +44,167 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
   // Select the client.
   $element['#tree'] = TRUE;
-  $client_options =  _brightcove_my_client_select_options();
-  if (count($client_options) > 1) {
-    $element['client_id'] = [
-      '#type' => 'select',
-      '#options' => $client_options,
-      '#title' => t('Client'),
-      '#default_value' => isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : array_keys($client_options)[0],
-    ];
-    $client_id = isset($form_state['values'][$field['field_name']]['client_id']) ? $form_state['values'][$field['field_name']]['client_id'] : $element['client_id']['#default_value'];
-  }
-  elseif (count($client_options) == 1) {
-    $client_id = array_keys($client_options)[0];
-    $element['client_id'] = [
-      '#type' => 'value',
-      '#value' => $client_id,
-      '#default_value' => $client_id,
-    ];
-  }
-  else {
-    $element['warning'] = [
-      '#markup' => t('To add videos you need to have access to some brightcove clients first.'),
-    ];
-    return $element;
-  }
-  $client = brightcove_client_load($client_id);
+  $wrapper_id = "bc-video-{$field['field_name']}-$delta";
 
-  $element['brightcove_id'] = [
-    '#type' => 'textfield',
-    '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : NULL,
-    '#title' => $element['#title'],
-    '#maxlength' => 256,
-    '#value_callback' => 'brightcove_field_video_browser_value',
-    '#attributes' => [
-      'rel' => [$element['#field_name'] . '-' . $parent_delta . '-' . $delta],
-      'class' => ['brightcove-video-field', $element['#field_name'] . '-' . $parent_delta . '-' . $delta],
-      'data-field-name' => $element['#field_name'],
-    ],
-    '#element_validate' => [
-      'brightcove_field_browser_video_validate',
-    ],
-    '#field_name' => $element['#field_name'],
-    '#description' => $element['#description'],
+  module_load_include('inc', 'brightcove', 'brightcove.client');
+  $element['client_id'] = brightcove_client_select_element();
+  switch ($element['client_id']['#type']) {
+    case 'select':
+      $element['client_id']['#default_value'] = isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : '_none';
+      $element['client_id']['#ajax'] = [
+        'wrapper' => $wrapper_id,
+        'callback' => 'brightcove_field_video_client_ajax_callback',
+      ];
+      $client_id = isset($form_state['values'][$field['field_name']][$langcode][$delta]['client_id']) ? $form_state['values'][$field['field_name']][$langcode][$delta]['client_id'] : $element['client_id']['#default_value'];
+      break;
+
+    case 'value':
+      $client_id = $element['client_id']['#value'];
+      break;
+
+    default :
+      return $element;
+  }
+  $element['bc_container'] = [
+    '#type' => 'container',
+    '#prefix' => '<div id="' . $wrapper_id . '">',
+    '#suffix' => '</div>'
   ];
+  if ($client_id != '_none') {
+    $client = brightcove_client_load($client_id);
+    $element['bc_container']['brightcove_id'] = [
+      '#type' => 'textfield',
+      '#default_value' => isset($items[$delta]['bc_container']['brightcove_id']) ? $items[$delta]['bc_container']['brightcove_id'] : NULL,
+      '#title' => $element['#title'],
+      '#maxlength' => 256,
+      '#value_callback' => 'brightcove_field_video_browser_value',
+      '#attributes' => [
+        'rel' => [$element['#field_name'] . '-' . $parent_delta . '-' . $delta],
+        'class' => ['brightcove-video-field', $element['#field_name'] . '-' . $parent_delta . '-' . $delta],
+        'data-field-name' => $element['#field_name'],
+      ],
+      '#element_validate' => [
+        'brightcove_field_browser_video_validate',
+      ],
+      '#field_name' => $element['#field_name'],
+      '#description' => $element['#description'],
+    ];
 
-  if (brightcove_field_browse_access('browse videos', $entity_type, $field['field_name'], $entity_id_or_bundle, $client)) {
-    // Button to browse videos.
-    $element['actions']['browse'] = [
+    if (brightcove_field_browse_access('browse videos', $entity_type, $field['field_name'], $entity_id_or_bundle, $client)) {
+      // Button to browse videos.
+      $element['bc_container']['actions']['browse'] = [
+        '#type' => 'button',
+        '#attributes' => [
+          'class' => ['brightcove-field-browse-video-button'],
+          'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
+          'data-entity-type' => $entity_type,
+          'data-bundle' => $element['#bundle'],
+          'data-field-name' => $element['#field_name'],
+          'data-entity-id' => is_null($eid) ? '0' : $eid,
+          'data-client-id' => $client_id,
+        ],
+        '#executes_submit_callback' => FALSE,
+        '#limit_validation_errors' => [],
+        '#default_value' => t('Browse'),
+        '#value_callback' => 'brightcove_field_button_value_callback',
+        '#ajax' => [
+          'callback' => 'ajax_browse_video_dialog_callback',
+        ],
+        '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
+      ];
+    }
+
+    if (brightcove_field_browse_access('upload videos', $entity_type, $field['field_name'], $entity_id_or_bundle, $client) &&
+      $instance['settings']['allow_upload']
+    ) {
+      $element['bc_container']['actions']['upload'] = [
+        '#type' => 'button',
+        '#attributes' => [
+          'class' => ['brightcove-field-upload-button'],
+          'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
+          'data-entity-type' => $entity_type,
+          'data-bundle' => $element['#bundle'],
+          'data-field-name' => $element['#field_name'],
+          'data-entity-id' => is_null($eid) ? '0' : $eid,
+          'data-client-id' => $client_id,
+        ],
+        '#limit_validation_errors' => [],
+        '#default_value' => t('Upload'),
+        '#value_callback' => 'brightcove_field_button_value_callback',
+        '#ajax' => [
+          'callback' => 'ajax_upload_video_dialog_callback',
+        ],
+        '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
+      ];
+    }
+
+    $element['bc_container']['actions']['remove'] = [
       '#type' => 'button',
       '#attributes' => [
-        'class' => ['brightcove-field-browse-video-button'],
+        'class' => ['brightcove-field-remove-button'],
         'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
         'data-entity-type' => $entity_type,
-        'data-bundle' => $element['#bundle'],
         'data-field-name' => $element['#field_name'],
         'data-entity-id' => is_null($eid) ? '0' : $eid,
       ],
-      '#executes_submit_callback' => FALSE,
-      '#limit_validation_errors' => [],
-      '#default_value' => t('Browse'),
+      '#default_value' => t('Remove'),
       '#value_callback' => 'brightcove_field_button_value_callback',
-      '#ajax' => [
-        'callback' => 'ajax_browse_video_dialog_callback',
-      ],
       '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
     ];
-  }
 
-  if (brightcove_field_browse_access('upload videos', $entity_type, $field['field_name'], $entity_id_or_bundle, $client) &&
-    $instance['settings']['allow_upload']
-  ) {
-    $element['actions']['upload'] = [
-      '#type' => 'button',
-      '#attributes' => [
-        'class' => ['brightcove-field-upload-button'],
-        'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
-        'data-entity-type' => $entity_type,
-        'data-bundle' => $element['#bundle'],
-        'data-field-name' => $element['#field_name'],
-        'data-entity-id' => is_null($eid) ? '0' : $eid,
-      ],
-      '#limit_validation_errors' => [],
-      '#default_value' => t('Upload'),
-      '#value_callback' => 'brightcove_field_button_value_callback',
-      '#ajax' => [
-        'callback' => 'ajax_upload_video_dialog_callback',
-      ],
-      '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
+    $element['bc_container']['player'] = [
+      '#type' => $instance['settings']['per_content_player'] ?
+        'select' : 'value',
+      '#title' => t('Player'),
+      '#options' => brightcove_player_list($instance),
+      '#default_value' => isset($items[$delta]['bc_container']['player']) ?
+        $items[$delta]['bc_container']['player'] : NULL,
+    ];
+
+    if (!isset($element['#default_value'])) {
+      $element['actions']['remove']['#attributes']['disabled'] = 'disabled';
+    }
+
+    if (empty($brightcove_field_settings[$element['#field_name']])) {
+      $brightcove_field_settings[$element['#field_name']] = [
+        'brightcove_field' => [
+          $element['#field_name'] => [
+          'entity_type' => $entity_type,
+          'field_name' => $element['#field_name'],
+          'entity_id' => is_null($eid) ? '0' : $eid,
+          ]
+        ],
+      ];
+    }
+
+    $element['bc_container']['brightcove_id']['#attached']['library'] = [
+      ['system', 'ui.dialog']
+    ];
+
+    $element['bc_container']['brightcove_id']['#attached']['css'] = [
+      drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css',
+    ];
+
+    $element['bc_container']['brightcove_id']['#attached']['js'] = [
+      drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
+    ];
+
+    $element['bc_container']['brightcove_id']['#attached']['js'][] = [
+      'data' => $brightcove_field_settings[$element['#field_name']],
+      'type' => 'setting',
     ];
   }
+}
 
-  $element['actions']['remove'] = [
-    '#type' => 'button',
-    '#attributes' => [
-      'class' => ['brightcove-field-remove-button'],
-      'rel' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
-      'data-entity-type' => $entity_type,
-      'data-field-name' => $element['#field_name'],
-      'data-entity-id' => is_null($eid) ? '0' : $eid,
-    ],
-    '#default_value' => t('Remove'),
-    '#value_callback' => 'brightcove_field_button_value_callback',
-    '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
-  ];
-
-  $element['player'] = [
-    '#type' => $instance['settings']['per_content_player'] ?
-      'select' : 'value',
-    '#title' => t('Player'),
-    '#options' => brightcove_player_list($instance),
-    '#default_value' => isset($items[$delta]['player']) ?
-      $items[$delta]['player'] : NULL,
-  ];
-
-  if (!isset($element['#default_value'])) {
-    $element['actions']['remove']['#attributes']['disabled'] = 'disabled';
-  }
-
-  if (empty($brightcove_field_settings[$element['#field_name']])) {
-    $brightcove_field_settings[$element['#field_name']] = [
-      'brightcove_field' => [
-        $element['#field_name'] => [
-        'entity_type' => $entity_type,
-        'field_name' => $element['#field_name'],
-        'entity_id' => is_null($eid) ? '0' : $eid,
-        ]
-      ],
-    ];
-  }
-
-  $element['brightcove_id']['#attached']['library'] = [
-    ['system', 'ui.dialog']
-  ];
-
-  $element['brightcove_id']['#attached']['css'] = [
-    drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css',
-  ];
-
-  $element['brightcove_id']['#attached']['js'] = [
-    drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
-  ];
-
-  $element['brightcove_id']['#attached']['js'][] = [
-    'data' => $brightcove_field_settings[$element['#field_name']],
-    'type' => 'setting',
-  ];
+/**
+ * AJAX callback for playlist select update on client selection.
+ */
+function brightcove_field_video_client_ajax_callback($form, $form_state) {
+  $parents = $form_state['triggering_element']['#parents'];
+  array_pop($parents);
+  $parents[] = 'bc_container';
+  $return = drupal_array_get_nested_value($form, $parents);
+  return $return;
 }
 
 /**

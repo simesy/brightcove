@@ -23,8 +23,6 @@ function brightcove_field_browse($client) {
   $content = [];
   module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
   $content = _brightcove_field_video_browse($client);
-  break;
-
   $content['filter_form']['css_and_js'] = [
     '#type' => 'container',
     '#attached' => [
