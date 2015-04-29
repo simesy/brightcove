@@ -39,9 +39,11 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
       catch ( Exception $error ) {
         watchdog('brightcove', 'Finding playlists has failed.', [], WATCHDOG_ERROR);
       }
-      foreach ($playlists as $playlist) {
-        $id = $playlist->getId();
-        $playlist_options[$id] = $playlist->getName() . " ($id)";
+      if (!empty($playlists)) {
+        foreach ($playlists as $playlist) {
+          $id = $playlist->getId();
+          $playlist_options[$id] = $playlist->getName() . " ($id)";
+        }
       }
       brightcove_cache_set($cid, $playlist_options);
     }
