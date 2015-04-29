@@ -890,23 +890,32 @@ function _brightcove_upload_form($form, &$form_state) {
     '#default_value' => !empty($form_state['values']['short']) ? $form_state['values']['short'] : '',
   ];
 
+  $form['custom_fields'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Custom fields'),
+    '#collapsible' => TRUE,
+  ];
+
   list($cms,) = _brightcove_create_classes($client);
   $fields = $cms->getVideoFields();
   $types = [
     'string' => 'textfield',
     'enum' => 'select',
   ];
+  $has_required = FALSE;
   foreach ($fields->getCustomFields() as $field) {
-    $form["custom_field_{$field->getId()}"] = [
+    $has_required = $has_required || $field->isRequired();
+    $form['custom_fields']["custom_field_{$field->getId()}"] = [
       '#title' => $field->getDisplayName(),
       '#description' => $field->getDescription(),
       '#required' => $field->isRequired(),
       '#type' => $types[$field->getType()],
     ];
     if ($field->getType() === 'enum') {
-      $form["custom_field_{$field->getId()}"]['#options'] = drupal_map_assoc($field->getEnumValues());
+      $form['custom_fields']["custom_field_{$field->getId()}"]['#options'] = drupal_map_assoc($field->getEnumValues());
     }
   }
+  $form['custom_fields']['#collapsed'] = !$has_required;
 
   $form['advanced'] = [
     '#type' => 'fieldset',
