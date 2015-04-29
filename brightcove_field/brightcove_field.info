@@ -4,6 +4,8 @@ core = 7.x
 package = Fields
 
 dependencies[] = brightcove
+dependencies[] = date
+dependencies[] = date_popup
 dependencies[] = field
 dependencies[] = entity
 dependencies[] = image
