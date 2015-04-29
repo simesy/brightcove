@@ -295,26 +295,6 @@ function brightcove_requirements($phase) {
   $t = get_t();
 
   if ($phase != 'install') {
-    if (!($path = variable_get('brightcove_mapi_path', FALSE))) {
-      $files = drupal_system_listing('/^bc-mapi\.php$/', 'libraries', 'filename', 0);
-      if (isset($files['bc-mapi.php'])) {
-        $path = dirname($files['bc-mapi.php']->uri);
-        variable_set('brightcove_mapi_path', $path);
-      }
-    }
-
-    if (!$path) {
-      $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
-      $requirements['bc_mapi']['description'] = $t('Brightcove MAPI SDK is missing. Please install it to sites/all/libraries from !url and enable the module again.', ['!url' => l('http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/', 'http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/')]);
-      $requirements['bc_mapi']['severity'] = REQUIREMENT_ERROR;
-      $requirements['bc_mapi']['value'] = $t('Missing');
-    }
-    else {
-      $requirements['bc_mapi']['title'] = $t('Brightcove MAPI SDK');
-      $requirements['bc_mapi']['severity'] = REQUIREMENT_OK;
-      $requirements['bc_mapi']['value'] = $t('Installed');
-    }
-
     $api_wrapper_installed = (($api_wrapper_library = libraries_detect('PHP-API-Wrapper')) && !empty($api_wrapper_library['installed']));
     $requirements['brightcove'] = [
       'title' => $t('Brightcove API Wrapper'),

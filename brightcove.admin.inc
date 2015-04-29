@@ -257,49 +257,6 @@ function brightcove_admin_settings_validate($form, &$form_state) {
   }
 }
 
-function brightcove_mapi_settings($form, &$form_state) {
-  $form['account'] = [
-    '#type' => 'fieldset',
-    '#title' => t('Account settings'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  ];
-  $form['account']['brightcove_read_api_key'] = [
-    '#type' => 'textfield',
-    '#title' => t('Brightcove Read API key'),
-    '#maxlength' => 255,
-    '#required' => TRUE,
-    '#default_value' => variable_get('brightcove_read_api_key', ''),
-    '#description' => t('A Brightcove Read API key from your account at Brightcove Studio. Please check at !link page.', ['!link' => l(t('Brightcove studio'), 'http://my.brightcove.com')]),
-  ];
-  $form['account']['brightcove_write_api_key'] = [
-    '#type' => 'textfield',
-    '#title' => t('Brightcove Write API key'),
-    '#maxlength' => 255,
-    '#default_value' => variable_get('brightcove_write_api_key', ''),
-    '#description' => t('A Brightcove Write API key from your account at Brightcove Studio. Please check at !link page. <strong>Requires at least a Professional account</strong>.', ['!link' => l(t('Brightcove studio'), 'http://my.brightcove.com')]),
-  ];
-
-  $form = system_settings_form($form);
-  $form['#validate'][] = 'brightcove_mapi_settings_validate';
-
-  return $form;
-}
-
-function brightcove_mapi_settings_validate($form, &$form_state) {
-  list($can_read, $can_write) = brightcove_verify_tokens(
-    $form_state['values']['brightcove_read_api_key'],
-    $form_state['values']['brightcove_write_api_key']
-  );
-
-  if (!$can_read) {
-    form_set_error('brightcove_read_api_key', t('Invalid read key'));
-  }
-  if ($form_state['values']['brightcove_write_api_key'] && !$can_write) {
-    form_set_error('brightcove_write_api_key', t('Invalid write key'));
-  }
-}
-
 function _brightcove_player_is_default($player) {
   return (bool) (variable_get('brightcove_player_default') == $player->name);
 }
