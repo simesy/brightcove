@@ -822,7 +822,7 @@ function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, cal
 
   $video = new BrightcoveVideo();
   if ($metadata_callback !== NULL) {
-    $metadata_callback($video);
+    $metadata_callback($video, $cms);
   }
 
   $video = $cms->createVideo($video);
@@ -861,70 +861,6 @@ function brightcove_handle_ingest_callback($hash) {
     ->execute();
 
   return NULL;
-}
-
-/**
- * Upload video to Brightcove.
- *
- * @see http://support.brightcove.com/en/docs/media-api-objects-reference#Video
- *
- * @param string $path
- *   Filepath to video file.
- * @param array $meta
- *   Meta data array. Required values:
- *     array(
- *       'name' => 'video name',
- *       'shortDescription' => 'short description',
- *     );
- * @param string|NULL $encode_to
- *   Container format to encode the video to.
- *   Possible values: "FLV", "MP4"
- *
- * @return int|NULL
- *   Brightcove video id or NULL if not found.
- */
-function brightcove_upload_video($path, $meta, $encode_to = NULL) {
-  global $user;
-
-  if ($encode_to === NULL) {
-    $encode_to = variable_get('brightcove_encode_to', 'MP4');
-  }
-
-  if (empty($meta['name'])) {
-    $meta['name'] = t('Video');
-  }
-  if (empty($meta['shortDescription'])) {
-    $meta['shortDescription'] = t('Short Description');
-  }
-  $user_attribute = variable_get('brightcove_user_field', '');
-  if (!empty($user_attribute)) {
-    $meta['customFields'] = [$user_attribute => $user->name];
-  }
-  $bc = brightcove_initialize();
-
-  try {
-    $options = [];
-    preg_match('/\.(f4a|f4b|f4v|f4p|flv)$/i', $path, $invalid_extensions);
-    if (!isset($invalid_extensions[1])) {
-      // retrieve upload settings
-      $create_multiple_renditions = (bool) variable_get('brightcove_create_multiple_renditions', TRUE);
-      $preserve_source_rendition = (bool) variable_get('brightcove_preserve_source_rendition', 0);
-
-      $options = [
-        'create_multiple_renditions' => $create_multiple_renditions,
-        'encode_to' => $encode_to,
-        'preserve_source_rendition' => $preserve_source_rendition,
-      ];
-    }
-
-    $id = $bc->createMedia('video', $path, $meta, $options);
-  }
-  catch (Exception $error) {
-    drupal_set_message(t('Video upload to Brightcove failed. Error: @error', ['@error' => $error]), 'error');
-    return NULL;
-  }
-
-  return $id;
 }
 
 /**
@@ -1135,6 +1071,8 @@ function _brightcove_my_client_select_options($account = NULL) {
 function _brightcove_upload_form($form, &$form_state) {
   $form = [];
 
+  $client = $form_state['build_info']['args'][0];
+
   // Check for existing clients.
   $clients = _brightcove_load_my_clients();
   if (empty($clients)) {
@@ -1144,7 +1082,7 @@ function _brightcove_upload_form($form, &$form_state) {
   else {
     $form['client'] = [
       '#type' => 'hidden',
-      '#value' => $form_state['build_info']['args'][0],
+      '#value' => $client->bcid,
     ];
   }
 
@@ -1160,7 +1098,9 @@ function _brightcove_upload_form($form, &$form_state) {
     '#type' => 'file',
     '#title' => t('Video file'),
     '#size' => 40,
-    '#description' => t('Allowed file types: ') . '<strong>3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv</strong>',
+    '#description' => t('Allowed file types: !filetypes', [
+       '!filetypes' => '<strong>3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv</strong>',
+    ]),
   ];
 
   $form['short'] = [
@@ -1172,28 +1112,21 @@ function _brightcove_upload_form($form, &$form_state) {
     '#default_value' => !empty($form_state['values']['short']) ? $form_state['values']['short'] : '',
   ];
 
-  $custom_fields = variable_get('brightcove_custom_fields', 0);
-  for ($i = 0; $i < $custom_fields; ++$i) {
-    $key = variable_get("brightcove_custom_fields_{$i}_key");
-    $label = variable_get("brightcove_custom_fields_{$i}_label");
-    $type = variable_get("brightcove_custom_fields_{$i}_type");
-    $values = array_map('trim', explode("\n",
-      (string) variable_get("brightcove_custom_fields_{$i}_values")));
-    $required = variable_get("brightcove_custom_fields_{$i}_required");
-    $typedic = [
-      'text' => 'textfield',
-      'list' => 'select',
+  list($cms,) = _brightcove_create_classes($client);
+  $fields = $cms->getVideoFields();
+  $types = [
+    'string' => 'textfield',
+    'enum' => 'select',
+  ];
+  foreach ($fields->getCustomFields() as $field) {
+    $form["custom_field_{$field->getId()}"] = [
+      '#title' => $field->getDisplayName(),
+      '#description' => $field->getDescription(),
+      '#required' => $field->isRequired(),
+      '#type' => $types[$field->getType()],
     ];
-
-    if (isset($typedic[$type])) {
-      $form["custom_field_{$i}"] = [
-        '#type' => $typedic[$type],
-        '#title' => t($label),
-        '#key' => $key,
-        '#required' => (bool) $required,
-      ] + ($type == 'list' ? [
-        '#options' => drupal_map_assoc($values),
-      ] : []);
+    if ($field->getType() === 'enum') {
+      $form["custom_field_{$field->getId()}"]['#options'] = drupal_map_assoc($field->getEnumValues());
     }
   }
 
@@ -1298,7 +1231,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
   $client = entity_load_single('brightcove_client', $form_state['values']['client']);
   try {
     $hash = hash('sha512', mt_rand());
-    $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, function ($video) use ($form_state) {
+    $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, function ($video, $cms) use ($form_state) {
       $video
         ->setName($form_state['values']['title'])
         ->setDescription($form_state['values']['short'])
@@ -1309,6 +1242,21 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
         ->setEconomics($form_state['values']['economics'])
         ->setReferenceId(brightcove_generate_reference())
       ;
+
+      $fields = $cms->getVideoFields();
+      $ids = array_map(function ($field) {
+        return $field->getId();
+      }, $fields->getCustomFields());
+      $custom_fields = [];
+      foreach ($ids as $id) {
+        if (!empty($form_state['values']["custom_field_{$id}"])) {
+          $custom_fields[$id] = $form_state['values']["custom_field_{$id}"];
+        }
+      }
+      if ($custom_fields) {
+        $video->setCustomFields($custom_fields);
+      }
+
       if (!empty($form_state['values']['tags'])) {
         $tags = explode(',', $form_state['values']['tags']);
         $tags = array_map('trim', $tags);

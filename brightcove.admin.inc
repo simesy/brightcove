@@ -31,12 +31,6 @@ function brightcove_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('brightcove_link_field', ''),
     '#description' => t('A Brightcove Custom Field to store the Drupal link of the entity where video belongs. This field must be created in BC Studio first. Read more about !link. <strong>Requires at least a Professional account</strong>', ['!link' =>  l(t('Brightcove custom metadata'), 'http://support.brightcove.com/en/video-cloud/docs/creating-custom-metadata-fields')]),
   ];
-  $form['account']['brightcove_custom_field_number'] = [
-    '#type' => 'textfield',
-    '#title' => t('Custom field number'),
-    '#default_value' => variable_get('brightcove_custom_field_number', 10),
-    '#description' => t('Basically Brightcove provides 10 fields as a default, but it supports more custom fields than 10. If you have more fields than 10 you can set it here.'),
-  ];
 
   // Caching.
   $form['cache'] = [
@@ -251,128 +245,10 @@ function brightcove_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('brightcove_status_display_unavailable', 'This video is unavailable for the moment.'),
   ];
 
-  // Custom fields
-  $num_customfields = empty($form_state['brightcove_custom_fields']) ?
-    $form_state['brightcove_custom_fields'] =
-      variable_get('brightcove_custom_fields', 0) :
-    $form_state['brightcove_custom_fields'];
-
-  $form['upload_customfields'] = [
-    '#type' => 'fieldset',
-    '#title' => t('Custom fields'),
-    '#collapsible' => TRUE,
-    '#collapsed' => !((bool) $num_customfields),
-    '#prefix' => '<div id="brightcove-admin-customfield">',
-    '#suffix' => '</div>',
-  ];
-
-  $form['upload_customfields']['brightcove_custom_fields'] = [
-    '#type' => 'value',
-    '#value' => $num_customfields,
-  ];
-
-  for ($i = 0; $i < $num_customfields; ++$i) {
-    $form['upload_customfields'][] = [
-      '#type' => 'fieldset',
-      "brightcove_custom_fields_{$i}_key" => [
-        '#type' => 'textfield',
-        '#title' => t('Field key'),
-        '#default_value' => variable_get("brightcove_custom_fields_{$i}_key"),
-      ],
-      "brightcove_custom_fields_{$i}_label" => [
-        '#type' => 'textfield',
-        '#title' => t('Label'),
-        '#default_value' => variable_get("brightcove_custom_fields_{$i}_label"),
-      ],
-      "brightcove_custom_fields_{$i}_type" => [
-        '#type' => 'radios',
-        '#title' => t('Type'),
-        '#default_value' =>
-          variable_get("brightcove_custom_fields_{$i}_type", 'text'),
-        '#options' => [
-          'text' => t('Text'),
-          'list' => t('List'),
-        ],
-      ],
-      "brightcove_custom_fields_{$i}_values" => [
-        '#type' => 'textarea',
-        '#title' => t('Values'),
-        '#description' => t('Put each values into a new line.'),
-        '#default_value' =>
-          variable_get("brightcove_custom_fields_{$i}_values"),
-        '#states' => [
-          'visible' => [
-            ":input[name=brightcove_custom_fields_{$i}_type]" => [
-              'value' => 'list',
-            ],
-          ],
-        ],
-      ],
-      "brightcove_custom_fields_{$i}_required" => [
-        '#type' => 'checkbox',
-        '#title' => t('Required'),
-        '#default_value' =>
-          variable_get("brightcove_custom_fields_{$i}_required"),
-      ],
-    ];
-  }
-
-  $form['upload_customfields']['add'] = [
-    '#type' => 'submit',
-    '#value' => t('Add more'),
-    '#submit' => [
-      'brightcove_admin_add_customfield_submit',
-    ],
-    '#ajax' => [
-      'callback' => 'brightcove_admin_customfield_ajax_callback',
-      'wrapper' => 'brightcove-admin-customfield'
-    ],
-  ];
-
-  if ($num_customfields > 0) {
-    $form['upload_customfields']['remove'] = [
-      '#type' => 'submit',
-      '#value' => t('Remove last'),
-      '#submit' => [
-        'brightcove_admin_remove_customfield_submit',
-      ],
-      '#ajax' => [
-        'callback' => 'brightcove_admin_customfield_ajax_callback',
-        'wrapper' => 'brightcove-admin-customfield',
-      ],
-    ];
-  }
-
   $form = system_settings_form($form);
   $form['#validate'][] = 'brightcove_admin_settings_validate';
 
   return $form;
-}
-
-function brightcove_admin_customfield_ajax_callback($form) {
-  return $form['upload_customfields'];
-}
-
-function brightcove_admin_add_customfield_submit($form, &$form_state) {
-  $settings_custom_field = variable_get('brightcove_custom_field_number', 10);
-  if ($form_state['brightcove_custom_fields'] < $settings_custom_field) {
-    $form_state['brightcove_custom_fields']++;
-  }
-  $form_state['rebuild'] = TRUE;
-}
-
-function brightcove_admin_remove_customfield_submit($form, &$form_state) {
-  if ($form_state['brightcove_custom_fields'] > 0) {
-    $form_state['brightcove_custom_fields']--;
-    $field_number = $form_state['brightcove_custom_fields'];
-    variable_del("brightcove_custom_fields_{$field_number}_key");
-    variable_del("brightcove_custom_fields_{$field_number}_label");
-    variable_del("brightcove_custom_fields_{$field_number}_values");
-    variable_del("brightcove_custom_fields_{$field_number}_required");
-    variable_del("brightcove_custom_fields_{$field_number}_type");
-    variable_set('brightcove_custom_fields', $form_state['brightcove_custom_fields']);
-  }
-  $form_state['rebuild'] = TRUE;
 }
 
 function brightcove_admin_settings_validate($form, &$form_state) {
