@@ -866,17 +866,13 @@ function _brightcove_upload_form($form, &$form_state) {
 
   $form['file_upload'] = [
     '#type' => 'file',
-    '#title' => t('Video file'),
+    '#title' => t('Video') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
     '#size' => 40,
-    '#description' => t('Allowed file types: !filetypes', [
-      '!filetypes' => '<strong>3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv</strong>',
-    ]),
   ];
 
   $form['title'] = [
     '#type' => 'textfield',
     '#title' => t('Name'),
-    '#description' => t('Video name or title.'),
     '#required' => TRUE,
     '#default_value' => !empty($form_state['values']['title']) ? $form_state['values']['title'] : '',
   ];
@@ -884,9 +880,7 @@ function _brightcove_upload_form($form, &$form_state) {
   $form['short'] = [
     '#type' => 'textarea',
     '#rows' => 2,
-    '#required' => TRUE,
     '#title' => t('Short description'),
-    '#description' => t('Video short description.'),
     '#default_value' => !empty($form_state['values']['short']) ? $form_state['values']['short'] : '',
   ];
 
@@ -894,7 +888,6 @@ function _brightcove_upload_form($form, &$form_state) {
     '#type' => 'textarea',
     '#rows' => 2,
     '#title' => t('Long description'),
-    '#description' => t('Video long description.'),
     '#default_value' => !empty($form_state['values']['long']) ? $form_state['values']['long'] : '',
   ];
 
@@ -908,7 +901,7 @@ function _brightcove_upload_form($form, &$form_state) {
   $form['tags'] = [
     '#type' => 'textfield',
     '#title' => t('Tags'),
-    '#description' => t('Associated tags, separated by comma.'),
+    '#description' => t('Separate tags with a comma; no tag > 128 characters'),
     '#default_value' => !empty($form_state['values']['tags']) ? $form_state['values']['tags'] : '',
   ];
 
@@ -959,29 +952,32 @@ function _brightcove_upload_form($form, &$form_state) {
   $form['advanced']['linktext'] = [
     '#type' => 'textfield',
     '#title' => t('Related link text'),
-    '#description' => t('Related link description or text.'),
     '#default_value' => !empty($form_state['values']['linktext']) ? $form_state['values']['linktext'] : '',
   ];
 
   $form['advanced']['linkurl'] = [
     '#type' => 'textfield',
     '#title' => t('Related link url'),
-    '#description' => t('Related link URL.'),
     '#default_value' => !empty($form_state['values']['linkurl']) ? $form_state['values']['linkurl'] : '',
   ];
 
-  $form['advanced']['start_availability_date'] = [
+  $form['advanced']['schedule'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Schedule availability'),
+  );
+
+  $form['advanced']['schedule']['start_availability_date'] = [
     '#type' => 'date_popup',
-    '#title' => t('Start availability date'),
+    '#title' => t('Starting'),
     '#date_format' => 'Y-m-d H:i',
     '#date_timezone' => date_default_timezone(),
     '#date_label_position' => 'hidden',
     '#default_value' => !empty($form_state['values']['start_availability_date']) ? $form_state['values']['start_availability_date'] : NULL,
   ];
 
-  $form['advanced']['end_availability_date'] = [
+  $form['advanced']['schedule']['end_availability_date'] = [
     '#type' => 'date_popup',
-    '#title' => t('End availability date'),
+    '#title' => t('Ending'),
     '#date_format' => 'Y-m-d H:i',
     '#date_timezone' => date_default_timezone(),
     '#date_label_position' => 'hidden',
@@ -1001,9 +997,8 @@ function _brightcove_upload_form($form, &$form_state) {
 
   $form['advanced']['profile'] = [
     '#type' => 'select',
-    '#title' => t('Video profile'),
+    '#title' => t('Video encoding profile'),
     '#options' => drupal_map_assoc(brightcove_standard_profile_list()),
-    '#description' => t('Encoding profile'),
   ];
 
   $form['#validate'][] = '_brightcove_upload_form_validate';
