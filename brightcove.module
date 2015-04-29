@@ -174,10 +174,10 @@ function brightcove_entity_info() {
  */
 function brightcove_libraries_info() {
   return [
-    'brightcove' => [
+    'PHP-API-Wrapper' => [
       'name' => 'Brightcove API Wrapper',
-      'vendor url' => '',
-      'download url' => '',
+      'vendor url' => 'https://github.com/brightcove/PHP-API-Wrapper',
+      'download url' => 'https://github.com/brightcove/PHP-API-Wrapper/archive/master.zip',
       'version callback' => '_brightcove_api_version',
       'files' => [
         'php' => [
@@ -188,6 +188,10 @@ function brightcove_libraries_info() {
       ],
     ],
   ];
+}
+
+function brightcove_load_lib() {
+  libraries_load('PHP-API-Wrapper');
 }
 
 /**
@@ -568,7 +572,7 @@ function brightcove_video_load($video_id, $client_entity, $reset = FALSE) {
     return FALSE;
   }
 
-  libraries_load('brightcove');
+  brightcove_load_lib();
   $cid = "brightcove:video:{$video_id}:{$client_entity->bcid}";
   $cache = brightcove_cache_get($cid);
   if (!empty($cache) && !$reset) {
@@ -788,7 +792,7 @@ function brightcove_expose_unavailable() {
  * @throws BrightcoveAuthenticationException
  */
 function _brightcove_create_client($client_entity) {
-  libraries_load('brightcove');
+  brightcove_load_lib();
   $client_id = $client_entity->client_id;
   $client_secret = $client_entity->client_secret;
 
@@ -813,7 +817,7 @@ function _brightcove_create_classes($client_entity) {
  * @return BrightcoveVideo
  */
 function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, callable $metadata_callback = NULL) {
-  libraries_load('brightcove');
+  brightcove_load_lib();
   list($cms, $di) = _brightcove_create_classes($client_entity);
 
   $video = new BrightcoveVideo();

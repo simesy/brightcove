@@ -553,7 +553,7 @@ function brightcove_client_form_validate($form, &$form_state) {
   $client_id = $form_state['values']['client_id'];
   $client_secret = $form_state['values']['client_secret'];
 
-  libraries_load('brightcove');
+  brightcove_load_lib();
   try {
     $client = BrightcoveClient::authorize($client_id, $client_secret);
     if (!$client->isAuthorized()) {
