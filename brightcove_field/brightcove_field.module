@@ -72,19 +72,7 @@ function brightcove_field_menu() {
     'page callback' => 'brightcove_field_browse',
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
-    'access arguments' => ['browse videos', 3, 4, 5, 6],
-    'file' => 'brightcove_field.browse.inc',
-    'type' => MENU_CALLBACK,
-  ];
-
-  // bc object type, entity type, field name, entity id or bundle
-  $items['brightcove_field/browse/playlist/%/%'] = [
-    'title' => 'Brightcove Videos Browser',
-    'page callback' => 'brightcove_field_browse',
-    'page arguments' => [2],
-    'delivery callback' => 'brightcove_field_deliver_dialog',
-    'access callback' => 'brightcove_field_browse_access',
-    'access arguments' => ['browse playlists', 3, 4, 5],
+    'access arguments' => ['browse videos', 2, 3, 4, 5],
     'file' => 'brightcove_field.browse.inc',
     'type' => MENU_CALLBACK,
   ];
@@ -102,7 +90,7 @@ function brightcove_field_menu() {
   ];
 
   // entity type, field name, entity id or bundle
-  $items['brightcove_field/upload/playlist/%/%'] = [
+  $items['brightcove_field/upload/playlist/%/%/%brightcove_client'] = [
     'title' => 'Upload playlist to Brightcove',
     'page callback' => 'brightcove_field_create',
     'delivery callback' => 'brightcove_field_deliver_dialog',
@@ -216,32 +204,6 @@ function ajax_upload_video_dialog_close_callback($form, $form_state) {
 
   $commands = [];
   $commands[] = ajax_command_close_dialog($selector, $data, NULL, $dialog_type);
-  return ['#type' => 'ajax', '#commands' => $commands];
-}
-
-function ajax_browse_playlist_dialog_callback($form, $form_state) {
-  $field_rel = $form_state['triggering_element']['#attributes']['rel'];
-  $field_name = $form_state['triggering_element']['#parents'][0];
-
-  $entity = $form['#entity'];
-  $entity_type = $form['#entity_type'];
-  $bundle = $form['#bundle'];
-  $eid_extracted = entity_extract_ids($entity_type, $entity);
-  $eid = array_shift($eid_extracted);
-  $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
-  $client_id_parents = $form_state['triggering_element']['#parents'];
-  $client_id_parents[3] = 'client_id';
-  unset($client_id_parents[4]);
-  $client_id = drupal_array_get_nested_value($form_state['values'], $client_id_parents);
-  $client = brightcove_client_load($client_id);
-
-  $title = 'Brightcove Playlist Browser';
-  $id = 'browse-dialog';
-  $selector = '<div id="' . $id . '">';
-  $path = url("brightcove_field/browse/playlist/{$entity_type}/{$field_name}/{$entity_id_or_bundle}/{$client}");
-
-  $commands = [];
-  $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
   return ['#type' => 'ajax', '#commands' => $commands];
 }
 
