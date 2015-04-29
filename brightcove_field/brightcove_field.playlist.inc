@@ -1,36 +1,6 @@
 <?php
 
 /**
- * @file
- * Holds all of the playlist field related methods.
- */
-
-function _brightcove_field_playlist_instance_settings_form(&$form, $field, $instance) {
-  $form['allow_create'] = [
-    '#type' => 'checkbox',
-    '#title' => t('Create playlists.'),
-    '#description' => t('Whether to allow creating new playlists from this field. Requires exposure of the "Playlist Read/Write" API at the Brightcove API Authentication page.'),
-    '#default_value' => isset($instance['settings']['allow_create']) ? $instance['settings']['allow_create'] : 0,
-  ];
-
-  $form['brightcove_player'] = [
-    '#type' => 'select',
-    '#title' => t('Brightcove Player'),
-    '#default_value' => isset($instance['settings']['brightcove_player']) ?
-      $instance['settings']['brightcove_player'] : NULL,
-    '#options' => brightcove_player_list(),
-    '#description' => t('Leave value on "Default" to use global settings.'),
-  ];
-
-  $form['per_content_player'] = [
-    '#type' => 'checkbox',
-    '#title' => t('Allow setting player per content'),
-    '#default_value' => isset($instance['settings']['per_content_player']) ?
-      $instance['settings']['per_content_player'] : NULL,
-  ];
-}
-
-/**
  * Helper function to return the playlist widget form.
  */
 function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, &$element) {
@@ -56,23 +26,27 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     default :
       return $element;
   }
-
-  $playlists = [];
-  if ($client_id != '_none') {
-    $client = brightcove_client_load($client_id);
-    try {
-      list ($cms, ) = _brightcove_create_classes($client);
-      $playlists = $cms->listPlaylists();
-    }
-    catch ( Exception $error ) {
-      watchdog('brightcove', 'Finding playlists has failed.', [], WATCHDOG_ERROR);
-    }
-  }
   $playlist_options = ['_none' => t('- Select a playlist -')];
-  foreach ($playlists as $playlist) {
-    $id = $playlist->getId();
-    $playlist_options[$id] = $playlist->getName() . " ($id)";
+  if ($client_id != '_none') {
+    $cid = 'brightcove:playlist:list:' . $client_id;
+    $playlist_options = brightcove_cache_get($cid);
+    if (!$playlist_options) {
+      $client = brightcove_client_load($client_id);
+      try {
+        list ($cms, ) = _brightcove_create_classes($client);
+        $playlists = $cms->listPlaylists();
+      }
+      catch ( Exception $error ) {
+        watchdog('brightcove', 'Finding playlists has failed.', [], WATCHDOG_ERROR);
+      }
+      foreach ($playlists as $playlist) {
+        $id = $playlist->getId();
+        $playlist_options[$id] = $playlist->getName() . " ($id)";
+      }
+      brightcove_cache_set($cid, $playlist_options);
+    }
   }
+
   $element['brightcove_id'] = [
     '#type' => 'select',
     '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : '_none',
