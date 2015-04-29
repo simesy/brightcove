@@ -864,30 +864,62 @@ function _brightcove_upload_form($form, &$form_state) {
     ];
   }
 
-  $form['title'] = [
-    '#type' => 'textfield',
-    '#title' => t('Title'),
-    '#description' => t('Video name or title.'),
-    '#required' => TRUE,
-    '#default_value' => !empty($form_state['values']['title']) ? $form_state['values']['title'] : '',
-  ];
-
   $form['file_upload'] = [
     '#type' => 'file',
     '#title' => t('Video file'),
     '#size' => 40,
     '#description' => t('Allowed file types: !filetypes', [
-       '!filetypes' => '<strong>3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv</strong>',
+      '!filetypes' => '<strong>3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv</strong>',
     ]),
+  ];
+
+  $form['title'] = [
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+    '#description' => t('Video name or title.'),
+    '#required' => TRUE,
+    '#default_value' => !empty($form_state['values']['title']) ? $form_state['values']['title'] : '',
   ];
 
   $form['short'] = [
     '#type' => 'textarea',
-    '#rows' => 3,
+    '#rows' => 2,
     '#required' => TRUE,
     '#title' => t('Short description'),
     '#description' => t('Video short description.'),
     '#default_value' => !empty($form_state['values']['short']) ? $form_state['values']['short'] : '',
+  ];
+
+  $form['long'] = [
+    '#type' => 'textarea',
+    '#rows' => 2,
+    '#title' => t('Long description'),
+    '#description' => t('Video long description.'),
+    '#default_value' => !empty($form_state['values']['long']) ? $form_state['values']['long'] : '',
+  ];
+
+  $form['reference_id'] = [
+    '#type' => 'textfield',
+    '#title' => t('Reference ID'),
+    '#default_value' => !empty($form_state['values']['reference_id']) ? $form_state['values']['reference_id'] : '',
+    '#description' => t('Leave empty to generate ID automatically.'),
+  ];
+
+  $form['tags'] = [
+    '#type' => 'textfield',
+    '#title' => t('Tags'),
+    '#description' => t('Associated tags, separated by comma.'),
+    '#default_value' => !empty($form_state['values']['tags']) ? $form_state['values']['tags'] : '',
+  ];
+
+  $form['state'] = [
+    '#type' => 'select',
+    '#title' => t('State'),
+    '#options' => [
+      'ACTIVE' => t('Active'),
+      'INACTIVE' => t('Inactive'),
+    ],
+    '#default_value' => !empty($form_state['values']['state']) ? $form_state['values']['state'] : TRUE,
   ];
 
   $form['custom_fields'] = [
@@ -924,21 +956,6 @@ function _brightcove_upload_form($form, &$form_state) {
     '#title' => t('Advanced attributes'),
   ];
 
-  $form['advanced']['tags'] = [
-    '#type' => 'textfield',
-    '#title' => t('Tags'),
-    '#description' => t('Associated tags, separated by comma.'),
-    '#default_value' => !empty($form_state['values']['tags']) ? $form_state['values']['tags'] : '',
-  ];
-
-  $form['advanced']['long'] = [
-    '#type' => 'textarea',
-    '#rows' => 4,
-    '#title' => t('Long description'),
-    '#description' => t('Video long description.'),
-    '#default_value' => !empty($form_state['values']['long']) ? $form_state['values']['long'] : '',
-  ];
-
   $form['advanced']['linktext'] = [
     '#type' => 'textfield',
     '#title' => t('Related link text'),
@@ -951,6 +968,24 @@ function _brightcove_upload_form($form, &$form_state) {
     '#title' => t('Related link url'),
     '#description' => t('Related link URL.'),
     '#default_value' => !empty($form_state['values']['linkurl']) ? $form_state['values']['linkurl'] : '',
+  ];
+
+  $form['advanced']['start_availability_date'] = [
+    '#type' => 'date_popup',
+    '#title' => t('Start availability date'),
+    '#date_format' => 'Y-m-d H:i',
+    '#date_timezone' => date_default_timezone(),
+    '#date_label_position' => 'hidden',
+    '#default_value' => !empty($form_state['values']['start_availability_date']) ? $form_state['values']['start_availability_date'] : NULL,
+  ];
+
+  $form['advanced']['end_availability_date'] = [
+    '#type' => 'date_popup',
+    '#title' => t('End availability date'),
+    '#date_format' => 'Y-m-d H:i',
+    '#date_timezone' => date_default_timezone(),
+    '#date_label_position' => 'hidden',
+    '#default_value' => !empty($form_state['values']['end_availability_date']) ? $form_state['values']['end_availability_date'] : '',
   ];
 
   $form['advanced']['economics'] = [
@@ -1019,16 +1054,36 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
   try {
     $hash = hash('sha512', mt_rand());
     $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, function ($video, $cms) use ($form_state) {
+      // Generate a reference id if the user left it empty.
+      $reference_id = (!empty($form_state['values']['reference_id']) ? $form_state['values']['reference_id'] : brightcove_generate_reference());
+
       $video
         ->setName($form_state['values']['title'])
         ->setDescription($form_state['values']['short'])
         ->setLongDescription($form_state['values']['long'])
         ->setLink((new BrightcoveVideoLink())
           ->setText($form_state['values']['linktext'])
-          ->setUrl($form_state['values']['linkurl']))
+          ->setUrl($form_state['values']['linkurl'])
+        )
+        ->setState($form_state['values']['state'] ? 'ACTIVE' : 'INACTIVE')
         ->setEconomics($form_state['values']['economics'])
-        ->setReferenceId(brightcove_generate_reference())
+        ->setReferenceId($reference_id)
       ;
+
+      // Set start/end availability dates if one of them was given.
+      if (!empty($form_state['values']['start_availability_date']) || !empty($form_state['values']['end_availability_date'])) {
+        $video_schedule = (new BrightcoveVideoSchedule());
+        if (!empty($form_state['values']['start_availability_date'])) {
+          $datetime = new DateTime($form_state['values']['start_availability_date']);
+          $video_schedule->setStartsAt($datetime->format(DateTime::ISO8601));
+        }
+        if (!empty($form_state['values']['end_availability_date'])) {
+          $datetime = new DateTime($form_state['values']['end_availability_date']);
+          $video_schedule->setEndsAt($datetime->format(DateTime::ISO8601));
+        }
+
+        $video->setSchedule($video_schedule);
+      }
 
       $fields = $cms->getVideoFields();
       $ids = array_map(function ($field) {
