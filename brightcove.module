@@ -406,6 +406,7 @@ function brightcove_update_playlist($metadata) {
  * @return bool|object
  */
 function brightcove_playlist_load($playlist_id, $client_id, $reset = FALSE) {
+  brightcove_load_lib();
   $cid = 'brightcove:playlist:' . $playlist_id;
   $cache = brightcove_cache_get($cid);
   if (!$reset && $cache) {
