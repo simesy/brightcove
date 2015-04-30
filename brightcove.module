@@ -88,7 +88,8 @@ function brightcove_menu() {
 
   $items["{$base}/playlist"] = [
     'title' => 'Playlists',
-    'page callback' => 'brightcove_playlist_overview_page',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['brightcove_playlist_overview_form'],
     'type' => MENU_LOCAL_TASK,
     'file' => 'brightcove.playlist.inc',
     'access arguments' => ['administer brightcove playlists'],

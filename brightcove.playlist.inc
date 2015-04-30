@@ -5,15 +5,57 @@
  */
 
 /**
+ * Form function for the playlists page.
+ */
+function brightcove_playlist_overview_form($form, $form_state) {
+  module_load_include('inc', 'brightcove', 'brightcove.client');
+  $form['client_id'] = brightcove_client_select_element();
+  $wrapper_id = 'bc-playlists';
+
+  switch ($form['client_id']['#type']) {
+    case 'select':
+      $form['client_id']['#ajax'] = [
+        'wrapper' => $wrapper_id,
+        'callback' => 'brightcove_playlist_tables_ajax_callback',
+      ];
+      $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : NULL;
+      break;
+
+    case 'value':
+      $client_id = $form['client_id']['#value'];
+      break;
+
+    default :
+      return $form;
+  }
+  $form['playlists'] = [
+    '#prefix' => '<div id="' . $wrapper_id . '">',
+    '#suffix' => '</div>',
+  ];
+  if (!empty($client_id) && ($client_id != '_none')) {
+    $client = brightcove_client_load($client_id);
+    $form['playlists']['#markup'] = brightcove_playlist_overview_table($client);
+  }
+  return $form;
+}
+
+/**
+ * AJAX callback to return the playlists table.
+ */
+function brightcove_playlist_tables_ajax_callback($form, $form_state) {
+  return $form['playlists'];
+}
+
+/**
  * Renders the playlist overview page.
  *
  * @return string
  *   Rendered overivew page.
  */
-function brightcove_playlist_overview_page() {
-  $table = ['header' => [t('Title'), ['colspan' => 2, 'data' => t('Operations')]]];
+function brightcove_playlist_overview_table($client) {
+  $table = ['header' => [t('ID'), t('Title'), ['colspan' => 2, 'data' => t('Operations')]]];
 
-  $playlists = brightcove_get_playlists();
+  $playlists = brightcove_get_playlists($client);
   if ($playlists) {
     foreach ($playlists as $playlist) {
       $table['rows'][] = _brightcove_playlist_overview_row($playlist);
@@ -34,18 +76,19 @@ function brightcove_playlist_overview_page() {
 /**
  * Renders a table row on the Brightcove playlist overview page.
  *
- * @param stdClass $playlist
+ * @param BrightcovePlaylist $playlist
  *   Playlist object.
  *
  * @return array
  *   Table row.
  *   @see theme_table()
  */
-function _brightcove_playlist_overview_row(stdClass $playlist) {
+function _brightcove_playlist_overview_row(BrightcovePlaylist $playlist) {
   return [
-    $playlist->name,
-    l(t('edit'), "admin/config/media/brightcove/playlist/{$playlist->id}/edit"),
-    l(t('delete'), "admin/config/media/brightcove/playlist/{$playlist->id}/delete"),
+    $playlist->getId(),
+    $playlist->getName(),
+    l(t('edit'), "admin/config/media/brightcove/playlist/{$playlist->getId()}/edit"),
+    l(t('delete'), "admin/config/media/brightcove/playlist/{$playlist->getId()}/delete"),
   ];
 }
 
@@ -54,6 +97,8 @@ function _brightcove_playlist_overview_row(stdClass $playlist) {
  *
  * This function is a cached wrapper around BCMAPI::find('allplaylists').
  *
+ * @param Entity $client
+ *   The brightcove_client entity object.
  * @param bool $cache_reset
  *   (optional) True to reset the cache.
  *
@@ -61,20 +106,21 @@ function _brightcove_playlist_overview_row(stdClass $playlist) {
  *   Array of playlists or FALSE if none found.
  *   @see http://support.brightcove.com/en/docs/media-api-objects-reference#Playlist
  */
-function brightcove_get_playlists($cache_reset = FALSE) {
-  $cid = 'brightcove:playlist:list';
+function brightcove_get_playlists(Entity $client, $cache_reset = FALSE) {
+  brightcove_load_lib();
+  $cid = 'brightcove:playlist:list:' . $client->bcid;
   $cache = brightcove_cache_get($cid);
   if (!$cache_reset && $cache && !empty($cache->data)) {
     return $cache->data;
   }
 
   $playlists = FALSE;
-  $bc = brightcove_initialize();
+  list($cms, ) = _brightcove_create_classes($client);
   try {
-    $playlists = $bc ? $bc->find('allplaylists') : NULL;
+    $playlists = $cms->listPlaylists();
   }
-  catch (Exception $e) {
-    watchdog('brightcove', 'Loading brightcove playlists failed.', [], WATCHDOG_ERROR);
+  catch (Exception $error) {
+    watchdog('brightcove', 'Fetching playlists failed.', [], WATCHDOG_ERROR);
   }
 
   if ($playlists) {
