@@ -944,11 +944,64 @@ function _brightcove_upload_form($form, &$form_state) {
   }
   $form['custom_fields']['#collapsed'] = !$has_required;
 
+  $form['schedule'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Availability'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#attached' => [
+      'js' => [
+        drupal_get_path('module', 'brightcove_field') . '/js/schedule.js',
+      ],
+      'css' => [
+        drupal_get_path('module', 'brightcove_field') . '/styles/schedule.css',
+      ]
+    ],
+  ];
+
+  $form['schedule']['start_availability_date'] = [
+    '#type' => 'date_popup',
+    '#date_format' => 'Y-m-d H:i',
+    '#date_timezone' => date_default_timezone(),
+    '#date_label_position' => 'hidden',
+    '#default_value' => !empty($form_state['values']['start_availability_date']) ? $form_state['values']['start_availability_date'] : '',
+    '#prefix' => '<div id="brightcove-start-availability-date">',
+    '#suffix' => '</div>',
+  ];
+  $form['schedule']['start_date'] = [
+    '#type' => 'radios',
+    '#title' => t('Starting'),
+    '#default_value' => 'immediately',
+    '#options' => [
+      'immediately' => t('Immediately'),
+      'date_set' => ' ',
+    ],
+  ];
+
+  $form['schedule']['end_availability_date'] = [
+    '#type' => 'date_popup',
+    '#date_format' => 'Y-m-d H:i',
+    '#date_timezone' => date_default_timezone(),
+    '#date_label_position' => 'hidden',
+    '#default_value' => !empty($form_state['values']['end_availability_date']) ? $form_state['values']['end_availability_date'] : '',
+    '#prefix' => '<div id="brightcove-end-availability-date">',
+    '#suffix' => '</div>',
+  ];
+  $form['schedule']['end_date'] = [
+    '#type' => 'radios',
+    '#title' => t('End'),
+    '#default_value' => 'no_end_date',
+    '#options' => [
+      'no_end_date' => t('No end date'),
+      'date_set' => ' ',
+    ],
+  ];
+
   $form['advanced'] = [
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
-    '#title' => t('Advanced attributes'),
+    '#title' => t('Advanced'),
   ];
 
   $form['advanced']['linktext'] = [
@@ -961,29 +1014,6 @@ function _brightcove_upload_form($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Related link url'),
     '#default_value' => !empty($form_state['values']['linkurl']) ? $form_state['values']['linkurl'] : '',
-  ];
-
-  $form['advanced']['schedule'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Schedule availability'),
-  );
-
-  $form['advanced']['schedule']['start_availability_date'] = [
-    '#type' => 'date_popup',
-    '#title' => t('Starting'),
-    '#date_format' => 'Y-m-d H:i',
-    '#date_timezone' => date_default_timezone(),
-    '#date_label_position' => 'hidden',
-    '#default_value' => !empty($form_state['values']['start_availability_date']) ? $form_state['values']['start_availability_date'] : NULL,
-  ];
-
-  $form['advanced']['schedule']['end_availability_date'] = [
-    '#type' => 'date_popup',
-    '#title' => t('Ending'),
-    '#date_format' => 'Y-m-d H:i',
-    '#date_timezone' => date_default_timezone(),
-    '#date_label_position' => 'hidden',
-    '#default_value' => !empty($form_state['values']['end_availability_date']) ? $form_state['values']['end_availability_date'] : '',
   ];
 
   $form['advanced']['economics'] = [
@@ -1068,13 +1098,14 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
       ;
 
       // Set start/end availability dates if one of them was given.
-      if (!empty($form_state['values']['start_availability_date']) || !empty($form_state['values']['end_availability_date'])) {
+      if ($form_state['values']['start_date'] == 'date_set' || $form_state['values']['end_date'] == 'date_set') {
         $video_schedule = (new BrightcoveVideoSchedule());
-        if (!empty($form_state['values']['start_availability_date'])) {
+        if ($form_state['values']['start_date'] == 'date_set') {
           $datetime = new DateTime($form_state['values']['start_availability_date']);
           $video_schedule->setStartsAt($datetime->format(DateTime::ISO8601));
         }
-        if (!empty($form_state['values']['end_availability_date'])) {
+
+        if ($form_state['values']['end_date'] == 'date_set') {
           $datetime = new DateTime($form_state['values']['end_availability_date']);
           $video_schedule->setEndsAt($datetime->format(DateTime::ISO8601));
         }
