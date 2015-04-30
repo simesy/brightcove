@@ -1,0 +1,15 @@
+#brightcove-start-availability-date,
+#brightcove-end-availability-date {
+  display: inline-block;
+  vertical-align: top;
+}
+
+#brightcove-start-availability-date #edit-start-availability-date,
+#brightcove-end-availability-date #edit-end-availability-date {
+  padding: 0;
+}
+
+#brightcove-start-availability-date .form-item-start-availability-date,
+#brightcove-end-availability-date .form-item-end-availability-date {
+  margin: 0;
+}
