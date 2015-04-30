@@ -43,23 +43,24 @@ function brightcove_field_browse($client) {
  *
  * @param $field_name
  *   Field name - field name that is requesting autocomplete. Unused, will be utilized to limit access to certain videos for certain fields.
+ * @param $client
+ *   The client entity object.
  * @param $string
  *   String to search for - will match videos by this text.
  * @return
  *   JSON object with matched videos.
  */
 function brightcove_field_autocomplete($type, $field_name, $client, $string = '') {
-  $bc = brightcove_initialize();
+  list($cms,) = _brightcove_create_classes($client);
   $matches = [];
   $result = [];
-
   switch ($type) {
     case 'video':
       try {
-        $result = $bc->find('find_videos_by_text', ['text' => $string]);
+        $result = $cms->listVideos($string);
       }
       catch (Exception $error) {
-        watchdog('brightcove', 'Finding videos in autocomplete failed.', [], WATCHDOG_ERROR);
+        watchdog('brightcove', 'Finding videos for autocomplete failed.', [], WATCHDOG_ERROR);
       }
       break;
     case 'playlist':

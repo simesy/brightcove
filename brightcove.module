@@ -113,10 +113,10 @@ function brightcove_menu() {
     'access arguments' => ['administer brightcove playlists'],
   ];
 
-  $items["{$base}/playlist/%brightcove_playlist/delete"] = [
+  $items["{$base}/playlist/%brightcove_client/%brightcove_playlist/delete"] = [
     'title' => 'Playlists',
     'page callback' => 'drupal_get_form',
-    'page arguments' => ['brightcove_playlist_delete_form', 5],
+    'page arguments' => ['brightcove_playlist_delete_form', 5, 6],
     'type' => MENU_CALLBACK,
     'file' => 'brightcove.playlist.inc',
     'access arguments' => ['administer brightcove playlists'],
@@ -324,7 +324,7 @@ function brightcove_playlist_title($brightcove_playlist) {
  * @param $form_state
  */
 function brightcove_playlist_delete_form_submit($form, &$form_state) {
-  brightcove_playlist_delete($form_state['values']['playlist_id']);
+  brightcove_playlist_delete(brightcove_client_load($form_state['values']['client_id']), $form_state['values']['playlist_id']);
 
   // Invalidate playlist cache.
   brightcove_invalidate_cache('brightcove:playlist:' . $form_state['values']['playlist_id']);
@@ -337,16 +337,18 @@ function brightcove_playlist_delete_form_submit($form, &$form_state) {
 /**
  * Delete a playlists from brightcove wrapper function.
  *
+ * @param $client
+ *   The client entity object
  * @param array $playlist_id
  * @return boolean
  */
-function brightcove_playlist_delete($playlist_id) {
-  $bc = brightcove_initialize();
+function brightcove_playlist_delete($client, $playlist_id) {
+  list($cms,) = _brightcove_create_classes($client);
   try {
-    $bc->delete('playlist', $playlist_id);
+    $cms->deletePlaylist($playlist_id);
   }
-  catch (Exception $exception) {
-    watchdog_exception('brightcove', $exception);
+  catch (Exception $error) {
+    watchdog('brightcove', 'Deleting playlist @playlist failed.', ['@playlist' => $playlist_id], WATCHDOG_ERROR);
   }
 }
 

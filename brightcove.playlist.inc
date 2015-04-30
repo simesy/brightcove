@@ -305,7 +305,7 @@ function brightcove_playlist_edit_form_delete($form, &$form_state) {
  * @param $playlist
  * @return array
  */
-function brightcove_playlist_delete_form($form, &$form_state, $playlist) {
+function brightcove_playlist_delete_form($form, &$form_state, $client, $playlist) {
   $form = [];
 
   if (!$playlist) {
@@ -313,14 +313,19 @@ function brightcove_playlist_delete_form($form, &$form_state, $playlist) {
     return $form;
   }
 
+  $form['client_id'] = [
+    '#type' => 'hidden',
+    '#value' => $client->bcid,
+  ];
+
   $form['playlist_id'] = [
     '#type' => 'hidden',
-    '#value' => $playlist->id,
+    '#value' => $playlist->getId(),
   ];
 
   return confirm_form(
     $form,
-    t('Are you sure you want to delete playlist "%name"', ['%name' => $playlist->name]),
+    t('Are you sure you want to delete playlist "%name"', ['%name' => $playlist->getName()]),
     'admin/config/media/brightcove/playlist',
     t('This action annot be undone'),
     t('Delete'),
