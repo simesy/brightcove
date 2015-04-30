@@ -1452,3 +1452,15 @@ function brightcove_standard_profile_list() {
 
   return $list;
 }
+
+/**
+ * Implements hook_exit().
+ */
+function brightcove_exit($destination = NULL) {
+  // Redirect to the given path.
+  if (isset($_SESSION['player_delete_redirect'])) {
+    $goto = $_SESSION['player_delete_redirect'];
+    unset($_SESSION['player_delete_redirect']);
+    drupal_goto($goto);
+  }
+}

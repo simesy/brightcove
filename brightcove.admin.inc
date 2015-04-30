@@ -453,3 +453,37 @@ function brightcove_client_form_submit($form, &$form_state) {
   brightcove_client_save($client);
   drupal_set_message(t('Client saved.'));
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function brightcove_form_ctools_export_ui_delete_confirm_form_alter(&$form, $form_state) {
+  // Check whether the default player is going to be deleted or not.
+  if ($form_state['item']->name == variable_get('brightcove_player_default', NULL)) {
+    $players = brightcove_player_load_all();
+
+    // If there is more than one players added, show an option for the user
+    // to select a new default player.
+    if (count($players) > 1) {
+      $available_players = array();
+      foreach ($players as $player) {
+        if ($player->name != $form_state['item']->name) {
+          $available_players[$player->name] = $player->display_name;
+        }
+      }
+
+      $form['default_player_delete_confirm'] = array(
+        '#type' => 'select',
+        '#title' => t('You are about to delete the default player, please select another one to continue') . ':',
+        '#options' => $available_players,
+        '#required' => TRUE,
+      );
+    }
+    // Otherwise forbid the deletion and redirect.
+    else {
+      $_SESSION['player_delete_redirect'] = 'admin/config/media/brightcove/players';
+      drupal_set_message('The default player cannot be deleted!', 'error');
+      drupal_exit();
+    }
+  }
+}
