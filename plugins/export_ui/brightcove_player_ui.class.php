@@ -113,4 +113,29 @@ class brightcove_player_ui extends ctools_export_ui {
     module_load_include('inc', 'brightcove', 'brightcove.admin');
     return drupal_get_form('brightcove_player_setdefault_form', $player);
   }
+
+  /**
+   * Submit callback.
+   */
+  function edit_form_submit(&$form, &$form_state) {
+    parent::edit_form_submit($form, $form_state);
+
+    // Check if a default player is already set and if not set the currently
+    // submitted as default.
+    if (variable_get('brightcove_player_default', NULL) == NULL) {
+      variable_set('brightcove_player_default', $form_state['values']['name']);
+    }
+  }
+
+  /**
+   * Delete page submit callback.
+   */
+  function delete_form_submit(&$form_state) {
+    parent::delete_form_submit($form_state);
+
+    // Change the default player to a newly selected one.
+    if (isset($form_state['values']['default_player_delete_confirm'])) {
+      variable_set('brightcove_player_default', $form_state['values']['default_player_delete_confirm']);
+    }
+  }
 }
