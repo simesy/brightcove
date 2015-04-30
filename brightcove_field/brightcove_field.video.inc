@@ -226,29 +226,26 @@ function _brightcove_field_video_browse($client) {
   if (isset($_SESSION['brightcove_field_filter']['search'])) {
     switch ($_SESSION['brightcove_field_filter']['search']) {
       case 'tags':
-        $params = ['tags' => $_SESSION['brightcove_field_filter']['keywords']];
         $search = "tags:{$_SESSION['brightcove_field_filter']['keywords']}";
         break;
 
       case 'everything':
       default:
-        $params = ['text' => join(' ', explode(',', $_SESSION['brightcove_field_filter']['keywords']))];
-        $search = $_SESSION['brightcove_field_filter']['keywords'];
+        $search = "text:{$_SESSION['brightcove_field_filter']['keywords']}";
         break;
     }
   }
   $params['page_size'] = $items_per_page;
   $params['page_number'] = $page;
-  $params['get_item_count'] = 'TRUE';
 
   $result = NULL;
 
   // Try to load the data from cache.
-  $cid = 'brightcove:video:list';
+  $cid = "brightcove:video:list:search:$search";
   foreach ($params as $key => $param) {
     $cid .= ":{$key}:{$param}";
   }
-  $cid .= ":$client->bcid";
+  $cid .= ":client:$client->bcid";
   $content = brightcove_cache_get($cid);
 
   // If no cached data is available.
