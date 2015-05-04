@@ -791,6 +791,12 @@ function brightcove_player_load($name) {
 
   // Return the player with the given name.
   $players = brightcove_player_load_all();
+
+  // If the currently selected player is not available (eg. it was deleted) use
+  // the default player.
+  if (!isset($players[$name])) {
+    $name = variable_get('brightcove_player_default');
+  }
   return $players[$name];
 }
 
@@ -826,7 +832,6 @@ function brightcove_player_list($instance = NULL) {
       $default_player = $players[$default_player]->display_name;
     }
   }
-
 
   $return = ['' => t('Default (@default_player)', ['@default_player' => $default_player])];
   foreach ($players as $id => $player) {
