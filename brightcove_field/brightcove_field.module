@@ -296,8 +296,12 @@ function brightcove_field_view_access($entity_type, $entity_id, $field_name) {
 /**
  * Callback for brightcove_field_player - checks access to the field and prints a player for Lightbox2.
  *
- * @param $node
- *   Node object.
+ * @param $type
+ *   Type of the field.
+ * @param $entity_type
+ *   Type of the entity.
+ * @param $entity_id
+ *   Id of the entity.
  * @param $field_name
  *   Field that is being displayed.
  * @param $delta
@@ -324,8 +328,7 @@ function brightcove_field_player($type, $entity_type, $entity_id, $field_name, $
 
   if (!$player) {
     $instance = field_info_instance($entity_type, $field_name, $entity->type);
-    $player = $instance['settings']['brightcove_player'] ? $instance['settings']['brightcove_player'] :
-      variable_get('brightcove_player_default', '');
+    $player = $instance['settings']['brightcove_player'] ? $instance['settings']['brightcove_player'] : variable_get('brightcove_player_default', '');
   }
 
   $variables = [
@@ -385,17 +388,22 @@ function brightcove_field_field_instance_settings_form($field, $instance) {
     case BRIGHTCOVE_VIDEO_WIDGET:
       module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
       _brightcove_field_video_instance_settings_form($form, $field, $instance);
-      $form['#element_validate'] = ['_brightcove_field_video_widget_validate'];
+      $form['#element_validate'] = ['_brightcove_field_video_playlist_widget_validate'];
       break;
 
+    case BRIGHTCOVE_PLAYLIST_WIDGET:
+      module_load_include('inc', 'brightcove_field', 'brightcove_field.playlist');
+      _brightcove_field_playlist_instance_settings_form($form, $field, $instance);
+      $form['#element_validate'] = ['_brightcove_field_video_playlist_widget_validate'];
+      break;
   }
   return $form;
 }
 
 /**
- * Element validate callback for brightcove_field_field_instance_settings_form.
+ * Element validate callback for brightcove_field_FIELD_instance_settings_form.
  */
-function _brightcove_field_video_widget_validate($element, &$form_state) {
+function _brightcove_field_video_playlist_widget_validate($element, &$form_state) {
   // If the default is selected check if there is a default player is set.
   if (empty($form_state['input']['instance']['settings']['brightcove_player'])) {
     if (is_null(variable_get('brightcove_player_default', NULL))) {
@@ -1265,8 +1273,7 @@ function brightcove_field_create_form($form, &$form_state) {
 /**
  * Implements hook_content_migrate_field_alter().
  */
-function brightcove_field_content_migrate_field_alter(&$field_value,
-                                                      $instance_value) {
+function brightcove_field_content_migrate_field_alter(&$field_value, $instance_value) {
   switch ($field_value['type']) {
     case 'brightcove_field':
       $field_value['module'] = 'brightcove_field';
@@ -1277,8 +1284,7 @@ function brightcove_field_content_migrate_field_alter(&$field_value,
 /**
  * Implements hook_content_migrate_instance_alter().
  */
-function brightcove_field_content_migrate_instance_alter(&$instance_value,
-                                                         $field_value) {
+function brightcove_field_content_migrate_instance_alter(&$instance_value, $field_value) {
   switch ($field_value['type']) {
     case 'brightcove_field':
       $instance_value['settings']['allow_upload'] =
@@ -1329,8 +1335,7 @@ function brightcove_field_image_default_styles() {
  * @param $display
  * @return array
  */
-function brightcove_field_field_formatter_view($entity_type, $entity, $field,
-                                      $instance, $langcode, $items, $display) {
+function brightcove_field_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = [];
   $theme = NULL;
   $variables = [];
@@ -1440,7 +1445,7 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field,
  * @param $iframe
  *   Optional. Boolean, if the dialog should contain an iframe or other html content
  *
- * @return
+ * @return array
  *   An array suitable for use with the ajax_render() function.
  */
 function ajax_command_dialog($title = 'Dialog', $id = NULL, $selector = '<div>', $data, $field_rel, $settings = NULL, $iframe = FALSE) {
@@ -1474,7 +1479,7 @@ function ajax_command_dialog($title = 'Dialog', $id = NULL, $selector = '<div>',
  * @param $dialog_type
  *   Type of dialog to close.
  *
- * @return
+ * @return array
  *   An array suitable for use with the ajax_render() function.
  */
 function ajax_command_close_dialog($selector = '<div>', $data, $settings = NULL, $dialog_type) {
@@ -1592,12 +1597,19 @@ function brightcove_field_field_insert($entity_type, $entity, $field, $instance,
 }
 
 /**
- * IMplements hook_field_update().
+ * Implements hook_field_update().
  */
 function brightcove_field_field_update($entity_type, $entity, $field, $instance, $langcode, &$items) {
   brightcove_field_refresh_video_entity_link($entity_type, $entity, $items);
 }
 
+/**
+ * Get Brightcove player.
+ *
+ * @param $instance
+ * @param $stored
+ * @return mixed
+ */
 function brightcove_field_get_value($instance, $stored) {
   if ($stored) {
     return $stored;
@@ -1674,8 +1686,7 @@ function _filter_brightcove($text, $filter) {
 function _filter_brightcove_replace($videoid) {
   $filter = &drupal_static('_filter_brightcove');
   $variables = [
-    'player' => $filter && $filter->settings['player'] ?
-        $filter->settings['player'] : variable_get('brightcove_player_default'),
+    'player' => $filter && $filter->settings['player'] ? $filter->settings['player'] : variable_get('brightcove_player_default'),
     'brightcove_id' => $videoid[1],
   ];
   return theme('brightcove_field_embed', $variables);
