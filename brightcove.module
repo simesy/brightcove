@@ -966,9 +966,10 @@ function _brightcove_upload_form($form, &$form_state) {
     '#date_format' => 'Y-m-d H:i',
     '#date_timezone' => date_default_timezone(),
     '#date_label_position' => 'hidden',
-    '#default_value' => !empty($form_state['values']['start_availability_date']) ? $form_state['values']['start_availability_date'] : '',
+    '#default_value' => !empty($form_state['values']['start_availability_date']) ? $form_state['values']['start_availability_date'] : format_date(REQUEST_TIME, 'custom', 'Y-m-d') . ' 00:00:00',
     '#prefix' => '<div id="brightcove-start-availability-date">',
     '#suffix' => '</div>',
+    '#pre_render' => ['_brightcove_schedule_start_end_date_pre_render'],
   ];
   $form['schedule']['start_date'] = [
     '#type' => 'radios',
@@ -985,9 +986,10 @@ function _brightcove_upload_form($form, &$form_state) {
     '#date_format' => 'Y-m-d H:i',
     '#date_timezone' => date_default_timezone(),
     '#date_label_position' => 'hidden',
-    '#default_value' => !empty($form_state['values']['end_availability_date']) ? $form_state['values']['end_availability_date'] : '',
+    '#default_value' => !empty($form_state['values']['end_availability_date']) ? $form_state['values']['end_availability_date'] : format_date(REQUEST_TIME, 'custom', 'Y-m-d') . ' 23:59:59',
     '#prefix' => '<div id="brightcove-end-availability-date">',
     '#suffix' => '</div>',
+    '#pre_render' => ['_brightcove_schedule_start_end_date_pre_render'],
   ];
   $form['schedule']['end_date'] = [
     '#type' => 'radios',
@@ -1047,6 +1049,14 @@ function _brightcove_upload_form_validate($form, &$form_state) {
   if (!in_array($form_state['values']['client'], array_keys(_brightcove_load_my_clients()))) {
     form_error($form['client'], t('Invalid client selected.'));
   }
+}
+
+function _brightcove_schedule_start_end_date_pre_render($elements) {
+  // Remove descriptions from the date and time fields.
+  unset($elements['date']['#description']);
+  unset($elements['time']['#description']);
+
+  return $elements;
 }
 
 /**
