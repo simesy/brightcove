@@ -991,7 +991,7 @@ function _brightcove_upload_form($form, &$form_state) {
   ];
   $form['schedule']['end_date'] = [
     '#type' => 'radios',
-    '#title' => t('End'),
+    '#title' => t('Ending'),
     '#default_value' => 'no_end_date',
     '#options' => [
       'no_end_date' => t('No end date'),
