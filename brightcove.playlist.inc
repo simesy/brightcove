@@ -58,7 +58,7 @@ function brightcove_playlist_overview_table($client) {
   $playlists = brightcove_get_playlists($client);
   if ($playlists) {
     foreach ($playlists as $playlist) {
-      $table['rows'][] = _brightcove_playlist_overview_row($playlist);
+      $table['rows'][] = _brightcove_playlist_overview_row($client, $playlist);
     }
   }
   else {
@@ -76,6 +76,8 @@ function brightcove_playlist_overview_table($client) {
 /**
  * Renders a table row on the Brightcove playlist overview page.
  *
+ * @param Entity $client
+ *  The client entity object.
  * @param BrightcovePlaylist $playlist
  *   Playlist object.
  *
@@ -83,11 +85,11 @@ function brightcove_playlist_overview_table($client) {
  *   Table row.
  *   @see theme_table()
  */
-function _brightcove_playlist_overview_row(BrightcovePlaylist $playlist) {
+function _brightcove_playlist_overview_row(Entity $client, BrightcovePlaylist $playlist) {
   return [
     $playlist->getId(),
     $playlist->getName(),
-    l(t('edit'), "admin/config/media/brightcove/playlist/{$playlist->getId()}/edit"),
+    l(t('edit'), "admin/config/media/brightcove/playlist/$client->bcid/{$playlist->getId()}/edit"),
     l(t('delete'), "admin/config/media/brightcove/playlist/{$playlist->getId()}/delete"),
   ];
 }
@@ -136,22 +138,35 @@ function brightcove_get_playlists(Entity $client, $cache_reset = FALSE) {
  * @param $playlist
  * @return array|mixed|null|string
  */
-function brightcove_playlist_edit_page($playlist) {
+function brightcove_playlist_edit_page($client, $playlist_id) {
+  $playlist = brightcove_playlist_load($playlist_id, $client->bcid);
   if (!$playlist) {
     return t('Playlist not found');
   }
-
-  return drupal_get_form('brightcove_playlist_edit_form', $playlist);
+  return drupal_get_form('brightcove_playlist_edit_form', $client, $playlist_id);
 }
-
-function _brightcove_playlist_form(&$form, $form_state, $playlist = NULL) {
+/**
+ *
+ * @param array $form
+ * @param array $form_state
+ * @param Entity $client
+ *  The client entity object to use for editing the playlist.
+ * @param BrightcovePlaylist $playlist
+ *  The BrightcovePlaylist entity to edit.
+ */
+function _brightcove_playlist_form(&$form, $form_state, $client, $playlist = NULL) {
   $form['referenceId'] = [
     '#type' => 'hidden',
     '#value' => isset($form_state['values']['referenceId']) ? $form_state['values']['referenceId'] : '',
   ];
 
+  $form['client_id'] = [
+    '#type' => 'hidden',
+    '#value' => $client->bcid,
+  ];
+
   $type_default = BRIGHTCOVE_PLAYLIST_TYPE_MANUAL;
-  if (!is_null($playlist) && $playlist->playlistType != 'EXPLICIT') {
+  if (!is_null($playlist) && $playlist->getType() != 'EXPLICIT') {
     $type_default = BRIGHTCOVE_PLAYLIST_TYPE_SMART;
   }
 
@@ -182,13 +197,13 @@ function _brightcove_playlist_form(&$form, $form_state, $playlist = NULL) {
   $form['name'] = [
     '#type' => 'textfield',
     '#title' => 'Name',
-    '#default_value' => isset($playlist->name) ? $playlist->name : '',
+    '#default_value' => empty($playlist) ? '' : $playlist->getName(),
   ];
 
-  $form['shortDescription'] = [
+  $form['description'] = [
     '#type' => 'textarea',
     '#title' => 'Short description',
-    '#default_value' => isset($playlist->shortDescription) ? $playlist->shortDescription : '',
+    '#default_value' => empty($playlist) ? '' : $playlist->getDescription(),
   ];
 
   $form['settings'] = [
@@ -199,18 +214,18 @@ function _brightcove_playlist_form(&$form, $form_state, $playlist = NULL) {
   if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
     $videos = NULL;
     if (!empty ($playlist)) {
-      foreach ($playlist->videos as $video) {
-        $videos .= check_plain($video->name) . ' [id:' . $video->id . ']';
-        if (end($playlist->videos)->id != $video->id) {
-          $videos .= ', ';
-        }
+      foreach ($playlist->getVideoIds() as $video_id) {
+        $video = brightcove_video_load($video_id, $client);
+        $videos .= check_plain($video->getName()) . ' [id:' . $video_id . '], ';
       }
+      // Get rid of the trailing ", ".
+      $videos = substr($videos, 0, -2);
     }
     $form['settings']['videos'] = [
       '#type' => 'textfield',
       '#title' => 'Videos',
       '#default_value' => !is_null($videos) ? $videos : '',
-      '#autocomplete_path' => 'brightcove/autocomplete/videos',
+      '#autocomplete_path' => 'brightcove/autocomplete/videos/' . $client->bcid,
     ];
   }
   else if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_SMART) {
@@ -255,14 +270,19 @@ function _brightcove_playlist_form(&$form, $form_state, $playlist = NULL) {
  *
  * @param $form
  * @param $form_state
- * @param null $playlist
+ * @param Entity $client
+ *  The client entity object to use for editing the playlist.
+ * @param string $playlist_id
+ *  The id of the playlist to edit.
  * @return array
  */
-function brightcove_playlist_edit_form($form, &$form_state, $playlist = NULL) {
-  if (!is_null($playlist) && !isset($form_state['playlist'])) {
+function brightcove_playlist_edit_form($form, &$form_state, $client, $playlist_id = NULL) {
+  $playlist = NULL;
+  if (!empty($playlist_id)) {
+    $playlist = brightcove_playlist_load($playlist_id, $client->bcid);
     $form_state['playlist'] = $playlist;
   }
-  _brightcove_playlist_form($form, $form_state, $playlist);
+  _brightcove_playlist_form($form, $form_state, $client, $playlist);
 
   $form['actions'] = ['#type' => 'actions'];
 
@@ -301,21 +321,36 @@ function brightcove_playlist_edit_form_ajax_callback($form, &$form_state) {
  * @param $form_state
  */
 function brightcove_playlist_edit_form_submit($form, &$form_state) {
-  $metadata = [];
-  $keys_to_send = ['name', 'shortDescription'];
-  foreach ($keys_to_send as $key) {
-    $metadata[$key] = $form_state['values'][$key];
-  }
+  $client = brightcove_client_load($form_state['values']['client_id']);
+  list($cms,) = _brightcove_create_classes($client);
 
+  // Manual playlists.
   if ($form_state['values']['type'] == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
-    $metadata['playlistType'] = 'explicit';
+    // Editing a playlist.
+    if (isset($form_state['playlist'])) {
+      try {
+        $playlist = $cms->getPlaylist($form_state['playlist']->getId());
+      }
+      catch (BrightcoveAPIException $e) {
+        watchdog('brightcove', 'Getting playlist to save failed.', [], WATCHDOG_ERROR);
+      }
+    }
+    // Adding a playlist.
+    else {
+      $playlist = new BrightcovePlaylist();
+    }
     $videos = drupal_explode_tags($form_state['values']['videos']);
+    $video_ids = [];
     foreach ($videos as $video) {
       // Parse the video id.
       preg_match('/\[id:(?P<videoid>\d+)\]/', $video, $matches);
-      $metadata['videoIds'][] = $matches['videoid'];
+      $video_ids[] = $matches['videoid'];
     }
+    $playlist->setVideoIds($video_ids);
+    $playlist->setName($form_state['values']['name']);
+    $playlist->setDescription($form_state['values']['description']);
   }
+  // Smart playlists.
   else {
     $metadata['tagInclusionRule'] = $form_state['values']['tagInclusionRule'];
     $metadata['playlistType'] = $form_state['values']['playlistType'];
@@ -323,12 +358,20 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
   }
 
   if (isset($form_state['playlist'])) {
-    $metadata['id'] = $form_state['playlist']->id;
-    brightcove_update_playlist($metadata);
+    try {
+      $cms->updatePlaylist($playlist);
+    }
+    catch (BrightcoveAPIException $e) {
+      watchdog('brightcove', 'Updating playlist has failed with message @message.', ['@message' => $e->getMessage()], WATCHDOG_ERROR);
+      drupal_set_message(t('Updating the playlist has failed. Probably this client does not have permission to edit playlists.'), 'error');
+    }
+    brightcove_invalidate_cache('brightcove:playlist:' . $playlist->getId());
+    brightcove_invalidate_cache('brightcove:playlist:list:' . $client->bcid, TRUE);
   }
   else {
-    brightcove_add_playlist($metadata);
+    $cms->createPlaylist($playlist);
   }
+
   // Redirect the user to the playlist listing page.
   $form_state['redirect'] = ['admin/config/media/brightcove/playlist'];
 }
