@@ -60,6 +60,8 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
         $client_id = $form_state['values'][$field['field_name']][$langcode][$delta]['client_id'];
       } else if (isset($form_state['input'][$field['field_name']][$langcode][$delta]['client_id'])) {
         $client_id = $form_state['input'][$field['field_name']][$langcode][$delta]['client_id'];
+      } else if (isset($items[$delta]['client_id'])) {
+        $client_id = $items[$delta]['client_id'];
       }
       break;
 
@@ -211,6 +213,7 @@ function brightcove_field_video_client_ajax_callback($form, $form_state) {
   $parents = $form_state['triggering_element']['#parents'];
   array_pop($parents);
   $return = drupal_array_get_nested_value($form, $parents);
+  unset($return['_weight']);
   return $return;
 }
 
