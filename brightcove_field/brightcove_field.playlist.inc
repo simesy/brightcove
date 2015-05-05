@@ -11,7 +11,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   $element['client_id'] = brightcove_client_select_element();
   switch ($element['client_id']['#type']) {
     case 'select':
-      $element['client_id']['#default_value'] = isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : '_none';
+      $element['client_id']['#default_value'] = isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : BRIGHTCOVE_CLIENT_ID_NONE;
       $element['client_id']['#ajax'] = [
         'wrapper' => $wrapper_id,
         'callback' => 'brightcove_field_playlist_client_ajax_callback',
@@ -26,8 +26,8 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     default :
       return $element;
   }
-  $playlist_options = ['_none' => t('- Select a playlist -')];
-  if ($client_id != '_none') {
+  $playlist_options = [BRIGHTCOVE_CLIENT_ID_NONE => t('- Select a playlist -')];
+  if ($client_id != BRIGHTCOVE_CLIENT_ID_NONE) {
     $cid = 'brightcove:playlist:list:' . $client_id;
     $playlist_options = brightcove_cache_get($cid);
     if (!$playlist_options) {
@@ -51,7 +51,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
 
   $element['brightcove_id'] = [
     '#type' => 'select',
-    '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : '_none',
+    '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : BRIGHTCOVE_CLIENT_ID_NONE,
     '#title' => $element['#title'],
     '#prefix' => '<div id="' . $wrapper_id . '">',
     '#suffix' => '</div>',

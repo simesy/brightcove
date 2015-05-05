@@ -149,6 +149,31 @@ function ajax_browse_dialog_close_callback($form, $form_state) {
   return ['#type' => 'ajax', '#commands' => $commands];
 }
 
+/**
+ * Rerenders the brightcove field widget.
+ *
+ * This is necessary, because for some reason the AJAX buttons work only once if they are loaded by AJAX and not
+ * rendered on the page originally.
+ *
+ * @param array $commands
+ *   AJAX commands array.
+ * @param array $form
+ *   Parent form.
+ * @param array $form_state
+ *   Parent form state.
+ */
+function _brightcove_field_rerender_widget(array &$commands, array $form, array $form_state) {
+  $field_name = $form_state['triggering_element']['#parents'][0];
+  $delta = $form_state['triggering_element']['#parents'][2];
+
+  array_pop($form_state['triggering_element']['#parents']);
+
+  $wrapper = _brightcove_field_get_wrapper_name($field_name, $delta);
+  $content = brightcove_field_video_client_ajax_callback($form, $form_state);
+  $rendered_content = drupal_render($content);
+  $commands[] = ajax_command_replace("#{$wrapper}", $rendered_content);
+}
+
 function ajax_browse_video_dialog_callback($form, $form_state) {
   $field_rel = $form_state['triggering_element']['#attributes']['rel'];
   $field_name = $form_state['triggering_element']['#parents'][0];
@@ -170,6 +195,7 @@ function ajax_browse_video_dialog_callback($form, $form_state) {
 
   $commands = [];
   $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
+  _brightcove_field_rerender_widget($commands, $form, $form_state);
   return ['#type' => 'ajax', '#commands' => $commands];
 }
 
@@ -191,6 +217,7 @@ function ajax_upload_video_dialog_callback($form, $form_state) {
 
   $commands = [];
   $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
+  _brightcove_field_rerender_widget($commands, $form, $form_state);
   return ['#type' => 'ajax', '#commands' => $commands];
 }
 
@@ -428,7 +455,7 @@ function brightcove_field_field_validate($entity_type, $entity, $field, $instanc
       break;
     case BRIGHTCOVE_PLAYLIST_WIDGET:
       foreach ($items as $delta => $item) {
-        if (!empty($item['brightcove_id']) && ($item['brightcove_id'] != '_none')) {
+        if (!empty($item['brightcove_id']) && ($item['brightcove_id'] !== BRIGHTCOVE_CLIENT_ID_NONE)) {
           $playlist = brightcove_playlist_load($item['brightcove_id'], $item['client_id']);
           if (empty($playlist)) {
             $errors[$field['field_name']][$langcode][$delta][] = [
@@ -449,7 +476,7 @@ function brightcove_field_field_validate($entity_type, $entity, $field, $instanc
  * Implements hook_field_is_empty().
  */
 function brightcove_field_field_is_empty($item, $field) {
-  return empty($item['brightcove_id']) || ($item['brightcove_id'] == '_none');
+  return empty($item['brightcove_id']) || ($item['brightcove_id'] === BRIGHTCOVE_CLIENT_ID_NONE);
 }
 
 /**
@@ -823,6 +850,10 @@ function brightcove_field_browser_process($element, $form_state, $form) {
  */
 function brightcove_field_button_value_callback() {
   return NULL;
+}
+
+function _brightcove_field_get_wrapper_name($field_name, $delta) {
+  return "bc-video-{$field_name}-{$delta}";
 }
 
 /**

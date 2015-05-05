@@ -32,7 +32,7 @@ function brightcove_playlist_overview_form($form, $form_state) {
     '#prefix' => '<div id="' . $wrapper_id . '">',
     '#suffix' => '</div>',
   ];
-  if (!empty($client_id) && ($client_id != '_none')) {
+  if (!empty($client_id) && ($client_id != BRIGHTCOVE_CLIENT_ID_NONE)) {
     $client = brightcove_client_load($client_id);
     $form['playlists']['#markup'] = brightcove_playlist_overview_table($client);
   }

@@ -21,6 +21,8 @@
 define('BRIGHTCOVE_STATUS_COMPLETE', 'COMPLETE');
 define('BRIGHTCOVE_STATUS_ERROR', 'ERROR');
 
+define('BRIGHTCOVE_CLIENT_ID_NONE', '_none');
+
 // Logo overlay alignment constants
 define('BRIGHTCOVE_LOGO_TOP_LEFT', 'TOP_LEFT');
 define('BRIGHTCOVE_LOGO_BOTTOM_LEFT', 'BOTTOM_LEFT');
