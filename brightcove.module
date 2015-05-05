@@ -112,7 +112,7 @@ function brightcove_menu() {
     'title arguments' => [5, 6],
     'page callback' => 'brightcove_playlist_edit_page',
     'page arguments' => [5, 6],
-    'type' => MENU_CALLBACK,
+    'type' => MENU_LOCAL_ACTION,
     'file' => 'brightcove.playlist.inc',
     'access callback' => 'brightcove_playlist_edit_access',
     'access arguments' => [5],
@@ -129,7 +129,6 @@ function brightcove_menu() {
 
   return $items;
 }
-
 
 /**
  * Implements hook_entity_info().
@@ -358,7 +357,6 @@ function brightcove_autocomplete_videos($client, $videos_typed) {
   $result = [];
 
   list($cms,) = _brightcove_create_classes($client);
-
   $videos_typed = drupal_explode_tags($videos_typed);
   $video_last = drupal_strtolower(array_pop($videos_typed));
   try {

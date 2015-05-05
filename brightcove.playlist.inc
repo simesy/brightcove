@@ -154,16 +154,35 @@ function brightcove_playlist_edit_page($client, $playlist_id) {
  * @param BrightcovePlaylist $playlist
  *  The BrightcovePlaylist entity to edit.
  */
-function _brightcove_playlist_form(&$form, $form_state, $client, $playlist = NULL) {
-  $form['referenceId'] = [
-    '#type' => 'hidden',
-    '#value' => isset($form_state['values']['referenceId']) ? $form_state['values']['referenceId'] : '',
-  ];
+function _brightcove_playlist_form(&$form, $form_state, $client = NULL, $playlist = NULL) {
+  $wrapper_id = 'bc-playlist-data-wrapper';
+  if (!empty($client)) {
+    $form['client_id'] = [
+      '#type' => 'hidden',
+      '#value' => $client->bcid,
+    ];
+  }
+  else {
+    module_load_include('inc', 'brightcove', 'brightcove.client');
+    $form['client_id'] = brightcove_client_select_element();
+  }
+  switch ($form['client_id']['#type']) {
+    case 'select':
+      $form['client_id']['#ajax'] = [
+        'wrapper' => $wrapper_id,
+        'callback' => 'brightcove_playlist_client_ajax'
+      ];
+      $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : $form['client_id']['#default_value'];
+      break;
 
-  $form['client_id'] = [
-    '#type' => 'hidden',
-    '#value' => $client->bcid,
-  ];
+    case 'value':
+    case 'hidden' :
+      $client_id = $form['client_id']['#value'];
+      break;
+  }
+  if (empty($client)) {
+    $client = brightcove_client_load($client_id);
+  }
 
   $type_default = BRIGHTCOVE_PLAYLIST_TYPE_MANUAL;
   if (!is_null($playlist) && $playlist->getType() != 'EXPLICIT') {
@@ -180,7 +199,12 @@ function _brightcove_playlist_form(&$form, $form_state, $client, $playlist = NUL
     }
   }
 
-  $form['type'] = [
+  $form['playlist_data'] = [
+    '#type' => 'container',
+    '#id' => $wrapper_id,
+  ];
+  if ($client_id != '_none') {
+  $form['playlist_data']['type'] = [
     '#title' => t('Playlist type'),
     '#type' => 'select',
     '#default_value' => $type_default,
@@ -194,19 +218,20 @@ function _brightcove_playlist_form(&$form, $form_state, $client, $playlist = NUL
     ],
   ];
 
-  $form['name'] = [
+  $form['playlist_data']['name'] = [
     '#type' => 'textfield',
     '#title' => 'Name',
     '#default_value' => empty($playlist) ? '' : $playlist->getName(),
+    '#required' => TRUE,
   ];
 
-  $form['description'] = [
+  $form['playlist_data']['description'] = [
     '#type' => 'textarea',
     '#title' => 'Short description',
     '#default_value' => empty($playlist) ? '' : $playlist->getDescription(),
   ];
 
-  $form['settings'] = [
+  $form['playlist_data']['settings'] = [
     '#type' => 'container',
     '#id' => 'brightcove-playlist-settings',
   ];
@@ -221,15 +246,16 @@ function _brightcove_playlist_form(&$form, $form_state, $client, $playlist = NUL
       // Get rid of the trailing ", ".
       $videos = substr($videos, 0, -2);
     }
-    $form['settings']['videos'] = [
+    $form['playlist_data']['settings']['videos'] = [
       '#type' => 'textfield',
       '#title' => 'Videos',
       '#default_value' => !is_null($videos) ? $videos : '',
       '#autocomplete_path' => 'brightcove/autocomplete/videos/' . $client->bcid,
+      '#required' => TRUE,
     ];
   }
   else if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_SMART) {
-    $form['settings']['tagInclusionRule'] = [
+    $form['playlist_data']['settings']['tagInclusionRule'] = [
       '#type' => 'select',
       '#title' => t('Smart playlist settings'),
       '#field_suffix' => t('of the following'),
@@ -240,7 +266,7 @@ function _brightcove_playlist_form(&$form, $form_state, $client, $playlist = NUL
       ],
     ];
 
-    $form['settings']['filterTags'] = [
+    $form['playlist_data']['settings']['filterTags'] = [
       '#type' => 'textfield',
       '#title' => t('Tags'),
       '#default_value' => (isset($playlist->filterTags)) ? drupal_implode_tags($playlist->filterTags) : '',
@@ -248,7 +274,7 @@ function _brightcove_playlist_form(&$form, $form_state, $client, $playlist = NUL
                            based on the following settings.'),
     ];
 
-    $form['settings']['playlistType'] = [
+    $form['playlist_data']['settings']['playlistType'] = [
       '#type' => 'select',
       '#title' => t('Playlist ordering'),
       '#options' => [
@@ -263,8 +289,15 @@ function _brightcove_playlist_form(&$form, $form_state, $client, $playlist = NUL
       '#default_value' => isset($playlist->playlistType) ? $playlist->playlistType : '',
     ];
   }
+  }
 }
 
+/**
+ * AJAX callback for playlist form.
+ */
+function brightcove_playlist_client_ajax($form, $form_state) {
+  return $form['playlist_data'];
+}
 /**
  * Playlist edit form.
  *
@@ -276,9 +309,9 @@ function _brightcove_playlist_form(&$form, $form_state, $client, $playlist = NUL
  *  The id of the playlist to edit.
  * @return array
  */
-function brightcove_playlist_edit_form($form, &$form_state, $client, $playlist_id = NULL) {
+function brightcove_playlist_edit_form($form, &$form_state, $client = NULL, $playlist_id = NULL) {
   $playlist = NULL;
-  if (!empty($playlist_id)) {
+  if (!empty($playlist_id) && !empty($client)) {
     $playlist = brightcove_playlist_load($playlist_id, $client->bcid);
     $form_state['playlist'] = $playlist;
   }
@@ -349,6 +382,7 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
     $playlist->setVideoIds($video_ids);
     $playlist->setName($form_state['values']['name']);
     $playlist->setDescription($form_state['values']['description']);
+    $playlist->setType('EXPLICIT');
   }
   // Smart playlists.
   else {
@@ -369,7 +403,14 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
     brightcove_invalidate_cache('brightcove:playlist:list:' . $client->bcid, TRUE);
   }
   else {
-    $cms->createPlaylist($playlist);
+    try {
+      $cms->createPlaylist($playlist);
+    }
+    catch ( BrightcoveAPIException $e ) {
+      watchdog('brightcove', 'Creating playlist has failed with message @message.', ['@message' => $e->getMessage()], WATCHDOG_ERROR);
+      drupal_set_message(t('Creating the playlist has failed. This client might not have permission to create playlists.'), 'error');
+    }
+    brightcove_invalidate_cache('brightcove:playlist:list:' . $client->bcid, TRUE);
   }
 
   // Redirect the user to the playlist listing page.
