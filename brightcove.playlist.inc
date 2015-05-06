@@ -90,7 +90,7 @@ function _brightcove_playlist_overview_row(Entity $client, BrightcovePlaylist $p
     $playlist->getId(),
     $playlist->getName(),
     l(t('edit'), "admin/config/media/brightcove/playlist/$client->bcid/{$playlist->getId()}/edit"),
-    l(t('delete'), "admin/config/media/brightcove/playlist/{$playlist->getId()}/delete"),
+    l(t('delete'), "admin/config/media/brightcove/playlist/$client->bcid/{$playlist->getId()}/delete"),
   ];
 }
 
@@ -432,25 +432,31 @@ function brightcove_playlist_edit_form_delete($form, &$form_state) {
  *
  * @param $form
  * @param $form_state
- * @param $playlist
+ * @param Entity $client
+ *   The brightcove client Entity object.
+ * @param string $playlist_id
+ *   The BrightcovePlaylist id.
  * @return array
  */
-function brightcove_playlist_delete_form($form, &$form_state, $client, $playlist) {
+function brightcove_playlist_delete_form($form, &$form_state, $client, $playlist_id) {
   $form = [];
-
-  if (!$playlist) {
-    drupal_set_message(t('Playlist not found!', 'error'));
-    return $form;
-  }
 
   $form['client_id'] = [
     '#type' => 'hidden',
     '#value' => $client->bcid,
   ];
 
+  try {
+    list($cms,) = _brightcove_create_classes($client);
+    $playlist = $cms->getPlaylist($playlist_id);
+  }
+  catch (BrightcoveAPIException $e) {
+    watchdog('brightcove', 'This playlist is not accessible by this client.', [], WATCHDOG_ERROR);
+  }
+
   $form['playlist_id'] = [
     '#type' => 'hidden',
-    '#value' => $playlist->getId(),
+    '#value' => $playlist_id,
   ];
 
   return confirm_form(

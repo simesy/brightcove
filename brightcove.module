@@ -124,7 +124,8 @@ function brightcove_menu() {
     'page arguments' => ['brightcove_playlist_delete_form', 5, 6],
     'type' => MENU_CALLBACK,
     'file' => 'brightcove.playlist.inc',
-    'access arguments' => ['administer brightcove playlists'],
+    'access callback' => 'brightcove_playlist_edit_access',
+    'access arguments' => [5],
   ];
 
   return $items;
@@ -407,10 +408,22 @@ function brightcove_playlist_delete_form_submit($form, &$form_state) {
 function brightcove_playlist_delete($client, $playlist_id) {
   list($cms,) = _brightcove_create_classes($client);
   try {
+    $playlist = $cms->getPlaylist($playlist_id);
+    $name = $playlist->getName();
     $cms->deletePlaylist($playlist_id);
   }
   catch (Exception $error) {
     watchdog('brightcove', 'Deleting playlist @playlist failed.', ['@playlist' => $playlist_id], WATCHDOG_ERROR);
+  }
+  // deletePlaylist() fails silently in case the client has no permission to
+  // delete the playlist so we check here if it has been really removed or
+  // not.
+  try {
+    $cms->getPlaylist($playlist_id);
+    drupal_set_message(t('Deleting the playlist @playlist has failed. Maybe the brightcove client has not enough permissions.', ['@playlist' => $playlist_id]), 'error');
+  }
+  catch (Exception $e) {
+    drupal_set_message(t('The playlist "@playlist" has been removed.', ['@playlist' => $name]), 'status');
   }
 }
 
