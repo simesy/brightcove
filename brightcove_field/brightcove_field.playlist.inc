@@ -50,26 +50,16 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     default :
       return $element;
   }
+  $client = brightcove_client_load($client_id);
   $playlist_options = [BRIGHTCOVE_CLIENT_ID_NONE => t('- Select a playlist -')];
   if ($client_id != BRIGHTCOVE_CLIENT_ID_NONE) {
-    $cid = 'brightcove:playlist:list:' . $client_id;
-    $playlist_options = brightcove_cache_get($cid);
-    if (!$playlist_options) {
-      $client = brightcove_client_load($client_id);
-      try {
-        list ($cms, ) = _brightcove_create_classes($client);
-        $playlists = $cms->listPlaylists();
+    module_load_include('inc', 'brightcove', 'brightcove.playlist');
+    $playlists = brightcove_get_playlists($client);
+    if (!empty($playlists)) {
+      foreach ($playlists as $playlist) {
+        $id = $playlist->getId();
+        $playlist_options[$id] = $playlist->getName() . " ($id)";
       }
-      catch ( Exception $error ) {
-        watchdog('brightcove', 'Finding playlists has failed.', [], WATCHDOG_ERROR);
-      }
-      if (!empty($playlists)) {
-        foreach ($playlists as $playlist) {
-          $id = $playlist->getId();
-          $playlist_options[$id] = $playlist->getName() . " ($id)";
-        }
-      }
-      brightcove_cache_set($cid, $playlist_options);
     }
   }
 
