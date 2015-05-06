@@ -251,7 +251,6 @@ function _brightcove_playlist_form(&$form, $form_state, $client = NULL, $playlis
       '#title' => 'Videos',
       '#default_value' => !is_null($videos) ? $videos : '',
       '#autocomplete_path' => 'brightcove/autocomplete/videos/' . $client->bcid,
-      '#required' => TRUE,
     ];
   }
   else if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_SMART) {
