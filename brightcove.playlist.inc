@@ -154,8 +154,9 @@ function brightcove_playlist_edit_page($client, $playlist_id) {
  * @param BrightcovePlaylist $playlist
  *  The BrightcovePlaylist entity to edit.
  */
-function _brightcove_playlist_form(&$form, $form_state, $client = NULL, $playlist = NULL) {
+function _brightcove_playlist_form(&$form, &$form_state, $client = NULL, $playlist = NULL) {
   $wrapper_id = 'bc-playlist-data-wrapper';
+  $form = ['#tree' => TRUE];
   if (!empty($client)) {
     $form['client_id'] = [
       '#type' => 'hidden',
@@ -173,6 +174,9 @@ function _brightcove_playlist_form(&$form, $form_state, $client = NULL, $playlis
         'callback' => 'brightcove_playlist_client_ajax'
       ];
       $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : $form['client_id']['#default_value'];
+      if (($client_id == BRIGHTCOVE_CLIENT_ID_NONE) && !empty($form_state['input']['client_id'])) {
+        $client_id = $form_state['input']['client_id'];
+      }
       break;
 
     case 'value':
@@ -180,7 +184,7 @@ function _brightcove_playlist_form(&$form, $form_state, $client = NULL, $playlis
       $client_id = $form['client_id']['#value'];
       break;
   }
-  if (empty($client)) {
+  if (empty($client) && ($client_id != BRIGHTCOVE_CLIENT_ID_NONE)) {
     $client = brightcove_client_load($client_id);
   }
 
@@ -201,94 +205,189 @@ function _brightcove_playlist_form(&$form, $form_state, $client = NULL, $playlis
 
   $form['playlist_data'] = [
     '#type' => 'container',
-    '#id' => $wrapper_id,
-  ];
-  if ($client_id != '_none') {
-  $form['playlist_data']['type'] = [
-    '#title' => t('Playlist type'),
-    '#type' => 'select',
-    '#default_value' => $type_default,
-    '#ajax' => [
-      'callback' => 'brightcove_playlist_edit_form_ajax_callback',
-      'wrapper' => 'brightcove-playlist-settings',
-    ],
-    '#options' => [
-      BRIGHTCOVE_PLAYLIST_TYPE_MANUAL => t('Manual'),
-      BRIGHTCOVE_PLAYLIST_TYPE_SMART => t('Smart'),
-    ],
+    '#prefix' => '<div id="' . $wrapper_id . '">',
+    '#suffix' => '</div>',
   ];
 
-  $form['playlist_data']['name'] = [
-    '#type' => 'textfield',
-    '#title' => 'Name',
-    '#default_value' => empty($playlist) ? '' : $playlist->getName(),
-    '#required' => TRUE,
-  ];
+  if ($client_id != BRIGHTCOVE_CLIENT_ID_NONE) {
+    $form['playlist_data']['type'] = [
+      '#title' => t('Playlist type'),
+      '#type' => 'select',
+      '#default_value' => $type_default,
+      '#ajax' => [
+        'callback' => 'brightcove_playlist_edit_form_ajax_callback',
+        'wrapper' => 'brightcove-playlist-settings',
+      ],
+      '#options' => [
+        BRIGHTCOVE_PLAYLIST_TYPE_MANUAL => t('Manual'),
+        //BRIGHTCOVE_PLAYLIST_TYPE_SMART => t('Smart'),
+      ],
+    ];
 
-  $form['playlist_data']['description'] = [
-    '#type' => 'textarea',
-    '#title' => 'Short description',
-    '#default_value' => empty($playlist) ? '' : $playlist->getDescription(),
-  ];
+    $form['playlist_data']['name'] = [
+      '#type' => 'textfield',
+      '#title' => t('Name'),
+      '#default_value' => empty($playlist) ? '' : $playlist->getName(),
+      '#required' => TRUE,
+    ];
 
-  $form['playlist_data']['settings'] = [
-    '#type' => 'container',
-    '#id' => 'brightcove-playlist-settings',
-  ];
+    $form['playlist_data']['description'] = [
+      '#type' => 'textarea',
+      '#title' => t('Short description'),
+      '#default_value' => empty($playlist) ? '' : $playlist->getDescription(),
+    ];
 
-  if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
-    $videos = NULL;
-    if (!empty ($playlist)) {
-      foreach ($playlist->getVideoIds() as $video_id) {
-        $video = brightcove_video_load($video_id, $client);
-        $videos .= check_plain($video->getName()) . ' [id:' . $video_id . '], ';
+    $settings_wrapper_id = 'brightcove-playlist-settings';
+    $form['playlist_data']['settings'] = [
+      '#type' => 'container',
+      '#id' => $settings_wrapper_id,
+      '#client_id' => $client_id,
+    ];
+
+    if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
+      $delta = 0;
+      // Edit playlist form.
+      if (!empty ($playlist)) {
+        $video_ids = $playlist->getVideoIds();
+        $count_videos = count($video_ids);
+        if (empty($form_state['bc_count_videos'])) {
+          $form_state['bc_count_videos'] = empty($count_videos) ? 1 : $count_videos;
+        }
+        foreach ($playlist->getVideoIds() as $video_id) {
+          $video = brightcove_video_load($video_id, $client);
+          $form['playlist_data']['settings'][$delta] = _brightcove_one_video_form($client_id, $delta, check_plain($video->getName()) . ' [id:' . $video_id . ']');
+          $delta++;
+        }
       }
-      // Get rid of the trailing ", ".
-      $videos = substr($videos, 0, -2);
+      // Add playlist form.
+      else {
+       if (empty($form_state['bc_count_videos'])) {
+          $form_state['bc_count_videos'] = 1;
+        }
+      }
+      // Add empty video fields to form array.
+      while ($delta < $form_state['bc_count_videos']) {
+        $form['playlist_data']['settings'][$delta] = _brightcove_one_video_form($client_id, $delta);
+        $delta++;
+      }
+
+      $form['playlist_data']['settings']['add_more'] = [
+        '#type' => 'submit',
+        '#value' => t('Add video'),
+        '#ajax' => [
+          'callback' => 'brightcove_playlist_video_ajax',
+          'wrapper' => $settings_wrapper_id,
+        ],
+        '#submit' => ['brightcove_playlist_video_add_submit'],
+        '#limit_validation_errors' => [],
+      ];
     }
-    $form['playlist_data']['settings']['videos'] = [
-      '#type' => 'textfield',
-      '#title' => 'Videos',
-      '#default_value' => !is_null($videos) ? $videos : '',
-      '#autocomplete_path' => 'brightcove/autocomplete/videos/' . $client->bcid,
-    ];
-  }
-  else if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_SMART) {
-    $form['playlist_data']['settings']['tagInclusionRule'] = [
-      '#type' => 'select',
-      '#title' => t('Smart playlist settings'),
-      '#field_suffix' => t('of the following'),
-      '#default_value' => 'OR',
-      '#options' => [
-        'OR' => t('Contain one or more'),
-        'AND' => t('Contain all'),
-      ],
-    ];
+    else if ($active_type == BRIGHTCOVE_PLAYLIST_TYPE_SMART) {
+      $form['playlist_data']['settings']['tagInclusionRule'] = [
+        '#type' => 'select',
+        '#title' => t('Smart playlist settings'),
+        '#field_suffix' => t('of the following'),
+        '#default_value' => 'OR',
+        '#options' => [
+          'OR' => t('Contain one or more'),
+          'AND' => t('Contain all'),
+        ],
+      ];
 
-    $form['playlist_data']['settings']['filterTags'] = [
-      '#type' => 'textfield',
-      '#title' => t('Tags'),
-      '#default_value' => (isset($playlist->filterTags)) ? drupal_implode_tags($playlist->filterTags) : '',
-      '#description' => t('Videos will be automatically added to this Playlist
-                           based on the following settings.'),
-    ];
+      $form['playlist_data']['settings']['filterTags'] = [
+        '#type' => 'textfield',
+        '#title' => t('Tags'),
+        '#default_value' => (isset($playlist->filterTags)) ? drupal_implode_tags($playlist->filterTags) : '',
+        '#description' => t('Videos will be automatically added to this Playlist based on the following settings.'),
+      ];
 
-    $form['playlist_data']['settings']['playlistType'] = [
-      '#type' => 'select',
-      '#title' => t('Playlist ordering'),
-      '#options' => [
-        'OLDEST_TO_NEWEST' => t('Oldest to newest (by activation date)'),
-        'NEWEST_TO_OLDEST' => t('Newest to oldest (by activation date)'),
-        'START_DATE_OLDEST_TO_NEWEST' => t('Oldest to newest'),
-        'START_DATE_NEWEST_TO_OLDEST' => t('Newest to Oldest'),
-        'ALPHABETICAL' => t('Alphabetical (by video name)'),
-        'PLAYS_TOTAL' => t('Total plays'),
-        'PLAYS_TRAILING_WEEK' => t('Plays trailing week'),
+      $form['playlist_data']['settings']['playlistType'] = [
+        '#type' => 'select',
+        '#title' => t('Playlist ordering'),
+        '#options' => [
+          'OLDEST_TO_NEWEST' => t('Oldest to newest (by activation date)'),
+          'NEWEST_TO_OLDEST' => t('Newest to oldest (by activation date)'),
+          'START_DATE_OLDEST_TO_NEWEST' => t('Oldest to newest'),
+          'START_DATE_NEWEST_TO_OLDEST' => t('Newest to Oldest'),
+          'ALPHABETICAL' => t('Alphabetical (by video name)'),
+          'PLAYS_TOTAL' => t('Total plays'),
+          'PLAYS_TRAILING_WEEK' => t('Plays trailing week'),
+        ],
+        '#default_value' => isset($playlist->playlistType) ? $playlist->playlistType : '',
+      ];
+    }
+  }
+}
+
+function brightcove_playlist_video_add_submit($form, &$form_state) {
+  $form_state['bc_count_videos']++;
+  $form_state['rebuild'] = TRUE;
+}
+
+function _brightcove_one_video_form($client_id, $delta, $default_value = '') {
+  $id = _brightcove_playlist_video_delta_id($delta);
+  return [
+    '#type' => 'container',
+    '#prefix' => '<div id="' . $id . '">',
+    '#suffix' => '</div>',
+    '#bcid' => $id,
+    'video' => [
+      '#type' => 'textfield',
+      '#default_value' => $default_value,
+      '#autocomplete_path' => 'brightcove/autocomplete/videos/' . $client_id,
+      '#name' => "edit-video-$delta",
+      '#id' => "edit-video-$delta",
+    ],
+    'remove' => [
+      '#type' => 'submit',
+      // D7 differentiates buttons by their #value so we they must be
+      // different. We fix this in #pre_render.
+      '#value' => t('Remove') . $delta,
+      '#ajax' => [
+        'callback' => 'brightcove_playlist_video_remove_ajax'
       ],
-      '#default_value' => isset($playlist->playlistType) ? $playlist->playlistType : '',
-    ];
-  }
-  }
+      '#pre_render' => ['brightcove_remove_button_pre_render'],
+      '#submit' => ['brightcove_playlist_video_remove_submit'],
+      '#limit_validation_errors' => [],
+    ],
+  ];
+}
+
+function brightcove_playlist_video_remove_submit($form, &$form_state) {
+  //$form_state['bc_count_videos']--;
+  $form_state['rebuild'] = TRUE;
+}
+
+function _brightcove_playlist_video_delta_id($delta) {
+  return "bc-playlist-video-$delta";
+}
+
+/**
+ * Pre render callback for the Remove buttons to work around
+ * https://www.drupal.org/node/1342066.
+ */
+function brightcove_remove_button_pre_render($element) {
+  $element['#value'] = t('Remove');
+  return $element;
+}
+
+/**
+ * AJAX callback to remove a video.
+ */
+function brightcove_playlist_video_remove_ajax($form, $form_state) {
+  $commands = array();
+  $parents = $form_state['triggering_element']['#array_parents'];
+  array_pop($parents);
+  $element = drupal_array_get_nested_value($form, $parents);
+  $commands[] = ajax_command_remove('#' . $element['#bcid']);
+  return array('#type' => 'ajax', '#commands' => $commands);
+}
+
+/**
+ * AJAX callback to add another video.
+ */
+function brightcove_playlist_video_ajax($form, $form_state) {
+  return $form['playlist_data']['settings'];
 }
 
 /**
@@ -321,7 +420,7 @@ function brightcove_playlist_edit_form($form, &$form_state, $client = NULL, $pla
   $form['actions']['submit'] = [
     '#type' => 'submit',
     '#value' => t('Save'),
-    '#submit' => ['brightcove_playlist_edit_form_submit'],
+    '#submit' => ['brightcove_playlist_submit'],
   ];
 
   if (!is_null($playlist)) {
@@ -352,7 +451,7 @@ function brightcove_playlist_edit_form_ajax_callback($form, &$form_state) {
  * @param $form
  * @param $form_state
  */
-function brightcove_playlist_edit_form_submit($form, &$form_state) {
+function brightcove_playlist_submit($form, &$form_state) {
   $client = brightcove_client_load($form_state['values']['client_id']);
   list($cms,) = _brightcove_create_classes($client);
 
