@@ -5,38 +5,183 @@
  */
 
 /**
- * Form function for the playlists page.
+ * Entity controller class for Brightcove client.
  */
-function brightcove_playlist_overview_form($form, $form_state) {
-  module_load_include('inc', 'brightcove', 'brightcove.client');
-  $form['client_id'] = brightcove_client_select_element();
-  $wrapper_id = 'bc-playlists';
+class BrightcovePlaylistEntityController extends EntityAPIController {
 
-  switch ($form['client_id']['#type']) {
-    case 'select':
-      $form['client_id']['#ajax'] = [
-        'wrapper' => $wrapper_id,
-        'callback' => 'brightcove_playlist_tables_ajax_callback',
+  /**
+   * Overwrites EntityAPIController::save().
+   */
+  public function save($playlist, DatabaseTransaction $transaction = NULL) {
+    if (!isset($playlist->client)) {
+      watchdog('brightcove', 'Saving playlist failed due to missing client property.', [], WATCHDOG_ERROR);
+      return;
+    }
+    try {
+      list($cms, ) = _brightcove_create_classes($playlist->client);
+      $cms->updatePlaylist($playlist->playlist);
+      $name = $playlist->getName();
+      watchdog('brightcove', 'Saving brightcove playlist @name was successful.', ['@name' => $name], WATCHDOG_INFO);
+    }
+    catch (BrightcoveAPIException $e) {
+      watchdog('brightcove', 'Saving brightcove playlist failed.', [], WATCHDOG_ERROR);
+    }
+  }
+
+  /**
+   * Overwrites DrupalDefaultEntityController::load().
+   *
+   * @param array ids
+   *  Array of ids. The format for an id is "1234-5" where 1234 is
+   *  a BrightcovePlaylist->getId() and 5 is a BrightcoveClient->bcid.
+   * @param $conditions
+   *
+   * @return An array of BrightcovePlaylist objects, keyed by the playlist id.
+   */
+  public function load($ids = array(), $conditions = array()) {
+    $playlists = [];
+    $entity_info = entity_get_info('brightcove_playlist');
+    foreach ($ids as $id) {
+      $playlist_ids = explode('-', $id);
+      if (count($playlist_ids) != 2) {
+        continue;
+      }
+      $playlist_id = $playlist_ids[0];
+      $client_id = $playlist_ids[1];
+      $playlist = brightcove_load_playlist($playlist_id, $client_id);
+
+      if ($playlist) {
+        $values = [
+          $entity_info['entity keys']['id'] => $id,
+          'playlist_id' => $playlist_id,
+          $entity_info['entity keys']['label'] => $playlist->getName(),
+          $entity_info['entity keys']['bundle'] => ($playlist->getType() == 'EXPLICIT') ? BRIGHTCOVE_PLAYLIST_TYPE_MANUAL : BRIGHTCOVE_PLAYLIST_TYPE_SMART,
+          'playlist' => $playlist,
+          'client' => brightcove_client_load($client_id),
+        ];
+        $playlist_entity = entity_create('brightcove_playlist', $values);
+        $playlists[$id] = $playlist_entity;
+      }
+
+    }
+    return $playlists;
+  }
+}
+
+/**
+ * Entity UI Controller class for brightcove playlists.
+ */
+class BrightcovePlaylistEntityUIController extends EntityBundleableUIController {
+
+  public function hook_menu() {
+    $items = parent::hook_menu();
+    $items['admin/config/media/brightcove/playlist'] = array(
+      'type' => MENU_LOCAL_TASK,
+      'title' => 'Playlists',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array($this->entityType . '_overview_form', $this->entityType),
+      'description' => 'Manage ' . $plural_label . '.',
+      'access callback' => 'entity_access',
+      'access arguments' => array('view', $this->entityType),
+      'file' => 'includes/entity.ui.inc',
+    );
+    return $items;
+  }
+
+  /**
+   * Overrides EntityDefaultUIController::overviewForm()
+   */
+  public function overviewForm($form, &$form_state) {
+    module_load_include('inc', 'brightcove', 'brightcove.client');
+    $form['client_id'] = brightcove_client_select_element();
+    $wrapper_id = 'bc-playlists';
+
+    switch ($form['client_id']['#type']) {
+      case 'select' :
+        $form['client_id']['#ajax'] = [
+          'wrapper' => $wrapper_id,
+          'callback' => 'brightcove_playlist_tables_ajax_callback'
+        ];
+        $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : NULL;
+        break;
+
+      case 'value' :
+        $client_id = $form['client_id']['#value'];
+        break;
+
+      default :
+        return $form;
+    }
+    $form['playlists'] = [
+      '#prefix' => '<div id="' . $wrapper_id . '">',
+      '#suffix' => '</div>'
+    ];
+    if (!empty($client_id) && ($client_id != BRIGHTCOVE_CLIENT_ID_NONE)) {
+      $client = brightcove_client_load($client_id);
+      $form['playlists']['#markup'] = $this->overviewTable(['client' => $client]);
+    }
+    return $form;
+  }
+
+  /**
+   * Renders the playlist overview table.
+   *
+   * @return string
+   *   Rendered overivew page.
+   */
+  public function overviewTable($conditions = array()) {
+    $client = $conditions['client'];
+    $table = [
+      'header' => [
+        t('ID'),
+        t('Title'),
+        [
+          'colspan' => 2,
+          'data' => t('Operations')
+        ]
+      ]
+    ];
+    module_load_include('inc', 'brightcove', 'brightcove.playlist');
+
+    $playlists = brightcove_get_playlists($client);
+    if ($playlists) {
+      foreach ( $playlists as $playlist ) {
+        $playlist_entity_id = $playlist->getId() . '-' . $client->bcid;
+        $playlist_entity = brightcove_playlist_load($playlist_entity_id);
+        $table['rows'][] = $this->overviewRow($playlist_entity);
+      }
+    }
+    else {
+      $table['rows'][] = [
+        [
+          'data' => t('No playlist found.'),
+          'colspan' => count($table['header'])
+        ]
       ];
-      $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : NULL;
-      break;
-
-    case 'value':
-      $client_id = $form['client_id']['#value'];
-      break;
-
-    default :
-      return $form;
+    }
+    return theme('table', $table);
   }
-  $form['playlists'] = [
-    '#prefix' => '<div id="' . $wrapper_id . '">',
-    '#suffix' => '</div>',
-  ];
-  if (!empty($client_id) && ($client_id != BRIGHTCOVE_CLIENT_ID_NONE)) {
-    $client = brightcove_client_load($client_id);
-    $form['playlists']['#markup'] = brightcove_playlist_overview_table($client);
+
+  /**
+   * Renders a table row on the Brightcove playlist overview page.
+   *
+   * @param Entity $client
+   *  The client entity object.
+   * @param BrightcovePlaylist $playlist
+   *   Playlist object.
+   *
+   * @return array
+   *   Table row.
+   *   @see theme_table()
+   */
+  protected function overviewRow(Entity $playlist) {
+    return [
+      $playlist->playlist->getId(),
+      $playlist->playlist->getName(),
+      l(t('edit'), "admin/config/media/brightcove/playlist/{$playlist->bpid}/edit"),
+      l(t('delete'), "admin/config/media/brightcove/playlist/{$playlist->bpid}/delete"),
+    ];
   }
-  return $form;
 }
 
 /**
@@ -44,54 +189,6 @@ function brightcove_playlist_overview_form($form, $form_state) {
  */
 function brightcove_playlist_tables_ajax_callback($form, $form_state) {
   return $form['playlists'];
-}
-
-/**
- * Renders the playlist overview page.
- *
- * @return string
- *   Rendered overivew page.
- */
-function brightcove_playlist_overview_table($client) {
-  $table = ['header' => [t('ID'), t('Title'), ['colspan' => 2, 'data' => t('Operations')]]];
-
-  $playlists = brightcove_get_playlists($client);
-  if ($playlists) {
-    foreach ($playlists as $playlist) {
-      $table['rows'][] = _brightcove_playlist_overview_row($client, $playlist);
-    }
-  }
-  else {
-    $table['rows'][] = [
-      [
-        'data' => t('No playlist found.'),
-        'colspan' => count($table['header']),
-      ],
-    ];
-  }
-
-  return theme('table', $table);
-}
-
-/**
- * Renders a table row on the Brightcove playlist overview page.
- *
- * @param Entity $client
- *  The client entity object.
- * @param BrightcovePlaylist $playlist
- *   Playlist object.
- *
- * @return array
- *   Table row.
- *   @see theme_table()
- */
-function _brightcove_playlist_overview_row(Entity $client, BrightcovePlaylist $playlist) {
-  return [
-    $playlist->getId(),
-    $playlist->getName(),
-    l(t('edit'), "admin/config/media/brightcove/playlist/$client->bcid/{$playlist->getId()}/edit"),
-    l(t('delete'), "admin/config/media/brightcove/playlist/$client->bcid/{$playlist->getId()}/delete"),
-  ];
 }
 
 /**
@@ -134,27 +231,17 @@ function brightcove_get_playlists(Entity $client, $cache_reset = FALSE) {
 
 /**
  *
- *
- * @param $playlist
- * @return array|mixed|null|string
- */
-function brightcove_playlist_edit_page($client, $playlist_id) {
-  $playlist = brightcove_playlist_load($playlist_id, $client->bcid);
-  if (!$playlist) {
-    return t('Playlist not found');
-  }
-  return drupal_get_form('brightcove_playlist_edit_form', $client, $playlist_id);
-}
-/**
- *
  * @param array $form
  * @param array $form_state
- * @param Entity $client
- *  The client entity object to use for editing the playlist.
- * @param BrightcovePlaylist $playlist
- *  The BrightcovePlaylist entity to edit.
+ * @param BrightcovePlaylistEntity|string $playlist
+ *  The BrightcovePlaylistEntity to edit or the bundle string.
  */
-function _brightcove_playlist_form(&$form, $form_state, $client = NULL, $playlist = NULL) {
+function _brightcove_playlist_form(&$form, $form_state, $playlist_entity) {
+  if (is_object($playlist_entity)) {
+    $client = $playlist_entity->client;
+    $playlist = $playlist_entity->playlist;
+  }
+
   $wrapper_id = 'bc-playlist-data-wrapper';
   if (!empty($client)) {
     $form['client_id'] = [
@@ -209,7 +296,7 @@ function _brightcove_playlist_form(&$form, $form_state, $client = NULL, $playlis
     '#type' => 'select',
     '#default_value' => $type_default,
     '#ajax' => [
-      'callback' => 'brightcove_playlist_edit_form_ajax_callback',
+      'callback' => 'brightcove_playlist_form_ajax_callback',
       'wrapper' => 'brightcove-playlist-settings',
     ],
     '#options' => [
@@ -308,27 +395,22 @@ function brightcove_playlist_client_ajax($form, $form_state) {
  *  The id of the playlist to edit.
  * @return array
  */
-function brightcove_playlist_edit_form($form, &$form_state, $client = NULL, $playlist_id = NULL) {
-  $playlist = NULL;
-  if (!empty($playlist_id) && !empty($client)) {
-    $playlist = brightcove_playlist_load($playlist_id, $client->bcid);
-    $form_state['playlist'] = $playlist;
-  }
-  _brightcove_playlist_form($form, $form_state, $client, $playlist);
+function brightcove_playlist_form($form, &$form_state, $playlist) {
+  _brightcove_playlist_form($form, $form_state, $playlist);
 
   $form['actions'] = ['#type' => 'actions'];
 
   $form['actions']['submit'] = [
     '#type' => 'submit',
     '#value' => t('Save'),
-    '#submit' => ['brightcove_playlist_edit_form_submit'],
+    '#submit' => ['brightcove_playlist_form_submit'],
   ];
 
-  if (!is_null($playlist)) {
+  if (!empty($playlist->bpid)) {
     $form['actions']['delete'] = [
       '#type' => 'submit',
       '#value' => t('Delete'),
-      '#submit' => ['brightcove_playlist_edit_form_delete'],
+      '#submit' => ['brightcove_playlist_form_delete'],
     ];
   }
 
@@ -342,17 +424,17 @@ function brightcove_playlist_edit_form($form, &$form_state, $client = NULL, $pla
  * @param $form_state
  * @return mixed
  */
-function brightcove_playlist_edit_form_ajax_callback($form, &$form_state) {
+function brightcove_playlist_form_ajax_callback($form, &$form_state) {
   return $form['settings'];
 }
 
 /**
- * brightcove_playlist_edit_form submit handler.
+ * brightcove_playlist_form submit handler.
  *
  * @param $form
  * @param $form_state
  */
-function brightcove_playlist_edit_form_submit($form, &$form_state) {
+function brightcove_playlist_form_submit($form, &$form_state) {
   $client = brightcove_client_load($form_state['values']['client_id']);
   list($cms,) = _brightcove_create_classes($client);
 
@@ -417,12 +499,12 @@ function brightcove_playlist_edit_form_submit($form, &$form_state) {
 }
 
 /**
- * brightcove_playlist_edit_form delete button callback.
+ * brightcove_playlist_form delete button callback.
  *
  * @param $form
  * @param $form_state
  */
-function brightcove_playlist_edit_form_delete($form, &$form_state) {
+function brightcove_playlist_form_delete($form, &$form_state) {
   $form_state['redirect'] = ["admin/config/media/brightcove/playlist/" . $form_state['playlist']->id . "/delete"];
 }
 
@@ -468,4 +550,85 @@ function brightcove_playlist_delete_form($form, &$form_state, $client, $playlist
   );
 }
 
+function _brightcove_configure_playlist_entity() {
+  $field_type = 'brightcove_field';
+  $field_name = 'brightcove_playlist_videos';
+  $entity_type = 'brightcove_playlist';
+  $field = field_info_field($field_name);
+  $instance = field_info_instance($entity_type, $field_name, BRIGHTCOVE_PLAYLIST_TYPE_MANUAL);
 
+  if (empty($field)) {
+    $field = array(
+      'field_name' => $field_name,
+      'type' => $field_type,
+      'cardinality' => -1,
+      'entity_types' => array($entity_type),
+      'translatable' => FALSE,
+      'locked' => TRUE,
+      'storage' => [
+        'type' => 'brightcove_playlist_video_storage',
+      ],
+    );
+    $field = field_create_field($field);
+  }
+
+  // Set field to active via a query because field_update_field() does
+  // not work on inactive fields.
+  db_update('field_config')
+    ->fields(array('active' => 1))
+    ->condition('field_name', $field_name, '=')
+    ->condition('deleted', 0, '=')
+    ->execute();
+  field_cache_clear();
+
+  if (empty($instance)) {
+    $instance = array(
+      'field_name' => $field_name,
+      'entity_type' => $entity_type,
+      'bundle' => BRIGHTCOVE_PLAYLIST_TYPE_MANUAL,
+      'label' => t('Videos'),
+      'settings' => array(),
+      'widget' => array(
+        'type' => BRIGHTCOVE_VIDEO_WIDGET,
+      ),
+      'display' => array(),
+    );
+
+    field_create_instance($instance);
+  }
+}
+
+/**
+ * @param $playlist_id
+ * @param bool $reset
+ * @return bool|object
+ */
+function brightcove_load_playlist($playlist_id, $client_id, $reset = FALSE) {
+  brightcove_load_lib();
+  $cid = "brightcove:playlist:$playlist_id:$client_id";
+  $cache = brightcove_cache_get($cid);
+  if (!$reset && $cache) {
+    return (object)$cache;
+  }
+  $playlist = FALSE;
+  $client = brightcove_client_load($client_id);
+
+  try {
+    list($cms, ) = _brightcove_create_classes($client);
+    $playlist = $cms->getPlaylist($playlist_id);
+  }
+  catch (Exception $e) {
+    watchdog('brightcove', 'Loading brightcove playlists failed.', [], WATCHDOG_ERROR);
+  }
+
+  if ($playlist) {
+    brightcove_cache_set($cid, $playlist);
+  }
+
+  return $playlist;
+}
+
+function brightcove_playlist_load($id) {
+  $playlists = entity_get_controller('brightcove_playlist')->load([$id]);
+  return reset($playlists);
+}

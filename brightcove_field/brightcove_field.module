@@ -406,6 +406,14 @@ function brightcove_field_field_info() {
 }
 
 /**
+ * Implements hook_enable().
+ */
+function brightcove_field_enable() {
+  module_load_include('inc', 'brightcove', 'brightcove.playlist');
+  _brightcove_configure_playlist_entity();
+}
+
+/**
  * Implements hook_field_settings_form().
  */
 function brightcove_field_field_instance_settings_form($field, $instance) {
@@ -464,7 +472,7 @@ function brightcove_field_field_validate($entity_type, $entity, $field, $instanc
     case BRIGHTCOVE_PLAYLIST_WIDGET:
       foreach ($items as $delta => $item) {
         if (!empty($item['brightcove_id']) && ($item['brightcove_id'] !== BRIGHTCOVE_CLIENT_ID_NONE)) {
-          $playlist = brightcove_playlist_load($item['brightcove_id'], $item['client_id']);
+          $playlist = brightcove_load_playlist($item['brightcove_id'], $item['client_id']);
           if (empty($playlist)) {
             $errors[$field['field_name']][$langcode][$delta][] = [
               'error' => 'brightcove_field',
@@ -927,7 +935,7 @@ function brightcove_field_playlist_browser_value($element, $value, $form_state) 
     $value = $element['#default_value'];
   }
   if (((int) $value) > 1) {
-    $playlist = brightcove_playlist_load($value);
+    $playlist = brightcove_load_playlist($value);
     if (!empty($playlist->id)) {
       $value = check_plain($playlist->name) . " [id:{$playlist->id}]";
     }
@@ -1000,7 +1008,7 @@ function brightcove_field_browser_playlist_validate($element, &$form_state) {
 
     if (is_numeric($id)) {
       // Matched ID, check if the video exists.
-      $playlist = brightcove_playlist_load($id);
+      $playlist = brightcove_load_playlist($id);
       if (empty($playlist)) {
         form_error($element, t('%name: Found no valid playlist with that name.', ['%name' => t($element['#title'])]));
       }
@@ -1427,7 +1435,7 @@ function brightcove_field_field_formatter_view($entity_type, $entity, $field, $i
         foreach ($items as $delta => $item) {
           $playlist = FALSE;
           if (isset($item['brightcove_id'])) {
-            $playlist = brightcove_playlist_load($item['brightcove_id'], $item['client_id']);
+            $playlist = brightcove_load_playlist($item['brightcove_id'], $item['client_id']);
           }
           $element[$delta] = [
             '#theme' => $theme,
