@@ -41,11 +41,8 @@ define('BRIGHTCOVE_CACHE_FILE_EXT', 'cache');
 define('BRIGHTCOVE_CACHE_MEMCACHE_PATH', 'localhost');
 define('BRIGHTCOVE_CACHE_MEMCACHE_PORT', 11211);
 
-/**
- * Settings needed:
- *  - API key
- *  - Allow public videos
- */
+// Without this brightcove_playlist_access() is not always found.
+require_once 'brightcove.playlist.inc';
 
 /**
  * Implements hook_menu().
@@ -386,23 +383,7 @@ function brightcove_ctools_plugin_directory($module, $type) {
   }
 }
 
-function brightcove_playlist_access($op, $entity, $account = NULL) {
-  if ($op == 'view') {
-    return TRUE;
-  }
-  elseif ($op == 'create') {
-    return TRUE;
-  }
-  // Does drupal user have permission to use this brightcove client?
-  if (!brightcove_client_access('use', $entity->client)) {
-    return FALSE;
-  }
-  // TODO Detect "Playlist Read/Write" permission of client once Brightcove
-  // implements an endpoint for it.
-  return TRUE;
-}
-
- /**
+/**
  * Autocomplete callback for listing videos.
  *
  * @param Entity $client

@@ -248,6 +248,20 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
 }
 
 /**
+ * Access callback for playlist entities.
+ */
+function brightcove_playlist_access($op, $entity, $account = NULL) {
+  // Viewing the playlist should be restricted by the content access the
+  // playlist is embedded into.
+  // Playlist creation depends on the client anyway so let's grant access and
+  // notify user on failure later.
+  if ($op == 'view' || $op == 'create') {
+    return TRUE;
+  }
+  return brightcove_client_access('use', $entity->client);
+}
+
+/**
  * AJAX callback to return the playlists table.
  */
 function brightcove_playlist_tables_ajax_callback($form, $form_state) {
