@@ -139,6 +139,7 @@ function brightcove_entity_info() {
       'path' => 'admin/config/media/brightcove/playlist',
       'controller class' => 'BrightcovePlaylistEntityUIController',
       'file' => 'brightcove.playlist.inc',
+      'menu wildcard' => '%brightcove_playlist',
     ],
     'module' => 'brightcove',
     'access callback' => 'brightcove_playlist_access',
@@ -146,6 +147,7 @@ function brightcove_entity_info() {
       'singular' => t('playlist'),
       'plural' => t('playlists')
     ],
+    'load hook' => 'brightcove_playlist_load',
     'bundles' => [
       BRIGHTCOVE_PLAYLIST_TYPE_MANUAL => [
         'label' => t('Manual playlist'),
