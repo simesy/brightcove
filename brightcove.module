@@ -212,18 +212,30 @@ function brightcove_account_uri($entity) {
  * Access callback for brightcove_client entity.
  *
  * @param $op
- *  Can be 'edit' or 'use'.
+ *   Can be 'edit' or 'use'.
+ * @param $entity
+ *   Brightcove client entity or client ID.
+ * @param $account
+ *   Loaded user account.
+ * @return bool
  */
 function brightcove_client_access($op, $entity = NULL, $account = NULL) {
-  if (empty($account)) {
+  // If we got ID try to load the entity.
+  if (is_numeric($entity)) {
+    $entity = brightcove_client_load($entity);
+  }
+
+  // If account is not set use the currently logged in user.
+  if (is_null($account)) {
     global $user;
     $account = $user;
   }
+
   switch ($op) {
     case 'use':
-      return user_access('use brightcove client ' . $entity->bcid) || user_access('administer brightcove settings');
+      return user_access('use brightcove client ' . $entity->bcid, $account) || user_access('administer brightcove settings', $account);
     default:
-      return user_access('administer brightcove settings');
+      return user_access('administer brightcove settings', $account);
   }
 }
 
@@ -931,6 +943,8 @@ function _brightcove_my_client_select_options($account = NULL) {
 function _brightcove_upload_form($form, &$form_state) {
   $form = [];
 
+  drupal_prepare_form('brightcove_upload_form', $form, $form_state);
+
   $client = $form_state['build_info']['args'][0];
 
   // Check for existing clients.
@@ -1118,6 +1132,17 @@ function _brightcove_upload_form($form, &$form_state) {
     '#title' => t('Video encoding profile'),
     '#options' => drupal_map_assoc(brightcove_standard_profile_list()),
   ];
+
+  $form['additional_fields'] = [
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => t('Additional fields'),
+  ];
+
+  // Attach additional fields.
+  $entity = entity_create('brightcove_video', array('type' => 'brightcove_video'));
+  field_attach_form('brightcove_video', $entity, $form['additional_fields'], $form_state);
 
   $form['#validate'][] = '_brightcove_upload_form_validate';
 

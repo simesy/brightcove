@@ -5,6 +5,41 @@
  */
 
 /**
+ * Implements hook_schema().
+ */
+function brightcove_field_schema() {
+  $schema['brightcove_video'] = [
+    'description' => 'Stores information about brightcove video.',
+    'fields' => [
+      'bvid' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique key for brightcove video.',
+      ],
+      'video_id' => [
+        'description' => 'The ID of the video.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'entity_id' => [
+        'description' => 'The ID of the entity for which belongs to.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'entity_type' => [
+        'description' => 'The type of the entity for which belongs to.',
+        'type' => 'varchar',
+        'length' => '128',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['bvid'],
+  ];
+
+  return $schema;
+}
+
+/**
  * Implements hook_field_schema().
  */
 function brightcove_field_field_schema() {
@@ -121,9 +156,7 @@ function brightcove_field_update_7601() {
     ];
 
     foreach (field_info_fields() as $name => $def) {
-      if ($def['type'] == 'brightcove_field' &&
-        $def['storage']['type'] == 'field_sql_storage'
-      ) {
+      if ($def['type'] == 'brightcove_field' && $def['storage']['type'] == 'field_sql_storage') {
         $tablename = _field_sql_storage_tablename($def);
         $revtablename = _field_sql_storage_revision_tablename($def);
         $client_id_col = _field_sql_storage_columnname($name, 'client_id');

@@ -3,6 +3,8 @@ description = A field allowing to attach videos to nodes.
 core = 7.x
 package = Fields
 
+configure = admin/config/media/brightcove-fields
+
 dependencies[] = brightcove
 dependencies[] = date
 dependencies[] = date_popup

@@ -77,7 +77,7 @@ function brightcove_field_menu() {
     'type' => MENU_CALLBACK,
   ];
 
-  // entity type, field name, entity id or bundle
+  // entity type, field name, entity id or bundle, client id
   $items['brightcove_field/upload/video/%/%/%/%brightcove_client'] = [
     'title' => 'Upload video to Brightcove',
     'page callback' => 'brightcove_field_upload',
@@ -121,6 +121,22 @@ function brightcove_field_menu() {
     'delivery callback' => 'ajax_deliver',
     'type' => MENU_CALLBACK,
   ];
+
+  $admin_base_path = 'admin/config/media/brightcove';
+
+  if (module_exists('field_ui')) {
+    $items["{$admin_base_path}/additional-fields"] = [
+      'title' => 'Additional fields',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => ['field_ui_field_overview_form', 'brightcove_video', 'brightcove_video'],
+      'type' => MENU_LOCAL_ACTION,
+      'file path' => drupal_get_path('module', 'field_ui'),
+      'file' => 'field_ui.admin.inc',
+      'access callback' => TRUE,
+      'access arguments' => [],
+      'type' => MENU_LOCAL_TASK,
+    ];
+  }
 
   return $items;
 }
@@ -1789,5 +1805,36 @@ function brightcove_field_auto_creation() {
   return [
     'brightcove_id' => 0,
     'player' => variable_get('brightcove_player_default', ''),
+  ];
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function brightcove_field_entity_info() {
+  return [
+    'brightcove_video' => [
+      'label' => t('Brightcove video'),
+      'fieldable' => TRUE,
+      'base table' => 'brightcove_video',
+      'controller class' => 'BrightcoveVideoEntityController',
+      'entity class' => 'Entity',
+      'entity keys' => [
+        'id' => 'bvid',
+        'bundle' => 'type',
+      ],
+      'bundle keys' => [
+        'bundle' => 'type',
+      ],
+      'bundles' => [
+        'brightcove_video' => [
+          'label' => t('Brightcove video'),
+          'admin' => [
+            'path' => 'admin/config/media/brightcove/additional-fields',
+            'real path' => 'admin/config/media/brightcove/additional-fields',
+          ],
+        ],
+      ]
+    ],
   ];
 }
