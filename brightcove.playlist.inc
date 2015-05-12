@@ -48,8 +48,8 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
         $cms->createPlaylist($playlist_entity->playlist);
       }
       $name = $playlist_entity->playlist->getName();
-      watchdog('brightcove', 'Saving brightcove playlist @name was successful.', ['@name' => $name], WATCHDOG_INFO);
-      drupal_set_message(t('Saving brightcove playlist @name was successful.', ['@name' => $name]), 'status');
+      watchdog('brightcove', 'Saving brightcove playlist "@name" was successful.', ['@name' => $name], WATCHDOG_INFO);
+      drupal_set_message(t('Saving brightcove playlist "@name" was successful.', ['@name' => $name]), 'status');
     }
     catch (BrightcoveAPIException $e) {
       watchdog('brightcove', 'Saving brightcove playlist failed with the following message: @message.', ['@message' => $e->getMessage()], WATCHDOG_ERROR);
@@ -411,7 +411,7 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
         '#type' => 'textfield',
         '#title' => t('Search string'),
         '#default_value' => $playlist_entity->playlist->getSearch(),
-        '#description' => t('The playlist will contain the videos resulting from the search. For details see https://docs.brightcove.com/en/video-cloud/cms-api/guides/search-videos.html.'),
+        '#description' => t('The playlist will contain the videos resulting from the search. Currently only tags are supported. E.g. "+tags:bird". For further information click <a href="https://docs.brightcove.com/en/video-cloud/cms-api/guides/search-videos.html#search">here</a>.'),
       ];
 
       $form['playlist_data']['settings']['playlistType'] = [
