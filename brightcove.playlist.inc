@@ -54,6 +54,7 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
     catch (BrightcoveAPIException $e) {
       watchdog('brightcove', 'Saving brightcove playlist failed with the following message: @message.', ['@message' => $e->getMessage()], WATCHDOG_ERROR);
       drupal_set_message(t('Saving brightcove playlist failed with the following message: @message', ['@message' => $e->getMessage()]), 'error');
+      throw $e;
     }
     brightcove_invalidate_cache('brightcove:playlist:list:' . $client_id);
   }
@@ -470,12 +471,14 @@ function brightcove_playlist_form_submit($form, &$form_state) {
     $playlist->setType('EXPLICIT');
   }
   field_attach_submit('brightcove_playlist', $playlist_entity, $form, $form_state);
-  entity_get_controller('brightcove_playlist')->save($playlist_entity);
-  $form_state['redirect'] = ['admin/config/media/brightcove/playlist'];
+  try {
+    entity_get_controller('brightcove_playlist')->save($playlist_entity);
+  }
+  catch (Exception $e) {
+    // In case of save failure keep form changes.
+    $form_state['rebuild'] = TRUE;
+  }
   return;
-
-  // Manual playlists.
-
 }
 
 /**
