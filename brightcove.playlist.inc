@@ -32,6 +32,7 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
   public function save($playlist_entity, DatabaseTransaction $transaction = NULL) {
     if (!isset($playlist_entity->client)) {
       watchdog('brightcove', 'Saving playlist failed due to missing client property.', [], WATCHDOG_ERROR);
+      drupal_set_message(t('Saving playlist failed due to missing client property.'), 'error');
       return;
     }
     $client_id = $playlist_entity->client->bcid;
@@ -48,9 +49,11 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
       }
       $name = $playlist_entity->playlist->getName();
       watchdog('brightcove', 'Saving brightcove playlist @name was successful.', ['@name' => $name], WATCHDOG_INFO);
+      drupal_set_message(t('Saving brightcove playlist @name was successful.', ['@name' => $name]), 'status');
     }
     catch (BrightcoveAPIException $e) {
-      watchdog('brightcove', 'Saving brightcove playlist failed.', [], WATCHDOG_ERROR);
+      watchdog('brightcove', 'Saving brightcove playlist failed with the following message: @message.', ['@message' => $e->getMessage()], WATCHDOG_ERROR);
+      drupal_set_message(t('Saving brightcove playlist failed with the following message: @message', ['@message' => $e->getMessage()]), 'error');
     }
     brightcove_invalidate_cache('brightcove:playlist:list:' . $client_id);
   }
@@ -100,35 +103,34 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
   public function delete($ids, DatabaseTransaction $transaction = NULL) {
     $entities = $ids ? $this->load($ids) : FALSE;
     if (!$entities) {
-      // Do nothing, in case invalid or no ids have been passed.
+      // Do nothing in case invalid or no ids have been passed.
       return;
     }
     foreach ($entities as $playlist_entity) {
       list($cms,) = _brightcove_create_classes($playlist_entity->client);
       $playlist = $playlist_entity->playlist;
       try {
-        $name = $playlist->getName();
         $cms->deletePlaylist($playlist->getId());
       }
       catch (Exception $error) {
         watchdog('brightcove', 'Deleting playlist @playlist failed.', ['@playlist' => $playlist->getId()], WATCHDOG_ERROR);
+        drupal_set_message(t('Deleting playlist @playlist failed.', ['@playlist' => $playlist->getId()]), 'error');
       }
       // deletePlaylist() fails silently in case the client has no permission to
       // delete the playlist so we check here if it has been really removed or
       // not.
       try {
         $cms->getPlaylist($playlist->getId());
+        watchdog('brightcove', 'Deleting the playlist @playlist has failed. Maybe the brightcove client has not enough permissions.', ['@playlist' => $playlist->getId()], WATCHDOG_ERROR);
         drupal_set_message(t('Deleting the playlist @playlist has failed. Maybe the brightcove client has not enough permissions.', ['@playlist' => $playlist->getId()]), 'error');
       }
       catch (Exception $e) {
-        //drupal_set_message(t('The playlist "@playlist" has been removed.', ['@playlist' => $name]), 'status');
          // Invalidate playlist cache.
         brightcove_invalidate_cache('brightcove:playlist:' . $playlist_entity->bpid);
         brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
       }
     }
   }
-
 }
 
 /**
@@ -297,6 +299,7 @@ function brightcove_get_playlists(Entity $client, $cache_reset = FALSE) {
   }
   catch (Exception $error) {
     watchdog('brightcove', 'Fetching playlists failed.', [], WATCHDOG_ERROR);
+    drupal_set_message(t('Fetching playlists failed.'), 'error');
   }
 
   if ($playlists) {
@@ -509,6 +512,7 @@ function brightcove_playlist_delete_form($form, &$form_state, $client, $playlist
   }
   catch (BrightcoveAPIException $e) {
     watchdog('brightcove', 'This playlist is not accessible by this client.', [], WATCHDOG_ERROR);
+    drupal_set_message(t('This playlist is not accessible by this client.'), 'error');
   }
 
   $form['playlist_id'] = [
@@ -615,7 +619,8 @@ function brightcove_load_playlist($playlist_id, $client_id, $reset = FALSE) {
     $playlist = $cms->getPlaylist($playlist_id);
   }
   catch (Exception $e) {
-    watchdog('brightcove', 'Loading brightcove playlists failed.', [], WATCHDOG_ERROR);
+    watchdog('brightcove', 'Loading brightcove playlist failed.', [], WATCHDOG_ERROR);
+    drupal_set_message(t('Loading brightcove playlist failed.'), 'error');
   }
 
   if ($playlist) {

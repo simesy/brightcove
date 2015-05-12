@@ -294,6 +294,7 @@ function _brightcove_field_video_browse($client) {
     }
     catch (Exception $error) {
       watchdog('brightcove', 'Finding videos in browse failed.', [], WATCHDOG_ERROR);
+      drupal_set_message(t('Finding videos in browse failed.'), 'error');
     }
 
     $pager_page_array = explode(',', $page);
