@@ -136,7 +136,7 @@ function brightcove_client_select_element() {
     ];
   }
   elseif (count($client_options) == 2) {
-    $client_id = array_keys($client_options)[0];
+    $client_id = array_keys($client_options)[1];
     $element = [
       '#type' => 'value',
       '#value' => $client_id,
