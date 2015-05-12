@@ -68,8 +68,19 @@ function brightcove_field_menu() {
   // bc object type, entity type, field name, entity id or bundle
   $items['brightcove_field/browse_video/%/%/%/%brightcove_client'] = [
     'title' => 'Brightcove Videos Browser',
-    'page arguments' => [5],
+    'page arguments' => [2, 3, 4, 5],
     'page callback' => 'brightcove_field_browse',
+    'delivery callback' => 'brightcove_field_deliver_dialog',
+    'access callback' => 'brightcove_field_browse_access',
+    'access arguments' => ['browse videos', 2, 3, 4, 5],
+    'file' => 'brightcove_field.browse.inc',
+    'type' => MENU_CALLBACK,
+  ];
+
+  $items['brightcove_field/edit_video/%/%/%/%brightcove_client/%'] = [
+    'title' => 'Brightcove Video editor',
+    'page arguments' => [5, 6],
+    'page callback' => 'brightcove_field_edit',
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
     'access arguments' => ['browse videos', 2, 3, 4, 5],
@@ -157,6 +168,20 @@ function ajax_browse_dialog_close_callback($form, $form_state) {
   return ['#type' => 'ajax', '#commands' => $commands];
 }
 
+function ajax_browse_dialog_redirect_callback($form, $form_state) {
+  $entity_type = $form_state['values']['entity_type'];
+  $field_name = $form_state['values']['field_name'];
+  $entity_id_or_bundle = $form_state['values']['entity_id_or_bundle'];
+  $client_id = $form_state['values']['client_id'];
+  $id = $form_state['values']['id'];
+
+  ctools_include('ajax');
+
+  $commands = [];
+  $commands[] = ctools_ajax_command_redirect("brightcove_field/edit_video/{$entity_type}/{$field_name}/{$entity_id_or_bundle}/{$client_id}/{$id}");
+  return ['#type' => 'ajax', '#commands' => $commands];
+}
+
 /**
  * Rerenders the brightcove field widget.
  *
@@ -235,6 +260,20 @@ function ajax_upload_video_dialog_close_callback($form, $form_state) {
   $data_id = check_plain($id);
   $data = $id ? "{$data_title} [id:{$data_id}]" : '';
   $dialog_type = 'upload';
+
+  $commands = [];
+  $commands[] = ajax_command_close_dialog($selector, $data, NULL, $dialog_type);
+  return ['#type' => 'ajax', '#commands' => $commands];
+}
+
+function ajax_edit_video_dialog_close_callback($form, $form_state) {
+  $id = _brightcove_edit_form_callback($form, $form_state);
+
+  $selector = '#browse-dialog';
+  $data_title = check_plain($form_state['values']['title']);
+  $data_id = check_plain($id);
+  $data = $id ? "{$data_title} [id:{$data_id}]" : '';
+  $dialog_type = 'browse';
 
   $commands = [];
   $commands[] = ajax_command_close_dialog($selector, $data, NULL, $dialog_type);
@@ -1089,11 +1128,23 @@ function brightcove_field_theme($existing, $type, $theme, $path) {
       'file' => 'theme.inc',
     ],
     'brightcove_field_browse_item' => [
-      'variables' => ['item' => NULL],
+      'variables' => [
+        'item' => NULL,
+        'entity_type' => NULL,
+        'field_name' => NULL,
+        'entity_id_or_bundle' => NULL,
+        'client_id' => NULL,
+      ],
       'file' => 'theme.inc',
     ],
     'brightcove_field_browse_items' => [
-      'variables' => ['item' => NULL],
+      'variables' => [
+        'items' => NULL,
+        'entity_type' => NULL,
+        'field_name' => NULL,
+        'entity_id_or_bundle' => NULL,
+        'client_id' => NULL,
+      ],
       'file' => 'theme.inc',
     ],
     'brightcove_field_embed' => [
@@ -1196,33 +1247,67 @@ function brightcove_field_filter_form_submit($form, &$form_state) {
  *
  * @see brightcove_field_forms().
  */
-function brightcove_field_browser_form($form, &$form_state, $item) {
+function brightcove_field_browser_form($form, &$form_state, $item, $entity_type, $field_name, $entity_id_or_bundle, $client_id) {
   $form['id'] = [
     '#type' => 'value',
     '#default_value' => $item['brightcove_id'],
   ];
+
+  $form['entity_type'] = [
+    '#type' => 'value',
+    '#default_value' => $entity_type,
+  ];
+
+  $form['field_name'] = [
+    '#type' => 'value',
+    '#default_value' => $field_name,
+  ];
+
+  $form['entity_id_or_bundle'] = [
+    '#type' => 'value',
+    '#default_value' => $entity_id_or_bundle,
+  ];
+
+  $form['client_id'] = [
+    '#type' => 'value',
+    '#default_value' => $client_id,
+  ];
+
   $form['title'] = [
     '#type' => 'value',
     '#default_value' => $item['title'],
   ];
+
   $form['text_title'] = [
     '#prefix' => '<div class="brightcove-title">',
     '#suffix' => '</div>',
     '#markup' => $item['title'],
   ];
+
   $form['text_image'] = [
     '#prefix' => '<div class="brightcove-image">',
     '#suffix' => '</div>',
     '#markup' => $item['thumbnail'],
   ];
-  $form['submit'] = [
+
+  $form['attach'] = [
     '#type' => 'submit',
-    '#name' => 'submit-' . $item['brightcove_id'],
+    '#name' => 'attach-' . $item['brightcove_id'],
     '#default_value' => t('Attach'),
     '#ajax' => [
       'callback' => 'ajax_browse_dialog_close_callback',
     ],
   ];
+
+  $form['edit'] = [
+    '#type' => 'submit',
+    '#name' => 'edit-' . $item['brightcove_id'],
+    '#default_value' => t('Edit'),
+    '#ajax' => [
+      'callback' => 'ajax_browse_dialog_redirect_callback',
+    ],
+  ];
+
   return $form;
 }
 
@@ -1244,7 +1329,7 @@ function brightcove_field_forms($form_id, $args) {
  * Upload form. Will return a form for one video item.
  */
 function brightcove_field_upload_form($form, $form_state) {
-  $form = _brightcove_upload_form($form, $form_state);
+  $form = _brightcove_edit_form($form_state, TRUE);
   $form['#prefix'] = '<div id="dialog-upload-form">';
 
   $form['submit'] = [

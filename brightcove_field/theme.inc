@@ -31,7 +31,7 @@ function theme_brightcove_field_browse_button($element) {
  *   Themed item form.
  */
 function theme_brightcove_field_browse_item($variables) {
-  $form = drupal_get_form('brightcove_field_browser_form' . $variables['item']['brightcove_id'], $variables['item']);
+  $form = drupal_get_form('brightcove_field_browser_form' . $variables['item']['brightcove_id'], $variables['item'], $variables['entity_type'], $variables['field_name'], $variables['entity_id_or_bundle'], $variables['client_id']);
   return drupal_render($form);
 }
 
@@ -49,8 +49,13 @@ function theme_brightcove_field_browse_items($variables) {
   $activerow = 0;
   $rows = [];
   foreach ($variables['items'] as $item) {
-    // TODO test these after field port is stable
-    $themed = theme('brightcove_field_browse_item', ['item' => $item]);
+    $themed = theme('brightcove_field_browse_item', [
+      'item' => $item,
+      'entity_type' => $variables['entity_type'],
+      'field_name' => $variables['field_name'],
+      'entity_id_or_bundle' => $variables['entity_id_or_bundle'],
+      'client_id' => $variables['client_id'],
+    ]);
     $rowcount++;
     if ($rowcount == 4) {
       $activerow++;
@@ -58,7 +63,6 @@ function theme_brightcove_field_browse_items($variables) {
     }
     $rows[$activerow][] = $themed;
   }
-  // TODO test these after field port is stable
   return '<div id="brightcove-browse-table-table">' . theme('table', ['header' => [], 'rows' => $rows]) . '</div>';
 }
 
