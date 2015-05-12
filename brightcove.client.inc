@@ -125,7 +125,7 @@ class BrightcoveClientEntityController extends EntityAPIController {
  * select is needed on a form.
  */
 function brightcove_client_select_element() {
-  $client_options[BRIGHTCOVE_CLIENT_ID_NONE] = t('- Select a client -');
+  $client_options = [BRIGHTCOVE_CLIENT_ID_NONE => t('- Select a client -')];
   $client_options +=  _brightcove_my_client_select_options();
   if (count($client_options) > 2) {
     $element = [

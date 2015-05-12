@@ -175,6 +175,47 @@ function brightcove_field_storage_info() {
 }
 
 /**
+ * Implements hook_field_storage_load().
+ */
+function brightcove_field_storage_load($entity_type, $entities, $age, $fields, $options) {
+  if ($entity_type == 'brightcove_playlist') {
+    foreach ($fields as $field_id => $ids) {
+      $field = field_info_field_by_id($field_id);
+      $field_name = $field ['field_name'];
+      foreach ($ids as $id) {
+        $video_ids = $entities[$id]->playlist->getVideoIds();
+        foreach ($video_ids as $video_id) {
+          $entities[$id]->{$field_name}[LANGUAGE_NONE][] = [
+            'brightcove_id' => $video_id,
+            'client_id' => $entities[$id]->client->bcid,
+          ];
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_field_storage_write().
+ */
+function brightcove_field_storage_write($entity_type, $entity, $op, $fields) {
+  if ($entity_type == 'brightcove_playlist') {
+    foreach ($fields as $field_id) {
+      $field = field_info_field_by_id($field_id);
+      $field_name = $field ['field_name'];
+      if ($field['type'] == 'brightcove_field') {
+        $videos = field_get_items($entity_type, $entity, $field_name);
+        $video_ids = [];
+        foreach ($videos as $video_id) {
+          $video_ids[] = $video_id['brightcove_id'];
+        }
+        $entity->playlist->setVideoIds($video_ids);
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_libraries_info().
  */
 function brightcove_libraries_info() {
@@ -195,6 +236,9 @@ function brightcove_libraries_info() {
   ];
 }
 
+/**
+ * Load brightcove php wrapper library.
+ */
 function brightcove_load_lib() {
   libraries_load('PHP-API-Wrapper');
 }
@@ -243,6 +287,14 @@ function brightcove_client_save($client) {
   entity_get_controller('brightcove_client')->save($client);
 }
 
+/**
+ * Load a brightcove client entity.
+ *
+ * @param string $client_id
+ *  The client id
+ * @return Entity
+ *  The clietn entity object.
+ */
 function brightcove_client_load($client_id) {
   return entity_load_single('brightcove_client', $client_id);
 }
@@ -397,53 +449,6 @@ function brightcove_autocomplete_videos($client, $videos_typed) {
     $video_matches[$prefix . $name] = check_plain($name);
   }
   drupal_json_output($video_matches);
-}
-
-/**
- * Playlist delete confirm form submit handler.
- *
- * @param $form
- * @param $form_state
- */
-function brightcove_playlist_delete_form_submit($form, &$form_state) {
-  brightcove_playlist_delete(brightcove_client_load($form_state['values']['client_id']), $form_state['values']['playlist_id']);
-
-  // Invalidate playlist cache.
-  brightcove_invalidate_cache('brightcove:playlist:' . $form_state['values']['playlist_id']);
-  brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
-
-  // Redirect the user the playlists listing page.
-  $form_state['redirect'] = ['admin/config/media/brightcove/playlist'];
-}
-
-/**
- * Delete a playlists from brightcove wrapper function.
- *
- * @param $client
- *   The client entity object
- * @param array $playlist_id
- * @return boolean
- */
-function brightcove_playlist_delete($client, $playlist_id) {
-  list($cms,) = _brightcove_create_classes($client);
-  try {
-    $playlist = $cms->getPlaylist($playlist_id);
-    $name = $playlist->getName();
-    $cms->deletePlaylist($playlist_id);
-  }
-  catch (Exception $error) {
-    watchdog('brightcove', 'Deleting playlist @playlist failed.', ['@playlist' => $playlist_id], WATCHDOG_ERROR);
-  }
-  // deletePlaylist() fails silently in case the client has no permission to
-  // delete the playlist so we check here if it has been really removed or
-  // not.
-  try {
-    $cms->getPlaylist($playlist_id);
-    drupal_set_message(t('Deleting the playlist @playlist has failed. Maybe the brightcove client has not enough permissions.', ['@playlist' => $playlist_id]), 'error');
-  }
-  catch (Exception $e) {
-    drupal_set_message(t('The playlist "@playlist" has been removed.', ['@playlist' => $name]), 'status');
-  }
 }
 
 /**

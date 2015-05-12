@@ -152,20 +152,9 @@
     Drupal.ajax.prototype.commands.ui_dialog_close = function (ajax, response, status) {
       var dialog = parent.jQuery(response.selector);
       var dialog_type = response.dialog_type;
-
-      switch (dialog_type) {
-        case 'browse':
-          Drupal.brightcove_field.submit_browse(dialog.attr('rel'), response.data);
-          break;
-        case 'upload':
-          Drupal.brightcove_field.submit_browse(dialog.attr('rel'), response.data);
-          break;
-        case 'create':
-          Drupal.brightcove_field.submit_browse(dialog.attr('rel'), response.data);
-          break;
-      }
-
+      Drupal.brightcove_field.submit_browse(dialog.attr('rel'), response.data);
       dialog.dialog('close');
     };
 
 })(jQuery);
+

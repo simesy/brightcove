@@ -139,6 +139,9 @@ function brightcove_field_open_dialog($type, $width, $height, $entity_type, $ent
   ];
 }
 
+/**
+ * Page callback for closing a dialog.
+ */
 function ajax_browse_dialog_close_callback($form, $form_state) {
   $selector = '#browse-dialog';
   $data = check_plain($form_state['values']['title']) . ' [id:' . check_plain($form_state['values']['id']) . ']';
@@ -165,10 +168,8 @@ function ajax_browse_dialog_close_callback($form, $form_state) {
 function _brightcove_field_rerender_widget(array &$commands, array $form, array $form_state) {
   $field_name = $form_state['triggering_element']['#parents'][0];
   $delta = $form_state['triggering_element']['#parents'][2];
-
-  array_pop($form_state['triggering_element']['#parents']);
-
   $wrapper = _brightcove_field_get_wrapper_name($field_name, $delta);
+  module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
   $content = brightcove_field_video_client_ajax_callback($form, $form_state);
   $rendered_content = drupal_render($content);
   $commands[] = ajax_command_replace("#{$wrapper}", $rendered_content);
@@ -902,7 +903,7 @@ function brightcove_field_video_browser_value($element, $value, $form_state) {
   $client_parents = $element['#parents'];
   array_pop($client_parents);
   array_push($client_parents, 'client_id');
-  $client_id = drupal_array_get_nested_value($form_state['input'], $element['#parents']);
+  $client_id = drupal_array_get_nested_value($form_state['values'], $client_parents);
   if ($client_id === NULL) {
     $parent_elements = $element['#parents'];
     array_pop($parent_elements);
@@ -950,12 +951,11 @@ function brightcove_field_browser_video_validate($element, &$form_state) {
   $id = '';
   $value = $element['#value'];
   if (!empty($value)) {
-
     $id = brightcove_parse_id($value);
     $client_parents = $element['#parents'];
     array_pop($client_parents);
     array_push($client_parents, 'client_id');
-    $client_id = drupal_array_get_nested_value($form_state['input'], $client_parents);
+    $client_id = drupal_array_get_nested_value($form_state['values'], $client_parents);
     $client = brightcove_client_load_or_default($client_id);
     // Assign ID to the value.
     // 231289 [id:72431493001]
