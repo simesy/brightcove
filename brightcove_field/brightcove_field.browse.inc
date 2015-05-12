@@ -19,7 +19,7 @@
  * TODO: Interesting feature would be to detect multiple values allowed in the
  *       parent field and allow attaching all videos at once.
  */
-function brightcove_field_browse($client) {
+function brightcove_field_browse($entity_type, $field_name, $entity_id_or_bundle, $client) {
   $content = [];
   module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
   $content = _brightcove_field_video_browse($client);
@@ -28,6 +28,7 @@ function brightcove_field_browse($client) {
     '#attached' => [
       'js' => [
         drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
+        ctools_attach_js('ajax-responder'),
       ],
       'css' => [
         drupal_get_path('module', 'brightcove_field') . '/styles/browse.css',
@@ -35,7 +36,80 @@ function brightcove_field_browse($client) {
     ],
   ];
 
-  return '<div class="brightcove-browse-table">' . drupal_render($content['filter_form']) . $content['pager'] . theme('brightcove_field_browse_items', ['items' => $content['items']]) . $content['pager'] . '</div>';
+  return '<div class="brightcove-browse-table">' .
+    drupal_render($content['filter_form']) .
+    $content['pager'] .
+    theme('brightcove_field_browse_items', [
+      'items' => $content['items'],
+      'entity_type' => $entity_type,
+      'field_name' => $field_name,
+      'entity_id_or_bundle' => $entity_id_or_bundle,
+      'client_id' => $client->bcid,
+    ]) .
+    $content['pager'] .
+  '</div>';
+}
+
+function brightcove_field_edit($client, $video_id) {
+  drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css');
+
+  $form = drupal_get_form('brightcove_field_edit_form', $client, $video_id);
+
+  return drupal_render($form);
+}
+
+function brightcove_field_edit_form($form, $form_state, $client, $video_id) {
+  list($cms,) = _brightcove_create_classes($client);
+  $video = $cms->getVideo($video_id);
+
+  $form_state = [];
+  $form_state['build_info']['args'][0] = $client;
+
+  $form_state['values'] = [
+    'title' => $video->getName(),
+    'short' => $video->getDescription(),
+    'long' => $video->getLongDescription(),
+    'reference_id' => $video->getReferenceId(),
+    'tags' => implode(', ', $video->getTags()),
+    'state' => $video->getState(),
+    'start_availability_date' => $video->getSchedule() ? $video->getSchedule()->getStartsAt() : NULL,
+    'end_availability_date' => $video->getSchedule() ? $video->getSchedule()->getEndsAt() : NULL,
+    'end_date' => $video->getSchedule() ? ($video->getSchedule()
+      ->getEndsAt() === '' ? 'no_end_date' : 'date_set') : NULL,
+    'linktext' => $video->getLink() ? $video->getLink()->getText() : NULL,
+    'linkurl' => $video->getLink() ? $video->getLink()->getUrl() : NULL,
+    'economics' => $video->getEconomics(),
+  ];
+
+  foreach ($video->getCustomFields() as $field => $value) {
+    $form_state['values']["custom_field_{$field}"] = $value;
+  }
+
+  $form = _brightcove_edit_form($form_state);
+
+  $form['#prefix'] = '<div id="dialog-edit-form">';
+
+  $form['submit'] = [
+    '#type' => 'submit',
+    '#name' => 'submit-',
+    '#default_value' => t('Save and Attach'),
+    '#ajax' => [
+      'callback' => 'ajax_edit_video_dialog_close_callback',
+      'wrapper' => 'dialog-edit-form',
+    ],
+  ];
+
+  $form['#suffix'] = '</div>';
+
+  $form['#attached']['js'] = [
+    drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
+  ];
+
+  $form['#attached']['css'] = [
+    drupal_get_path('module', 'brightcove_field') . '/styles/upload.css',
+  ];
+
+  return $form;
 }
 
 /**

@@ -29,7 +29,7 @@
       }
 
       var messages = $('.messages').parent().not('.jquery-processed');
-      $(messages).addClass('jquery-processed').clone().insertAfter('#brightcove-field-upload-form');
+      $(messages).addClass('jquery-processed').clone().insertAfter('#brightcove-field-upload-form, #brightcove-field-edit-form');
     }
   };
 
@@ -151,8 +151,9 @@
 
     Drupal.ajax.prototype.commands.ui_dialog_close = function (ajax, response, status) {
       var dialog = parent.jQuery(response.selector);
-      var dialog_type = response.dialog_type;
+
       Drupal.brightcove_field.submit_browse(dialog.attr('rel'), response.data);
+
       dialog.dialog('close');
     };
 
