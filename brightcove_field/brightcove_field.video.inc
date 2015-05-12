@@ -36,8 +36,8 @@ function _brightcove_field_video_instance_settings_form(&$form, $field, $instanc
 function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, &$element) {
   $entity_type = $element['#entity_type'];
   $entity_info = entity_get_info($entity_type);
-  $eid = isset($form[$entity_info['entity keys']['id']]['#value']) ? $form[$entity_info['entity keys']['id']]['#value'] : NULL;
-  $bundle = isset($form[$entity_info['entity keys']['bundle']]['#value']) ? $form[$entity_info['entity keys']['bundle']]['#value'] : NULL;
+  $eid = isset($form['#entity']->{$entity_info['entity keys']['id']}) ? $form['#entity']->{$entity_info['entity keys']['id']} : NULL;
+  $bundle = $element['#bundle'];
   // It needs to be able to work with field collection.
   $parent_delta = array_pop($element['#field_parents']);
   // We need this mixed variable in access checking.
@@ -46,31 +46,51 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   $element['#tree'] = TRUE;
   $wrapper_id = _brightcove_field_get_wrapper_name($field['field_name'], $delta);
 
-  module_load_include('inc', 'brightcove', 'brightcove.client');
-  $element['client_id'] = brightcove_client_select_element();
-  switch ($element['client_id']['#type']) {
-    case 'select':
-      $element['client_id']['#default_value'] = isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : BRIGHTCOVE_CLIENT_ID_NONE;
-      $element['client_id']['#ajax'] = [
-        'wrapper' => $wrapper_id,
-        'callback' => 'brightcove_field_video_client_ajax_callback',
-      ];
-      $client_id = BRIGHTCOVE_CLIENT_ID_NONE;
-      if (isset($form_state['values'][$field['field_name']][$langcode][$delta]['client_id'])) {
-        $client_id = $form_state['values'][$field['field_name']][$langcode][$delta]['client_id'];
-      } else if (isset($form_state['input'][$field['field_name']][$langcode][$delta]['client_id'])) {
-        $client_id = $form_state['input'][$field['field_name']][$langcode][$delta]['client_id'];
-      } else if (isset($items[$delta]['client_id'])) {
-        $client_id = $items[$delta]['client_id'];
-      }
-      break;
+  // Playlists already determine the client.
+  if ($entity_type == 'brightcove_playlist') {
+    // Editing a playlist.
+    if (isset($form['#entity']->bpid)) {
+      $client_id = $form['#entity']->client->bcid;
+    }
+    // Adding a playlist.
+    else {
+      $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : $form_state['input']['client_id'];
+    }
+    $element['client_id'] = [
+      '#type' => 'value',
+      '#value' => $client_id,
+    ];
+  }
+  // This is not a playlist entity.
+  else {
+    module_load_include('inc', 'brightcove', 'brightcove.client');
+    $element['client_id'] = brightcove_client_select_element();
+    switch ($element['client_id']['#type']) {
+      case 'select':
+        $element['client_id']['#default_value'] = isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : BRIGHTCOVE_CLIENT_ID_NONE;
+        $element['client_id']['#ajax'] = [
+          'wrapper' => $wrapper_id,
+          'callback' => 'brightcove_field_video_client_ajax_callback',
+        ];
+        $client_id = BRIGHTCOVE_CLIENT_ID_NONE;
+        if (isset($form_state['values'][$field['field_name']][$langcode][$delta]['client_id'])) {
+          $client_id = $form_state['values'][$field['field_name']][$langcode][$delta]['client_id'];
+        }
+        elseif (isset($form_state['input'][$field['field_name']][$langcode][$delta]['client_id'])) {
+          $client_id = $form_state['input'][$field['field_name']][$langcode][$delta]['client_id'];
+        }
+        elseif (isset($items[$delta]['client_id'])) {
+          $client_id = $items[$delta]['client_id'];
+        }
+        break;
 
-    case 'value':
-      $client_id = $element['client_id']['#value'];
-      break;
+      case 'value':
+        $client_id = $element['client_id']['#value'];
+        break;
 
-    default:
-      return;
+      default:
+        return;
+    }
   }
 
   if (empty($brightcove_field_settings[$element['#field_name']])) {
@@ -207,11 +227,20 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
 }
 
 /**
- * AJAX callback for playlist select update on client selection.
+ * AJAX callback for playlist select update on client selection and Attach
+ * button.
  */
 function brightcove_field_video_client_ajax_callback($form, $form_state) {
-  $parents = $form_state['triggering_element']['#parents'];
-  array_pop($parents);
+  $parents = $form_state['triggering_element']['#array_parents'];
+  // This callback is used by both the client selection and the attach button
+  // so we are not sure about the depth of the array. We want to get until sg
+  // like ['field_video']['und'][1] and we do this by checking if the popped
+  // array element is numeric or not.
+  $popped = NULL;
+  while (!is_numeric($popped)) {
+    $popped = array_pop($parents);
+  }
+  $parents[] = $popped;
   $return = drupal_array_get_nested_value($form, $parents);
   unset($return['_weight']);
   return $return;

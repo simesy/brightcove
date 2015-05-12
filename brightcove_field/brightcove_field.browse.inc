@@ -83,10 +83,3 @@ function brightcove_field_upload($client) {
   $form = drupal_get_form('brightcove_field_upload_form', $client);
   return drupal_render($form);
 }
-
-function brightcove_field_create() {
-  drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css');
-
-  $form = drupal_get_form('brightcove_field_create_form');
-  return drupal_render($form);
-}
