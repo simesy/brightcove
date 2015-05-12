@@ -474,3 +474,13 @@ function brightcove_update_7008() {
   // Clear schema cache.
   cache_clear_all('schema', 'cache', TRUE);
 }
+
+/**
+ * Creating the video field for the manual playlist entity.
+ */
+function brightcove_update_7009() {
+  // Make drupal notice the new brightcove_playlist entity.
+  drupal_flush_all_caches();
+  module_load_include('inc', 'brightcove', 'brightcove.playlist.inc');
+  _brightcove_configure_playlist_entity();
+}
