@@ -403,31 +403,19 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
       $playlist_entity->playlist->setType('EXPLICIT');
     }
     elseif ($playlist_entity->type == BRIGHTCOVE_PLAYLIST_TYPE_SMART) {
-      $form['playlist_data']['settings']['tagInclusionRule'] = [
-        '#type' => 'select',
-        '#title' => t('Smart playlist settings'),
-        '#field_suffix' => t('of the following'),
-        '#default_value' => 'OR',
-        '#options' => [
-          'OR' => t('Contain one or more'),
-          'AND' => t('Contain all'),
-        ],
-      ];
-
-      $form['playlist_data']['settings']['filterTags'] = [
+      $form['playlist_data']['settings']['search'] = [
         '#type' => 'textfield',
-        '#title' => t('Tags'),
-        '#default_value' => (isset($playlist->filterTags)) ? drupal_implode_tags($playlist->filterTags) : '',
-        '#description' => t('Videos will be automatically added to this Playlist
-                             based on the following settings.'),
+        '#title' => t('Search string'),
+        '#default_value' => $playlist_entity->playlist->getSearch(),
+        '#description' => t('The playlist will contain the videos resulting from the search. For details see https://docs.brightcove.com/en/video-cloud/cms-api/guides/search-videos.html.'),
       ];
 
       $form['playlist_data']['settings']['playlistType'] = [
         '#type' => 'select',
         '#title' => t('Playlist ordering'),
         '#options' => [
-          'OLDEST_TO_NEWEST' => t('Oldest to newest (by activation date)'),
-          'NEWEST_TO_OLDEST' => t('Newest to oldest (by activation date)'),
+          'ACTIVATED_OLDEST_TO_NEWEST' => t('Oldest to newest (by activation date)'),
+          'ACTIVATED_NEWEST_TO_OLDEST' => t('Newest to oldest (by activation date)'),
           'START_DATE_OLDEST_TO_NEWEST' => t('Oldest to newest'),
           'START_DATE_NEWEST_TO_OLDEST' => t('Newest to Oldest'),
           'ALPHABETICAL' => t('Alphabetical (by video name)'),
@@ -468,20 +456,23 @@ function brightcove_playlist_form_ajax_callback($form, &$form_state) {
  */
 function brightcove_playlist_form_submit($form, &$form_state) {
   $playlist_entity = $form['#entity'];
-  $client = $playlist_entity->client;
-  $playlist_entity->playlist->setName($form_state['values']['name']);
-  $playlist_entity->playlist->setDescription($form_state['values']['description']);
+  $playlist = $playlist_entity->playlist;
+  $playlist->setName($form_state['values']['name']);
+  $playlist->setDescription($form_state['values']['description']);
+  if ($playlist_entity->type != BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
+    $playlist->setType($form_state['values']['settings']['playlistType']);
+    $playlist->setSearch($form_state['values']['settings']['search']);
+  }
+  else {
+    $playlist->setType('EXPLICIT');
+  }
   field_attach_submit('brightcove_playlist', $playlist_entity, $form, $form_state);
   entity_get_controller('brightcove_playlist')->save($playlist_entity);
   $form_state['redirect'] = ['admin/config/media/brightcove/playlist'];
   return;
 
   // Manual playlists.
-  if ($playlist_entity->type != BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
-    $metadata['tagInclusionRule'] = $form_state['values']['tagInclusionRule'];
-    $metadata['playlistType'] = $form_state['values']['playlistType'];
-    $metadata['filterTags'] = drupal_explode_tags($form_state['values']['filterTags']);
-  }
+
 }
 
 /**
