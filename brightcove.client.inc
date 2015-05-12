@@ -14,8 +14,8 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
     $items = parent::hook_menu();
     $items['admin/config/media/brightcove/client']['type'] = MENU_LOCAL_TASK;
     $items['admin/config/media/brightcove/client']['weight'] = 0.1;
-    $items['admin/config/media/brightcove/client']['title'] = 'API';
-    $items['admin/config/media/brightcove/client/add']['title'] = 'Add Brightcove API Authentication';
+    $items['admin/config/media/brightcove/client']['title'] = 'API Client';
+    $items['admin/config/media/brightcove/client/add']['title'] = 'Add Client (Brightcove API Authentication)';
     $items['admin/config/media/brightcove/client/add']['title callback'] = 't';
     return $items;
   }
@@ -145,7 +145,7 @@ function brightcove_client_select_element() {
   }
   else {
     $element = [
-      '#markup' => t('To add playlists you need to have access to some brightcove clients first.'),
+      '#markup' => t('Sorry, it seems you don\'t have access to any brightcove clients. You can add clients <a href="/admin/config/media/brightcove/client/add">here</a>.'),
     ];
   }
   return $element;

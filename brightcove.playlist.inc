@@ -162,6 +162,9 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
     $form['client_id'] = brightcove_client_select_element();
     $wrapper_id = 'bc-playlists';
 
+    if (!isset($form['client_id']['#type'])) {
+      return $form;
+    }
     switch ($form['client_id']['#type']) {
       case 'select' :
         $form['client_id']['#ajax'] = [
