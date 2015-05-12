@@ -89,17 +89,6 @@ function brightcove_field_menu() {
     'type' => MENU_CALLBACK,
   ];
 
-  // entity type, field name, entity id or bundle
-  $items['brightcove_field/upload/playlist/%/%/%brightcove_client'] = [
-    'title' => 'Upload playlist to Brightcove',
-    'page callback' => 'brightcove_field_create',
-    'delivery callback' => 'brightcove_field_deliver_dialog',
-    'access callback' => 'brightcove_field_browse_access',
-    'access arguments' => ['administer brightcove playlists', 3, 4, 5],
-    'file' => 'brightcove_field.browse.inc',
-    'type' => MENU_CALLBACK,
-  ];
-
   // entity type, entity id, field name, delta
   $items['brightcove_field_player/%/%/%/%/%'] = [
     'title' => 'Brightcove Videos Window Player',
@@ -254,20 +243,6 @@ function ajax_create_playlist_dialog_callback($form, $form_state) {
 
   $commands = [];
   $commands[] = ajax_command_dialog($title, $id, $selector, $path, $field_rel, NULL, TRUE);
-  return ['#type' => 'ajax', '#commands' => $commands];
-}
-
-function ajax_create_playlist_dialog_close_callback($form, $form_state) {
-  $id = _brightcove_create_form_callback($form, $form_state);
-
-  $selector = '#create-dialog';
-  $data_title = check_plain($form_state['values']['name']);
-  $data_id = check_plain($id);
-  $data = $id ? "{$data_title} [id:{$data_id}]" : '';
-  $dialog_type = 'create';
-
-  $commands = [];
-  $commands[] = ajax_command_close_dialog($selector, $data, NULL, $dialog_type);
   return ['#type' => 'ajax', '#commands' => $commands];
 }
 
@@ -1263,37 +1238,6 @@ function brightcove_field_upload_form($form, $form_state) {
     '#ajax' => [
       'callback' => 'ajax_upload_video_dialog_close_callback',
       'wrapper' => 'dialog-upload-form',
-    ],
-  ];
-  $form['#suffix'] = '</div>';
-
-  $form['#attached']['js'] = [
-    drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
-  ];
-
-  $form['#attached']['css'] = [
-    drupal_get_path('module', 'brightcove_field') . '/styles/upload.css',
-  ];
-
-  return $form;
-}
-
-/**
- * Create form. Will return a form for one playlist item.
- */
-function brightcove_field_create_form($form, &$form_state) {
-  module_load_include('inc', 'brightcove', 'brightcove.playlist');
-  _brightcove_playlist_form($form, $form_state);
-
-  $form['#prefix'] = '<div id="dialog-create-form">';
-
-  $form['submit'] = [
-    '#type' => 'submit',
-    '#name' => 'submit-',
-    '#default_value' => t('Create'),
-    '#ajax' => [
-      'callback' => 'ajax_create_playlist_dialog_close_callback',
-      'wrapper' => 'dialog-create-form',
     ],
   ];
   $form['#suffix'] = '</div>';

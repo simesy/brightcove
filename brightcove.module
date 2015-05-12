@@ -374,20 +374,6 @@ function brightcove_ctools_plugin_directory($module, $type) {
   }
 }
 
-/**
- * Title callback of the playlist edit page.
- *
- * @param Entity $client
- *   The client entity object.
- * @param $playlist_id
- *   The id of the Brightcove playlist.
- * @return The name of the playlist.
- */
-function brightcove_playlist_title($client, $playlist_id) {
-  $playlist = brightcove_load_playlist($playlist_id, $client->bcid);
-  return $playlist->getName();
-}
-
 function brightcove_playlist_access($op, $entity, $account = NULL) {
   if ($op == 'view') {
     return TRUE;
@@ -395,20 +381,8 @@ function brightcove_playlist_access($op, $entity, $account = NULL) {
   elseif ($op == 'create') {
     return TRUE;
   }
-  return brightcove_playlist_edit_access($entity->client);
-}
-
-/**
- * Access callback for editing a Brightcove playlist.
- *
- * @param Entity $client
- *   The Brightcove client to use for editing the playlist.
- * @todo @param $playlist_id
- * @return boolean
- */
-function brightcove_playlist_edit_access($client) {
   // Does drupal user have permission to use this brightcove client?
-  if (!brightcove_client_access('use', $client)) {
+  if (!brightcove_client_access('use', $entity->client)) {
     return FALSE;
   }
   // TODO Detect "Playlist Read/Write" permission of client once Brightcove
@@ -449,54 +423,6 @@ function brightcove_autocomplete_videos($client, $videos_typed) {
     $video_matches[$prefix . $name] = check_plain($name);
   }
   drupal_json_output($video_matches);
-}
-
-/**
- * Wrapper function around playlist save.
- *
- * @param $metadata
- * @return bool|string
- */
-function brightcove_add_playlist($metadata) {
-  $playlist_id = FALSE;
-  $bc = brightcove_initialize();
-
-  try {
-    $playlist_id = $bc->createPlaylist('video', $metadata);
-  }
-  catch(Exception $error) {
-    drupal_set_message(t('Playlist upload to Brightcove failed. Error: @error', ['@error' => $error]), 'error');
-    return FALSE;
-  }
-
-  // Invalidate playlist cache.
-  brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
-
-  return $playlist_id;
-}
-
-/**
- * Wrapper function around playlist update.
- *
- * @param $metadata
- * @return bool|object
- */
-function brightcove_update_playlist($metadata) {
-  $bc = brightcove_initialize();
-
-  try {
-    $playlist = $bc->update('playlist', $metadata);
-  }
-  catch(Exception $error) {
-    drupal_set_message(t('Playlist upload to Brightcove failed. Error: @error', ['@error' => $error]), 'error');
-    return FALSE;
-  }
-
-  // Invalidate playlist cache.
-  brightcove_invalidate_cache('brightcove:playlist:' . $playlist->getId());
-  brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
-
-  return $playlist;
 }
 
 /**
@@ -1228,49 +1154,6 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
   }
 
   return FALSE;
-}
-
-/**
- * Create the new playlist.
- *
- * @param $form
- * @param $form_state
- * @return bool|StdClass
- */
-function _brightcove_create_form_callback(&$form, $form_state) {
-  $metadata = [];
-  $keys_to_send = ['name', 'shortDescription'];
-  foreach ($keys_to_send as $key) {
-    $metadata[$key] = $form_state['values'][$key];
-  }
-
-  if ($form_state['values']['type'] == BRIGHTCOVE_PLAYLIST_TYPE_MANUAL) {
-    $metadata['playlistType'] = 'explicit';
-    $videos = drupal_explode_tags($form_state['values']['videos']);
-    foreach ($videos as $video) {
-      // Parse the video id.
-      preg_match('/\[id:(?P<videoid>\d+)\]/', $video, $matches);
-      $metadata['videoIds'][] = $matches['videoid'];
-    }
-  }
-  else {
-    $metadata['tagInclusionRule'] = $form_state['values']['tagInclusionRule'];
-    $metadata['playlistType'] = $form_state['values']['playlistType'];
-    $metadata['filterTags'] = drupal_explode_tags($form_state['values']['filterTags']);
-  }
-
-  $id = brightcove_add_playlist($metadata);
-
-  // Cache video temporary, because Brightcove cache is not cleared promptly, so we
-  // might not get the video object for a while.
-  $playlist = (object)$metadata;
-  $playlist->id = $id;
-  brightcove_cache_set('brightcove:playlist:' . $id, $playlist);
-
-  // Invalidate BC cache
-  brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
-
-  return $id;
 }
 
 /**
