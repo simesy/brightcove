@@ -10,52 +10,49 @@
  */
 class BrightcoveClientEntityUIController extends EntityDefaultUIController {
 
+  /**
+   * @inheritdoc
+   */
   public function hook_menu() {
     $items = parent::hook_menu();
     $items['admin/config/media/brightcove/client']['type'] = MENU_LOCAL_TASK;
     $items['admin/config/media/brightcove/client']['weight'] = 0.1;
-    $items['admin/config/media/brightcove/client']['title'] = 'API';
-    $items['admin/config/media/brightcove/client/add']['title'] = 'Add Brightcove API Authentication';
+    $items['admin/config/media/brightcove/client']['title'] = 'API Client';
+    $items['admin/config/media/brightcove/client/add']['title'] = 'Add Client (Brightcove API Authentication)';
     $items['admin/config/media/brightcove/client/add']['title callback'] = 't';
+
+    $items["{$this->path}/manage/%brightcove_client/setdefault"] = [
+      'title' => 'Set client default',
+      'page callback' => 'brightcove_client_set_default',
+      'page arguments' => [6],
+      'access callback' => 'brightcove_client_set_default_access',
+      'access arguments' => [6],
+      'file path' => drupal_get_path('module', 'brightcove'),
+      'file' => 'brightcove.client.inc',
+    ];
     return $items;
   }
 
+  /**
+   * @inheritdoc
+   */
+  public function overviewForm($form, &$form_state) {
+    $form['#attached']['library'][] = array('system', 'drupal.ajax');
+    return parent::overviewForm($form, $form_state);
+  }
+
+  /**
+   * @inheritdoc
+   */
   protected function overviewTableRow($conditions, $id, $entity, $additional_cols = []) {
-    if (variable_get('brightcove_client_default') !== $id) {
-      $additional_cols[] = l(t('set default'), "{$this->path}/manage/{$id}/setdefault");
-    }
+    $wrapper_id = _brightcove_client_default_link_id($id);
+    $link = "<div id=\"$wrapper_id\">";
+    $link .= _brightcove_client_default_link($id);
+    $link .= '</div>';
+    $additional_cols[] = $link;
     return parent::overviewTableRow($conditions, $id, $entity, $additional_cols);
   }
 
-  public function operationForm($form, &$form_state, $entity, $op) {
-    switch ($op) {
-      case 'setdefault':
-        $label = entity_label($this->entityType, $entity);
-        $confirm_question = t('Are you sure you want to set default the %entity %label?', [
-          '%entity' => $this->entityInfo['label'],
-          '%label' => $label
-        ]);
-        return confirm_form($form, $confirm_question, $this->path, '');
-      default:
-        return parent::operationForm($form, $form_state, $entity, $op);
-    }
-  }
-
-  protected function operationCount() {
-    return parent::operationCount() + 1;
-  }
-
-  public function applyOperation($op, $entity) {
-    $label = entity_label($this->entityType, $entity);
-    $vars = ['%entity' => $this->entityInfo['label'], '%label' => $label];
-    switch ($op) {
-      case 'setdefault':
-        variable_set('brightcove_client_default', $entity->bcid);
-        return t('%entity %label is now the default.', $vars);
-      default:
-        return parent::applyOperation($op, $entity);
-    }
-  }
 }
 
 /**
@@ -128,15 +125,19 @@ function brightcove_client_select_element() {
   $client_options = [BRIGHTCOVE_CLIENT_ID_NONE => t('- Select a client -')];
   $client_options +=  _brightcove_my_client_select_options();
   if (count($client_options) > 2) {
+    $default_value = variable_get('brightcove_client_default');
+    if (!array_key_exists($default_value, $client_options)) {
+      $default_value =  BRIGHTCOVE_CLIENT_ID_NONE;
+    }
     $element = [
       '#type' => 'select',
       '#options' => $client_options,
       '#title' => t('Client'),
-      '#default_value' => BRIGHTCOVE_CLIENT_ID_NONE,
+      '#default_value' => $default_value,
     ];
   }
   elseif (count($client_options) == 2) {
-    $client_id = array_keys($client_options)[0];
+    $client_id = array_keys($client_options)[1];
     $element = [
       '#type' => 'value',
       '#value' => $client_id,
@@ -145,7 +146,7 @@ function brightcove_client_select_element() {
   }
   else {
     $element = [
-      '#markup' => t('To add playlists you need to have access to some brightcove clients first.'),
+      '#markup' => t('Sorry, it seems you don\'t have access to any brightcove clients. You can add clients <a href="/admin/config/media/brightcove/client/add">here</a>.'),
     ];
   }
   return $element;
@@ -317,4 +318,164 @@ function brightcove_client_form_submit($form, &$form_state) {
   // Save the client.
   brightcove_client_save($client);
   drupal_set_message(t('Client saved.'));
+}
+
+/**
+ * Access callback.
+ *
+ * @param Entity $client
+ */
+function brightcove_client_set_default_access($client) {
+  $value = _brightcove_client_default_link_id($client->bcid);
+  if (drupal_valid_token($_GET['token'], $value) && brightcove_client_access('use', $client)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * AJAX menu callback to set a client default.
+ *
+ * @param Entity $client
+ * @param string $type
+ *  Set internally, either 'nojs' or 'ajax'.
+ */
+function brightcove_client_set_default($client, $type = 'ajax') {
+  $old_default_client = variable_get('brightcove_client_default');
+  variable_set('brightcove_client_default', $client->bcid);
+  drupal_set_message(t('Client "@client" has been set to default.', ['@client' => $client->label]));
+  if (!empty($old_default_client)) {
+    drupal_set_message(t('The default client before was "@client".', ['@client' => brightcove_client_load($old_default_client)->label]));
+  }
+  if ($type == 'ajax') {
+    $commands = [];
+    $commands[] = ajax_command_html('#' . _brightcove_client_default_link_id($client->bcid), _brightcove_client_default_link($client->bcid));
+    if (!empty($old_default_client)) {
+      $commands[] = ajax_command_html('#' . _brightcove_client_default_link_id($old_default_client), _brightcove_client_default_link($old_default_client));
+    }
+    $commands[] = ajax_command_prepend('#content', theme('status_messages'));
+    ajax_deliver(['#type' => 'ajax', '#commands' => $commands]);
+  }
+  else {
+    drupal_goto('/admin/config/media/brightcove/client');
+  }
+
+}
+
+/**
+ * The html id for the default client links on the client overcview page.
+ *
+ * @param string $id
+ *  The client entity id.
+ * @return string
+ *  The HTML id.
+ */
+function _brightcove_client_default_link_id($id) {
+  return 'bc-default-client-' . $id;
+}
+
+/**
+ *  Generates the 'set default' AJAX link for clients.
+ *
+ * @param Entity $client_id
+ *   The client entity id.
+ * @return string
+ *   Either the link to set the client default or a text saying 'default'.
+ */
+function _brightcove_client_default_link($client_id) {
+  if (variable_get('brightcove_client_default') !== $client_id) {
+    $wrapper_id = _brightcove_client_default_link_id($client_id);
+    $token = drupal_get_token($wrapper_id);
+    $options = [
+      'query' => [
+        'token' => $token
+      ],
+      'attributes' => [
+        'class' => [
+          'use-ajax',
+        ],
+      ],
+    ];
+    return l(t('set default'), "/admin/config/media/brightcove/client/manage/{$client_id}/setdefault", $options);
+  }
+  else {
+    return t('default');
+  }
+}
+
+/**
+ * Access callback for brightcove_client entity.
+ *
+ * @param $op
+ *   Can be 'edit' or 'use'.
+ * @param Entity|string $entity
+ *   Brightcove client entity or client ID.
+ * @param $account
+ *   Loaded user account.
+ * @return bool
+ */
+function brightcove_client_access($op, $entity = NULL, $account = NULL) {
+  // If we got ID try to load the entity.
+  if (is_numeric($entity)) {
+    $entity = brightcove_client_load($entity);
+  }
+
+  // If account is not set use the currently logged in user.
+  if (is_null($account)) {
+    global $user;
+    $account = $user;
+  }
+
+  switch ($op) {
+    case 'use':
+      return user_access('use brightcove client ' . $entity->bcid, $account) || user_access('administer brightcove settings', $account);
+    default:
+      return user_access('administer brightcove settings', $account);
+  }
+}
+
+/**
+ * Saves a brightcove_client.
+ */
+function brightcove_client_save($client) {
+  entity_get_controller('brightcove_client')->save($client);
+}
+
+/**
+ * Load a brightcove client entity.
+ *
+ * @param string $client_id
+ *  The client id
+ * @return Entity
+ *  The client entity object.
+ */
+function brightcove_client_load($client_id) {
+  return entity_load_single('brightcove_client', $client_id);
+}
+
+/**
+ * Load a client or if none given, the default client.
+ *
+ * @param string $client_id
+ *  The client entity id.
+ *
+ * @return Entity|boolean
+ *  The client entity object or FALSE.
+ */
+function brightcove_client_load_or_default($client_id = NULL) {
+  if ($client_id) {
+    $client = brightcove_client_load($client_id);
+    if ($client) {
+      return $client;
+    }
+  }
+
+  if (($default_client_id = variable_get('brightcove_client_default'))) {
+    $client = brightcove_client_load($default_client_id);
+    if ($client) {
+      return $client;
+    }
+  }
+
+  return FALSE;
 }

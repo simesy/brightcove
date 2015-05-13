@@ -162,13 +162,16 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
     $form['client_id'] = brightcove_client_select_element();
     $wrapper_id = 'bc-playlists';
 
+    if (!isset($form['client_id']['#type'])) {
+      return $form;
+    }
     switch ($form['client_id']['#type']) {
       case 'select' :
         $form['client_id']['#ajax'] = [
           'wrapper' => $wrapper_id,
           'callback' => 'brightcove_playlist_tables_ajax_callback'
         ];
-        $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : NULL;
+        $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : $form['client_id']['#default_value'];
         break;
 
       case 'value' :
@@ -328,7 +331,7 @@ function brightcove_playlist_client_ajax($form, $form_state) {
 function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
   brightcove_load_lib();
   // On AJAX the playlist_entity->playlist might not be properly populated.
-  if (isset($playlist_entity->playlist) && !($playlist_entity->playlist instanceof BrightcovePlaylist)) {
+  if (isset($playlist_entity->playlist) && !($playlist_entity->playlist instanceof BrightcovePlaylist) && !empty($playlist_entity->client) && isset($playlist_entity->playlist_id)) {
     $playlist_entity->playlist = brightcove_load_playlist($playlist_entity->playlist_id, $playlist_entity->client->bcid);
   }
 
@@ -374,7 +377,9 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
   }
   $client = brightcove_client_load($client_id);
   $playlist_entity->client = $client;
-  if (empty($playlist_entity->playlist)) {
+  // If we have just changed the client select from '_none' to something, the
+  // $playlist_entity->playlist is not a BrightcovePlaylist.
+  if (empty($playlist_entity->playlist) || !($playlist_entity->playlist instanceof BrightcovePlaylist)) {
     $playlist_entity->playlist = new BrightcovePlaylist();
   }
   $form['playlist_data'] = [

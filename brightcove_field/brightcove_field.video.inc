@@ -49,7 +49,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   // Playlists already determine the client.
   if ($entity_type == 'brightcove_playlist') {
     // Editing a playlist.
-    if (isset($form['#entity']->bpid)) {
+    if (!empty($form['#entity']->client && ($form['#entity']->client instanceof Entity))) {
       $client_id = $form['#entity']->client->bcid;
     }
     // Adding a playlist.
@@ -67,12 +67,11 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     $element['client_id'] = brightcove_client_select_element();
     switch ($element['client_id']['#type']) {
       case 'select':
-        $element['client_id']['#default_value'] = isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : BRIGHTCOVE_CLIENT_ID_NONE;
         $element['client_id']['#ajax'] = [
           'wrapper' => $wrapper_id,
           'callback' => 'brightcove_field_video_client_ajax_callback',
         ];
-        $client_id = BRIGHTCOVE_CLIENT_ID_NONE;
+        $client_id = $element['client_id']['#default_value'];
         if (isset($form_state['values'][$field['field_name']][$langcode][$delta]['client_id'])) {
           $client_id = $form_state['values'][$field['field_name']][$langcode][$delta]['client_id'];
         }
@@ -82,6 +81,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
         elseif (isset($items[$delta]['client_id'])) {
           $client_id = $items[$delta]['client_id'];
         }
+        $element['client_id']['#default_value'] = $client_id;
         break;
 
       case 'value':
@@ -115,7 +115,8 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     '#weight' => 99,
   ];
 
-  if ($client_id !== BRIGHTCOVE_CLIENT_ID_NONE) {
+  $client = brightcove_client_load($client_id);
+  if (!empty($client)) {
     $element['brightcove_id'] = [
       '#type' => 'textfield',
       '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : NULL,
@@ -155,8 +156,6 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       '#options' => brightcove_player_list($instance),
       '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : NULL,
     ];
-
-    $client = brightcove_client_load($client_id);
 
     $element['actions']['remove'] = [
       '#type' => 'button',
