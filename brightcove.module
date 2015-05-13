@@ -43,6 +43,7 @@ define('BRIGHTCOVE_CACHE_MEMCACHE_PORT', 11211);
 
 // Without this brightcove_playlist_access() is not always found.
 require_once 'brightcove.playlist.inc';
+require_once 'brightcove.client.inc';
 
 /**
  * Implements hook_menu().
@@ -258,74 +259,6 @@ function brightcove_account_uri($entity) {
   return [
     'path' => 'admin/config/media/brightcove/brightcove_client/' . entity_id('brightcove_client', $entity),
   ];
-}
-
-/**
- * Access callback for brightcove_client entity.
- *
- * @param $op
- *   Can be 'edit' or 'use'.
- * @param $entity
- *   Brightcove client entity or client ID.
- * @param $account
- *   Loaded user account.
- * @return bool
- */
-function brightcove_client_access($op, $entity = NULL, $account = NULL) {
-  // If we got ID try to load the entity.
-  if (is_numeric($entity)) {
-    $entity = brightcove_client_load($entity);
-  }
-
-  // If account is not set use the currently logged in user.
-  if (is_null($account)) {
-    global $user;
-    $account = $user;
-  }
-
-  switch ($op) {
-    case 'use':
-      return user_access('use brightcove client ' . $entity->bcid, $account) || user_access('administer brightcove settings', $account);
-    default:
-      return user_access('administer brightcove settings', $account);
-  }
-}
-
-/**
- * Saves a brightcove_client.
- */
-function brightcove_client_save($client) {
-  entity_get_controller('brightcove_client')->save($client);
-}
-
-/**
- * Load a brightcove client entity.
- *
- * @param string $client_id
- *  The client id
- * @return Entity
- *  The clietn entity object.
- */
-function brightcove_client_load($client_id) {
-  return entity_load_single('brightcove_client', $client_id);
-}
-
-function brightcove_client_load_or_default($client_id = NULL) {
-  if ($client_id) {
-    $client = brightcove_client_load($client_id);
-    if ($client) {
-      return $client;
-    }
-  }
-
-  if (($default_client_id = variable_get('brightcove_client_default'))) {
-    $client = brightcove_client_load($default_client_id);
-    if ($client) {
-      return $client;
-    }
-  }
-
-  return FALSE;
 }
 
 /**

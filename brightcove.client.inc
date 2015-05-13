@@ -163,11 +163,15 @@ function brightcove_client_select_element() {
   $client_options = [BRIGHTCOVE_CLIENT_ID_NONE => t('- Select a client -')];
   $client_options +=  _brightcove_my_client_select_options();
   if (count($client_options) > 2) {
+    $default_value = variable_get('brightcove_client_default');
+    if (!array_key_exists($default_value, $client_options)) {
+      $default_value =  BRIGHTCOVE_CLIENT_ID_NONE;
+    }
     $element = [
       '#type' => 'select',
       '#options' => $client_options,
       '#title' => t('Client'),
-      '#default_value' => BRIGHTCOVE_CLIENT_ID_NONE,
+      '#default_value' => $default_value,
     ];
   }
   elseif (count($client_options) == 2) {
@@ -435,4 +439,81 @@ function _brightcove_client_default_link($client_id) {
   else {
     return t('default');
   }
+}
+
+/**
+ * Access callback for brightcove_client entity.
+ *
+ * @param $op
+ *   Can be 'edit' or 'use'.
+ * @param Entity|string $entity
+ *   Brightcove client entity or client ID.
+ * @param $account
+ *   Loaded user account.
+ * @return bool
+ */
+function brightcove_client_access($op, $entity = NULL, $account = NULL) {
+  // If we got ID try to load the entity.
+  if (is_numeric($entity)) {
+    $entity = brightcove_client_load($entity);
+  }
+
+  // If account is not set use the currently logged in user.
+  if (is_null($account)) {
+    global $user;
+    $account = $user;
+  }
+
+  switch ($op) {
+    case 'use':
+      return user_access('use brightcove client ' . $entity->bcid, $account) || user_access('administer brightcove settings', $account);
+    default:
+      return user_access('administer brightcove settings', $account);
+  }
+}
+
+/**
+ * Saves a brightcove_client.
+ */
+function brightcove_client_save($client) {
+  entity_get_controller('brightcove_client')->save($client);
+}
+
+/**
+ * Load a brightcove client entity.
+ *
+ * @param string $client_id
+ *  The client id
+ * @return Entity
+ *  The client entity object.
+ */
+function brightcove_client_load($client_id) {
+  return entity_load_single('brightcove_client', $client_id);
+}
+
+/**
+ * Load a client or if none given, the default client.
+ *
+ * @param string $client_id
+ *  The client entity id.
+ *
+ * @return Entity|boolean
+ *  The client entity object or FALSE.
+ */
+function brightcove_client_load_or_default($client_id = NULL) {
+  if ($client_id) {
+    $client = brightcove_client_load($client_id);
+    if ($client) {
+      return $client;
+    }
+  }
+
+  if (($default_client_id = variable_get('brightcove_client_default'))) {
+    $client = brightcove_client_load($default_client_id);
+    if ($client) {
+      return $client;
+    }
+  }
+
+  return FALSE;
 }

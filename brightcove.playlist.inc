@@ -171,7 +171,7 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
           'wrapper' => $wrapper_id,
           'callback' => 'brightcove_playlist_tables_ajax_callback'
         ];
-        $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : NULL;
+        $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : $form['client_id']['#default_value'];
         break;
 
       case 'value' :
