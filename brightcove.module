@@ -875,7 +875,7 @@ function _brightcove_edit_form(&$form_state, $upload = FALSE) {
         '#default_value' => isset($form_state['values']["custom_field_{$field->getId()}"]) ? $form_state['values']["custom_field_{$field->getId()}"] : NULL,
       ];
       if ($field->getType() === 'enum') {
-        $form['custom_fields']["custom_field_{$field->getId()}"]['#options'] = drupal_map_assoc($field->getEnumValues());
+        $form['custom_fields']["custom_field_{$field->getId()}"]['#options'] = [NULL => t('- no value set -')] + drupal_map_assoc($field->getEnumValues());
       }
     }
     $form['custom_fields']['#collapsed'] = !$has_required;
