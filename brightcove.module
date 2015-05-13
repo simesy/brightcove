@@ -898,6 +898,16 @@ function _brightcove_edit_form(&$form_state, $upload = FALSE) {
     ],
   ];
 
+  $form['schedule']['start_date'] = [
+    '#type' => 'radios',
+    '#title' => t('Starting'),
+    '#default_value' => isset($form_state['values']['start_date']) ? $form_state['values']['start_date'] : 'immediately',
+    '#options' => [
+      'immediately' => t('Immediately'),
+      'date_set' => t('Starting from'),
+    ],
+  ];
+
   $form['schedule']['start_availability_date'] = [
     '#type' => 'date_popup',
     '#date_format' => 'Y-m-d H:i',
@@ -907,14 +917,20 @@ function _brightcove_edit_form(&$form_state, $upload = FALSE) {
     '#prefix' => '<div id="brightcove-start-availability-date">',
     '#suffix' => '</div>',
     '#pre_render' => ['_brightcove_schedule_start_end_date_pre_render'],
+    '#states' => [
+      'visible' => [
+        'input[name="start_date"]' => ['value' => 'date_set'],
+      ],
+    ],
   ];
-  $form['schedule']['start_date'] = [
+
+  $form['schedule']['end_date'] = [
     '#type' => 'radios',
-    '#title' => t('Starting'),
-    '#default_value' => 'immediately',
+    '#title' => t('Ending'),
+    '#default_value' => isset($form_state['values']['end_date']) ? $form_state['values']['end_date'] : 'no_end_date',
     '#options' => [
-      'immediately' => t('Immediately'),
-      'date_set' => ' ',
+      'no_end_date' => t('No end date'),
+      'date_set' => t('Until'),
     ],
   ];
 
@@ -927,14 +943,10 @@ function _brightcove_edit_form(&$form_state, $upload = FALSE) {
     '#prefix' => '<div id="brightcove-end-availability-date">',
     '#suffix' => '</div>',
     '#pre_render' => ['_brightcove_schedule_start_end_date_pre_render'],
-  ];
-  $form['schedule']['end_date'] = [
-    '#type' => 'radios',
-    '#title' => t('Ending'),
-    '#default_value' => isset($form_state['values']['end_date']) ? $form_state['values']['end_date'] : 'no_end_date',
-    '#options' => [
-      'no_end_date' => t('No end date'),
-      'date_set' => ' ',
+    '#states' => [
+      'visible' => [
+        'input[name="end_date"]' => ['value' => 'date_set'],
+      ],
     ],
   ];
 
@@ -1143,6 +1155,7 @@ function _brightcove_edit_form_callback($form, $form_state) {
   $link->setText($form_state['values']['linktext']);
   $link->setUrl($form_state['values']['linkurl']);
   $video->setLink($link);
+  $video->setEconomics($form_state['values']['economics']);
 
   try {
     $cms->updateVideo($video);
