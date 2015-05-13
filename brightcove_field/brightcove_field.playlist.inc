@@ -35,7 +35,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   $element['client_id'] = brightcove_client_select_element();
   switch ($element['client_id']['#type']) {
     case 'select':
-      $element['client_id']['#default_value'] = isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : BRIGHTCOVE_CLIENT_ID_NONE;
+      $element['client_id']['#default_value'] = isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : $element['client_id']['#default_value'];
       $element['client_id']['#ajax'] = [
         'wrapper' => $wrapper_id,
         'callback' => 'brightcove_field_playlist_client_ajax_callback',

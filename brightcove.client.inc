@@ -147,6 +147,7 @@ function brightcove_client_select_element() {
   else {
     $element = [
       '#markup' => t('Sorry, it seems you don\'t have access to any brightcove clients. You can add clients <a href="/admin/config/media/brightcove/client/add">here</a>.'),
+      '#type' => 'markup',
     ];
   }
   return $element;
