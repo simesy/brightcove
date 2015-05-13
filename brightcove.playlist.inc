@@ -278,6 +278,7 @@ function brightcove_playlist_tables_ajax_callback($form, $form_state) {
  * Get the playlists from Brightcove.
  *
  * This function is a cached wrapper around BCMAPI::find('allplaylists').
+ * It only loads the first 100 playlists.
  *
  * @param Entity $client
  *   The brightcove_client entity object.
@@ -299,7 +300,7 @@ function brightcove_get_playlists(Entity $client, $cache_reset = FALSE) {
   $playlists = FALSE;
   list($cms, ) = _brightcove_create_classes($client);
   try {
-    $playlists = $cms->listPlaylists();
+    $playlists = $cms->listPlaylists(100);
   }
   catch (Exception $error) {
     watchdog('brightcove', 'Fetching playlists failed.', [], WATCHDOG_ERROR);
