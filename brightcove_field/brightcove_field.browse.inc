@@ -58,6 +58,15 @@ function brightcove_field_edit($client, $video_id) {
   return drupal_render($form);
 }
 
+function _brightcove_format_date($datestring, $expected_format = 'Y-m-d H:i') {
+  if (!$datestring) {
+    return NULL;
+  }
+
+  $datetime = new DateTime($datestring);
+  return $datetime->format($expected_format);
+}
+
 function brightcove_field_edit_form($form, $form_state, $client, $video_id) {
   list($cms,) = _brightcove_create_classes($client);
   $video = $cms->getVideo($video_id);
@@ -72,8 +81,10 @@ function brightcove_field_edit_form($form, $form_state, $client, $video_id) {
     'reference_id' => $video->getReferenceId(),
     'tags' => implode(', ', $video->getTags()),
     'state' => $video->getState(),
-    'start_availability_date' => $video->getSchedule() ? $video->getSchedule()->getStartsAt() : NULL,
-    'end_availability_date' => $video->getSchedule() ? $video->getSchedule()->getEndsAt() : NULL,
+    'start_availability_date' => _brightcove_format_date($video->getSchedule() ? $video->getSchedule()->getStartsAt() : NULL),
+    'start_date' => $video->getSchedule() ? ($video->getSchedule()
+      ->getStartsAt() === '' ? 'immidiately' : 'date_set') : NULL,
+    'end_availability_date' => _brightcove_format_date($video->getSchedule() ? $video->getSchedule()->getEndsAt() : NULL),
     'end_date' => $video->getSchedule() ? ($video->getSchedule()
       ->getEndsAt() === '' ? 'no_end_date' : 'date_set') : NULL,
     'linktext' => $video->getLink() ? $video->getLink()->getText() : NULL,
