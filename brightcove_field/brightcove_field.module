@@ -240,7 +240,7 @@ function ajax_upload_video_dialog_callback($form, $form_state) {
   $eid_extracted = entity_extract_ids($entity_type, $entity);
   $eid = array_shift($eid_extracted);
   $entity_id_or_bundle = !empty($eid) ? $eid : $bundle;
-  $client_id = $form_state['values'][$field_name][LANGUAGE_NONE][0]['client_id'];
+  $client_id = $form_state['triggering_element']['#attributes']['data-client-id'];
   $title = 'Upload Video to Brightcove';
   $id = 'upload-dialog';
   $selector = '<div id="' . $id . '">';
@@ -1328,8 +1328,8 @@ function brightcove_field_forms($form_id, $args) {
 /**
  * Upload form. Will return a form for one video item.
  */
-function brightcove_field_upload_form($form, $form_state) {
-  $form = _brightcove_edit_form($form_state, TRUE);
+function brightcove_field_upload_form($form, $form_state, $client) {
+  $form = _brightcove_edit_form($form_state, TRUE, $client);
   $form['#prefix'] = '<div id="dialog-upload-form">';
 
   $form['submit'] = [

@@ -776,27 +776,15 @@ function _brightcove_my_client_select_options($account = NULL) {
  * @see brightcove_field_upload_form()
  * @see brightcove_media_upload_form()
  */
-function _brightcove_edit_form(&$form_state, $upload = FALSE) {
+function _brightcove_edit_form(&$form_state, $upload = FALSE, $client) {
   $form = [];
-
   $form_state += form_state_defaults();
-
   drupal_prepare_form('brightcove_upload_form', $form, $form_state);
 
-  $client = $form_state['build_info']['args'][0];
-
-  // Check for existing clients.
-  $clients = _brightcove_load_my_clients();
-  if (empty($clients)) {
-    drupal_set_message(t('No clients configured'), 'error');
-    return $form;
-  }
-  else {
-    $form['client'] = [
-      '#type' => 'hidden',
-      '#value' => $client->bcid,
-    ];
-  }
+  $form['client'] = [
+    '#type' => 'hidden',
+    '#value' => $client->bcid,
+  ];
 
   if ($upload) {
     $form['file_upload'] = [
@@ -1017,9 +1005,8 @@ function _brightcove_schedule_start_end_date_pre_render($elements) {
  * @return bool|StdClass
  */
 function _brightcove_upload_form_callback(&$form, $form_state) {
-  $limits['extensions'] = '3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv';
   $validators = [
-    'file_validate_extensions' => [$limits['extensions']],
+    'file_validate_extensions' => ['3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv'],
   ];
 
   $file = file_save_upload('file_upload', $validators, file_default_scheme() . '://');
@@ -1039,7 +1026,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
     return $form;
   }
 
-  $client = entity_load_single('brightcove_client', $form_state['values']['client']);
+  $client = brightcove_client_load($form_state['values']['client']);
   try {
     $hash = hash('sha512', mt_rand());
     $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, function ($video, $cms) use ($form_state) {
