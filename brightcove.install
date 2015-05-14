@@ -254,6 +254,36 @@ function brightcove_schema() {
     'primary key' => ['id'],
   ];
 
+  $schema['brightcove_video'] = [
+    'description' => 'Stores information about brightcove video.',
+    'fields' => [
+      'bvid' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique key for brightcove video.',
+      ],
+      'type' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'video_id' => [
+        'description' => 'The ID of the video.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'account_id' => [
+        'description' => 'The ID of the brightcove account this video belongs to.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['bvid'],
+    'unique keys' => [
+      'client_video' => ['video_id'],
+    ],
+  ];
+
   return $schema;
 }
 
@@ -483,4 +513,40 @@ function brightcove_update_7009() {
   drupal_flush_all_caches();
   module_load_include('inc', 'brightcove', 'brightcove.playlist.inc');
   _brightcove_configure_playlist_entity();
+}
+
+/**
+ * Create the base table of brightcove_video entity.
+ */
+function brightcove_update_7600() {
+  $table = [
+    'description' => 'Stores information about brightcove video.',
+    'fields' => [
+      'bvid' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique key for brightcove video.',
+      ],
+      'type' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'video_id' => [
+        'description' => 'The ID of the video.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'account_id' => [
+        'description' => 'The ID of the brightcove account this video belongs to.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['bvid'],
+    'unique keys' => [
+      'client_video' => ['video_id'],
+    ],
+  ];
+   db_create_table('brightcove_video', $table);
 }
