@@ -776,7 +776,7 @@ function _brightcove_my_client_select_options($account = NULL) {
  * @see brightcove_field_upload_form()
  * @see brightcove_media_upload_form()
  */
-function _brightcove_edit_form(&$form_state, $upload = FALSE, $client) {
+function _brightcove_edit_form(&$form_state, $client, $upload = FALSE) {
   $form = [];
   $form_state += form_state_defaults();
   drupal_prepare_form('brightcove_upload_form', $form, $form_state);

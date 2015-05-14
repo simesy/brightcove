@@ -96,7 +96,7 @@ function brightcove_field_edit_form($form, $form_state, $client, $video_id) {
     $form_state['values']["custom_field_{$field}"] = $value;
   }
 
-  $form = _brightcove_edit_form($form_state);
+  $form = _brightcove_edit_form($form_state, $client);
 
   $form['#prefix'] = '<div id="dialog-edit-form">';
 
