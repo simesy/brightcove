@@ -1329,7 +1329,7 @@ function brightcove_field_forms($form_id, $args) {
  * Upload form. Will return a form for one video item.
  */
 function brightcove_field_upload_form($form, $form_state, $client) {
-  $form = _brightcove_edit_form($form_state, TRUE, $client);
+  $form = _brightcove_edit_form($form_state, $client, TRUE);
   $form['#prefix'] = '<div id="dialog-upload-form">';
 
   $form['submit'] = [
