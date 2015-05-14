@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * This file contains function over the brightcove playlist feature.
+ * Brightcove playlist related functions.
  */
 
 /**

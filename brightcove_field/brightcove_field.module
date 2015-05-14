@@ -1844,34 +1844,3 @@ function brightcove_field_auto_creation() {
     'player' => variable_get('brightcove_player_default', ''),
   ];
 }
-
-/**
- * Implements hook_entity_info().
- */
-function brightcove_field_entity_info() {
-  return [
-    'brightcove_video' => [
-      'label' => t('Brightcove video'),
-      'fieldable' => TRUE,
-      'base table' => 'brightcove_video',
-      'controller class' => 'BrightcoveVideoEntityController',
-      'entity class' => 'Entity',
-      'entity keys' => [
-        'id' => 'bvid',
-        'bundle' => 'type',
-      ],
-      'bundle keys' => [
-        'bundle' => 'type',
-      ],
-      'bundles' => [
-        'brightcove_video' => [
-          'label' => t('Brightcove video'),
-          'admin' => [
-            'path' => 'admin/config/media/brightcove/additional-fields',
-            'real path' => 'admin/config/media/brightcove/additional-fields',
-          ],
-        ],
-      ]
-    ],
-  ];
-}

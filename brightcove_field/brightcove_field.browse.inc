@@ -73,6 +73,7 @@ function brightcove_field_edit_form($form, $form_state, $client, $video_id) {
 
   $form_state = [];
   $form_state['build_info']['args'][0] = $client;
+  $form_state['build_info']['args'][1] = $video_id;
 
   $form_state['values'] = [
     'title' => $video->getName(),

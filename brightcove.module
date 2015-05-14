@@ -44,6 +44,7 @@ define('BRIGHTCOVE_CACHE_MEMCACHE_PORT', 11211);
 // Without this brightcove_playlist_access() is not always found.
 require_once 'brightcove.playlist.inc';
 require_once 'brightcove.client.inc';
+require_once 'brightcove.video.inc';
 
 /**
  * Implements hook_menu().
@@ -156,6 +157,20 @@ function brightcove_entity_info() {
       BRIGHTCOVE_PLAYLIST_TYPE_SMART => [
         'label' => t('Smart playlist'),
       ],
+    ],
+  ];
+  $entity_info['brightcove_video'] = [
+    'label' => t('Brightcove video'),
+    'fieldable' => TRUE,
+    'base table' => 'brightcove_video',
+    'controller class' => 'BrightcoveVideoEntityController',
+    'entity class' => 'Entity',
+    'entity keys' => [
+      'id' => 'bvid',
+      'bundle' => 'type',
+    ],
+    'bundle keys' => [
+      'bundle' => 'type',
     ],
   ];
 
@@ -412,7 +427,8 @@ function brightcove_write_api_access() {
  * @param string $video_id
  * @param stdClass $client_entity
  * @param bool $reset
- * @return BrightcoveVideo|bool Video object or FALSE if video not found.
+ *
+ * @return BrightcoveVideo|bool
  * Video object or FALSE if video not found.
  */
 function brightcove_video_load($video_id, $client_entity, $reset = FALSE) {
@@ -984,7 +1000,12 @@ function _brightcove_edit_form(&$form_state, $upload = FALSE, $client) {
   ];
 
   // Attach additional fields.
-  $entity = entity_create('brightcove_video', array('type' => 'brightcove_video'));
+  $values = [
+    'client' => $client,
+    'video_id' => $form_state['build_info']['args'][1],
+    'type' => 'brightcove_video',
+  ];
+  $entity = entity_create('brightcove_video', $values);
   field_attach_form('brightcove_video', $entity, $form['additional_fields'], $form_state);
 
   $form['#validate'][] = '_brightcove_upload_form_validate';
@@ -1105,9 +1126,6 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
 
 function _brightcove_edit_form_callback($form, $form_state) {
   list($client, $video_id) = $form_state['build_info']['args'];
-  /**
-   * @var BrightcoveCMS $cms
-   */
   list($cms,) = _brightcove_create_classes($client);
   $video = $cms->getVideo($video_id);
   $custom_field_definitions = $cms->getVideoFields()->getCustomFields();
