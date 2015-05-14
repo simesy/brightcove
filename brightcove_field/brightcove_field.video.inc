@@ -50,42 +50,42 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   if ($entity_type == 'brightcove_playlist') {
     // Editing a playlist.
     if (!empty($form['#entity']->client && ($form['#entity']->client instanceof Entity))) {
-      $client_id = $form['#entity']->client->bcid;
+      $bcid = $form['#entity']->client->bcid;
     }
     // Adding a playlist.
     else {
-      $client_id = isset($form_state['values']['client_id']) ? $form_state['values']['client_id'] : $form_state['input']['client_id'];
+      $bcid = isset($form_state['values']['bcid']) ? $form_state['values']['bcid'] : $form_state['input']['bcid'];
     }
-    $element['client_id'] = [
+    $element['bcid'] = [
       '#type' => 'value',
-      '#value' => $client_id,
+      '#value' => $bcid,
     ];
   }
   // This is not a playlist entity.
   else {
     module_load_include('inc', 'brightcove', 'brightcove.client');
-    $element['client_id'] = brightcove_client_select_element();
-    switch ($element['client_id']['#type']) {
+    $element['bcid'] = brightcove_client_select_element();
+    switch ($element['bcid']['#type']) {
       case 'select':
-        $element['client_id']['#ajax'] = [
+        $element['bcid']['#ajax'] = [
           'wrapper' => $wrapper_id,
           'callback' => 'brightcove_field_video_client_ajax_callback',
         ];
-        $client_id = $element['client_id']['#default_value'];
-        if (isset($form_state['values'][$field['field_name']][$langcode][$delta]['client_id'])) {
-          $client_id = $form_state['values'][$field['field_name']][$langcode][$delta]['client_id'];
+        $bcid = $element['bcid']['#default_value'];
+        if (isset($form_state['values'][$field['field_name']][$langcode][$delta]['bcid'])) {
+          $bcid = $form_state['values'][$field['field_name']][$langcode][$delta]['bcid'];
         }
-        elseif (isset($form_state['input'][$field['field_name']][$langcode][$delta]['client_id'])) {
-          $client_id = $form_state['input'][$field['field_name']][$langcode][$delta]['client_id'];
+        elseif (isset($form_state['input'][$field['field_name']][$langcode][$delta]['bcid'])) {
+          $bcid = $form_state['input'][$field['field_name']][$langcode][$delta]['bcid'];
         }
-        elseif (isset($items[$delta]['client_id'])) {
-          $client_id = $items[$delta]['client_id'];
+        elseif (isset($items[$delta]['bcid'])) {
+          $bcid = $items[$delta]['bcid'];
         }
-        $element['client_id']['#default_value'] = $client_id;
+        $element['bcid']['#default_value'] = $bcid;
         break;
 
       case 'value':
-        $client_id = $element['client_id']['#value'];
+        $bcid = $element['bcid']['#value'];
         break;
 
       default:
@@ -115,7 +115,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     '#weight' => 99,
   ];
 
-  $client = brightcove_client_load($client_id);
+  $client = brightcove_client_load($bcid);
   if (!empty($client)) {
     $element['brightcove_id'] = [
       '#type' => 'textfield',
@@ -186,7 +186,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
           'data-bundle' => $element['#bundle'],
           'data-field-name' => $element['#field_name'],
           'data-entity-id' => is_null($eid) ? '0' : $eid,
-          'data-client-id' => $client_id,
+          'data-client-id' => $bcid,
         ],
         '#executes_submit_callback' => FALSE,
         '#limit_validation_errors' => [],
@@ -211,7 +211,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
           'data-bundle' => $element['#bundle'],
           'data-field-name' => $element['#field_name'],
           'data-entity-id' => is_null($eid) ? '0' : $eid,
-          'data-client-id' => $client_id,
+          'data-client-id' => $bcid,
         ],
         '#limit_validation_errors' => [],
         '#default_value' => t('Upload'),

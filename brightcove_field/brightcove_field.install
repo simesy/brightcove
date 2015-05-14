@@ -20,7 +20,7 @@ function brightcove_field_field_schema() {
         'length' => 255,
         'not null' => FALSE,
       ],
-      'client_id' => [
+      'bcid' => [
         'type' => 'int',
         'not null' => TRUE,
       ],
@@ -124,10 +124,10 @@ function brightcove_field_update_7601() {
       if ($def['type'] == 'brightcove_field' && $def['storage']['type'] == 'field_sql_storage') {
         $tablename = _field_sql_storage_tablename($def);
         $revtablename = _field_sql_storage_revision_tablename($def);
-        $client_id_col = _field_sql_storage_columnname($name, 'client_id');
+        $bcid_col = _field_sql_storage_columnname($name, 'bcid');
 
-        db_add_field($tablename, $client_id_col, $coldef);
-        db_add_field($revtablename, $client_id_col, $coldef);
+        db_add_field($tablename, $bcid_col, $coldef);
+        db_add_field($revtablename, $bcid_col, $coldef);
       }
     }
 

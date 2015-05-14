@@ -32,27 +32,27 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   //$element['#tree'] = TRUE;
   $wrapper_id = "bc-playlist-{$field['field_name']}-{$delta}";
   module_load_include('inc', 'brightcove', 'brightcove.client');
-  $element['client_id'] = brightcove_client_select_element();
-  switch ($element['client_id']['#type']) {
+  $element['bcid'] = brightcove_client_select_element();
+  switch ($element['bcid']['#type']) {
     case 'select':
-      $element['client_id']['#default_value'] = isset($items[$delta]['client_id']) ? $items[$delta]['client_id'] : $element['client_id']['#default_value'];
-      $element['client_id']['#ajax'] = [
+      $element['bcid']['#default_value'] = isset($items[$delta]['bcid']) ? $items[$delta]['bcid'] : $element['bcid']['#default_value'];
+      $element['bcid']['#ajax'] = [
         'wrapper' => $wrapper_id,
         'callback' => 'brightcove_field_playlist_client_ajax_callback',
       ];
-      $client_id = isset($form_state['values'][$field['field_name']][$langcode][$delta]['client_id']) ? $form_state['values'][$field['field_name']][$langcode][$delta]['client_id'] : $element['client_id']['#default_value'];
+      $bcid = isset($form_state['values'][$field['field_name']][$langcode][$delta]['bcid']) ? $form_state['values'][$field['field_name']][$langcode][$delta]['bcid'] : $element['bcid']['#default_value'];
       break;
 
     case 'value':
-      $client_id = $element['client_id']['#value'];
+      $bcid = $element['bcid']['#value'];
       break;
 
     default :
       return $element;
   }
-  $client = brightcove_client_load($client_id);
-  $playlist_options = [BRIGHTCOVE_CLIENT_ID_NONE => t('- Select a playlist -')];
-  if ($client_id != BRIGHTCOVE_CLIENT_ID_NONE) {
+  $client = brightcove_client_load($bcid);
+  $playlist_options = [BRIGHTCOVE_BCID_NONE => t('- Select a playlist -')];
+  if ($bcid != BRIGHTCOVE_BCID_NONE) {
     module_load_include('inc', 'brightcove', 'brightcove.playlist');
     $playlists = brightcove_get_playlists($client);
     if (!empty($playlists)) {
@@ -65,7 +65,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
 
   $element['brightcove_id'] = [
     '#type' => 'select',
-    '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : BRIGHTCOVE_CLIENT_ID_NONE,
+    '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : BRIGHTCOVE_BCID_NONE,
     '#title' => $element['#title'],
     '#prefix' => '<div id="' . $wrapper_id . '">',
     '#suffix' => '</div>',

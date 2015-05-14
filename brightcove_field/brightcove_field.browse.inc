@@ -44,7 +44,7 @@ function brightcove_field_browse($entity_type, $field_name, $entity_id_or_bundle
       'entity_type' => $entity_type,
       'field_name' => $field_name,
       'entity_id_or_bundle' => $entity_id_or_bundle,
-      'client_id' => $client->bcid,
+      'bcid' => $client->bcid,
     ]) .
     $content['pager'] .
   '</div>';

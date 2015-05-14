@@ -262,6 +262,11 @@ function brightcove_schema() {
         'not null' => TRUE,
         'description' => 'Primary Key: Unique key for brightcove video.',
       ],
+      'type' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
       'video_id' => [
         'description' => 'The ID of the video.',
         'type' => 'int',
@@ -521,6 +526,11 @@ function brightcove_update_7600() {
         'type' => 'serial',
         'not null' => TRUE,
         'description' => 'Primary Key: Unique key for brightcove video.',
+      ],
+      'type' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
       ],
       'video_id' => [
         'description' => 'The ID of the video.',

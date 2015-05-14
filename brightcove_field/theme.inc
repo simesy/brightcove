@@ -31,7 +31,7 @@ function theme_brightcove_field_browse_button($element) {
  *   Themed item form.
  */
 function theme_brightcove_field_browse_item($variables) {
-  $form = drupal_get_form('brightcove_field_browser_form' . $variables['item']['brightcove_id'], $variables['item'], $variables['entity_type'], $variables['field_name'], $variables['entity_id_or_bundle'], $variables['client_id']);
+  $form = drupal_get_form('brightcove_field_browser_form' . $variables['item']['brightcove_id'], $variables['item'], $variables['entity_type'], $variables['field_name'], $variables['entity_id_or_bundle'], $variables['bcid']);
   return drupal_render($form);
 }
 
@@ -54,7 +54,7 @@ function theme_brightcove_field_browse_items($variables) {
       'entity_type' => $variables['entity_type'],
       'field_name' => $variables['field_name'],
       'entity_id_or_bundle' => $variables['entity_id_or_bundle'],
-      'client_id' => $variables['client_id'],
+      'bcid' => $variables['bcid'],
     ]);
     $rowcount++;
     if ($rowcount == 4) {

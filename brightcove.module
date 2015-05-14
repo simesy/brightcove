@@ -21,7 +21,7 @@
 define('BRIGHTCOVE_STATUS_COMPLETE', 'COMPLETE');
 define('BRIGHTCOVE_STATUS_ERROR', 'ERROR');
 
-define('BRIGHTCOVE_CLIENT_ID_NONE', '_none');
+define('BRIGHTCOVE_BCID_NONE', '_none');
 
 // Logo overlay alignment constants
 define('BRIGHTCOVE_LOGO_TOP_LEFT', 'TOP_LEFT');
@@ -172,6 +172,15 @@ function brightcove_entity_info() {
     'bundle keys' => [
       'bundle' => 'type',
     ],
+    'bundles' => [
+       'brightcove_video' => [
+         'label' => t('Brightcove video'),
+         'admin' => [
+           'path' => 'admin/config/media/brightcove/additional-fields',
+           'real path' => 'admin/config/media/brightcove/additional-fields',
+         ],
+       ],
+     ],
   ];
 
   return $entity_info;
@@ -202,7 +211,7 @@ function brightcove_field_storage_load($entity_type, $entities, $age, $fields, $
         foreach ($video_ids as $video_id) {
           $entities[$id]->{$field_name}[LANGUAGE_NONE][] = [
             'brightcove_id' => $video_id,
-            'client_id' => $entities[$id]->client->bcid,
+            'bcid' => $entities[$id]->client->bcid,
           ];
         }
       }
@@ -429,9 +438,9 @@ function brightcove_write_api_access() {
  * @param bool $reset
  *
  * @return BrightcoveVideo|bool
- * Video object or FALSE if video not found.
+ *  Video object or FALSE on failure.
  */
-function brightcove_video_load($video_id, $client_entity, $reset = FALSE) {
+function brightcove_load_video($video_id, $client_entity, $reset = FALSE) {
   if (!$client_entity) {
     return FALSE;
   }
@@ -1000,12 +1009,7 @@ function _brightcove_edit_form(&$form_state, $client, $upload = FALSE) {
   ];
 
   // Attach additional fields.
-  $values = [
-    'client' => $client,
-    'video_id' => $form_state['build_info']['args'][1],
-    'type' => 'brightcove_video',
-  ];
-  $entity = entity_create('brightcove_video', $values);
+  $entity = brightcove_video_load_by_video_id($form_state['build_info']['args'][1], $client);
   field_attach_form('brightcove_video', $entity, $form['additional_fields'], $form_state);
 
   $form['#validate'][] = '_brightcove_upload_form_validate';
@@ -1162,15 +1166,9 @@ function _brightcove_edit_form_callback($form, $form_state) {
   $video->setLink($link);
   $video->setEconomics($form_state['values']['economics']);
 
-  try {
-    $cms->updateVideo($video);
-  } catch (BrightcoveAPIException $ex) {
-    drupal_set_message(t('Brightcove API error: @message', [
-      '@message' => $ex->getMessage(),
-    ]), 'error');
-    watchdog_exception('brightcove edit', $ex);
-  }
-
+  $entity = brightcove_video_load_by_video_id($video_id, $client);
+  field_attach_submit('brightcove_video', $entity, $form['additional_fields'], $form_state);
+  $entity->save();
   return $video_id;
 }
 
