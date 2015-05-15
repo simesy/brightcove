@@ -104,22 +104,24 @@ function brightcove_save_video(BrightcoveVideo $video, Entity $client) {
   $video_id = $video->getId();
   if (!empty($video_id)) {
     try {
-      return $cms->updateVideo($video);
+      $video = $cms->updateVideo($video);
+      brightcove_invalidate_cache("brightcove:video:{$video->getId()}:{$client->bcid}");
+
     }
     catch (BrightcoveAPIException $e) {
       watchdog('brightcove', 'Updating BrightcoveVideo failed with message "@e".', ['@e' => $e->getMessage()], WATCHDOG_ERROR);
-      return $video;
     }
   }
   else {
     try {
-      return $cms->createVideo($video);
+      $video = $cms->createVideo($video);
+      brightcove_invalidate_cache("brightcove:video:{$video->getId()}:{$client->bcid}");
     }
     catch (BrightcoveAPIException $e) {
       watchdog('brightcove', 'Creating BrightcoveVideo failed with message "@e".', ['@e' => $e->getMessage()], WATCHDOG_ERROR);
-      return $video;
     }
   }
+  return $video;
 }
 
 /**
