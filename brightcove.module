@@ -1009,7 +1009,9 @@ function _brightcove_edit_form(&$form_state, $client, $upload = FALSE) {
   ];
 
   // Attach additional fields.
-  $entity = brightcove_video_load_by_video_id($form_state['build_info']['args'][1], $client);
+  // Edit form vs upload form.
+  $video_id = isset($form_state['build_info']['args'][1]) ? $form_state['build_info']['args'][1] : NULL;
+  $entity = brightcove_video_load_by_video_id($video_id, $client);
   field_attach_form('brightcove_video', $entity, $form['additional_fields'], $form_state);
 
   $form['#validate'][] = '_brightcove_upload_form_validate';
@@ -1119,7 +1121,10 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
         $video->setTags($tags);
       }
     });
-
+    // Save additional fields
+    $entity = brightcove_video_load_by_video_id($video->getId(), $client);
+    field_attach_submit('brightcove_video', $entity, $form['additional_fields'], $form_state);
+    $entity->save();
     return $video->getId();
   } catch (Exception $e) {
     watchdog_exception('brightcove_upload', $e);

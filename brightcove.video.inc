@@ -18,6 +18,7 @@ class BrightcoveVideoEntityController extends EntityAPIController {
    * @inheritdoc
    */
   public function create(array $values = array()) {
+    brightcove_load_lib();
     // Add is_new property if it is not set.
     $values += array('is_new' => TRUE);
     if (empty($values['client']) || !($values['client'] instanceof Entity)) {
@@ -113,6 +114,9 @@ function brightcove_save_video(BrightcoveVideo $video, Entity $client) {
   }
 }
 
+/**
+ * TODO: Move brightcove_field_edit_form() here.
+ */
 function brightcove_video_form($form, &$form_state, $video_entity) {
 
 }
