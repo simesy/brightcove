@@ -77,26 +77,28 @@ function brightcove_field_menu() {
     'type' => MENU_CALLBACK,
   ];
 
-  $items['brightcove_field/edit_video/%/%/%/%brightcove_client/%'] = [
+  $items['brightcove_field/edit_video/%/%/%/%brightcove_video'] = [
     'title' => 'Brightcove Video editor',
-    'page arguments' => [5, 6],
-    'page callback' => 'brightcove_field_edit',
+    'page arguments' => [5],
+    'page callback' => 'brightcove_video_edit',
     'delivery callback' => 'brightcove_field_deliver_dialog',
-    'access callback' => 'brightcove_field_browse_access',
+    'access callback' => 'brightcove_video_edit_access',
     'access arguments' => ['browse videos', 2, 3, 4, 5],
-    'file' => 'brightcove_field.browse.inc',
+    'file' => 'brightcove.video.inc',
+    'file path' => drupal_get_path('module', 'brightcove'),
     'type' => MENU_CALLBACK,
   ];
 
   // entity type, field name, entity id or bundle, client id
   $items['brightcove_field/upload/video/%/%/%/%brightcove_client'] = [
     'title' => 'Upload video to Brightcove',
-    'page callback' => 'brightcove_field_upload',
+    'page callback' => 'brightcove_video_upload',
     'page arguments' => [6],
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
     'access arguments' => ['upload videos', 3, 4, 5, 6],
-    'file' => 'brightcove_field.browse.inc',
+    'file' => 'brightcove.video.inc',
+    'file path' => drupal_get_path('module', 'brightcove'),
     'type' => MENU_CALLBACK,
   ];
 
@@ -1323,35 +1325,6 @@ function brightcove_field_forms($form_id, $args) {
     $forms[$form_id] = ['callback' => 'brightcove_field_browser_form'];
   }
   return $forms;
-}
-
-/**
- * Upload form. Will return a form for one video item.
- */
-function brightcove_field_upload_form($form, $form_state, $client) {
-  $form = _brightcove_edit_form($form_state, $client, TRUE);
-  $form['#prefix'] = '<div id="dialog-upload-form">';
-
-  $form['submit'] = [
-    '#type' => 'submit',
-    '#name' => 'submit-',
-    '#default_value' => t('Attach'),
-    '#ajax' => [
-      'callback' => 'ajax_upload_video_dialog_close_callback',
-      'wrapper' => 'dialog-upload-form',
-    ],
-  ];
-  $form['#suffix'] = '</div>';
-
-  $form['#attached']['js'] = [
-    drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
-  ];
-
-  $form['#attached']['css'] = [
-    drupal_get_path('module', 'brightcove_field') . '/styles/upload.css',
-  ];
-
-  return $form;
 }
 
 /**

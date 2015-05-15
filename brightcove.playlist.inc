@@ -261,7 +261,7 @@ function brightcove_playlist_access($op, $entity, $account = NULL) {
   // playlist is embedded into.
   // Playlist creation depends on the client anyway so let's grant access and
   // notify user on failure later.
-  if ($op == 'view' || $op == 'create') {
+  if ($op == 'view' || $op == 'add') {
     return TRUE;
   }
   return brightcove_client_access('use', $entity->client);

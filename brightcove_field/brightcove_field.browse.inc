@@ -50,80 +50,6 @@ function brightcove_field_browse($entity_type, $field_name, $entity_id_or_bundle
   '</div>';
 }
 
-function brightcove_field_edit($client, $video_id) {
-  drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css');
-
-  $form = drupal_get_form('brightcove_field_edit_form', $client, $video_id);
-
-  return drupal_render($form);
-}
-
-function _brightcove_format_date($datestring, $expected_format = 'Y-m-d H:i') {
-  if (!$datestring) {
-    return NULL;
-  }
-
-  $datetime = new DateTime($datestring);
-  return $datetime->format($expected_format);
-}
-
-function brightcove_field_edit_form($form, $form_state, $client, $video_id) {
-  list($cms,) = _brightcove_create_classes($client);
-  $video = $cms->getVideo($video_id);
-
-  $form_state = [];
-  $form_state['build_info']['args'][0] = $client;
-  $form_state['build_info']['args'][1] = $video_id;
-
-  $form_state['values'] = [
-    'title' => $video->getName(),
-    'short' => $video->getDescription(),
-    'long' => $video->getLongDescription(),
-    'reference_id' => $video->getReferenceId(),
-    'tags' => implode(', ', $video->getTags()),
-    'state' => $video->getState(),
-    'start_availability_date' => _brightcove_format_date($video->getSchedule() ? $video->getSchedule()->getStartsAt() : NULL),
-    'start_date' => $video->getSchedule() ? ($video->getSchedule()
-      ->getStartsAt() === '' ? 'immidiately' : 'date_set') : NULL,
-    'end_availability_date' => _brightcove_format_date($video->getSchedule() ? $video->getSchedule()->getEndsAt() : NULL),
-    'end_date' => $video->getSchedule() ? ($video->getSchedule()
-      ->getEndsAt() === '' ? 'no_end_date' : 'date_set') : NULL,
-    'linktext' => $video->getLink() ? $video->getLink()->getText() : NULL,
-    'linkurl' => $video->getLink() ? $video->getLink()->getUrl() : NULL,
-    'economics' => $video->getEconomics(),
-  ];
-
-  foreach ($video->getCustomFields() as $field => $value) {
-    $form_state['values']["custom_field_{$field}"] = $value;
-  }
-
-  $form = _brightcove_edit_form($form_state, $client);
-
-  $form['#prefix'] = '<div id="dialog-edit-form">';
-
-  $form['submit'] = [
-    '#type' => 'submit',
-    '#name' => 'submit-',
-    '#default_value' => t('Save and Attach'),
-    '#ajax' => [
-      'callback' => 'ajax_edit_video_dialog_close_callback',
-      'wrapper' => 'dialog-edit-form',
-    ],
-  ];
-
-  $form['#suffix'] = '</div>';
-
-  $form['#attached']['js'] = [
-    drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
-  ];
-
-  $form['#attached']['css'] = [
-    drupal_get_path('module', 'brightcove_field') . '/styles/upload.css',
-  ];
-
-  return $form;
-}
-
 /**
  * Menu callback for brightcove_field/autocomplete.
  *
@@ -161,11 +87,4 @@ function brightcove_field_autocomplete($type, $field_name, $client, $string = ''
     $matches[check_plain($bc_item->name) . ' [id:' . $bc_item->id . ']'] = check_plain($bc_item->name) . ' [id: ' . $bc_item->id . ']';
   }
   drupal_json_output($matches);
-}
-
-function brightcove_field_upload($client) {
-  drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css');
-
-  $form = drupal_get_form('brightcove_field_upload_form', $client);
-  return drupal_render($form);
 }

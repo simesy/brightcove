@@ -31,6 +31,7 @@ class BrightcoveVideoEntityController extends EntityAPIController {
     elseif ($video = brightcove_load_video($values['video_id'], $values['client'])) {
       $values['video'] = $video;
       $values['account_id'] = $values['client']->account_id;
+      $values['label'] = $video->getName();
     }
     else {
       throw new Exception(t('Failure to load the video @video with client @client', ['@video' => $values['video_id'], '@client' => $values['client']->bcid]));
@@ -72,6 +73,7 @@ class BrightcoveVideoEntityController extends EntityAPIController {
           $entity->video = brightcove_load_video($entity->video_id, $entity->client);
         }
       }
+      $entity->label = $entity->video->getName();
     }
     return $entities;
   }
@@ -81,6 +83,10 @@ class BrightcoveVideoEntityController extends EntityAPIController {
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
     $entity->video = brightcove_save_video($entity->video, $entity->client);
+    $entity->account_id = $entity->client->account_id;
+    if (empty($entity->video_id)) {
+      $entity->video_id = $entity->video->getId();
+    }
     return parent::save($entity, $transaction);
   }
 }
@@ -102,6 +108,7 @@ function brightcove_save_video(BrightcoveVideo $video, Entity $client) {
     }
     catch (BrightcoveAPIException $e) {
       watchdog('brightcove', 'Updating BrightcoveVideo failed with message "@e".', ['@e' => $e->getMessage()], WATCHDOG_ERROR);
+      return $video;
     }
   }
   else {
@@ -110,15 +117,306 @@ function brightcove_save_video(BrightcoveVideo $video, Entity $client) {
     }
     catch (BrightcoveAPIException $e) {
       watchdog('brightcove', 'Creating BrightcoveVideo failed with message "@e".', ['@e' => $e->getMessage()], WATCHDOG_ERROR);
+      return $video;
     }
   }
 }
 
 /**
- * TODO: Move brightcove_field_edit_form() here.
+ * Brightcove video entity form.
  */
 function brightcove_video_form($form, &$form_state, $video_entity) {
+  brightcove_load_lib();
+  $form = [];
+  $form['#entity'] = $video_entity;
+  $form['#entity_type'] = 'brightcove_video';
+  $form['#bundle'] = $video_entity->type;
 
+  $client = $video_entity->client;
+  $video = $video_entity->video;
+  $video_id = $video->getId();
+  // Edit form
+  if (!empty($video_id)) {
+    list($cms,) = _brightcove_create_classes($client);
+
+    $form_state = [];
+    $form_state['values'] = [
+      'title' => $video->getName(),
+      'short' => $video->getDescription(),
+      'long' => $video->getLongDescription(),
+      'reference_id' => $video->getReferenceId(),
+      'tags' => implode(', ', $video->getTags()),
+      'state' => $video->getState(),
+      'start_availability_date' => _brightcove_format_date($video->getSchedule() ? $video->getSchedule()->getStartsAt() : NULL),
+      'start_date' => $video->getSchedule() ? ($video->getSchedule()
+        ->getStartsAt() === '' ? 'immidiately' : 'date_set') : NULL,
+      'end_availability_date' => _brightcove_format_date($video->getSchedule() ? $video->getSchedule()->getEndsAt() : NULL),
+      'end_date' => $video->getSchedule() ? ($video->getSchedule()
+        ->getEndsAt() === '' ? 'no_end_date' : 'date_set') : NULL,
+      'linktext' => $video->getLink() ? $video->getLink()->getText() : NULL,
+      'linkurl' => $video->getLink() ? $video->getLink()->getUrl() : NULL,
+      'economics' => $video->getEconomics(),
+    ];
+
+    foreach ($video->getCustomFields() as $field => $value) {
+      $form_state['values']["custom_field_{$field}"] = $value;
+    }
+  }
+
+  $form_state += form_state_defaults();
+  drupal_prepare_form('brightcove_upload_form', $form, $form_state);
+
+  $form['client'] = [
+    '#type' => 'hidden',
+    '#value' => $client->bcid,
+  ];
+
+  if (empty($video_id)) {
+    $form['file_upload'] = [
+      '#type' => 'file',
+      '#title' => t('Video') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
+      '#size' => 40,
+    ];
+  }
+
+  $form['title'] = [
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+    '#required' => TRUE,
+    '#default_value' => !empty($form_state['values']['title']) ? $form_state['values']['title'] : '',
+  ];
+
+  $form['short'] = [
+    '#type' => 'textarea',
+    '#rows' => 2,
+    '#title' => t('Short description'),
+    '#default_value' => !empty($form_state['values']['short']) ? $form_state['values']['short'] : '',
+  ];
+
+  $form['long'] = [
+    '#type' => 'textarea',
+    '#rows' => 2,
+    '#title' => t('Long description'),
+    '#default_value' => !empty($form_state['values']['long']) ? $form_state['values']['long'] : '',
+  ];
+
+  $form['reference_id'] = [
+    '#type' => 'textfield',
+    '#title' => t('Reference ID'),
+    '#default_value' => !empty($form_state['values']['reference_id']) ? $form_state['values']['reference_id'] : '',
+    '#description' => t('Leave empty to generate ID automatically.'),
+  ];
+
+  $form['tags'] = [
+    '#type' => 'textfield',
+    '#title' => t('Tags'),
+    '#description' => t('Separate tags with a comma; no tag > 128 characters'),
+    '#default_value' => !empty($form_state['values']['tags']) ? $form_state['values']['tags'] : '',
+  ];
+
+  $form['state'] = [
+    '#type' => 'select',
+    '#title' => t('State'),
+    '#options' => [
+      'ACTIVE' => t('Active'),
+      'INACTIVE' => t('Inactive'),
+    ],
+    '#default_value' => !empty($form_state['values']['state']) ? $form_state['values']['state'] : TRUE,
+  ];
+
+  $form['custom_fields'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Custom fields'),
+    '#collapsible' => TRUE,
+  ];
+
+  try {
+    list($cms,) = _brightcove_create_classes($client);
+    $fields = $cms->getVideoFields();
+    $has_required = FALSE;
+    $types = [
+      'string' => 'textfield',
+      'enum' => 'select',
+    ];
+    foreach ($fields->getCustomFields() as $field) {
+      $has_required = $has_required || $field->isRequired();
+      $form['custom_fields']["custom_field_{$field->getId()}"] = [
+        '#title' => $field->getDisplayName(),
+        '#description' => $field->getDescription(),
+        '#required' => $field->isRequired(),
+        '#type' => $types[$field->getType()],
+        '#default_value' => isset($form_state['values']["custom_field_{$field->getId()}"]) ? $form_state['values']["custom_field_{$field->getId()}"] : NULL,
+      ];
+      if ($field->getType() === 'enum') {
+        $form['custom_fields']["custom_field_{$field->getId()}"]['#options'] = [NULL => t('- no value set -')] + drupal_map_assoc($field->getEnumValues());
+      }
+    }
+    $form['custom_fields']['#collapsed'] = !$has_required;
+  }
+  catch (BrightcoveAPIException $ex) {
+    $form['custom_fields']['#access'] = FALSE;
+  }
+
+  $form['schedule'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Availability'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#attached' => [
+      'js' => [
+        drupal_get_path('module', 'brightcove_field') . '/js/schedule.js',
+      ],
+      'css' => [
+        drupal_get_path('module', 'brightcove_field') . '/styles/schedule.css',
+      ]
+    ],
+  ];
+
+  $form['schedule']['start_date'] = [
+    '#type' => 'radios',
+    '#title' => t('Starting'),
+    '#default_value' => isset($form_state['values']['start_date']) ? $form_state['values']['start_date'] : 'immediately',
+    '#options' => [
+      'immediately' => t('Immediately'),
+      'date_set' => t('Starting from'),
+    ],
+  ];
+
+  $form['schedule']['start_availability_date'] = [
+    '#type' => 'date_popup',
+    '#date_format' => 'Y-m-d H:i',
+    '#date_timezone' => date_default_timezone(),
+    '#date_label_position' => 'hidden',
+    '#default_value' => !empty($form_state['values']['start_availability_date']) ? $form_state['values']['start_availability_date'] : format_date(REQUEST_TIME, 'custom', 'Y-m-d') . ' 00:00:00',
+    '#prefix' => '<div id="brightcove-start-availability-date">',
+    '#suffix' => '</div>',
+    '#pre_render' => ['_brightcove_schedule_start_end_date_pre_render'],
+    '#states' => [
+      'visible' => [
+        'input[name="start_date"]' => ['value' => 'date_set'],
+      ],
+    ],
+  ];
+
+  $form['schedule']['end_date'] = [
+    '#type' => 'radios',
+    '#title' => t('Ending'),
+    '#default_value' => isset($form_state['values']['end_date']) ? $form_state['values']['end_date'] : 'no_end_date',
+    '#options' => [
+      'no_end_date' => t('No end date'),
+      'date_set' => t('Until'),
+    ],
+  ];
+
+  $form['schedule']['end_availability_date'] = [
+    '#type' => 'date_popup',
+    '#date_format' => 'Y-m-d H:i',
+    '#date_timezone' => date_default_timezone(),
+    '#date_label_position' => 'hidden',
+    '#default_value' => !empty($form_state['values']['end_availability_date']) ? $form_state['values']['end_availability_date'] : format_date(REQUEST_TIME, 'custom', 'Y-m-d') . ' 23:59:59',
+    '#prefix' => '<div id="brightcove-end-availability-date">',
+    '#suffix' => '</div>',
+    '#pre_render' => ['_brightcove_schedule_start_end_date_pre_render'],
+    '#states' => [
+      'visible' => [
+        'input[name="end_date"]' => ['value' => 'date_set'],
+      ],
+    ],
+  ];
+
+  $form['advanced'] = [
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => t('Advanced'),
+  ];
+
+  $form['advanced']['linktext'] = [
+    '#type' => 'textfield',
+    '#title' => t('Related link text'),
+    '#default_value' => !empty($form_state['values']['linktext']) ? $form_state['values']['linktext'] : '',
+  ];
+
+  $form['advanced']['linkurl'] = [
+    '#type' => 'textfield',
+    '#title' => t('Related link url'),
+    '#default_value' => !empty($form_state['values']['linkurl']) ? $form_state['values']['linkurl'] : '',
+  ];
+
+  $form['advanced']['economics'] = [
+    '#type' => 'select',
+    '#title' => t('Economic model'),
+    '#options' => [
+      BRIGHTCOVE_ECONOMICS_FREE => t('No advertising'),
+      BRIGHTCOVE_ECONOMICS_AD_SUPPORTED => t('Advertising'),
+    ],
+    '#description' => t('If set to "Advertising", ads may be shown when viewers watch this video'),
+    '#default_value' => !empty($form_state['values']['economics']) ? $form_state['values']['economics'] : BRIGHTCOVE_ECONOMICS_FREE
+  ];
+
+  if (empty($video_id)) {
+    $form['advanced']['profile'] = [
+      '#type' => 'select',
+      '#title' => t('Video encoding profile'),
+      '#options' => drupal_map_assoc(brightcove_standard_profile_list()),
+    ];
+  }
+
+  $form['additional_fields'] = [
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => t('Additional fields'),
+  ];
+
+  // Attach additional fields.
+  // Edit form vs upload form.
+  $entity = brightcove_video_load_by_video_id($video_id, $client);
+  field_attach_form('brightcove_video', $entity, $form['additional_fields'], $form_state);
+
+  $form['#validate'][] = '_brightcove_upload_form_validate';
+
+  // Add video
+  if (empty($video_id)) {
+    $form['#prefix'] = '<div id="dialog-upload-form">';
+    $form['submit'] = [
+      '#type' => 'submit',
+      '#name' => 'submit-',
+      '#default_value' => t('Attach'),
+      '#ajax' => [
+        'callback' => 'ajax_upload_video_dialog_close_callback',
+        'wrapper' => 'dialog-upload-form',
+      ],
+    ];
+    $form['#suffix'] = '</div>';
+  }
+  // Edit form
+  else {
+    $form['#prefix'] = '<div id="dialog-edit-form">';
+
+    $form['submit'] = [
+      '#type' => 'submit',
+      '#name' => 'submit-',
+      '#default_value' => t('Save and Attach'),
+      '#ajax' => [
+        'callback' => 'ajax_edit_video_dialog_close_callback',
+        'wrapper' => 'dialog-edit-form',
+      ],
+    ];
+
+    $form['#suffix'] = '</div>';
+  }
+  $form['#attached'] = [
+    'js' => [
+        drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
+    ],
+    'css' => [
+      drupal_get_path('module', 'brightcove_field') . '/styles/upload.css',
+      drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css',
+    ],
+  ];
+
+  return $form;
 }
 
 /**
@@ -186,4 +484,61 @@ function brightcove_video_load_by_video_id($video_id, $client) {
     $video = entity_get_controller('brightcove_video')->create($values);
   }
   return $video;
+}
+
+function brightcove_video_create($values) {
+  return entity_get_controller('brightcove_video')->create($values);
+}
+/**
+ * Access callback for video entities.
+ */
+function brightcove_video_access($op, $entity, $account = NULL) {
+  // Viewing the video should be restricted by the content access the
+  // video is embedded into.
+  // Video creation depends on the client anyway so let's grant access and
+  // notify user on failure later.
+  if ($op == 'view' || $op == 'add') {
+    return TRUE;
+  }
+  return brightcove_client_access('use', $entity->client);
+}
+
+/**
+ * Menu callback to display the video upload dialog.
+ */
+function brightcove_video_upload($client) {
+  $values = [
+    'client' => $client,
+    'type' => 'brightcove_video',
+  ];
+  $video_entity = brightcove_video_create($values);
+  return brightcove_video_edit($video_entity);
+}
+
+/**
+ * Menu access callback for editing a video.
+ */
+function brightcove_video_edit_access($perm, $entity_type, $field_name, $entity_id_or_bundle = NULL, Entity $video) {
+  return brightcove_field_browse_access($perm, $entity_type, $field_name, $entity_id_or_bundle, $video->client);
+}
+
+/**
+ * Menu callback to display a video edit form.
+ * @param Entity $video
+ */
+function brightcove_video_edit(Entity $video_entity) {
+  $form = drupal_get_form('brightcove_video_form', $video_entity);
+  return drupal_render($form);
+}
+
+/**
+ * Format a date.
+ */
+function _brightcove_format_date($datestring, $expected_format = 'Y-m-d H:i') {
+  if (!$datestring) {
+    return NULL;
+  }
+
+  $datetime = new DateTime($datestring);
+  return $datetime->format($expected_format);
 }
