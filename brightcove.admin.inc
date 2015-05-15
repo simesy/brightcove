@@ -180,7 +180,7 @@ function brightcove_admin_settings($form, &$form_state) {
   ];
   $form['player']['brightcove_player_smart_api'] = [
     '#type' => 'checkbox',
-    '#title' => t('Use Smart Palyer API'),
+    '#title' => t('Use Smart Player API'),
     '#description' => t("Optionally use the <a href=\"!url\">Brightcove Smart Player API</a>. You can only use it, if you avoid to load the full JavaScript API. Smart Player API doesn't support playlist players.", ['!url' => 'http://support.brightcove.com/en/video-cloud/docs/using-smart-player-api']),
     '#default_value' => variable_get('brightcove_player_smart_api', FALSE),
     '#states' => [
