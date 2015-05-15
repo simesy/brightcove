@@ -497,7 +497,7 @@ function brightcove_video_access($op, $entity, $account = NULL) {
   // video is embedded into.
   // Video creation depends on the client anyway so let's grant access and
   // notify user on failure later.
-  if ($op == 'view' || $op == 'add') {
+  if ($op == 'view' || $op == 'add' || $op == 'create') {
     return TRUE;
   }
   return brightcove_client_access('use', $entity->client);
