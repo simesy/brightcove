@@ -77,12 +77,12 @@ function brightcove_field_menu() {
     'type' => MENU_CALLBACK,
   ];
 
-  $items['brightcove_field/edit_video/%/%/%/%brightcove_video'] = [
+  $items['brightcove_field/edit_video/%/%/%/%brightcove_client/%'] = [
     'title' => 'Brightcove Video editor',
-    'page arguments' => [5],
+    'page arguments' => [5, 6],
     'page callback' => 'brightcove_video_edit',
     'delivery callback' => 'brightcove_field_deliver_dialog',
-    'access callback' => 'brightcove_video_edit_access',
+    'access callback' => 'brightcove_field_browse_access',
     'access arguments' => ['browse videos', 2, 3, 4, 5],
     'file' => 'brightcove.video.inc',
     'file path' => drupal_get_path('module', 'brightcove'),

@@ -512,8 +512,8 @@ function brightcove_video_upload($client) {
     'type' => 'brightcove_video',
   ];
   $video_entity = brightcove_video_create($values);
-  return brightcove_video_edit($video_entity);
-}
+  $form = drupal_get_form('brightcove_video_form', $video_entity);
+  return drupal_render($form);}
 
 /**
  * Menu access callback for editing a video.
@@ -524,9 +524,13 @@ function brightcove_video_edit_access($perm, $entity_type, $field_name, $entity_
 
 /**
  * Menu callback to display a video edit form.
- * @param Entity $video
+ *
+ * @param Entity $client
+ * @param string $video_id
+ *
  */
-function brightcove_video_edit(Entity $video_entity) {
+function brightcove_video_edit(Entity $client, $video_id) {
+  $video_entity = brightcove_video_load_by_video_id($video_id, $client);
   $form = drupal_get_form('brightcove_video_form', $video_entity);
   return drupal_render($form);
 }
