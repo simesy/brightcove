@@ -309,7 +309,7 @@ function _brightcove_field_video_browse($client) {
         $item['title'] = check_plain($video->getName());
         $item['brightcove_id'] = $video->getId();
         $video_images = $video->getImages();
-        if (!empty($video_images)) {
+        if (!empty($video_images) && !empty($video_images['thumbnail'])) {
           $image_vars = ['path' => $video_images['thumbnail']->getSrc(), 'alt' => '', 'title' => '', 'attributes' => ''];
           $item['thumbnail'] = theme('image', $image_vars);
         }
