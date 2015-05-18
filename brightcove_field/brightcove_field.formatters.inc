@@ -89,7 +89,7 @@ function theme_brightcove_field_image($variables) {
         'attributes' => [
           'rel' => $field['field_name'],
           'class' => [$field['field_name'], 'use-ajax'],
-          'title' => $elements["#{$type}"] ? check_plain($elements["#{$type}"]->name) : '',
+          'title' => $elements["#{$type}"] ? check_plain(!empty($elements["#{$type}"]) ? $elements["#{$type}"]->getName() : '') : '',
         ],
         'html' => TRUE,
       ]);
@@ -100,7 +100,7 @@ function theme_brightcove_field_image($variables) {
       $output = l($image, $uri['path'], [
         'attributes' => [
           'class' => [$field['field_name']],
-          'title' => $elements["#{$type}"] ? check_plain($elements["#{$type}"]->name) : '',
+          'title' => $elements["#{$type}"] ? check_plain(!empty($elements["#{$type}"]) ? $elements["#{$type}"]->getName() : '') : '',
         ],
         'html' => TRUE,
       ]);
