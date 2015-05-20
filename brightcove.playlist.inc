@@ -343,6 +343,7 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
 
   $form['#tree'] = TRUE;
   // Adding a playlist.
+  $playlist = NULL;
   if (!empty($playlist_entity->bpid)) {
     $playlist = $playlist_entity->playlist;
     $form['bcid'] = [
@@ -357,6 +358,7 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
   }
   $wrapper_id = 'bc-playlist-data-wrapper';
 
+  $bcid = $form['bcid']['#default_value'];
   switch ($form['bcid']['#type']) {
     case 'select':
       $form['bcid']['#ajax'] = [
@@ -366,8 +368,8 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
       if (!empty($form_state['values']['bcid'])) {
         $bcid = $form_state['values']['bcid'];
       }
-      else {
-        $bcid = isset($form_state['input']['bcid']) ? $form_state['input']['bcid'] : $form['bcid']['#default_value'];
+      else if(!empty($form_state['input']['bcid'])) {
+        $bcid = $form_state['input']['bcid'];
       }
       break;
 
