@@ -296,19 +296,19 @@ function brightcove_form_ctools_export_ui_delete_confirm_form_alter(&$form, $for
     // If there is more than one players added, show an option for the user
     // to select a new default player.
     if (count($players) > 1) {
-      $available_players = array();
+      $available_players = [];
       foreach ($players as $player) {
         if ($player->name != $form_state['item']->name) {
           $available_players[$player->name] = $player->display_name;
         }
       }
 
-      $form['default_player_delete_confirm'] = array(
+      $form['default_player_delete_confirm'] = [
         '#type' => 'select',
         '#title' => t('You are about to delete the default player, please select another one to continue') . ':',
         '#options' => $available_players,
         '#required' => TRUE,
-      );
+      ];
     }
     // Otherwise forbid the deletion and redirect.
     else {

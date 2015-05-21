@@ -12,9 +12,9 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
  /**
    * Overwrites EntityAPIController::create().
    */
-  public function create(array $values = array()) {
+  public function create(array $values = []) {
     // Add is_new property if it is not set.
-    $values += array('is_new' => TRUE);
+    $values += ['is_new' => TRUE];
     brightcove_load_lib();
     $playlist_entity = new Entity($values, $this->entityType);
     if (empty($playlist_entity->client) || !($playlist_entity->client instanceof Entity)) {
@@ -36,8 +36,8 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
       return;
     }
     $bcid = $playlist_entity->client->bcid;
-    try {
-      list($cms, ) = _brightcove_create_classes($playlist_entity->client);
+    brightcove_try(function() use($playlist_entity, $bcid) {
+      list($cms,) = _brightcove_create_classes($playlist_entity->client);
       if (!empty($playlist_entity->bpid)) {
         field_attach_update('brightcove_playlist', $playlist_entity);
         $cms->updatePlaylist($playlist_entity->playlist);
@@ -50,12 +50,9 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
       $name = $playlist_entity->playlist->getName();
       watchdog('brightcove', 'Saving brightcove playlist "@name" was successful.', ['@name' => $name], WATCHDOG_INFO);
       drupal_set_message(t('Saving brightcove playlist "@name" was successful.', ['@name' => $name]), 'status');
-    }
-    catch (BrightcoveAPIException $e) {
-      watchdog('brightcove', 'Saving brightcove playlist failed with the following message: @message.', ['@message' => $e->getMessage()], WATCHDOG_ERROR);
-      drupal_set_message(t('Saving brightcove playlist failed with the following message: @message', ['@message' => $e->getMessage()]), 'error');
-      throw $e;
-    }
+    }, function (BrightcoveAPIException $ex) {
+      throw $ex;
+    });
     brightcove_invalidate_cache('brightcove:playlist:list:' . $bcid);
   }
 
@@ -69,7 +66,7 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
    *
    * @return An array of BrightcovePlaylist objects, keyed by the playlist id.
    */
-  public function load($ids = array(), $conditions = array()) {
+  public function load($ids = [], $conditions = []) {
     $playlists = [];
     $entity_info = entity_get_info('brightcove_playlist');
     foreach ($ids as $id) {
@@ -110,13 +107,9 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
     foreach ($entities as $playlist_entity) {
       list($cms,) = _brightcove_create_classes($playlist_entity->client);
       $playlist = $playlist_entity->playlist;
-      try {
+      brightcove_try(function () use($playlist, $cms) {
         $cms->deletePlaylist($playlist->getId());
-      }
-      catch (Exception $error) {
-        watchdog('brightcove', 'Deleting playlist @playlist failed.', ['@playlist' => $playlist->getId()], WATCHDOG_ERROR);
-        drupal_set_message(t('Deleting playlist @playlist failed.', ['@playlist' => $playlist->getId()]), 'error');
-      }
+      });
       // deletePlaylist() fails silently in case the client has no permission to
       // delete the playlist so we check here if it has been really removed or
       // not.
@@ -141,16 +134,16 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
 
   public function hook_menu() {
     $items = parent::hook_menu();
-    $items['admin/config/media/brightcove/playlist'] = array(
+    $items['admin/config/media/brightcove/playlist'] = [
       'type' => MENU_LOCAL_TASK,
       'title' => 'Playlists',
       'page callback' => 'drupal_get_form',
-      'page arguments' => array($this->entityType . '_overview_form', $this->entityType),
+      'page arguments' => [$this->entityType . '_overview_form', $this->entityType],
       'description' => 'Manage playlists.',
       'access callback' => 'entity_access',
-      'access arguments' => array('view', $this->entityType),
+      'access arguments' => ['view', $this->entityType],
       'file' => 'includes/entity.ui.inc',
-    );
+    ];
     return $items;
   }
 
@@ -198,7 +191,7 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
    * @return string
    *   Rendered overivew page.
    */
-  public function overviewTable($conditions = array()) {
+  public function overviewTable($conditions = []) {
     $client = $conditions['client'];
     $table = [
       'header' => [
@@ -299,13 +292,9 @@ function brightcove_get_playlists(Entity $client, $cache_reset = FALSE) {
 
   $playlists = FALSE;
   list($cms, ) = _brightcove_create_classes($client);
-  try {
+  brightcove_try(function() use(&$playlists, $cms) {
     $playlists = $cms->listPlaylists(100);
-  }
-  catch (Exception $error) {
-    watchdog('brightcove', 'Fetching playlists failed.', [], WATCHDOG_ERROR);
-    drupal_set_message(t('Fetching playlists failed.'), 'error');
-  }
+  });
 
   if ($playlists) {
     brightcove_cache_set($cid, $playlists);
@@ -517,14 +506,11 @@ function brightcove_playlist_delete_form($form, &$form_state, $client, $playlist
     '#value' => $client->bcid,
   ];
 
-  try {
+  $playlist = NULL;
+  brightcove_try(function () use($client, &$playlist, $playlist_id) {
     list($cms,) = _brightcove_create_classes($client);
     $playlist = $cms->getPlaylist($playlist_id);
-  }
-  catch (BrightcoveAPIException $e) {
-    watchdog('brightcove', 'This playlist is not accessible by this client.', [], WATCHDOG_ERROR);
-    drupal_set_message(t('This playlist is not accessible by this client.'), 'error');
-  }
+  });
 
   $form['playlist_id'] = [
     '#type' => 'hidden',
@@ -533,7 +519,7 @@ function brightcove_playlist_delete_form($form, &$form_state, $client, $playlist
 
   return confirm_form(
     $form,
-    t('Are you sure you want to delete playlist "%name"', ['%name' => $playlist->getName()]),
+    t('Are you sure you want to delete playlist "%name"', ['%name' => $playlist ? $playlist->getName() : '']),
     'admin/config/media/brightcove/playlist',
     t('This action annot be undone'),
     t('Delete'),
@@ -562,41 +548,41 @@ function _brightcove_configure_playlist_entity() {
   $instance = field_info_instance($entity_type, $field_name, BRIGHTCOVE_PLAYLIST_TYPE_MANUAL);
 
   if (empty($field)) {
-    $field = array(
+    $field = [
       'field_name' => $field_name,
       'type' => $field_type,
       'cardinality' => -1,
-      'entity_types' => array($entity_type),
+      'entity_types' => [$entity_type],
       'translatable' => FALSE,
       'locked' => TRUE,
       'storage' => [
         'type' => 'brightcove_playlist_video_storage',
       ],
-    );
+    ];
     $field = field_create_field($field);
   }
 
   // Set field to active via a query because field_update_field() does
   // not work on inactive fields.
   db_update('field_config')
-    ->fields(array('active' => 1))
+    ->fields(['active' => 1])
     ->condition('field_name', $field_name, '=')
     ->condition('deleted', 0, '=')
     ->execute();
   field_cache_clear();
 
   if (empty($instance)) {
-    $instance = array(
+    $instance = [
       'field_name' => $field_name,
       'entity_type' => $entity_type,
       'bundle' => BRIGHTCOVE_PLAYLIST_TYPE_MANUAL,
       'label' => t('Videos'),
-      'settings' => array(),
-      'widget' => array(
+      'settings' => [],
+      'widget' => [
         'type' => BRIGHTCOVE_VIDEO_WIDGET,
-      ),
-      'display' => array(),
-    );
+      ],
+      'display' => [],
+    ];
 
     field_create_instance($instance);
   }
@@ -625,14 +611,10 @@ function brightcove_load_playlist($playlist_id, $bcid, $reset = FALSE) {
   $playlist = FALSE;
   $client = brightcove_client_load($bcid);
 
-  try {
+  brightcove_try(function() use($client, &$playlist, $playlist_id) {
     list($cms, ) = _brightcove_create_classes($client);
     $playlist = $cms->getPlaylist($playlist_id);
-  }
-  catch (Exception $e) {
-    watchdog('brightcove', 'Loading brightcove playlist failed.', [], WATCHDOG_ERROR);
-    drupal_set_message(t('Loading brightcove playlist failed.'), 'error');
-  }
+  });
 
   if ($playlist) {
     brightcove_cache_set($cid, $playlist);

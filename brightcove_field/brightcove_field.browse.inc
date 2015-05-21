@@ -15,12 +15,8 @@
  *   The brightcove client entity to display the videos for.
  *
  * @return A list of available videos that can be attached to a field.
- *
- * TODO: Interesting feature would be to detect multiple values allowed in the
- *       parent field and allow attaching all videos at once.
  */
 function brightcove_field_browse($entity_type, $field_name, $entity_id_or_bundle, $client) {
-  $content = [];
   module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
   $content = _brightcove_field_video_browse($client);
   $content['filter_form']['css_and_js'] = [
@@ -68,12 +64,9 @@ function brightcove_field_autocomplete($type, $field_name, $client, $string = ''
   $result = [];
   switch ($type) {
     case 'video':
-      try {
+      brightcove_try(function() use(&$result, $cms, $string) {
         $result = $cms->listVideos($string);
-      }
-      catch (Exception $error) {
-        watchdog('brightcove', 'Finding videos for autocomplete failed.', [], WATCHDOG_ERROR);
-      }
+      });
       break;
     case 'playlist':
       // No API method to find playlists by name.

@@ -251,7 +251,7 @@ function brightcove_field_video_client_ajax_callback($form, $form_state) {
  * @param Entity $client
  *   The brightcove client entity object.
  *
- * @return An array rendered by brightcove_field_browse().
+ * @return array An array rendered by brightcove_field_browse().
  */
 function _brightcove_field_video_browse($client) {
   global $pager_total, $pager_page_array;
@@ -288,13 +288,9 @@ function _brightcove_field_video_browse($client) {
   // If no cached data is available.
   if (!$content) {
     list($cms,) = _brightcove_create_classes($client);
-    try {
+    brightcove_try(function() use(&$result, $cms, $search, $items_per_page, $page) {
       $result = $cms->listVideos($search, NULL, $items_per_page, $items_per_page * $page);
-    }
-    catch (Exception $error) {
-      watchdog('brightcove', 'Finding videos in browse failed.', [], WATCHDOG_ERROR);
-      drupal_set_message(t('Finding videos in browse failed.'), 'error');
-    }
+    });
 
     $pager_page_array = explode(',', $page);
     $pager_total[0] = ceil($cms->countVideos($search) / $items_per_page);

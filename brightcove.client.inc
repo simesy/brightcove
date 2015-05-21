@@ -37,7 +37,7 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
    * @inheritdoc
    */
   public function overviewForm($form, &$form_state) {
-    $form['#attached']['library'][] = array('system', 'drupal.ajax');
+    $form['#attached']['library'][] = ['system', 'drupal.ajax'];
     return parent::overviewForm($form, $form_state);
   }
 
@@ -256,15 +256,15 @@ function brightcove_client_form_validate($form, &$form_state) {
   $client_secret = $form_state['values']['client_secret'];
 
   brightcove_load_lib();
-  try {
+  $client = NULL;
+  brightcove_try(function() use(&$form, &$client, $client_id, $client_secret) {
     $client = BrightcoveClient::authorize($client_id, $client_secret);
     if (!$client->isAuthorized()) {
       form_error($form, t('Failed to authorize.'));
     }
-  } catch (BrightcoveAuthenticationException $ex) {
+  }, function (Exception $ex) use(&$form) {
     form_error($form, t('Failed to authorize.'));
-    watchdog_exception('brightcove', $ex, 'Brightcove client validation');
-  }
+  });
 
   // Ensure the proposed client id is unique or reused only during client
   // updates.

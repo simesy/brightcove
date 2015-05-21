@@ -17,18 +17,18 @@ class BrightcoveVideoEntityController extends EntityAPIController {
  /**
    * @inheritdoc
    */
-  public function create(array $values = array()) {
+  public function create(array $values = []) {
     brightcove_load_lib();
     // Add is_new property if it is not set.
-    $values += array('is_new' => TRUE);
+    $values += ['is_new' => TRUE];
     if (empty($values['client']) || !($values['client'] instanceof Entity)) {
       throw new Exception(t('Cannot create a brightcove_video entity without a client.'));
     }
     if (empty($values['video_id'])) {
-      $values['video'] = new BrightcoveVideo;
+      $values['video'] = new BrightcoveVideo();
       $values['video_id'] = NULL;
     }
-    elseif ($video = brightcove_load_video($values['video_id'], $values['client'])) {
+    elseif (($video = brightcove_load_video($values['video_id'], $values['client']))) {
       $values['video'] = $video;
       $values['account_id'] = $values['client']->account_id;
       $values['label'] = $video->getName();
@@ -46,7 +46,7 @@ class BrightcoveVideoEntityController extends EntityAPIController {
   /**
    * @inheritdoc
    */
-  public function load($ids = array(), $conditions = array()) {
+  public function load($ids = [], $conditions = []) {
     $entities = parent::load($ids, $conditions);
     // Add the BrightcoveVideo object to each entity object.
     foreach ($entities as $key => $entity) {
@@ -55,7 +55,7 @@ class BrightcoveVideoEntityController extends EntityAPIController {
           $clients = brightcove_get_clients_by_account_id($entity->account_id);
           $found_client = FALSE;
           foreach ($clients as $client) {
-            if ($video = brightcove_load_video($entity->video_id, $client)) {
+            if (($video = brightcove_load_video($entity->video_id, $client))) {
               $entity->video = $video;
               $entity->client = $client;
               $found_client = TRUE;
@@ -103,23 +103,16 @@ function brightcove_save_video(BrightcoveVideo $video, Entity $client) {
   list($cms,) = _brightcove_create_classes($client);
   $video_id = $video->getId();
   if (!empty($video_id)) {
-    try {
+    brightcove_try(function() use(&$video, $cms, $client) {
       $video = $cms->updateVideo($video);
       brightcove_invalidate_cache("brightcove:video:{$video->getId()}:{$client->bcid}");
-
-    }
-    catch (BrightcoveAPIException $e) {
-      watchdog('brightcove', 'Updating BrightcoveVideo failed with message "@e".', ['@e' => $e->getMessage()], WATCHDOG_ERROR);
-    }
+    });
   }
   else {
-    try {
+    brightcove_try(function() use(&$video, $cms, $client) {
       $video = $cms->createVideo($video);
       brightcove_invalidate_cache("brightcove:video:{$video->getId()}:{$client->bcid}");
-    }
-    catch (BrightcoveAPIException $e) {
-      watchdog('brightcove', 'Creating BrightcoveVideo failed with message "@e".', ['@e' => $e->getMessage()], WATCHDOG_ERROR);
-    }
+    });
   }
   return $video;
 }
@@ -139,8 +132,6 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
   $video_id = $video->getId();
   // Edit form
   if (!empty($video_id)) {
-    list($cms,) = _brightcove_create_classes($client);
-
     $form_state = [];
     $form_state['values'] = [
       'title' => $video->getName(),

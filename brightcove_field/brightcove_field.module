@@ -1003,13 +1003,11 @@ function brightcove_field_browser_video_validate($element, &$form_state) {
       // Didn't match ID, try looking up the video text at BC.
       list($cms,) = _brightcove_create_classes($client);
       $result = [];
-      try {
+      brightcove_try(function() use(&$result, $cms, $value) {
         $result = $cms->listVideos($value, '-created_at');
-      }
-      catch (Exception $error) {
+      }, function () use (&$element) {
         form_error($element, t('There was a problem accessing Brightcove. Please try again'));
-        watchdog('brightcove', 'Validating element with Brightcove failed', [], WATCHDOG_ERROR);
-      }
+      });
 
       if (count($result) > 1) {
         // This title is ambiguous.
@@ -1609,8 +1607,8 @@ function _brightcove_field_get_object_formatter_keys($type = 'video') {
  *   )
  */
 function brightcove_field_refresh_video_entity_link($entity_type, $entity, $items) {
-  if ($entity_link_field = variable_get('brightcove_link_field')) {
-    if ($entity_link = entity_uri($entity_type, $entity)) {
+  if (($entity_link_field = variable_get('brightcove_link_field'))) {
+    if (($entity_link = entity_uri($entity_type, $entity))) {
       $absolute_entity_link = url($entity_link['path'],
         [
           'absolute' => TRUE,
@@ -1621,25 +1619,18 @@ function brightcove_field_refresh_video_entity_link($entity_type, $entity, $item
         $video_ids[$item['bcid']][] = $item['brightcove_id'];
       }
       if ($video_ids) {
-        foreach ($video_ids as $bcid => $video_ids) {
+        $videos = [];
+        foreach ($video_ids as $bcid => $video_id) {
           $client = brightcove_client_load($bcid);
           list($cms,) = _brightcove_create_classes($client);
-          try {
-            $videos = $cms->listVideos('reference_id:' . implode(' ', $video_ids));
-          }
-          catch (Exception $error) {
-            watchdog('brightcove', 'Finding for setting entity link failed.', [], WATCHDOG_ERROR);
-          }
+          brightcove_try(function() use(&$videos, $cms, $video_id) {
+            $videos = $cms->listVideos('reference_id:' . implode(' ', $video_id));
+          });
         }
         foreach ($videos as $video) {
           $custom_fields = $video->getCustomFields();
           $custom_fields[$entity_link_field] = $absolute_entity_link;
-          try {
-            $video->setCustomFields($custom_fields);
-          }
-          catch (Exception $error) {
-            watchdog('brightcove', 'Setting entity link custom field failed.', [], WATCHDOG_ERROR);
-          }
+          $video->setCustomFields($custom_fields);
         }
       }
     }
@@ -1676,7 +1667,7 @@ function brightcove_field_get_value($instance, $stored) {
   }
   // If no player is set to the content and the BC video field,
   // try to get the global default player.
-  elseif ($pid = variable_get('brightcove_player_default')) {
+  elseif (($pid = variable_get('brightcove_player_default'))) {
     return $pid;
   }
   return NULL;
