@@ -14,20 +14,20 @@
  * $param Entity $client
  *   The brightcove client entity to display the videos for.
  *
- * @return A list of available videos that can be attached to a field.
+ * @return string A list of available videos that can be attached to a field.
  */
 function brightcove_field_browse($entity_type, $field_name, $entity_id_or_bundle, $client) {
-  module_load_include('inc', 'brightcove_field', 'brightcove_field.video');
+  module_load_include('inc', 'brightcove', 'brightcove_field.video');
   $content = _brightcove_field_video_browse($client);
   $content['filter_form']['css_and_js'] = [
     '#type' => 'container',
     '#attached' => [
       'js' => [
-        drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
+        drupal_get_path('module', 'brightcove') . '/js/brightcove.js',
         ctools_attach_js('ajax-responder'),
       ],
       'css' => [
-        drupal_get_path('module', 'brightcove_field') . '/styles/browse.css',
+        drupal_get_path('module', 'brightcove') . '/styles/browse.css',
       ],
     ],
   ];
@@ -70,7 +70,7 @@ function brightcove_field_autocomplete($type, $field_name, $client, $string = ''
       break;
     case 'playlist':
       // No API method to find playlists by name.
-      module_load_include('inc', 'brightcove_field', 'brightcove_field.playlist');
+      module_load_include('inc', 'brightcove', 'brightcove_field.playlist');
       $result = brightcove_field_get_matched_playlists($string);
       break;
   }

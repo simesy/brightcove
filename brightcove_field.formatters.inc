@@ -23,12 +23,12 @@ function theme_brightcove_field_formatter_default($variables) {
       $path = brightcove_get_experiences_js_url();
       drupal_add_js($path, ['type' => 'external', 'defer' => FALSE, 'async' => TRUE]);
     }
-    $params['id'] = 'myExperience' . $vidcount;
+    $client = brightcove_client_load($variables['element']['bcid']);
     $output = theme('brightcove_field_embed', [
       'type' => $variables['type'],
-      'brightcove_id' => $variables['element']['brightcove_id'],
-      'params' => $params,
-      'player' => brightcove_field_get_value($variables['instance'], $variables['element']['player']),
+      'video_id' => $variables['element']['brightcove_id'],
+      'player_id' => $variables['element']['player'],
+      'account_id' => $client->account_id,
       'width' => $variables['width'],
       'height' => $variables['height'],
     ]);

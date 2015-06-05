@@ -25,7 +25,7 @@ class BrightcoveVideoEntityController extends EntityAPIController {
       throw new Exception(t('Cannot create a brightcove_video entity without a client.'));
     }
     if (empty($values['video_id'])) {
-      $values['video'] = new BrightcoveVideo();
+      $values['video'] = new \Brightcove\Object\Video\Video();
       $values['video_id'] = NULL;
     }
     elseif (($video = brightcove_load_video($values['video_id'], $values['client']))) {
@@ -36,7 +36,7 @@ class BrightcoveVideoEntityController extends EntityAPIController {
     else {
       throw new Exception(t('Failure to load the video @video with client @client', ['@video' => $values['video_id'], '@client' => $values['client']->bcid]));
     }
-    // Add a BrightcoveVideo object to the entity object.
+    // Add a Video object to the entity object.
     brightcove_load_lib();
     $video_entity = new Entity($values, $this->entityType);
 
@@ -48,9 +48,9 @@ class BrightcoveVideoEntityController extends EntityAPIController {
    */
   public function load($ids = [], $conditions = []) {
     $entities = parent::load($ids, $conditions);
-    // Add the BrightcoveVideo object to each entity object.
+    // Add the Video object to each entity object.
     foreach ($entities as $key => $entity) {
-      if (empty($entity->video) || !($entity->video instanceof BrightcoveVideo)) {
+      if (empty($entity->video) || !($entity->video instanceof \Brightcove\Object\Video\Video)) {
         if (empty($entity->client) || !($entity->client instanceof Entity)) {
           $clients = brightcove_get_clients_by_account_id($entity->account_id);
           $found_client = FALSE;
@@ -92,14 +92,14 @@ class BrightcoveVideoEntityController extends EntityAPIController {
 }
 
 /**
- * Saves a BrightcoveVideo.
+ * Saves a Video.
  *
- * @param BrightcoveVideo $video
+ * @param \Brightcove\Object\Video\Video $video
  * @param Entity $client
  *
- * @return BrightcoveVideo
+ * @return \Brightcove\Object\Video\Video
  */
-function brightcove_save_video(BrightcoveVideo $video, Entity $client) {
+function brightcove_save_video(\Brightcove\Object\Video\Video $video, Entity $client) {
   list($cms,) = _brightcove_create_classes($client);
   $video_id = $video->getId();
   if (!empty($video_id)) {
@@ -246,7 +246,7 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
     }
     $form['custom_fields']['#collapsed'] = !$has_required;
   }
-  catch (BrightcoveAPIException $ex) {
+  catch (\Brightcove\API\Exception\APIException $ex) {
     $form['custom_fields']['#access'] = FALSE;
   }
 
@@ -415,7 +415,7 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
 /**
  * Save a video entity.
  *
- * This call will take care of creating/updating the BrightcoveVideo at
+ * This call will take care of creating/updating the Video at
  * $video->video as well.
  *
  * @param Entity $video
@@ -442,7 +442,7 @@ function brightcove_video_load($bvid) {
 }
 
 /**
- * Load a video entity by BrightcoveVideo->getId().
+ * Load a video entity by Video->getId().
  *
  * This very smart function loads a brightcove_video entity by video_id
  * or if it does not exist, it creates it.
@@ -490,10 +490,7 @@ function brightcove_video_access($op, $entity, $account = NULL) {
   // video is embedded into.
   // Video creation depends on the client anyway so let's grant access and
   // notify user on failure later.
-  if ($op == 'view' || $op == 'add' || $op == 'create') {
-    return TRUE;
-  }
-  return brightcove_client_access('use', $entity->client);
+  return $op == 'view' || $op == 'add' || $op == 'create' || brightcove_client_access('use', $entity->client);
 }
 
 /**
@@ -511,7 +508,7 @@ function brightcove_video_upload($client) {
 /**
  * Menu access callback for editing a video.
  */
-function brightcove_video_edit_access($perm, $entity_type, $field_name, $entity_id_or_bundle = NULL, Entity $video) {
+function brightcove_video_edit_access($perm, $entity_type, $field_name, $entity_id_or_bundle = NULL, Entity $video = NULL) {
   return brightcove_field_browse_access($perm, $entity_type, $field_name, $entity_id_or_bundle, $video->client);
 }
 
@@ -521,6 +518,7 @@ function brightcove_video_edit_access($perm, $entity_type, $field_name, $entity_
  * @param Entity $client
  * @param string $video_id
  *
+ * @return string
  */
 function brightcove_video_edit(Entity $client, $video_id) {
   $video_entity = brightcove_video_load_by_video_id($video_id, $client);

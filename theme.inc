@@ -14,7 +14,7 @@
  * @see nodereference_explorer.module
  */
 function theme_brightcove_field_browse_button($element) {
-  drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js');
+  drupal_add_js(drupal_get_path('module', 'brightcove') . '/js/brightcove.js');
   $element['#button_type'] = 'button';
   // TODO: review after the field part is stable
   $button = theme('button', ['element' => $element]);

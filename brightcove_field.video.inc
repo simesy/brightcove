@@ -138,10 +138,10 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
           ['system', 'ui.dialog'],
         ],
         'css' => [
-          drupal_get_path('module', 'brightcove_field') . '/styles/brightcove.css',
+          drupal_get_path('module', 'brightcove') . '/styles/brightcove.css',
         ],
         'js' => [
-          drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
+          drupal_get_path('module', 'brightcove') . '/js/brightcove.js',
           [
             'data' => $brightcove_field_settings[$element['#field_name']],
             'type' => 'setting',
@@ -151,9 +151,9 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     ];
 
     $element['player'] = [
-      '#type' => $instance['settings']['per_content_player'] ? 'select' : 'value',
+      '#type' => 'select',
       '#title' => t('Player'),
-      '#options' => brightcove_player_list($instance),
+      '#options' => brightcove_player_list($client->bcid),
       '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : NULL,
     ];
 

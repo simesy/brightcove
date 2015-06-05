@@ -258,7 +258,7 @@ function brightcove_client_form_validate($form, &$form_state) {
   brightcove_load_lib();
   $client = NULL;
   brightcove_try(function() use(&$form, &$client, $client_id, $client_secret) {
-    $client = BrightcoveClient::authorize($client_id, $client_secret);
+    $client = \Brightcove\API\Client::authorize($client_id, $client_secret);
     if (!$client->isAuthorized()) {
       form_error($form, t('Failed to authorize.'));
     }
@@ -436,7 +436,7 @@ function brightcove_client_access($op, $entity = NULL, $account = NULL) {
  *
  * @param $op
  * @param string $bcid
- *   The BrightcoveClient bcid.
+ *   The Brightcove Client bcid.
  * @param object $account
  *  The drupal user object.
  *

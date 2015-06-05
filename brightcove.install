@@ -6,6 +6,34 @@
   */
 
 /**
+ * Implements hook_field_schema().
+ */
+function brightcove_field_schema() {
+  return [
+    'columns' => [
+      'brightcove_id' => [
+        'type' => 'varchar',
+        'length' => 15,
+        'not null' => FALSE
+      ],
+      'player' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ],
+      'bcid' => [
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+    ],
+    'indexes' => [
+      'brightcove_id' => ['brightcove_id'],
+    ],
+  ];
+}
+
+
+/**
  * Implements hook_schema().
  */
 function brightcove_schema() {
@@ -553,4 +581,44 @@ function brightcove_update_7600() {
     ],
   ];
    db_create_table('brightcove_video', $table);
+}
+
+/**
+ * Removes the brightcove player table.
+ */
+function brightcove_update_7601() {
+  db_delete('brightcove_player');
+  variable_del('brightcove_default_player');
+}
+
+function brightcove_update_7602() {
+  if (module_exists('field_sql_storage')) {
+    $coldef = [
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ];
+
+    foreach (field_info_fields() as $name => $def) {
+      if ($def['type'] == 'brightcove_field' && $def['storage']['type'] == 'field_sql_storage') {
+        $tablename = _field_sql_storage_tablename($def);
+        $revtablename = _field_sql_storage_revision_tablename($def);
+        $bcid_col = _field_sql_storage_columnname($name, 'bcid');
+
+        db_add_field($tablename, $bcid_col, $coldef);
+        db_add_field($revtablename, $bcid_col, $coldef);
+      }
+    }
+
+    field_cache_clear();
+  }
+}
+
+function brightcove_update_7603() {
+  db_update('field_config')
+    ->fields([
+      'module' => 'brightcove',
+    ])
+    ->condition('module', 'brightcove_field')
+    ->execute();
 }

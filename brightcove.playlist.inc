@@ -20,8 +20,8 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
     if (empty($playlist_entity->client) || !($playlist_entity->client instanceof Entity)) {
       $playlist_entity->client = entity_create('brightcove_client', []);
     }
-    if (empty($playlist_entity->playlist) || !($playlist_entity->playlist instanceof BrightcovePlaylist)) {
-      $playlist_entity->playlist = new BrightcovePlaylist();
+    if (empty($playlist_entity->playlist) || !($playlist_entity->playlist instanceof \Brightcove\Object\Playlist)) {
+      $playlist_entity->playlist = new \Brightcove\Object\Playlist();
     }
     return $playlist_entity;
   }
@@ -50,7 +50,7 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
       $name = $playlist_entity->playlist->getName();
       watchdog('brightcove', 'Saving brightcove playlist "@name" was successful.', ['@name' => $name], WATCHDOG_INFO);
       drupal_set_message(t('Saving brightcove playlist "@name" was successful.', ['@name' => $name]), 'status');
-    }, function (BrightcoveAPIException $ex) {
+    }, function (\Brightcove\API\Exception\APIException $ex) {
       throw $ex;
     });
     brightcove_invalidate_cache('brightcove:playlist:list:' . $bcid);
@@ -59,12 +59,12 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
   /**
    * Overwrites DrupalDefaultEntityController::load().
    *
-   * @param array ids
+   * @param array $ids
    *  Array of ids. The format for an id is "1234-5" where 1234 is
-   *  a BrightcovePlaylist->getId() and 5 is a BrightcoveClient->bcid.
+   *  a Playlist->getId() and 5 is a Client->bcid.
    * @param $conditions
    *
-   * @return An array of BrightcovePlaylist objects, keyed by the playlist id.
+   * @return \Brightcove\Object\Playlist[] An array of Playlist objects, keyed by the playlist id.
    */
   public function load($ids = [], $conditions = []) {
     $playlists = [];
@@ -229,7 +229,7 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
    *
    * @param Entity $client
    *  The client entity object.
-   * @param BrightcovePlaylist $playlist
+   * @param \Brightcove\Object\Playlist $playlist
    *   Playlist object.
    *
    * @return array
@@ -321,7 +321,7 @@ function brightcove_playlist_client_ajax($form, $form_state) {
 function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
   brightcove_load_lib();
   // On AJAX the playlist_entity->playlist might not be properly populated.
-  if (isset($playlist_entity->playlist) && !($playlist_entity->playlist instanceof BrightcovePlaylist) && !empty($playlist_entity->client) && isset($playlist_entity->playlist_id)) {
+  if (isset($playlist_entity->playlist) && !($playlist_entity->playlist instanceof \Brightcove\Object\Playlist) && !empty($playlist_entity->client) && isset($playlist_entity->playlist_id)) {
     $playlist_entity->playlist = brightcove_load_playlist($playlist_entity->playlist_id, $playlist_entity->client->bcid);
   }
 
@@ -370,9 +370,9 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
   $client = brightcove_client_load($bcid);
   $playlist_entity->client = $client;
   // If we have just changed the client select from '_none' to something, the
-  // $playlist_entity->playlist is not a BrightcovePlaylist.
-  if (empty($playlist_entity->playlist) || !($playlist_entity->playlist instanceof BrightcovePlaylist)) {
-    $playlist_entity->playlist = new BrightcovePlaylist();
+  // $playlist_entity->playlist is not a Playlist.
+  if (empty($playlist_entity->playlist) || !($playlist_entity->playlist instanceof \Brightcove\Object\Playlist)) {
+    $playlist_entity->playlist = new \Brightcove\Object\Playlist();
   }
   $form['playlist_data'] = [
     '#type' => 'container',
@@ -495,7 +495,7 @@ function brightcove_playlist_form_delete($form, &$form_state) {
  * @param Entity $client
  *   The brightcove client Entity object.
  * @param string $playlist_id
- *   The BrightcovePlaylist id.
+ *   The Playlist id.
  * @return array
  */
 function brightcove_playlist_delete_form($form, &$form_state, $client, $playlist_id) {
@@ -589,16 +589,16 @@ function _brightcove_configure_playlist_entity() {
 }
 
 /**
- * Loads a BrightcovePlaylist object.
+ * Loads a Playlist object.
  *
  * @param $playlist_id
- *  The BrightcovePlalylist->getId() id.
+ *  The Playlist->getId() id.
  * @param $bcid
- *  The BrightcoveClient->bcid to use for fetching the playlist.
+ *  The Client->bcid to use for fetching the playlist.
  * @param bool $reset
  *  Set to TRUE if you do not want to use the cache.
  *
- * @return bool|BrightcovePlalylist
+ * @return bool|\Brightcove\Object\Playlist
  *  The playlist object or FALSE on failure.
  */
 function brightcove_load_playlist($playlist_id, $bcid, $reset = FALSE) {
@@ -627,8 +627,9 @@ function brightcove_load_playlist($playlist_id, $bcid, $reset = FALSE) {
  * Loads a brightcove playlist entity object by id.
  *
  * @param string $id
- *  An id in the form of "12345-6" where 12345 is BrightcovePlaylist->getId()
- *  and 6 is the BrightcoveClient->bcid.
+ *  An id in the form of "12345-6" where 12345 is Playlist->getId()
+ *  and 6 is the Client->bcid.
+ * @return mixed
  */
 function brightcove_playlist_load($id) {
   brightcove_load_lib();
