@@ -2052,36 +2052,6 @@ function brightcove_autocomplete_videos($client, $videos_typed) {
 }
 
 /**
- * Return the path to the Brightcove MAPI library.
- *
- * If brightcove_variable_get('brightcove_mapi_path') has not yet been set, then
- * this will attempt to autodiscover the path if the bc-mapi.php file exists
- * within sites/all/libraries/* or sites/example.com/libraries/*. It will also
- * set the path to media_brightcove_variable_get('brightcove_mapi_path').
- *
- * The library is available from http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/.
- *
- * @return string
- *   The path to the bc-mapi.php file.
- */
-function brightcove_mapi_path() {
-  $path = &drupal_static(__FUNCTION__);
-
-  if (!isset($path)) {
-    if (!($path = variable_get('brightcove_mapi_path', FALSE))) {
-      $files = drupal_system_listing('/^bc-mapi\.php$/', 'libraries',
-                                     'filename', 0);
-      if (isset($files['bc-mapi.php'])) {
-        $path = dirname($files['bc-mapi.php']->uri);
-        variable_set('brightcove_mapi_path', $path);
-      }
-    }
-  }
-
-  return $path;
-}
-
-/**
  * Implements hook_file_mimetype_mapping_alter().
  *
  * Regsiter the video/brightcove mimetype.
