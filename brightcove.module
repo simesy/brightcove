@@ -2275,25 +2275,45 @@ function brightcove_expose_unavailable() {
 }
 
 /**
- * @param $client_entity
+ * @param Entity $client_entity
  * @return \Brightcove\API\Client
- * @throws \Brightcove\API\Exception\AuthenticationException
  */
-function _brightcove_create_client($client_entity) {
-  brightcove_load_lib();
-  $client_id = $client_entity->client_id;
-  $client_secret = $client_entity->client_secret;
+function _brightcove_create_client(Entity $client_entity) {
+  $cache = &drupal_static(__FUNCTION__, []);
+  if (!empty($cache[$client_entity->bcid])) {
+    return $cache[$client_entity->bcid];
+  }
 
-  $client = NULL;
-  brightcove_try(function() use($client_id, $client_secret, &$client) {
-    $client = \Brightcove\API\Client::authorize($client_id, $client_secret);
+  brightcove_load_lib();
+
+  brightcove_try(function() use($client_entity, &$cache) {
+    $client_id = $client_entity->client_id;
+    $client_secret = $client_entity->client_secret;
+    $cache[$client_entity->bcid] = \Brightcove\API\Client::authorize($client_id, $client_secret);
   });
 
-  return $client;
+  return isset($cache[$client_entity->bcid]) ? $cache[$client_entity->bcid] : NULL;
 }
 
-function _brightcove_create_classes($client_entity) {
-  $client = _brightcove_create_client($client_entity);
+/**
+ * @param Entity $client_entity
+ * @return array
+ */
+function _brightcove_create_classes(Entity $client_entity) {
+  $client = NULL;
+  $retry = 5;
+  while ($client === NULL && $retry) {
+    $client = _brightcove_create_client($client_entity);
+    $retry--;
+    if ($client === NULL) {
+      usleep(250000);
+    }
+  }
+
+  if ($client === NULL) {
+    throw new \Brightcove\API\Exception\AuthenticationException("Failed to authorize with Brightcove.");
+  }
+
   $account = $client_entity->account_id;
   $cms = new \Brightcove\API\CMS($client, $account);
   $di = new \Brightcove\API\DI($client, $account);
