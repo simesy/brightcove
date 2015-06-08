@@ -2314,7 +2314,12 @@ function _brightcove_create_client($client_entity) {
   $client_id = $client_entity->client_id;
   $client_secret = $client_entity->client_secret;
 
-  return \Brightcove\API\Client::authorize($client_id, $client_secret);
+  $client = NULL;
+  brightcove_try(function() use($client_id, $client_secret, &$client) {
+    $client = \Brightcove\API\Client::authorize($client_id, $client_secret);
+  });
+
+  return $client;
 }
 
 function _brightcove_create_classes($client_entity) {

@@ -621,4 +621,6 @@ function brightcove_update_7603() {
     ])
     ->condition('module', 'brightcove_field')
     ->execute();
+
+  cache_clear_all();
 }
