@@ -5,15 +5,6 @@
  * Holds all of the video field related methods.
  */
 
-function _brightcove_field_video_instance_settings_form(&$form, $field, $instance) {
-  $form['allow_upload'] = [
-    '#type' => 'checkbox',
-    '#title' => t('Allow upload if client has the Brightcove permission for it.'),
-    '#description' => t('Whether to allow uploading new videos to Brightcove from this field. Requires exposure of the "Video Read/Write" API at the Brightcove API Authentication page.'),
-    '#default_value' => isset($instance['settings']['allow_upload']) ? $instance['settings']['allow_upload'] : 0,
-  ];
-}
-
 /**
  * Helper function to return the video widget form.
  */
@@ -183,9 +174,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       ];
     }
 
-    if (brightcove_field_browse_access('upload videos', $entity_type, $field['field_name'], $entity_id_or_bundle, $client) &&
-      $instance['settings']['allow_upload']
-    ) {
+    if (brightcove_field_browse_access('upload videos', $entity_type, $field['field_name'], $entity_id_or_bundle, $client)) {
       $element['actions']['upload'] = [
         '#type' => 'button',
         '#attributes' => [

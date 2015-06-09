@@ -247,14 +247,11 @@ function brightcove_field_instance_settings_form($field, $instance) {
   switch ($instance['widget']['type']) {
     case BRIGHTCOVE_VIDEO_WIDGET:
       module_load_include('inc', 'brightcove', 'brightcove_field.video');
-      _brightcove_field_video_instance_settings_form($form, $field, $instance);
-      $form['#element_validate'] = ['_brightcove_field_video_playlist_widget_validate'];
       break;
 
     case BRIGHTCOVE_PLAYLIST_WIDGET:
       module_load_include('inc', 'brightcove', 'brightcove_field.playlist');
       _brightcove_field_playlist_instance_settings_form($form, $field, $instance);
-      $form['#element_validate'] = ['_brightcove_field_video_playlist_widget_validate'];
       break;
   }
   return $form;
@@ -306,18 +303,6 @@ function brightcove_field_validate($entity_type, $entity, $field, $instance, $la
  */
 function brightcove_field_is_empty($item, $field) {
   return empty($item['brightcove_id']) || ($item['brightcove_id'] === BRIGHTCOVE_BCID_NONE);
-}
-
-/**
- * Element validate callback for brightcove_field_FIELD_instance_settings_form.
- */
-function _brightcove_field_video_playlist_widget_validate($element, &$form_state) {
-  // If the default is selected check if there is a default player is set.
-  if (empty($form_state['input']['instance']['settings']['brightcove_player'])) {
-    if (is_null(variable_get('brightcove_player_default', NULL))) {
-      form_error($element, t('A default player must be selected to use global settings for the Brightcove player on the !link page.', ['!link' => l(t('Brightcove settings'), 'admin/config/media/brightcove/players')]));
-    }
-  }
 }
 
 /**
@@ -635,9 +620,7 @@ function brightcove_field_browser_process($element, $form_state, $form) {
     ];
   }
 
-  if ((user_access('upload videos')) &&
-    ($field_info['settings']['allow_upload'])
-  ) {
+  if (user_access('upload videos')) {
     $element['actions']['upload'] = [
       '#type' => 'brightcove_field_browse_button',
       '#id' => $element['#id'] . '-upload',
@@ -1317,8 +1300,6 @@ function brightcove_content_migrate_field_alter(&$field_value, $instance_value) 
 function brightcove_content_migrate_instance_alter(&$instance_value, $field_value) {
   switch ($field_value['type']) {
     case 'brightcove_field':
-      $instance_value['settings']['allow_upload'] =
-        $field_value['settings']['allow_upload'];
       if ($instance_value['widget']['module'] == 'brightcove_cck') {
         $instance_value['widget']['module'] = 'brightcove_field';
         if (strpos($instance_value['widget']['type'],
@@ -1408,19 +1389,19 @@ function brightcove_field_formatter_view($entity_type, $entity, $field, $instanc
             $video = brightcove_load_video($item['brightcove_id'], $client);
           }
           $element[$delta] = [
-              '#theme' => $theme,
-              '#type' => 'brightcove',
-              '#element' => $item,
-              '#delta' => $delta,
-              '#entity_type' => $entity_type,
-              '#entity' => $entity,
-              '#field' => $field,
-              '#instance' => $instance,
-              '#display' => $display,
-              '#video' => $video,
-              '#width' => isset($settings['width']) ? $settings['width'] : NULL,
-              '#height' => isset($settings['height']) ? $settings['height'] : NULL,
-            ] + $variables;
+            '#theme' => $theme,
+            '#type' => 'brightcove',
+            '#element' => $item,
+            '#delta' => $delta,
+            '#entity_type' => $entity_type,
+            '#entity' => $entity,
+            '#field' => $field,
+            '#instance' => $instance,
+            '#display' => $display,
+            '#video' => $video,
+            '#width' => isset($settings['width']) ? $settings['width'] : NULL,
+            '#height' => isset($settings['height']) ? $settings['height'] : NULL,
+          ] + $variables;
         }
         break;
       case BRIGHTCOVE_PLAYLIST_WIDGET:
@@ -1430,19 +1411,19 @@ function brightcove_field_formatter_view($entity_type, $entity, $field, $instanc
             $playlist = brightcove_load_playlist($item['brightcove_id'], $item['bcid']);
           }
           $element[$delta] = [
-              '#theme' => $theme,
-              '#type' => 'brightcove-player',
-              '#element' => $item,
-              '#delta' => $delta,
-              '#entity_type' => $entity_type,
-              '#entity' => $entity,
-              '#field' => $field,
-              '#instance' => $instance,
-              '#display' => $display,
-              '#playlist' => $playlist,
-              '#width' => isset($settings['width']) ? $settings['width'] : NULL,
-              '#height' => isset($settings['height']) ? $settings['height'] : NULL,
-            ] + $variables;
+            '#theme' => $theme,
+            '#type' => 'brightcove-player',
+            '#element' => $item,
+            '#delta' => $delta,
+            '#entity_type' => $entity_type,
+            '#entity' => $entity,
+            '#field' => $field,
+            '#instance' => $instance,
+            '#display' => $display,
+            '#playlist' => $playlist,
+            '#width' => isset($settings['width']) ? $settings['width'] : NULL,
+            '#height' => isset($settings['height']) ? $settings['height'] : NULL,
+          ] + $variables;
         }
         break;
     }
