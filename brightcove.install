@@ -39,62 +39,6 @@ function brightcove_field_schema() {
 function brightcove_schema() {
   $schema = [];
 
-  $schema['brightcove_player'] = [
-    'description' => 'Stores brightcove players.',
-    'export' => [
-      'key' => 'name',
-      'key name' => 'Name',
-      'primary key' => 'pid',
-      'identifier' => 'preset',
-      'default hook' => 'brightcove_player',
-      'api' => [
-        'owner' => 'brightcove',
-        'api' => 'brightcove',
-        'minimum_version' => 1,
-        'current_version' => 1,
-      ],
-    ],
-    'fields' => [
-      'pid' => [
-        'type' => 'serial',
-        'not null' => TRUE,
-        'unsigned' => TRUE,
-        'no export' => TRUE,
-      ],
-      'name' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      ],
-      'display_name' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ],
-      'player_id' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      ],
-      'player_key' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      ],
-      'responsive' => [
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
-      ],
-    ],
-    'primary key' => ['pid'],
-    'unique keys' => [
-      'name' => ['name'],
-    ],
-  ];
-
   $schema['cache_brightcove'] = drupal_get_schema_unprocessed('system', 'cache');
 
   $schema['brightcove_client'] = [
