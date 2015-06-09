@@ -251,7 +251,6 @@ function brightcove_field_instance_settings_form($field, $instance) {
 
     case BRIGHTCOVE_PLAYLIST_WIDGET:
       module_load_include('inc', 'brightcove', 'brightcove_field.playlist');
-      _brightcove_field_playlist_instance_settings_form($form, $field, $instance);
       break;
   }
   return $form;

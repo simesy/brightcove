@@ -6,25 +6,6 @@
  */
 
 /**
- * Additional form settings for playlist and player fields.
- */
-function _brightcove_field_playlist_instance_settings_form(&$form, $field, $instance) {
-  $form['brightcove_player'] = [
-    '#type' => 'select',
-    '#title' => t('Brightcove Player'),
-    '#default_value' => isset($instance['settings']['brightcove_player']) ? $instance['settings']['brightcove_player'] : NULL,
-    '#options' => brightcove_player_list(),
-    '#description' => t('Leave value on "Default" to use global settings.'),
-  ];
-
-  $form['per_content_player'] = [
-    '#type' => 'checkbox',
-    '#title' => t('Allow setting player per content'),
-    '#default_value' => isset($instance['settings']['per_content_player']) ? $instance['settings']['per_content_player'] : NULL,
-  ];
-}
-
-/**
  * Helper function to return the playlist widget form.
  */
 function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, &$element) {
