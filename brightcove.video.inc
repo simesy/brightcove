@@ -241,7 +241,10 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
         '#default_value' => isset($form_state['values']["custom_field_{$field->getId()}"]) ? $form_state['values']["custom_field_{$field->getId()}"] : NULL,
       ];
       if ($field->getType() === 'enum') {
-        $form['custom_fields']["custom_field_{$field->getId()}"]['#options'] = [NULL => t('- no value set -')] + drupal_map_assoc($field->getEnumValues());
+        $enum_values = drupal_map_assoc($field->getEnumValues());
+        // Show elements in custom fields in alphabetical order like in Video Cloud Studio.
+        ksort($enum_values);
+        $form['custom_fields']["custom_field_{$field->getId()}"]['#options'] = [NULL => t('- no value set -')] + $enum_values;
       }
     }
     $form['custom_fields']['#collapsed'] = !$has_required;
