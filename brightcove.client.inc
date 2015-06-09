@@ -218,6 +218,20 @@ function brightcove_client_form($form, &$form_state, $client = NULL) {
     '#weight' => 5,
   ];
 
+  if (empty($client->is_new)) {
+    $players = [];
+    foreach (brightcove_player_load_all($client->bcid) as $player) {
+      $players[$player->getId()] = $player->getName();
+    }
+    $form['default_player'] = [
+      '#type' => 'select',
+      '#required' => TRUE,
+      '#default_value' => brightcove_get_default_player($client->bcid),
+      '#title' => t('Default player'),
+      '#options' => $players,
+    ];
+  }
+
   // When updating a client, do not collapse the Change History fieldset.
   $form['change_history'] = [
     '#type' => 'fieldset',
@@ -329,6 +343,10 @@ function brightcove_client_form_submit($form, &$form_state) {
   // Set the client uid if it's being created at this time.
   if (empty($client->uid)) {
     $client->uid = $user->uid;
+  }
+
+  if (!empty($form_state['values']['default_player'])) {
+    $client->data['default_player'] = $form_state['values']['default_player'];
   }
 
   // Trigger a new revision if the checkbox was enabled or a log message supplied.
