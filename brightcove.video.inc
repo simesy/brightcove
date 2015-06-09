@@ -257,10 +257,10 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
     '#collapsed' => TRUE,
     '#attached' => [
       'js' => [
-        drupal_get_path('module', 'brightcove_field') . '/js/schedule.js',
+        drupal_get_path('module', 'brightcove') . '/js/schedule.js',
       ],
       'css' => [
-        drupal_get_path('module', 'brightcove_field') . '/styles/schedule.css',
+        drupal_get_path('module', 'brightcove') . '/styles/schedule.css',
       ]
     ],
   ];
