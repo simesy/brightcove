@@ -371,6 +371,20 @@ function brightcove_requirements($phase) {
     $requirements['curl']['value'] = $t(': missing');
   }
 
+  if ($phase === 'runtime') {
+    $client_found = FALSE;
+    $client_id = variable_get('brightcove_client_default');
+    if ($client_id) {
+      $client_found = (bool) brightcove_client_load($client_id);
+    }
+
+    $requirements['brightcove_default_client'] = [
+      'title' => $t('Default brightcove client'),
+      'severity' => $client_found ? REQUIREMENT_OK : REQUIREMENT_ERROR,
+      'value' => $client_found ? $t('Selected') : l($t('Not selected'), 'admin/config/media/brightcove/client'),
+    ];
+  }
+
   return $requirements;
 }
 

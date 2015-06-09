@@ -111,8 +111,28 @@ class BrightcoveClientEntityController extends EntityAPIController {
       unset($client->log);
     }
 
-    return parent::save($client, $transaction);
+    $return = parent::save($client, $transaction);
+
+    if (!(($default_client = variable_get('brightcove_client_default')) && (bool) brightcove_client_load($default_client))) {
+      variable_set('brightcove_client_default', $client->bcid);
+    }
+
+    return $return;
   }
+
+  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+    parent::delete($ids, $transaction);
+
+    $default_client = variable_get('brightcove_client_default');
+    if (in_array($default_client, $ids)) {
+      $default_client = db_query('SELECT bcid FROM {brightcove_client} ORDER BY bcid ASC LIMIT 1')->fetchField();
+      if ($default_client) {
+        variable_set('brightcove_client_default', $default_client);
+      }
+    }
+  }
+
+
 }
 
 /**
