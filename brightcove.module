@@ -2058,13 +2058,13 @@ function brightcove_write_api_access() {
  * Uses a 5 minutes cache to speed up lookups.
  *
  * @param string $video_id
- * @param stdClass $client_entity
+ * @param Entity $client_entity
  * @param bool $reset
  *
  * @return \Brightcove\Object\Video\Video|bool
  *  Video object or FALSE on failure.
  */
-function brightcove_load_video($video_id, $client_entity, $reset = FALSE) {
+function brightcove_load_video($video_id, Entity $client_entity, $reset = FALSE) {
   if (!$client_entity) {
     return FALSE;
   }
