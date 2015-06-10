@@ -506,7 +506,9 @@ function brightcove_update_7603() {
 }
 
 /**
- * Remove revision related shema-parts. todo specify more!
+ * Remove revision related shema-parts of Brightcove Client entity. It means the
+ * table 'brightcove_client_revision' and the field 'revision_id' in table
+ * 'brightcove_client'.
  */
 function brightcove_update_7604() {
   if (db_table_exists('brightcove_client_revision')) {
