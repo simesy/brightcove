@@ -1789,7 +1789,7 @@ function brightcove_entity_info() {
     'entity keys' => [
       'id' => 'bcid',
       'label' => 'label',
-      'name' => 'label',
+      'name' => 'client_id',
     ],
     'admin ui' => [
       'path' => 'admin/config/media/brightcove/client',
