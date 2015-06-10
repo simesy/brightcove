@@ -500,7 +500,7 @@ function brightcove_field_formatter_settings_form($field, $instance, $view_mode,
     $type = ($instance['widget']['type'] == BRIGHTCOVE_VIDEO_WIDGET) ? 'video' : 'playlist';
     $metadata_options = _brightcove_field_get_object_formatter_keys($type);
     $element['brightcove_metadata_type'] = [
-      '#title' => t('Image type'),
+      '#title' => t('Metadata type'),
       '#type' => 'select',
       '#default_value' => $settings['brightcove_metadata_type'],
       '#options' => $metadata_options,
@@ -1353,18 +1353,18 @@ function brightcove_field_formatter_view($entity_type, $entity, $field, $instanc
   $settings = $display['settings'];
   $variables['#brightcove_widget_type'] = $instance['widget']['type'];
 
-  if ($display['type'] == 'brightcove_default') {
+  if ($display['type'] === 'brightcove_default') {
     $theme = 'brightcove_field_formatter_default';
   }
 
-  if ($display['type'] == 'brightcove_image') {
+  if ($display['type'] === 'brightcove_image') {
     $theme = 'brightcove_field_image';
     $variables['#brightcove_image_style'] = $settings['brightcove_image_style'];
     $variables['#brightcove_image_link'] = $settings['brightcove_image_link'];
     $variables['#brightcove_image_type'] = $settings['brightcove_image_type'];
   }
 
-  if ($display['type'] == 'brightcove_metadata') {
+  if ($display['type'] === 'brightcove_metadata') {
     $metadata_options = _brightcove_field_get_object_formatter_keys();
     $theme = 'brightcove_field_metadata';
     $variables['#key'] = $settings['brightcove_metadata_type'];
@@ -1527,21 +1527,21 @@ function _brightcove_field_get_object_formatter_keys($type = 'video') {
     case 'video':
       return [
         'name' => t('Name'),
-        'shortDescription' => t('Short description'),
+        'description' => t('Short description'),
         'longDescription' => t('Long description'),
-        'creationDate' => t('Creation date'),
-        'publishedDate' => t('Published date'),
+        'createdAt' => t('Creation date'),
         'lastModifiedDate' => t('Last modified date'),
-        'length' => t('Length'),
-        'playsTotal' => t('Total plays'),
-        'playsTrailingWeek' => t('Trailing week plays'),
+        'duration' => t('Length'),
+        'customFields' => t('Custom fields'),
       ];
     case 'playlist':
       return [
         'name' => t('Name'),
-        'shortDescription' => t('Short description'),
+        'description' => t('Short description'),
       ];
   }
+
+  return [];
 }
 
 /**
@@ -2872,13 +2872,13 @@ function brightcove_try(callable $try, callable $catch = NULL, $logtype = NULL) 
   } catch (\Brightcove\API\Exception\APIException $ex) {
     drupal_set_message(t('Brightcove API call failed: %message', [
       '%message' => _brightcove_try_json_message($ex->getResponseBody()),
-    ]));
+    ]), 'error');
     watchdog_exception($logtype ?: 'brightcove_api', $ex);
     if ($catch) {
       $catch($ex);
     }
   } catch (\Brightcove\API\Exception\AuthenticationException $ex) {
-    drupal_set_message(t('Failed to authorize with Brightcove'));
+    drupal_set_message(t('Failed to authorize with Brightcove'), 'error');
     watchdog_exception($logtype ?: 'brightcove_auth', $ex);
     if ($catch) {
       $catch($ex);
