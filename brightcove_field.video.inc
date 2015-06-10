@@ -129,7 +129,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       '#type' => 'select',
       '#title' => t('Player'),
       '#options' => brightcove_player_list($client->bcid),
-      '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : NULL,
+      '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : brightcove_get_default_player($client->bcid),
     ];
 
     $element['actions']['remove'] = [

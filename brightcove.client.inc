@@ -111,8 +111,28 @@ class BrightcoveClientEntityController extends EntityAPIController {
       unset($client->log);
     }
 
-    return parent::save($client, $transaction);
+    $return = parent::save($client, $transaction);
+
+    if (!(($default_client = variable_get('brightcove_client_default')) && (bool) brightcove_client_load($default_client))) {
+      variable_set('brightcove_client_default', $client->bcid);
+    }
+
+    return $return;
   }
+
+  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+    parent::delete($ids, $transaction);
+
+    $default_client = variable_get('brightcove_client_default');
+    if (in_array($default_client, $ids)) {
+      $default_client = db_query('SELECT bcid FROM {brightcove_client} ORDER BY bcid ASC LIMIT 1')->fetchField();
+      if ($default_client) {
+        variable_set('brightcove_client_default', $default_client);
+      }
+    }
+  }
+
+
 }
 
 /**
@@ -197,6 +217,20 @@ function brightcove_client_form($form, &$form_state, $client = NULL) {
     '#required' => TRUE,
     '#weight' => 5,
   ];
+
+  if (empty($client->is_new)) {
+    $players = [];
+    foreach (brightcove_player_load_all($client->bcid) as $player) {
+      $players[$player->getId()] = $player->getName();
+    }
+    $form['default_player'] = [
+      '#type' => 'select',
+      '#required' => TRUE,
+      '#default_value' => brightcove_get_default_player($client->bcid),
+      '#title' => t('Default player'),
+      '#options' => $players,
+    ];
+  }
 
   // When updating a client, do not collapse the Change History fieldset.
   $form['change_history'] = [
@@ -309,6 +343,10 @@ function brightcove_client_form_submit($form, &$form_state) {
   // Set the client uid if it's being created at this time.
   if (empty($client->uid)) {
     $client->uid = $user->uid;
+  }
+
+  if (!empty($form_state['values']['default_player'])) {
+    $client->data['default_player'] = $form_state['values']['default_player'];
   }
 
   // Trigger a new revision if the checkbox was enabled or a log message supplied.

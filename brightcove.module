@@ -2894,3 +2894,19 @@ function _brightcove_try_json_message($post) {
 
   return $postjson['message'];
 }
+
+/**
+ * Returns the default player associated with a client.
+ *
+ * @param null|int $client_id
+ * @return string
+ *   Player id.
+ */
+function brightcove_get_default_player($client_id = NULL) {
+  if ($client_id === NULL) {
+    $client_id = variable_get('brightcove_client_default');
+  }
+  $client = brightcove_client_load($client_id);
+
+  return isset($client->data['default_player']) ? $client->data['default_player'] : 'default';
+}
