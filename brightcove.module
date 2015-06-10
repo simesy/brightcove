@@ -1526,6 +1526,7 @@ function _brightcove_field_get_object_formatter_keys($type = 'video') {
   switch ($type) {
     case 'video':
       return [
+        'all' => t('All metadata'),
         'name' => t('Name'),
         'description' => t('Short description'),
         'longDescription' => t('Long description'),
@@ -1535,6 +1536,7 @@ function _brightcove_field_get_object_formatter_keys($type = 'video') {
       ];
     case 'playlist':
       return [
+        'all' => t('All metadata'),
         'name' => t('Name'),
         'description' => t('Short description'),
       ];

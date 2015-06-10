@@ -122,7 +122,23 @@ function theme_brightcove_field_metadata($variables) {
   $type = ($elements['#brightcove_widget_type'] == BRIGHTCOVE_VIDEO_WIDGET) ? 'video' : 'playlist';
 
   if ($elements["#{$type}"]) {
-    $val = $elements["#{$type}"]->{'get' . ucfirst($elements['#key'])}();
+    if ($elements['#key'] === 'all') {
+      $keys = _brightcove_field_get_object_formatter_keys($type);
+      unset($keys['all']);
+      $val = [];
+      foreach ($keys as $key => $label) {
+        $v = $elements["#{$type}"]->{'get' . ucfirst($key)}();
+        if (is_array($v)) {
+          $val += $v;
+        }
+        else {
+          $val[$label] = $v;
+        }
+      }
+    }
+    else {
+      $val = $elements["#{$type}"]->{'get' . ucfirst($elements['#key'])}();
+    }
     if (is_array($val)) {
       $rows = '';
       foreach ($val as $k => $v) {
