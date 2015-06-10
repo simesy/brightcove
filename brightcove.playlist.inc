@@ -275,6 +275,13 @@ function brightcove_playlist_tables_ajax_callback($form, $form_state) {
  *
  * @param Entity $client
  *   The brightcove_client entity object.
+ * @param string $sort
+ *   (optional) Field to sort results on (use -field for descending order).
+ * @param int $limit
+ *   (optional) Number of items to return (any integer up to 100).
+ * @param int $offset
+ *   (optional) Number of items to skip (for paging result sets larger than the
+ *   limit).
  * @param bool $cache_reset
  *   (optional) True to reset the cache.
  *
@@ -282,7 +289,7 @@ function brightcove_playlist_tables_ajax_callback($form, $form_state) {
  *   Array of playlists or FALSE if none found.
  *   @see http://support.brightcove.com/en/docs/media-api-objects-reference#Playlist
  */
-function brightcove_get_playlists(Entity $client, $cache_reset = FALSE) {
+function brightcove_get_playlists(Entity $client, $sort = NULL, $limit = 100, $offset = 0, $cache_reset = FALSE) {
   brightcove_load_lib();
   $cid = 'brightcove:playlist:list:' . $client->bcid;
   $cache = brightcove_cache_get($cid);
@@ -292,8 +299,8 @@ function brightcove_get_playlists(Entity $client, $cache_reset = FALSE) {
 
   $playlists = FALSE;
   list($cms, ) = _brightcove_create_classes($client);
-  brightcove_try(function() use(&$playlists, $cms) {
-    $playlists = $cms->listPlaylists(100);
+  brightcove_try(function() use(&$playlists, $cms, $sort, $limit, $offset) {
+    $playlists = $cms->listPlaylists($sort, $limit, $offset);
   });
 
   if ($playlists) {

@@ -43,6 +43,7 @@ function theme_brightcove_field_formatter_default($variables) {
  * Theme function to render brightcove images.
  *
  * @param $variables
+ * @return null|string
  */
 function theme_brightcove_field_image($variables) {
   $output = NULL;
@@ -121,8 +122,37 @@ function theme_brightcove_field_metadata($variables) {
   $type = ($elements['#brightcove_widget_type'] == BRIGHTCOVE_VIDEO_WIDGET) ? 'video' : 'playlist';
 
   if ($elements["#{$type}"]) {
-    $text = check_plain($elements["#{$type}"]->{$elements['#key']});
-    $output = "<span><strong>{$elements['#label']}:</strong> $text</span>";
+    if ($elements['#key'] === 'all') {
+      $keys = _brightcove_field_get_object_formatter_keys($type);
+      unset($keys['all']);
+      $val = [];
+      foreach ($keys as $key => $label) {
+        $v = $elements["#{$type}"]->{'get' . ucfirst($key)}();
+        if (is_array($v)) {
+          $val += $v;
+        }
+        else {
+          $val[$label] = $v;
+        }
+      }
+    }
+    else {
+      $val = $elements["#{$type}"]->{'get' . ucfirst($elements['#key'])}();
+    }
+    if (is_array($val)) {
+      $rows = '';
+      foreach ($val as $k => $v) {
+        $kp = check_plain($k);
+        $vp = check_plain($v);
+        $rows .= "<tr><td><strong>{$kp}</strong></td><td>{$vp}</td></tr>";
+      }
+
+      $output = "<table><th colspan=\"2\">{$elements['#label']}</th>{$rows}</table>";
+    }
+    else {
+      $text = check_plain($val);
+      $output = "<p><strong>{$elements['#label']}:</strong> {$text}</p>";
+    }
   }
 
   return $output;
