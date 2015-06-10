@@ -58,7 +58,7 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
 /**
  * Entity controller class for Brightcove client.
  */
-class BrightcoveClientEntityController extends EntityAPIController {
+class BrightcoveClientEntityController extends EntityAPIControllerExportable {
 
   /**
    * Overrides EntityAPIController::save()
@@ -88,30 +88,23 @@ class BrightcoveClientEntityController extends EntityAPIController {
       }
     }
 
-    $client->revision_timestamp = REQUEST_TIME;
-    $client->revision_uid = $user->uid;
-
     // Determine if we will be inserting a new client.
     $client->is_new = empty($client->bcid);
 
-    if ($client->is_new || !empty($client->revision)) {
-      // When inserting either a new client or revision, $entity->log must be set
-      // because {brightcove_client_revision}.log is a text column and therefore
-      // cannot have a default value. However, it might not be set at this
-      // point, so we ensure that it is at least an empty string in that case.
-      if (!isset($client->log)) {
-        $client->log = '';
-      }
-    }
-    elseif (empty($client->log)) {
-      // If we are updating an existing client without adding a new revision,
-      // we need to make sure $entity->log is unset whenever it is empty. As
-      // long as $entity->log is unset, drupal_write_record() will not attempt
-      // to update the existing database column when re-saving the revision.
-      unset($client->log);
-    }
-
     return parent::save($client, $transaction);
+  }
+
+  /**
+   * Overridden.
+   */
+  public function export($entity, $prefix = '') {
+    $vars = get_object_vars($entity);
+    // todo either name or remove bcid maybe?
+    unset($vars[$this->statusKey], $vars[$this->moduleKey], $vars['is_new'], $vars['changed']);
+    if ($this->nameKey != $this->idKey) {
+      unset($vars[$this->idKey]);
+    }
+    return entity_var_json_export($vars, $prefix);
   }
 }
 
@@ -123,11 +116,11 @@ class BrightcoveClientEntityController extends EntityAPIController {
  */
 function brightcove_client_select_element() {
   $client_options = [BRIGHTCOVE_BCID_NONE => t('- Select a client -')];
-  $client_options +=  _brightcove_my_client_select_options();
+  $client_options += _brightcove_my_client_select_options();
   if (count($client_options) > 2) {
     $default_value = variable_get('brightcove_client_default');
     if (!array_key_exists($default_value, $client_options)) {
-      $default_value =  BRIGHTCOVE_BCID_NONE;
+      $default_value = BRIGHTCOVE_BCID_NONE;
     }
     $element = [
       '#type' => 'select',
@@ -206,13 +199,6 @@ function brightcove_client_form($form, &$form_state, $client = NULL) {
     '#collapsed' => empty($client->bcid),
     '#weight' => 350,
   ];
-  if (!empty($client->bcid)) {
-    $form['change_history']['revision'] = [
-      '#type' => 'checkbox',
-      '#title' => t('Create new revision on update'),
-      '#description' => t('If an update log message is entered, a revision will be created even if this is unchecked.'),
-    ];
-  }
   $form['change_history']['log'] = [
     '#type' => 'textarea',
     '#title' => !empty($client->bcid) ? t('Update log message') : t('Creation log message'),
@@ -257,12 +243,12 @@ function brightcove_client_form_validate($form, &$form_state) {
 
   brightcove_load_lib();
   $client = NULL;
-  brightcove_try(function() use(&$form, &$client, $client_id, $client_secret) {
+  brightcove_try(function () use (&$form, &$client, $client_id, $client_secret) {
     $client = \Brightcove\API\Client::authorize($client_id, $client_secret);
     if (!$client->isAuthorized()) {
       form_error($form, t('Failed to authorize.'));
     }
-  }, function (Exception $ex) use(&$form) {
+  }, function (Exception $ex) use (&$form) {
     form_error($form, t('Failed to authorize.'));
   });
 
@@ -280,7 +266,7 @@ function brightcove_client_form_validate($form, &$form_state) {
     $bcid = key($result['brightcove_client']);
     if (empty($client->bcid) || $bcid != $client->bcid) {
       form_set_error('client_id', t('This client id is <a href="!url">already in use</a> and must be unique. Please supply another value.', [
-          '!url' => url('admin/config/media/brightcove/brightcove_client/manage/' . $bcid)
+        '!url' => url('admin/config/media/brightcove/brightcove_client/manage/' . $bcid)
       ]));
     }
   }
@@ -309,13 +295,6 @@ function brightcove_client_form_submit($form, &$form_state) {
   // Set the client uid if it's being created at this time.
   if (empty($client->uid)) {
     $client->uid = $user->uid;
-  }
-
-  // Trigger a new revision if the checkbox was enabled or a log message supplied.
-  if (!empty($form_state['values']['revision']) || !empty($form['change_history']['revision']['#default_value']) ||
-    !empty($form_state['values']['log'])) {
-    $client->revision = TRUE;
-    $client->log = $form_state['values']['log'];
   }
 
   // Save the client.
