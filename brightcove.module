@@ -1530,7 +1530,6 @@ function _brightcove_field_get_object_formatter_keys($type = 'video') {
         'description' => t('Short description'),
         'longDescription' => t('Long description'),
         'createdAt' => t('Creation date'),
-        'lastModifiedDate' => t('Last modified date'),
         'duration' => t('Length'),
         'customFields' => t('Custom fields'),
       ];
