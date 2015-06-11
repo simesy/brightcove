@@ -421,7 +421,7 @@ function _brightcove_client_default_link($bcid) {
         ],
       ],
     ];
-    return l(t('set default'), "/admin/config/media/brightcove/client/manage/{$bcid}/setdefault", $options);
+    return l(t('set default'), "admin/config/media/brightcove/client/manage/{$bcid}/setdefault", $options);
   }
   else {
     return t('default');
