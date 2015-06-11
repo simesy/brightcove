@@ -520,3 +520,31 @@ function brightcove_update_7604() {
 
   cache_clear_all();
 }
+
+/**
+ * Add 2 fields to brightcove_client to be exportable via Features.
+ */
+function brightcove_update_7605() {
+  if (!db_field_exists('brightcove_client', 'status')) {
+    $status_field = [
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0x01,
+      'size' => 'tiny',
+      'description' => 'The exportable status of the entity.',
+    ];
+    db_add_field('brightcove_client', 'status', $status_field);
+  }
+
+  if (!db_field_exists('brightcove_client', 'module')) {
+    $module_field = [
+      'type' => 'varchar',
+      'not null' => FALSE,
+      'length' => 255,
+      'description' => 'The name of the providing module if the entity has been defined in code.',
+    ];
+    db_add_field('brightcove_client', 'module', $module_field);
+  }
+
+  cache_clear_all();
+}
