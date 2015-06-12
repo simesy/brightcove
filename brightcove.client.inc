@@ -53,6 +53,15 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
     return parent::overviewTableRow($conditions, $id, $entity, $additional_cols);
   }
 
+  /**
+   * @inheritdoc
+   */
+  protected function overviewTableHeaders($conditions, $rows, $additional_header = array()) {
+    $header = $additional_header;
+    $header[] = t('Default');
+
+    return parent::overviewTableHeaders($conditions, $rows, $header);
+  }
 }
 
 /**
