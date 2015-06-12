@@ -47,6 +47,8 @@ define('BRIGHTCOVE_PLAYLIST_WIDGET', 'brightcove_field_playlist_browser');
 define('BRIGHTCOVE_ECONOMICS_FREE', 'FREE');
 define('BRIGHTCOVE_ECONOMICS_AD_SUPPORTED', 'AD_SUPPORTED');
 
+define('BRIGHTCOVE_PLAYLIST_MAX_ITEMS', 20);
+
 // Without this brightcove_playlist_access() is not always found.
 require_once 'brightcove.playlist.inc';
 require_once 'brightcove.client.inc';
@@ -2909,4 +2911,24 @@ function brightcove_get_default_player($client_id = NULL) {
   $client = brightcove_client_load($client_id);
 
   return isset($client->data['default_player']) ? $client->data['default_player'] : 'default';
+}
+
+function _brightcove_playlist_items_total(Entity $client, $cache_reset = FALSE) {
+  $cid = "brightcove:playlist:count:{$client->bcid}";
+  $cache = brightcove_cache_get($cid);
+  if (!$cache_reset && !empty($cache)) {
+    return $cache;
+  }
+
+  $playlist_count = 0;
+  list($cms, ) = _brightcove_create_classes($client);
+  brightcove_try(function() use(&$playlist_count, $cms) {
+    $playlist_count = $cms->countPlaylists();
+  });
+
+  if (!empty($playlist_count)) {
+    brightcove_cache_set($cid, $playlist_count);
+  }
+
+  return $playlist_count;
 }

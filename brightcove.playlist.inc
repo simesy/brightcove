@@ -205,7 +205,12 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
     ];
     module_load_include('inc', 'brightcove', 'brightcove.playlist');
 
-    $playlists = brightcove_get_playlists($client);
+    $page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_NUMBER_INT);
+    if (empty($page)) {
+      $page = 0;
+    }
+
+    $playlists = brightcove_get_playlists($client, 'name', $page);
     if ($playlists) {
       foreach ( $playlists as $playlist ) {
         $playlist_entity_id = $playlist->getId() . '-' . $client->bcid;
@@ -221,7 +226,9 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
         ]
       ];
     }
-    return theme('table', $table);
+
+    pager_default_initialize(_brightcove_playlist_items_total($client), BRIGHTCOVE_PLAYLIST_MAX_ITEMS, 0);
+    return theme('table', $table) . theme('pager');
   }
 
   /**
@@ -277,11 +284,8 @@ function brightcove_playlist_tables_ajax_callback($form, $form_state) {
  *   The brightcove_client entity object.
  * @param string $sort
  *   (optional) Field to sort results on (use -field for descending order).
- * @param int $limit
- *   (optional) Number of items to return (any integer up to 100).
- * @param int $offset
- *   (optional) Number of items to skip (for paging result sets larger than the
- *   limit).
+ * @param int $page
+ *   (optional) The page to get.
  * @param bool $cache_reset
  *   (optional) True to reset the cache.
  *
@@ -289,18 +293,20 @@ function brightcove_playlist_tables_ajax_callback($form, $form_state) {
  *   Array of playlists or FALSE if none found.
  *   @see http://support.brightcove.com/en/docs/media-api-objects-reference#Playlist
  */
-function brightcove_get_playlists(Entity $client, $sort = NULL, $limit = 100, $offset = 0, $cache_reset = FALSE) {
+function brightcove_get_playlists(Entity $client, $sort = NULL, $page = 0, $cache_reset = FALSE) {
   brightcove_load_lib();
-  $cid = 'brightcove:playlist:list:' . $client->bcid;
+  $cid = 'brightcove:playlist:list:' . $client->bcid . ':' . $page;
   $cache = brightcove_cache_get($cid);
-  if (!$cache_reset && $cache && !empty($cache->data)) {
-    return $cache->data;
+  if (!$cache_reset && !empty($cache)) {
+    return $cache;
   }
 
   $playlists = FALSE;
   list($cms, ) = _brightcove_create_classes($client);
-  brightcove_try(function() use(&$playlists, $cms, $sort, $limit, $offset) {
-    $playlists = $cms->listPlaylists($sort, $limit, $offset);
+  brightcove_try(function() use(&$playlists, $cms, $sort, $page) {
+    $offset = BRIGHTCOVE_PLAYLIST_MAX_ITEMS * $page;
+
+    $playlists = $cms->listPlaylists($sort, BRIGHTCOVE_PLAYLIST_MAX_ITEMS, $offset);
   });
 
   if ($playlists) {
@@ -528,7 +534,7 @@ function brightcove_playlist_delete_form($form, &$form_state, $client, $playlist
     $form,
     t('Are you sure you want to delete playlist "%name"', ['%name' => $playlist ? $playlist->getName() : '']),
     'admin/config/media/brightcove/playlist',
-    t('This action annot be undone'),
+    t('This action cannot be undone'),
     t('Delete'),
     t('Cancel')
   );
