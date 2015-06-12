@@ -23,11 +23,11 @@ function theme_brightcove_field_formatter_default($variables) {
       $path = brightcove_get_experiences_js_url();
       drupal_add_js($path, ['type' => 'external', 'defer' => FALSE, 'async' => TRUE]);
     }
-    $client = brightcove_client_load($variables['element']['bcid']);
+    $client = brightcove_client_load_or_default($variables['element']['bcid']);
     $output = theme('brightcove_field_embed', [
       'type' => $variables['type'],
       'brightcove_id' => $variables['element']['brightcove_id'],
-      'player_id' => $variables['element']['player'],
+      'player_id' => $variables['element']['player'] ?: brightcove_get_default_player($client->bcid),
       'account_id' => $client->account_id,
       'width' => $variables['width'],
       'height' => $variables['height'],

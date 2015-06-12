@@ -616,6 +616,10 @@ function _brightcove_configure_playlist_entity() {
  *  The playlist object or FALSE on failure.
  */
 function brightcove_load_playlist($playlist_id, $bcid, $reset = FALSE) {
+  if (!$bcid) {
+    return FALSE;
+  }
+
   brightcove_load_lib();
   $cid = "brightcove:playlist:$playlist_id:$bcid";
   $cache = brightcove_cache_get($cid);
