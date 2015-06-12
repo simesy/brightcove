@@ -129,7 +129,12 @@ function theme_brightcove_field_metadata($variables) {
       foreach ($keys as $key => $label) {
         $v = $elements["#{$type}"]->{'get' . ucfirst($key)}();
         if (is_array($v)) {
-          $val += $v;
+          if (array_values($v) === $v) {
+            $val[$label] = implode(', ', $v); // this will go trough check_plain() later
+          }
+          else {
+            $val += $v;
+          }
         }
         else {
           $val[$label] = $v;
@@ -140,17 +145,27 @@ function theme_brightcove_field_metadata($variables) {
       $val = $elements["#{$type}"]->{'get' . ucfirst($elements['#key'])}();
     }
     if (is_array($val)) {
-      $rows = '';
-      foreach ($val as $k => $v) {
-        $kp = check_plain($k);
-        $vp = check_plain($v);
-        $rows .= "<tr><td><strong>{$kp}</strong></td><td>{$vp}</td></tr>";
+      if (array_values($val) === $val) {
+        $text = implode(', ', array_map('check_plain', $val));
+        $output = "<p><strong>{$elements['#label']}</strong> {$text}</p>";
       }
+      else {
+        $rows = '';
+        foreach ($val as $k => $v) {
+          $kp = check_plain($k);
+          $vp = $v instanceof \Brightcove\Object\Video\Link ? l(t($v->getText()), $v->getUrl()) : check_plain($v);
+          $rows .= "<tr><td><strong>{$kp}</strong></td><td>{$vp}</td></tr>";
+        }
 
-      $output = "<table><th colspan=\"2\">{$elements['#label']}</th>{$rows}</table>";
+        $output = "<table><th colspan=\"2\">{$elements['#label']}</th>{$rows}</table>";
+      }
     }
     else {
-      $text = check_plain($val);
+      if ($val instanceof \Brightcove\Object\Video\Link) {
+        $text = l(t($val->getText()), $val->getUrl());
+      } else {
+        $text = check_plain($val);
+      }
       $output = "<p><strong>{$elements['#label']}:</strong> {$text}</p>";
     }
   }
