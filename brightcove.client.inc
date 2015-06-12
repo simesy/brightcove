@@ -53,6 +53,24 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
     return parent::overviewTableRow($conditions, $id, $entity, $additional_cols);
   }
 
+  public function operationFormValidate($form, &$form_state) {
+    parent::operationFormValidate($form, $form_state);
+    if ($form_state['op'] === 'import') {
+      $import = $form_state['values']['import'];
+      $json = json_decode($import, TRUE);
+      if ($json) {
+        brightcove_try(function() use($json) {
+          $client_id = isset($json['client_id']) ? $json['client_id'] : NULL;
+          $client_secret = isset($json['client_secret']) ? $json['client_secret'] : NULL;
+          \Brightcove\API\Client::authorize($client_id, $client_secret);
+        }, function() {
+          form_set_error('import', t("Invalid credentials."));
+        });
+      }
+    }
+  }
+
+
 }
 
 /**
@@ -117,7 +135,6 @@ class BrightcoveClientEntityController extends EntityAPIControllerExportable {
    */
   public function export($entity, $prefix = '') {
     $vars = get_object_vars($entity);
-    // todo either name or remove bcid maybe?
     unset($vars[$this->statusKey], $vars[$this->moduleKey], $vars['is_new'], $vars['changed']);
     if ($this->nameKey != $this->idKey) {
       unset($vars[$this->idKey]);
@@ -211,9 +228,12 @@ function brightcove_client_form($form, &$form_state, $client = NULL) {
 
   if (empty($client->is_new)) {
     $players = [];
-    foreach (brightcove_player_load_all($client->bcid) as $player) {
-      $players[$player->getId()] = $player->getName();
-    }
+    brightcove_try(function() use(&$players, $client) {
+      foreach (brightcove_player_load_all($client->bcid) as $player) {
+        $players[$player->getId()] = $player->getName();
+      }
+    });
+
     $form['default_player'] = [
       '#type' => 'select',
       '#required' => TRUE,

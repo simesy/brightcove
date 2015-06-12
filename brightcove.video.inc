@@ -122,7 +122,6 @@ function brightcove_save_video(\Brightcove\Object\Video\Video $video, Entity $cl
  */
 function brightcove_video_form($form, &$form_state, $video_entity) {
   brightcove_load_lib();
-  $form = [];
   $form['#entity'] = $video_entity;
   $form['#entity_type'] = 'brightcove_video';
   $form['#bundle'] = $video_entity->type;
@@ -251,6 +250,16 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
   }
   catch (\Brightcove\API\Exception\APIException $ex) {
     $form['custom_fields']['#access'] = FALSE;
+  }
+  catch (\Brightcove\API\Exception\AuthenticationException $ex) {
+    return [
+      'authfail' => [
+        '#type' => 'markup',
+        '#markup' => t('Failed to authenticate with Brightcove. Go to !settings-link to check the settings of the selected client.', [
+          '!settings-link' => l(t('Edit @client', ['@client' => $client->label]), "admin/config/media/brightcove/client/manage/{$client->bcid}"),
+        ]),
+      ],
+    ];
   }
 
   $form['schedule'] = [

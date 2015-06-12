@@ -731,12 +731,14 @@ function brightcove_field_video_browser_value($element, $value, $form_state) {
     $bcid = $client_element['#default_value'];
   }
 
-  if (((int) $value) > 1) {
-    $client = brightcove_client_load_or_default($bcid);
-    $video = brightcove_load_video($value, $client);
-    if ($video) {
-      $value = check_plain($video->getName()) . " [id:{$video->getId()}]";
-    }
+  if (is_numeric($value)) {
+    brightcove_try(function() use($bcid, &$value) {
+      $client = brightcove_client_load_or_default($bcid);
+      $video = brightcove_load_video($value, $client);
+      if ($video) {
+        $value = check_plain($video->getName()) . " [id:{$video->getId()}]";
+      }
+    });
   }
   return $value;
 }
@@ -784,9 +786,9 @@ function brightcove_field_browser_video_validate($element, &$form_state) {
     }
     else {
       // Didn't match ID, try looking up the video text at BC.
-      list($cms,) = _brightcove_create_classes($client);
       $result = [];
-      brightcove_try(function () use (&$result, $cms, $value) {
+      brightcove_try(function () use (&$result, $client, $value) {
+        list($cms,) = _brightcove_create_classes($client);
         $result = $cms->listVideos($value, '-created_at');
       }, function () use (&$element) {
         form_error($element, t('There was a problem accessing Brightcove. Please try again'));
@@ -2890,6 +2892,7 @@ function brightcove_exit($destination = NULL) {
 }
 
 function brightcove_try(callable $try, callable $catch = NULL, $logtype = NULL) {
+  brightcove_load_lib();
   try {
     $try();
   } catch (\Brightcove\API\Exception\APIException $ex) {

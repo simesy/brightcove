@@ -125,10 +125,14 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       ],
     ];
 
+    $player_list = [];
+    brightcove_try(function() use(&$player_list, $client) {
+      $player_list = brightcove_player_list($client->bcid);
+    });
     $element['player'] = [
       '#type' => 'select',
       '#title' => t('Player'),
-      '#options' => brightcove_player_list($client->bcid),
+      '#options' => $player_list,
       '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : brightcove_get_default_player($client->bcid),
     ];
 
@@ -260,13 +264,13 @@ function _brightcove_field_video_browse($client) {
 
   // If no cached data is available.
   if (!$content) {
-    list($cms,) = _brightcove_create_classes($client);
-    brightcove_try(function() use(&$result, $cms, $search, $items_per_page, $page) {
+    brightcove_try(function() use(&$result, $client, $search, $items_per_page, $page, &$pager_total) {
+      list($cms,) = _brightcove_create_classes($client);
       $result = $cms->listVideos($search, NULL, $items_per_page, $items_per_page * $page);
+      $pager_total[0] = ceil($cms->countVideos($search) / $items_per_page);
     });
 
     $pager_page_array = explode(',', $page);
-    $pager_total[0] = ceil($cms->countVideos($search) / $items_per_page);
     $pager_page_array[0] = max(0, min(
       (int)$pager_page_array[0],
       ((int)$pager_total[0]) - 1)
