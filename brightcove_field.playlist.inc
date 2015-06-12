@@ -42,6 +42,13 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
         $playlist_options[$id] = $playlist->getName() . " ($id)";
       }
     }
+
+    $element['player'] = [
+      '#type' => 'select',
+      '#title' => t('Player'),
+      '#options' => brightcove_player_list($client->bcid),
+      '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : brightcove_get_default_player($client->bcid),
+    ];
   }
 
   $element['brightcove_id'] = [

@@ -21,8 +21,16 @@
   data-account="<?php print $account_id; ?>"
   data-player="<?php print $player_id; ?>"
   data-embed="<?php print $embed; ?>"
-  data-video-id="<?php print $video_id; ?>"
+  <?php if ($type === BRIGHTCOVE_EMBED_TYPE_VIDEO): ?>
+    data-video-id="<?php print $brightcove_id; ?>"
+  <?php endif; ?>
+  <?php if ($type === BRIGHTCOVE_EMBED_TYPE_PLAYLIST): ?>
+    data-playlist-id="<?php print $brightcove_id; ?>"
+  <?php endif; ?>
   width="<?php print $width; ?>"
   height="<?php print $height; ?>"
   class="video-js" controls></video>
+<?php if ($type === BRIGHTCOVE_EMBED_TYPE_PLAYLIST): ?>
+  <ol class="vjs-playlist"></ol>
+<?php endif; ?>
 <script src="//players.brightcove.net/<?php print $account_id; ?>/<?php print $player_id; ?>_<?php print $embed; ?>/index.min.js"></script>

@@ -16,7 +16,6 @@
 function theme_brightcove_field_browse_button($element) {
   drupal_add_js(drupal_get_path('module', 'brightcove') . '/js/brightcove.js');
   $element['#button_type'] = 'button';
-  // TODO: review after the field part is stable
   $button = theme('button', ['element' => $element]);
   return str_ireplace('type="submit"', 'type="button"', $button);
 }
@@ -64,59 +63,4 @@ function theme_brightcove_field_browse_items($variables) {
     $rows[$activerow][] = $themed;
   }
   return '<div id="brightcove-browse-table-table">' . theme('table', ['header' => [], 'rows' => $rows]) . '</div>';
-}
-
-/**
- * The brightcove_field_embed theme function preprocess function.
- *
- * @param $variables
- */
-function brightcove_field_preprocess_brightcove_field_embed(&$variables) {
-  if (!isset($variables['player'])) {
-    watchdog('brightcove', 'Brightcove player is missing.', [], WATCHDOG_ERROR);
-  }
-
-  $player = brightcove_player_load($variables['player']);
-
-  $variables['id'] = 'myExperience-' . $variables['id'];
-  $variables['bgcolor'] = '#FFFFFF';
-  $variables['width'] = isset($variables['width']) ? $variables['width'] : BRIGHTCOVE_DEFAULT_VIDEO_WIDTH;
-  $variables['height'] = isset($variables['height']) ? $variables['height'] : BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT;
-  $variables['responsive'] = FALSE;
-  $variables['smart_api'] = FALSE;
-
-  // If player should be responsive.
-  if ((!is_null($player) && $player->responsive) || variable_get('brightcove_player_responsive', FALSE)) {
-    $variables['responsive'] = TRUE;
-    drupal_add_css(drupal_get_path('module', 'brightcove_field') . '/styles/responsive.css');
-  }
-
-  // If we should use Smart player API.
-  if (variable_get('brightcove_player_smart_api', FALSE)) {
-    $variables['smart_api'] = TRUE;
-    // Add width and height to client side to be able to use it by Smart Player API.
-    drupal_add_js([
-        'brightcoveField' => [
-          $variables['id'] => [
-            'width' => $variables['width'],
-            'height' => $variables['height']
-          ],
-        ],
-    ],
-      'setting'
-    );
-  }
-
-  if (isset($variables['brightcove_id'])) {
-    $variables['player_id'] = isset($player->player_id) ? $player->player_id : '';
-    $variables['player_key'] = isset($player->player_key) ? $player->player_key : '';
-
-    if (drupal_strtolower($variables['type']) == 'brightcove') {
-      $variables['is_vid'] = TRUE;
-    }
-    elseif (drupal_strtolower($variables['type']) == 'brightcove-player') {
-      $variables['is_vid'] = FALSE;
-    }
-  }
-
 }

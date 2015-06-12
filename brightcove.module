@@ -1123,7 +1123,7 @@ function brightcove_field_player($type, $entity_type, $entity_id, $field_name, $
 
   $variables = [
     'type' => ($type === 'playlist') ? BRIGHTCOVE_EMBED_TYPE_PLAYLIST : BRIGHTCOVE_EMBED_TYPE_VIDEO,
-    'video_id' => $brightcove_id,
+    'brightcove_id' => $brightcove_id,
     'player_id' => $player,
     'account_id' => $client->account_id,
     'height' => $height,
@@ -1390,8 +1390,9 @@ function brightcove_field_formatter_view($entity_type, $entity, $field, $instanc
     $variables['#attached']['library'][] = ['system', 'drupal.ajax'];
     $variables['#attached']['library'][] = ['system', 'ui.dialog'];
     $variables['#attached']['js'][] = drupal_get_path('module', 'brightcove') . '/js/brightcove.js';
-    $variables['#attached']['css'][] = drupal_get_path('module', 'brightcove') . '/styles/brightcove.css';
   }
+
+  $variables['#attached']['css'][] = drupal_get_path('module', 'brightcove') . '/styles/brightcove.css';
 
   if ($theme) {
     switch ($instance['widget']['type']) {
@@ -1404,7 +1405,7 @@ function brightcove_field_formatter_view($entity_type, $entity, $field, $instanc
           }
           $element[$delta] = [
               '#theme' => $theme,
-              '#type' => 'brightcove',
+              '#type' => BRIGHTCOVE_EMBED_TYPE_VIDEO,
               '#element' => $item,
               '#delta' => $delta,
               '#entity_type' => $entity_type,
@@ -1426,7 +1427,7 @@ function brightcove_field_formatter_view($entity_type, $entity, $field, $instanc
           }
           $element[$delta] = [
               '#theme' => $theme,
-              '#type' => 'brightcove-player',
+              '#type' => BRIGHTCOVE_EMBED_TYPE_PLAYLIST,
               '#element' => $item,
               '#delta' => $delta,
               '#entity_type' => $entity_type,
@@ -1700,7 +1701,7 @@ function _filter_brightcove($text, $filter) {
 function _filter_brightcove_replace($matches) {
   $variables = [
     'player_id' => $matches[3],
-    'video_id' => $matches[2],
+    'brightcove_id' => $matches[2],
     'account_id' => $matches[1],
   ];
   return theme('brightcove_field_embed', $variables);
@@ -2236,7 +2237,7 @@ function brightcove_theme() {
         'type' => BRIGHTCOVE_EMBED_TYPE_VIDEO,
         'account_id' => NULL,
         'player_id' => NULL,
-        'video_id' => NULL,
+        'brightcove_id' => NULL,
         'width' => BRIGHTCOVE_DEFAULT_VIDEO_WIDTH,
         'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
         'embed' => 'default',

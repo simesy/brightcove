@@ -26,7 +26,7 @@ function theme_brightcove_field_formatter_default($variables) {
     $client = brightcove_client_load($variables['element']['bcid']);
     $output = theme('brightcove_field_embed', [
       'type' => $variables['type'],
-      'video_id' => $variables['element']['brightcove_id'],
+      'brightcove_id' => $variables['element']['brightcove_id'],
       'player_id' => $variables['element']['player'],
       'account_id' => $client->account_id,
       'width' => $variables['width'],
