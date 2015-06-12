@@ -45,20 +45,49 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
    * @inheritdoc
    */
   protected function overviewTableRow($conditions, $id, $entity, $additional_cols = []) {
-    $wrapper_id = _brightcove_client_default_link_id($id);
+    $wrapper_id = _brightcove_client_default_link_id($entity->bcid);
     $link = "<div id=\"$wrapper_id\">";
-    $link .= _brightcove_client_default_link($id);
+    $link .= _brightcove_client_default_link($entity);
     $link .= '</div>';
     $additional_cols[] = $link;
     return parent::overviewTableRow($conditions, $id, $entity, $additional_cols);
   }
 
+  /**
+   * @inheritdoc
+   */
+  public function operationFormValidate($form, &$form_state) {
+    parent::operationFormValidate($form, $form_state);
+    if ($form_state['op'] === 'import') {
+      $import = $form_state['values']['import'];
+      $json = json_decode($import, TRUE);
+      if ($json) {
+        brightcove_try(function() use($json) {
+          $client_id = isset($json['client_id']) ? $json['client_id'] : NULL;
+          $client_secret = isset($json['client_secret']) ? $json['client_secret'] : NULL;
+          \Brightcove\API\Client::authorize($client_id, $client_secret);
+        }, function() {
+          form_set_error('import', t("Invalid credentials."));
+        });
+      }
+    }
+  }
+
+  /**
+   * @inheritdoc
+   */
+  protected function overviewTableHeaders($conditions, $rows, $additional_header = array()) {
+    $header = $additional_header;
+    $header[] = t('Default');
+
+    return parent::overviewTableHeaders($conditions, $rows, $header);
+  }
 }
 
 /**
  * Entity controller class for Brightcove client.
  */
-class BrightcoveClientEntityController extends EntityAPIController {
+class BrightcoveClientEntityController extends EntityAPIControllerExportable {
 
   /**
    * Overrides EntityAPIController::save()
@@ -88,28 +117,8 @@ class BrightcoveClientEntityController extends EntityAPIController {
       }
     }
 
-    $client->revision_timestamp = REQUEST_TIME;
-    $client->revision_uid = $user->uid;
-
     // Determine if we will be inserting a new client.
     $client->is_new = empty($client->bcid);
-
-    if ($client->is_new || !empty($client->revision)) {
-      // When inserting either a new client or revision, $entity->log must be set
-      // because {brightcove_client_revision}.log is a text column and therefore
-      // cannot have a default value. However, it might not be set at this
-      // point, so we ensure that it is at least an empty string in that case.
-      if (!isset($client->log)) {
-        $client->log = '';
-      }
-    }
-    elseif (empty($client->log)) {
-      // If we are updating an existing client without adding a new revision,
-      // we need to make sure $entity->log is unset whenever it is empty. As
-      // long as $entity->log is unset, drupal_write_record() will not attempt
-      // to update the existing database column when re-saving the revision.
-      unset($client->log);
-    }
 
     $return = parent::save($client, $transaction);
 
@@ -132,7 +141,17 @@ class BrightcoveClientEntityController extends EntityAPIController {
     }
   }
 
-
+  /**
+   * Overridden.
+   */
+  public function export($entity, $prefix = '') {
+    $vars = get_object_vars($entity);
+    unset($vars[$this->statusKey], $vars[$this->moduleKey], $vars['is_new'], $vars['changed']);
+    if ($this->nameKey != $this->idKey) {
+      unset($vars[$this->idKey]);
+    }
+    return entity_var_json_export($vars, $prefix);
+  }
 }
 
 /**
@@ -143,11 +162,11 @@ class BrightcoveClientEntityController extends EntityAPIController {
  */
 function brightcove_client_select_element() {
   $client_options = [BRIGHTCOVE_BCID_NONE => t('- Select a client -')];
-  $client_options +=  _brightcove_my_client_select_options();
+  $client_options += _brightcove_my_client_select_options();
   if (count($client_options) > 2) {
     $default_value = variable_get('brightcove_client_default');
     if (!array_key_exists($default_value, $client_options)) {
-      $default_value =  BRIGHTCOVE_BCID_NONE;
+      $default_value = BRIGHTCOVE_BCID_NONE;
     }
     $element = [
       '#type' => 'select',
@@ -220,9 +239,12 @@ function brightcove_client_form($form, &$form_state, $client = NULL) {
 
   if (empty($client->is_new)) {
     $players = [];
-    foreach (brightcove_player_load_all($client->bcid) as $player) {
-      $players[$player->getId()] = $player->getName();
-    }
+    brightcove_try(function() use(&$players, $client) {
+      foreach (brightcove_player_load_all($client->bcid) as $player) {
+        $players[$player->getId()] = $player->getName();
+      }
+    });
+
     $form['default_player'] = [
       '#type' => 'select',
       '#required' => TRUE,
@@ -240,13 +262,6 @@ function brightcove_client_form($form, &$form_state, $client = NULL) {
     '#collapsed' => empty($client->bcid),
     '#weight' => 350,
   ];
-  if (!empty($client->bcid)) {
-    $form['change_history']['revision'] = [
-      '#type' => 'checkbox',
-      '#title' => t('Create new revision on update'),
-      '#description' => t('If an update log message is entered, a revision will be created even if this is unchecked.'),
-    ];
-  }
   $form['change_history']['log'] = [
     '#type' => 'textarea',
     '#title' => !empty($client->bcid) ? t('Update log message') : t('Creation log message'),
@@ -291,12 +306,12 @@ function brightcove_client_form_validate($form, &$form_state) {
 
   brightcove_load_lib();
   $client = NULL;
-  brightcove_try(function() use(&$form, &$client, $client_id, $client_secret) {
+  brightcove_try(function () use (&$form, &$client, $client_id, $client_secret) {
     $client = \Brightcove\API\Client::authorize($client_id, $client_secret);
     if (!$client->isAuthorized()) {
       form_error($form, t('Failed to authorize.'));
     }
-  }, function (Exception $ex) use(&$form) {
+  }, function (Exception $ex) use (&$form) {
     form_error($form, t('Failed to authorize.'));
   });
 
@@ -314,7 +329,7 @@ function brightcove_client_form_validate($form, &$form_state) {
     $bcid = key($result['brightcove_client']);
     if (empty($client->bcid) || $bcid != $client->bcid) {
       form_set_error('client_id', t('This client id is <a href="!url">already in use</a> and must be unique. Please supply another value.', [
-          '!url' => url('admin/config/media/brightcove/brightcove_client/manage/' . $bcid)
+        '!url' => url('admin/config/media/brightcove/brightcove_client/manage/' . $bcid)
       ]));
     }
   }
@@ -382,17 +397,18 @@ function brightcove_client_set_default_access($client) {
  *  Set internally, either 'nojs' or 'ajax'.
  */
 function brightcove_client_set_default($client, $type = 'ajax') {
-  $old_default_client = variable_get('brightcove_client_default');
+  $old_default_client_id = variable_get('brightcove_client_default');
+  $old_default_client_entity = entity_load_single('brightcove_client', $old_default_client_id);
   variable_set('brightcove_client_default', $client->bcid);
   drupal_set_message(t('Client "@client" has been set to default.', ['@client' => $client->label]));
-  if (!empty($old_default_client)) {
-    drupal_set_message(t('The default client before was "@client".', ['@client' => brightcove_client_load($old_default_client)->label]));
+  if (!empty($old_default_client_id)) {
+    drupal_set_message(t('The default client before was "@client".', ['@client' => $old_default_client_entity->label]));
   }
   if ($type == 'ajax') {
     $commands = [];
-    $commands[] = ajax_command_html('#' . _brightcove_client_default_link_id($client->bcid), _brightcove_client_default_link($client->bcid));
-    if (!empty($old_default_client)) {
-      $commands[] = ajax_command_html('#' . _brightcove_client_default_link_id($old_default_client), _brightcove_client_default_link($old_default_client));
+    $commands[] = ajax_command_html('#' . _brightcove_client_default_link_id($client->bcid), _brightcove_client_default_link($client));
+    if (!empty($old_default_client_id)) {
+      $commands[] = ajax_command_html('#' . _brightcove_client_default_link_id($old_default_client_id), _brightcove_client_default_link($old_default_client_entity));
     }
     $commands[] = ajax_command_prepend('#content', theme('status_messages'));
     ajax_deliver(['#type' => 'ajax', '#commands' => $commands]);
@@ -419,13 +435,13 @@ function _brightcove_client_default_link_id($id) {
  *  Generates the 'set default' AJAX link for clients.
  *
  * @param Entity $bcid
- *   The client entity id.
+ *   The client entity.
  * @return string
  *   Either the link to set the client default or a text saying 'default'.
  */
-function _brightcove_client_default_link($bcid) {
-  if (variable_get('brightcove_client_default') !== $bcid) {
-    $wrapper_id = _brightcove_client_default_link_id($bcid);
+function _brightcove_client_default_link(Entity $client) {
+  if (variable_get('brightcove_client_default') !== $client->bcid) {
+    $wrapper_id = _brightcove_client_default_link_id($client->bcid);
     $token = drupal_get_token($wrapper_id);
     $options = [
       'query' => [
@@ -437,7 +453,7 @@ function _brightcove_client_default_link($bcid) {
         ],
       ],
     ];
-    return l(t('set default'), "/admin/config/media/brightcove/client/manage/{$bcid}/setdefault", $options);
+    return l(t('set default'), "admin/config/media/brightcove/client/manage/{$client->bcid}/setdefault", $options);
   }
   else {
     return t('default');

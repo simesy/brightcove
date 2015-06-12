@@ -1,5 +1,5 @@
-name = Brightcove
-description = Brightcove integration module - basic API
+name = Brightcove Video Connect
+description = Integration module for Brightcove Video Cloud
 core = 7.x
 
 configure = admin/config/media/brightcove

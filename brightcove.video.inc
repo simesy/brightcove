@@ -100,20 +100,13 @@ class BrightcoveVideoEntityController extends EntityAPIController {
  * @return \Brightcove\Object\Video\Video
  */
 function brightcove_save_video(\Brightcove\Object\Video\Video $video, Entity $client) {
-  list($cms,) = _brightcove_create_classes($client);
   $video_id = $video->getId();
-  if (!empty($video_id)) {
-    brightcove_try(function() use(&$video, $cms, $client) {
-      $video = $cms->updateVideo($video);
-      brightcove_invalidate_cache("brightcove:video:{$video->getId()}:{$client->bcid}");
-    });
-  }
-  else {
-    brightcove_try(function() use(&$video, $cms, $client) {
-      $video = $cms->createVideo($video);
-      brightcove_invalidate_cache("brightcove:video:{$video->getId()}:{$client->bcid}");
-    });
-  }
+  $op = empty($video_id) ? 'create' : 'update';
+  brightcove_try(function() use(&$video, $client, $client, $op) {
+    list($cms,) = _brightcove_create_classes($client);
+    $video = $cms->{"{$op}Video"}($video);
+    brightcove_invalidate_cache("brightcove:video:{$video->getId()}:{$client->bcid}");
+  });
   return $video;
 }
 
@@ -122,7 +115,6 @@ function brightcove_save_video(\Brightcove\Object\Video\Video $video, Entity $cl
  */
 function brightcove_video_form($form, &$form_state, $video_entity) {
   brightcove_load_lib();
-  $form = [];
   $form['#entity'] = $video_entity;
   $form['#entity_type'] = 'brightcove_video';
   $form['#bundle'] = $video_entity->type;
@@ -251,6 +243,16 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
   }
   catch (\Brightcove\API\Exception\APIException $ex) {
     $form['custom_fields']['#access'] = FALSE;
+  }
+  catch (\Brightcove\API\Exception\AuthenticationException $ex) {
+    return [
+      'authfail' => [
+        '#type' => 'markup',
+        '#markup' => t('Failed to authenticate with Brightcove. Go to !settings-link to check the settings of the selected client.', [
+          '!settings-link' => l(t('Edit @client', ['@client' => $client->label]), "admin/config/media/brightcove/client/manage/{$client->bcid}"),
+        ]),
+      ],
+    ];
   }
 
   $form['schedule'] = [

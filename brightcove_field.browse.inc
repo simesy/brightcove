@@ -59,19 +59,18 @@ function brightcove_field_browse($entity_type, $field_name, $entity_id_or_bundle
  *   JSON object with matched videos.
  */
 function brightcove_field_autocomplete($type, $field_name, $client, $string = '') {
-  list($cms,) = _brightcove_create_classes($client);
   $matches = [];
   $result = [];
   switch ($type) {
     case 'video':
-      brightcove_try(function() use(&$result, $cms, $string) {
+      brightcove_try(function() use(&$result, $client, $string) {
+        list($cms,) = _brightcove_create_classes($client);
         $result = $cms->listVideos($string);
       });
       break;
     case 'playlist':
-      // No API method to find playlists by name.
-      module_load_include('inc', 'brightcove', 'brightcove_field.playlist');
-      $result = brightcove_field_get_matched_playlists($string);
+      // TODO implement if needed
+      $result = [];
       break;
   }
 
