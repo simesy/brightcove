@@ -45,9 +45,9 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
    * @inheritdoc
    */
   protected function overviewTableRow($conditions, $id, $entity, $additional_cols = []) {
-    $wrapper_id = _brightcove_client_default_link_id($id);
+    $wrapper_id = _brightcove_client_default_link_id($entity->bcid);
     $link = "<div id=\"$wrapper_id\">";
-    $link .= _brightcove_client_default_link($id);
+    $link .= _brightcove_client_default_link($entity);
     $link .= '</div>';
     $additional_cols[] = $link;
     return parent::overviewTableRow($conditions, $id, $entity, $additional_cols);
@@ -366,17 +366,18 @@ function brightcove_client_set_default_access($client) {
  *  Set internally, either 'nojs' or 'ajax'.
  */
 function brightcove_client_set_default($client, $type = 'ajax') {
-  $old_default_client = variable_get('brightcove_client_default');
+  $old_default_client_id = variable_get('brightcove_client_default');
+  $old_default_client_entity = entity_load_single('brightcove_client', $old_default_client_id);
   variable_set('brightcove_client_default', $client->bcid);
   drupal_set_message(t('Client "@client" has been set to default.', ['@client' => $client->label]));
-  if (!empty($old_default_client)) {
-    drupal_set_message(t('The default client before was "@client".', ['@client' => brightcove_client_load($old_default_client)->label]));
+  if (!empty($old_default_client_id)) {
+    drupal_set_message(t('The default client before was "@client".', ['@client' => $old_default_client_entity->label]));
   }
   if ($type == 'ajax') {
     $commands = [];
-    $commands[] = ajax_command_html('#' . _brightcove_client_default_link_id($client->bcid), _brightcove_client_default_link($client->bcid));
-    if (!empty($old_default_client)) {
-      $commands[] = ajax_command_html('#' . _brightcove_client_default_link_id($old_default_client), _brightcove_client_default_link($old_default_client));
+    $commands[] = ajax_command_html('#' . _brightcove_client_default_link_id($client->bcid), _brightcove_client_default_link($client));
+    if (!empty($old_default_client_id)) {
+      $commands[] = ajax_command_html('#' . _brightcove_client_default_link_id($old_default_client_id), _brightcove_client_default_link($old_default_client_entity));
     }
     $commands[] = ajax_command_prepend('#content', theme('status_messages'));
     ajax_deliver(['#type' => 'ajax', '#commands' => $commands]);
@@ -403,13 +404,13 @@ function _brightcove_client_default_link_id($id) {
  *  Generates the 'set default' AJAX link for clients.
  *
  * @param Entity $bcid
- *   The client entity id.
+ *   The client entity.
  * @return string
  *   Either the link to set the client default or a text saying 'default'.
  */
-function _brightcove_client_default_link($bcid) {
-  if (variable_get('brightcove_client_default') !== $bcid) {
-    $wrapper_id = _brightcove_client_default_link_id($bcid);
+function _brightcove_client_default_link(Entity $client) {
+  if (variable_get('brightcove_client_default') !== $client->bcid) {
+    $wrapper_id = _brightcove_client_default_link_id($client->bcid);
     $token = drupal_get_token($wrapper_id);
     $options = [
       'query' => [
@@ -421,7 +422,7 @@ function _brightcove_client_default_link($bcid) {
         ],
       ],
     ];
-    return l(t('set default'), "admin/config/media/brightcove/client/manage/{$bcid}/setdefault", $options);
+    return l(t('set default'), "admin/config/media/brightcove/client/manage/{$client->bcid}/setdefault", $options);
   }
   else {
     return t('default');
