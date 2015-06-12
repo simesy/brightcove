@@ -1599,8 +1599,8 @@ function brightcove_field_refresh_video_entity_link($entity_type, $entity, $item
         $videos = [];
         foreach ($video_ids as $bcid => $video_id) {
           $client = brightcove_client_load($bcid);
-          list($cms,) = _brightcove_create_classes($client);
-          brightcove_try(function () use (&$videos, $cms, $video_id) {
+          brightcove_try(function () use (&$videos, $client, $video_id) {
+            list($cms,) = _brightcove_create_classes($client);
             $videos = $cms->listVideos('reference_id:' . implode(' ', $video_id));
           });
         }
@@ -1674,7 +1674,10 @@ function brightcove_filter_info() {
  */
 function _filter_brightcove_settings($form, &$form_state, $filter, $format, $defaults) {
   $filter->settings += $defaults;
-  $player_list = brightcove_player_list();
+  $player_list = [];
+  brightcove_try(function() use(&$player_list) {
+    $player_list = brightcove_player_list();
+  });
   $settings = [];
 
   $settings['player'] = [
@@ -2034,10 +2037,10 @@ function brightcove_autocomplete_videos($client, $videos_typed) {
   $matches = [];
   $result = [];
 
-  list($cms,) = _brightcove_create_classes($client);
   $videos_typed = drupal_explode_tags($videos_typed);
   $video_last = drupal_strtolower(array_pop($videos_typed));
-  brightcove_try(function () use (&$result, $cms, $video_last) {
+  brightcove_try(function () use (&$result, $client, $video_last) {
+    list($cms,) = _brightcove_create_classes($client);
     $result = $cms->listVideos($video_last);
   });
 
@@ -2099,9 +2102,9 @@ function brightcove_load_video($video_id, Entity $client_entity, $reset = FALSE)
     return $cache;
   }
   else {
-    list($cms,) = _brightcove_create_classes($client_entity);
     $video = NULL;
-    brightcove_try(function () use ($cms, $video_id, &$video) {
+    brightcove_try(function () use ($client_entity, $video_id, &$video) {
+      list($cms,) = _brightcove_create_classes($client_entity);
       $video = $cms->getVideo($video_id);
     });
     if ($video) {
@@ -2449,9 +2452,14 @@ function brightcove_player_load_all($client_id = NULL) {
   $cid = "brightcove:players:{$client_id}";
   if (!($players = brightcove_cache_get($cid))) {
     $client = brightcove_client_load($client_id);
-    list(, , $pm) = _brightcove_create_classes($client);
-    $players = $pm->listPlayers()->getItems();
-    brightcove_cache_set($cid, $players);
+    $players = [];
+    brightcove_try(function() use(&$players, $client) {
+      list(, , $pm) = _brightcove_create_classes($client);
+      $players = $pm->listPlayers()->getItems();
+    });
+    if ($players) {
+      brightcove_cache_set($cid, $players);
+    }
   }
 
   return $players;
@@ -2627,8 +2635,11 @@ function _brightcove_edit_form_callback($form, $form_state) {
   }
   $video = $video_entity->video;
 
-  list($cms,) = _brightcove_create_classes($client);
-  $custom_field_definitions = $cms->getVideoFields()->getCustomFields();
+  $custom_field_definitions = [];
+  brightcove_try(function() use(&$custom_field_definitions, $client) {
+    list($cms,) = _brightcove_create_classes($client);
+    $custom_field_definitions = $cms->getVideoFields()->getCustomFields();
+  });
 
   $video->setName($form_state['values']['title']);
   $video->setDescription($form_state['values']['short']);

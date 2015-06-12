@@ -105,24 +105,25 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
       return;
     }
     foreach ($entities as $playlist_entity) {
-      list($cms,) = _brightcove_create_classes($playlist_entity->client);
       $playlist = $playlist_entity->playlist;
-      brightcove_try(function () use($playlist, $cms) {
+      brightcove_try(function () use($playlist, $playlist_entity) {
+        list($cms,) = _brightcove_create_classes($playlist_entity->client);
         $cms->deletePlaylist($playlist->getId());
+
+        // deletePlaylist() fails silently in case the client has no permission to
+        // delete the playlist so we check here if it has been really removed or
+        // not.
+        try {
+          $cms->getPlaylist($playlist->getId());
+          watchdog('brightcove', 'Deleting the playlist @playlist has failed. Maybe the brightcove client has not enough permissions.', ['@playlist' => $playlist->getId()], WATCHDOG_ERROR);
+          drupal_set_message(t('Deleting the playlist @playlist has failed. Maybe the brightcove client has not enough permissions.', ['@playlist' => $playlist->getId()]), 'error');
+        }
+        catch (Exception $e) {
+           // Invalidate playlist cache.
+          brightcove_invalidate_cache('brightcove:playlist:' . $playlist_entity->bpid);
+          brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
+        }
       });
-      // deletePlaylist() fails silently in case the client has no permission to
-      // delete the playlist so we check here if it has been really removed or
-      // not.
-      try {
-        $cms->getPlaylist($playlist->getId());
-        watchdog('brightcove', 'Deleting the playlist @playlist has failed. Maybe the brightcove client has not enough permissions.', ['@playlist' => $playlist->getId()], WATCHDOG_ERROR);
-        drupal_set_message(t('Deleting the playlist @playlist has failed. Maybe the brightcove client has not enough permissions.', ['@playlist' => $playlist->getId()]), 'error');
-      }
-      catch (Exception $e) {
-         // Invalidate playlist cache.
-        brightcove_invalidate_cache('brightcove:playlist:' . $playlist_entity->bpid);
-        brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
-      }
     }
   }
 }
@@ -298,8 +299,8 @@ function brightcove_get_playlists(Entity $client, $sort = NULL, $limit = 100, $o
   }
 
   $playlists = FALSE;
-  list($cms, ) = _brightcove_create_classes($client);
-  brightcove_try(function() use(&$playlists, $cms, $sort, $limit, $offset) {
+  brightcove_try(function() use(&$playlists, $client, $sort, $limit, $offset) {
+    list($cms, ) = _brightcove_create_classes($client);
     $playlists = $cms->listPlaylists($sort, $limit, $offset);
   });
 

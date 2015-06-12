@@ -100,20 +100,13 @@ class BrightcoveVideoEntityController extends EntityAPIController {
  * @return \Brightcove\Object\Video\Video
  */
 function brightcove_save_video(\Brightcove\Object\Video\Video $video, Entity $client) {
-  list($cms,) = _brightcove_create_classes($client);
   $video_id = $video->getId();
-  if (!empty($video_id)) {
-    brightcove_try(function() use(&$video, $cms, $client) {
-      $video = $cms->updateVideo($video);
-      brightcove_invalidate_cache("brightcove:video:{$video->getId()}:{$client->bcid}");
-    });
-  }
-  else {
-    brightcove_try(function() use(&$video, $cms, $client) {
-      $video = $cms->createVideo($video);
-      brightcove_invalidate_cache("brightcove:video:{$video->getId()}:{$client->bcid}");
-    });
-  }
+  $op = empty($video_id) ? 'create' : 'update';
+  brightcove_try(function() use(&$video, $client, $client, $op) {
+    list($cms,) = _brightcove_create_classes($client);
+    $video = $cms->{"{$op}Video"}($video);
+    brightcove_invalidate_cache("brightcove:video:{$video->getId()}:{$client->bcid}");
+  });
   return $video;
 }
 

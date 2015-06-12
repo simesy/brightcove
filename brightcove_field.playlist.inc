@@ -35,7 +35,10 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   $playlist_options = [BRIGHTCOVE_BCID_NONE => t('- Select a playlist -')];
   if ($bcid != BRIGHTCOVE_BCID_NONE) {
     module_load_include('inc', 'brightcove', 'brightcove.playlist');
-    $playlists = brightcove_get_playlists($client);
+    $playlists = [];
+    brightcove_try(function() use(&$playlists, $client) {
+      $playlists = brightcove_get_playlists($client);
+    });
     if (!empty($playlists)) {
       foreach ($playlists as $playlist) {
         $id = $playlist->getId();
@@ -43,10 +46,14 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
       }
     }
 
+    $player_list = [];
+    brightcove_try(function() use(&$player_list, $client) {
+      $player_list = brightcove_player_list($client->bcid);
+    });
     $element['player'] = [
       '#type' => 'select',
       '#title' => t('Player'),
-      '#options' => brightcove_player_list($client->bcid),
+      '#options' => $player_list,
       '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : brightcove_get_default_player($client->bcid),
     ];
   }
