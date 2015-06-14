@@ -1801,7 +1801,7 @@ function brightcove_entity_info() {
   $entity_info = [];
 
   $entity_info['brightcove_client'] = [
-    'label' => t('Brightcove client'),
+    'label' => t('API Client'),
     'base table' => 'brightcove_client',
     'uri callback' => 'brightcove_client_uri',
     'controller class' => 'BrightcoveClientEntityController',
