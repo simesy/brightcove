@@ -56,17 +56,17 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   }
 
   // Page back.
-  if (isset($form_state['triggering_element']['#button_id']) && $form_state['triggering_element']['#button_id'] == 'bc_pager_prev') {
-    $page--;
+  if (isset($form_state['triggering_element']['#button_id']) && $form_state['triggering_element']['#button_id'] == 'bc_pager_prev' && $form_state['triggering_element']['#delta'] == $delta) {
+    $page = $page > 0 ? $page - 1 : 0;
   }
 
   // Page forward.
-  if (isset($form_state['triggering_element']['#button_id']) && $form_state['triggering_element']['#button_id'] == 'bc_pager_next') {
+  if (isset($form_state['triggering_element']['#button_id']) && $form_state['triggering_element']['#button_id'] == 'bc_pager_next' && $form_state['triggering_element']['#delta'] == $delta) {
     $page++;
   }
 
-  if (isset($form['#node']->{$field['field_name']}) && isset($form['#node_edit_form']) && $form['#node_edit_form'] && !isset($form_state['triggering_element']['#button_id'])) {
-    // Find the set value.
+  if (isset($form['#node']->{$field['field_name']}[$langcode][$delta]) && isset($form['#node_edit_form']) && $form['#node_edit_form'] && !isset($form_state['triggering_element']['#button_id'])) {
+    // Find the and set value.
     $brightcove_id = $form['#node']->{$field['field_name']}[$langcode][$delta]['brightcove_id'];
     // Have to page through the list.
     do {
@@ -76,13 +76,14 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     while (!in_array($brightcove_id, array_keys($playlist_options)) && !empty($playlist_options));
 
     if (empty($playlist_options)) {
-      // Reset page number if the value is not found.
+      // Give back the first page if value not found.
       $page = 0;
+      $playlist_options = _brightcove_field_get_playlists($client, $page);
     }
     else {
       // The be on the current page we have to remove one because the do ... while
       // counts +1;
-      $page--;
+      $page = $page > 0 ? $page - 1 : 0;
     }
 
     $player_list = [];
@@ -103,8 +104,9 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   $offset = BRIGHTCOVE_PLAYLIST_MAX_ITEMS * $page;
 
   $element['brightcove_id_current_page'] = [
-    '#type' => 'hidden',
+    '#type' => 'textfield', // @TODO: debug, change back to hidden
     '#value' => $page,
+    '#size' => 1, // @TODO: debug, remove
   ];
 
   $element['brightcove_id'] = [
@@ -116,7 +118,6 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : BRIGHTCOVE_BCID_NONE,
     '#options' => $playlist_options,
     '#multiple' => FALSE,
-    '#bc_current_page' => $page,
   ];
 
   $element['brightcove_id_pager'] = [
@@ -157,6 +158,8 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
       'wrapper' => $ajax_wrapper_id,
     ];
     $item['#field_name'] = $field['field_name'];
+    $item['#langcode'] = $langcode;
+    $item['#delta'] = $delta;
   }
 
   return $element;
@@ -167,7 +170,9 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
  */
 function brightcove_field_playlist_pager($form, &$form_state) {
   $field = $form_state['triggering_element']['#field_name'];
-  return $form[$field];
+  $langcode = $form_state['triggering_element']['#langcode'];
+  $delta = $form_state['triggering_element']['#delta'];
+  return $form[$field][$langcode][$delta];
 }
 
 function _brightcove_field_get_playlists(Entity $client, $page) {
