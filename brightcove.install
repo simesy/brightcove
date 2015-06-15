@@ -179,43 +179,13 @@ function brightcove_schema() {
 }
 
 /**
- * Adds brightcove_player table.
- */
-function brightcove_update_7001() {
-  db_create_table('brightcove_player', [
-    'description' => 'Stores brightcove players.',
-    'fields' => [
-      'name' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      ],
-      'player_id' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      ],
-      'player_key' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      ],
-    ],
-    'primary key' => ['name'],
-    'unique keys' => [
-      'name' => ['name'],
-    ],
-  ]);
-}
-
-/**
  * Implements hook_requirements().
  */
 function brightcove_requirements($phase) {
   $requirements = [];
   $t = get_t();
 
-  if ($phase != 'install') {
+  if ($phase !== 'install') {
     $api_wrapper_installed = (($api_wrapper_library = libraries_detect('PHP-API-Wrapper')) && !empty($api_wrapper_library['installed']));
     $requirements['brightcove'] = [
       'title' => $t('Brightcove API Wrapper'),
@@ -282,154 +252,123 @@ function brightcove_uninstall() {
 }
 
 /**
- * Migrates old player id and key to the table.
- */
-function brightcove_update_7002() {
-  $t = get_t();
-
-  $player_id = variable_get('brightcove_player');
-  $player_key = variable_get('brightcove_player_key');
-
-  brightcove_player_save((object) [
-    'name' => $t('Default'),
-    'player_id' => $player_id,
-    'player_key' => $player_key,
-  ]);
-
-  variable_del('brightcove_player');
-  variable_del('brightcove_player_key');
-}
-
-/**
- * Create individual primary key for players.
- */
-function brightcove_update_7003() {
-  $spec = [
-    'type' => 'serial',
-    'unsigned' => TRUE,
-    'not null' => TRUE,
-  ];
-
-  db_drop_primary_key('brightcove_player');
-  db_add_field('brightcove_player', 'pid', $spec, ['primary key' => ['pid']]);
-}
-
-/**
- * Make name column unique.
- */
-function brightcove_update_7004() {
-  db_add_unique_key('brightcove_player', 'name', ['name']);
-}
-
-/**
- * Adding a "Display name" column.  Move existing "Name" data into that and
- * make "Name" machine-readable.
- */
-function brightcove_update_7005() {
-  $default_player = variable_get('brightcove_player_pid', '');
-
-  db_add_field('brightcove_player', 'display_name', [
-    'type' => 'varchar',
-    'length' => 255,
-    'not null' => TRUE,
-    'default' => ''
-  ]);
-
-  // We are not using brightcove_player_load_all() here because that, being
-  // based on CTools Export, is using the table schema. But new fields might be
-  // added to the table schema in future updates and that will break the
-  // execution with an 'Unknown column' fatal error.
-  $players = db_query("SELECT pid, name FROM {brightcove_player}")->fetchAll();
-
-  if (!empty($players)) {
-    foreach ($players as $player) {
-      // Make display name the name, and restrict the name to machine-readable.
-      $player->display_name = $player->name;
-      $player->name = preg_replace('/_+/', '_', preg_replace('/[^a-z0-9]+/', '_', strtolower($player->name)));
-
-      // Save the new name. We are not using brightcove_player_save() because
-      // $player is not a full CTools Export object.
-      db_update('brightcove_player')
-        ->fields([
-          'name' => $player->name,
-          'display_name' => $player->display_name
-        ])
-        ->condition('pid', $player->pid)
-        ->execute();
-
-      //
-      if ($player->pid == $default_player) {
-        $default_player = $player->name;
-      }
-    }
-  }
-
-  variable_set('brightcove_player_default', $default_player);
-}
-
-/**
- * Create cache table for Brightcove objects.
- */
-function brightcove_update_7006() {
-  $cache_table = drupal_get_schema_unprocessed('system', 'cache');
-  db_create_table('cache_brightcove', $cache_table);
-}
-
-/**
- * Fix default players for Brightcove field instances.
- */
-function brightcove_update_7007() {
-  $players = brightcove_player_load_all();
-  // Get all of the brightcove fields.
-  $fields = field_read_fields(['type' => 'brightcove_field']);
-  foreach ($fields as $field) {
-    // Update the value of the default player for brightcove field instances.
-    $instances = field_read_instances(['field_name' => $field['field_name']]);
-    foreach ($instances as $instance) {
-      if (!empty($players)) {
-        foreach ($players as $player) {
-          if ($instance['settings']['brightcove_player'] == $player->pid) {
-            $instance['settings']['brightcove_player'] = $player->name;
-            field_update_instance($instance);
-          }
-        }
-      }
-    }
-  }
-}
-
-/**
- * Add responsive flag to players.
- */
-function brightcove_update_7008() {
-  $spec = [
-    'type' => 'int',
-    'size' => 'tiny',
-    'not null' => TRUE,
-    'default' => 0,
-  ];
-
-  db_add_field('brightcove_player', 'responsive', $spec);
-
-  // Clear schema cache.
-  cache_clear_all('schema', 'cache', TRUE);
-}
-
-/**
- * Creating the video field for the manual playlist entity.
- */
-function brightcove_update_7009() {
-  // Make drupal notice the new brightcove_playlist entity.
-  drupal_flush_all_caches();
-  module_load_include('inc', 'brightcove', 'brightcove.playlist.inc');
-  _brightcove_configure_playlist_entity();
-}
-
-/**
- * Create the base table of brightcove_video entity.
+ * Update to the 7.x-6.x version.
+ *
+ * - creates tables for the new entities
+ * - updates field definitions
+ * - updates field config (brightcove_field -> brightcove module merge)
+ * - enables additional dependencies
  */
 function brightcove_update_7600() {
-  $table = [
+  db_delete('cache')
+    ->condition('cid', 'ctools_plugin%', 'LIKE')
+    ->execute();
+
+  $schema = [];
+
+  $schema['brightcove_client'] = [
+    'description' => 'The base table for brightcove clients.',
+    'fields' => [
+      'bcid' => [
+        'description' => 'The primary identifier for a brightcove client, used internally only.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'label' => [
+        'description' => 'The label of this client.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'account_id' => [
+        'description' => 'The ID of the account this client belongs to.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'client_id' => [
+        'description' => 'The client ID.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'client_secret' => [
+        'description' => 'The client secret key.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'uid' => [
+        'description' => 'The {users}.uid that created this client.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'created' => [
+        'description' => 'The Unix timestamp when the client was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'changed' => [
+        'description' => 'The Unix timestamp when the client was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'data' => [
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ],
+      'status' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0x01,
+        'size' => 'tiny',
+        'description' => 'The exportable status of the entity.',
+      ],
+      'module' => [
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ],
+    ],
+    'primary key' => ['bcid'],
+    'unique keys' => [
+      'client_id' => ['client_id'],
+    ],
+    'creator' => [
+      'table' => 'users',
+      'columns' => ['uid' => 'uid'],
+    ],
+  ];
+
+  $schema['brightcove_callback'] = [
+    'fields' => [
+      'id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'fid' => [
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'expires' => [
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+  ];
+
+  $schema['brightcove_video'] = [
     'description' => 'Stores information about brightcove video.',
     'fields' => [
       'bvid' => [
@@ -460,18 +399,14 @@ function brightcove_update_7600() {
       'client_video' => ['video_id'],
     ],
   ];
-  db_create_table('brightcove_video', $table);
-}
 
-/**
- * Removes the brightcove player table.
- */
-function brightcove_update_7601() {
-  db_delete('brightcove_player');
+  foreach ($schema as $table => $def) {
+    db_create_table($table, $def);
+  }
+
+  db_drop_table('brightcove_player');
   variable_del('brightcove_default_player');
-}
 
-function brightcove_update_7602() {
   if (module_exists('field_sql_storage')) {
     $coldef = [
       'type' => 'int',
@@ -490,61 +425,19 @@ function brightcove_update_7602() {
       }
     }
 
-    field_cache_clear();
+    db_update('field_config')
+      ->fields([
+        'module' => 'brightcove',
+      ])
+      ->condition('module', 'brightcove_field')
+      ->execute();
   }
-}
 
-function brightcove_update_7603() {
-  db_update('field_config')
-    ->fields([
-      'module' => 'brightcove',
-    ])
-    ->condition('module', 'brightcove_field')
-    ->execute();
+  module_enable(['date_api', 'libraries'], TRUE);
 
   cache_clear_all();
-}
 
-/**
- * Remove revision related shema-parts of Brightcove Client entity. It means the
- * table 'brightcove_client_revision' and the field 'revision_id' in table
- * 'brightcove_client'.
- */
-function brightcove_update_7604() {
-  if (db_table_exists('brightcove_client_revision')) {
-    db_drop_table('brightcove_client_revision');
-  }
-  if (db_table_exists('brightcove_client') && db_field_exists('brightcove_client', 'revision_id')) {
-    db_drop_field('brightcove_client', 'revision_id');
-  }
-
-  cache_clear_all();
-}
-
-/**
- * Add 2 fields to brightcove_client to be exportable via Features.
- */
-function brightcove_update_7605() {
-  if (!db_field_exists('brightcove_client', 'status')) {
-    $status_field = [
-      'type' => 'int',
-      'not null' => TRUE,
-      'default' => 0x01,
-      'size' => 'tiny',
-      'description' => 'The exportable status of the entity.',
-    ];
-    db_add_field('brightcove_client', 'status', $status_field);
-  }
-
-  if (!db_field_exists('brightcove_client', 'module')) {
-    $module_field = [
-      'type' => 'varchar',
-      'not null' => FALSE,
-      'length' => 255,
-      'description' => 'The name of the providing module if the entity has been defined in code.',
-    ];
-    db_add_field('brightcove_client', 'module', $module_field);
-  }
-
-  cache_clear_all();
+  drupal_set_message(t('The brightcove module has been updated. Because of the changes in the API, please visit the !admin-link to add your credentials.', [
+    '!admin-link' => l(t('API Client page'), 'admin/config/media/brightcove/client'),
+  ]));
 }

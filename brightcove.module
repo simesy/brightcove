@@ -1405,6 +1405,9 @@ function brightcove_field_formatter_view($entity_type, $entity, $field, $instanc
           $video = FALSE;
           if (isset($item['brightcove_id'])) {
             $client = brightcove_client_load_or_default($item['bcid']);
+            if (!$client) {
+              return [];
+            }
             $video = brightcove_load_video($item['brightcove_id'], $client);
           }
           $element[$delta] = [
@@ -1427,7 +1430,13 @@ function brightcove_field_formatter_view($entity_type, $entity, $field, $instanc
         foreach ($items as $delta => $item) {
           $playlist = FALSE;
           if (isset($item['brightcove_id'])) {
+            if (!$item['bcid'] && ($defaultclient = brightcove_client_load_or_default())) {
+              $item['bcid'] = $defaultclient->bcid;
+            }
             $playlist = brightcove_load_playlist($item['brightcove_id'], $item['bcid']);
+            if (!$playlist) {
+              return [];
+            }
           }
           $element[$delta] = [
               '#theme' => $theme,
@@ -1792,7 +1801,7 @@ function brightcove_entity_info() {
   $entity_info = [];
 
   $entity_info['brightcove_client'] = [
-    'label' => t('Brightcove client'),
+    'label' => t('API Client'),
     'base table' => 'brightcove_client',
     'uri callback' => 'brightcove_client_uri',
     'controller class' => 'BrightcoveClientEntityController',

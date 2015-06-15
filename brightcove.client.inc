@@ -17,8 +17,8 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
     $items = parent::hook_menu();
     $items['admin/config/media/brightcove/client']['type'] = MENU_LOCAL_TASK;
     $items['admin/config/media/brightcove/client']['weight'] = 0.1;
-    $items['admin/config/media/brightcove/client']['title'] = 'API Client';
-    $items['admin/config/media/brightcove/client/add']['title'] = 'Add Client (Brightcove API Authentication)';
+    $items['admin/config/media/brightcove/client']['title'] = 'API Clients';
+    $items['admin/config/media/brightcove/client/add']['title'] = 'Add API Client';
     $items['admin/config/media/brightcove/client/add']['title callback'] = 't';
 
     $items["{$this->path}/manage/%brightcove_client/setdefault"] = [
