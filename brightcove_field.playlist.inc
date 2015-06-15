@@ -25,6 +25,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
         'wrapper' => $ajax_wrapper_id,
         'callback' => 'brightcove_field_playlist_client_ajax_callback',
       ];
+      $element['bcid']['#ajax_id'] = 'bcid';
       $bcid = isset($form_state['values'][$field['field_name']][$langcode][$delta]['bcid']) ? $form_state['values'][$field['field_name']][$langcode][$delta]['bcid'] : $element['bcid']['#default_value'];
       break;
 
@@ -47,6 +48,10 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
 
   $items_total = _brightcove_playlist_items_total($client);
 
+  if (isset($form_state['triggering_element']['#ajax_id']) && $form_state['triggering_element']['#ajax_id'] == 'bcid') {
+    $form_state['input'][$field['field_name']][$langcode][$delta]['brightcove_id_current_page'] = 0;
+  }
+
   // Get the current page.
   if (isset($form_state['input'][$field['field_name']][$langcode][$delta]['brightcove_id_current_page'])) {
     $page = $form_state['input'][$field['field_name']][$langcode][$delta]['brightcove_id_current_page'];
@@ -56,16 +61,16 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   }
 
   // Page back.
-  if (isset($form_state['triggering_element']['#button_id']) && $form_state['triggering_element']['#button_id'] == 'bc_pager_prev' && $form_state['triggering_element']['#delta'] == $delta) {
+  if (isset($form_state['triggering_element']['#ajax_id']) && $form_state['triggering_element']['#ajax_id'] == 'bc_pager_prev' && $form_state['triggering_element']['#delta'] == $delta) {
     $page = $page > 0 ? $page - 1 : 0;
   }
 
   // Page forward.
-  if (isset($form_state['triggering_element']['#button_id']) && $form_state['triggering_element']['#button_id'] == 'bc_pager_next' && $form_state['triggering_element']['#delta'] == $delta) {
+  if (isset($form_state['triggering_element']['#ajax_id']) && $form_state['triggering_element']['#ajax_id'] == 'bc_pager_next' && $form_state['triggering_element']['#delta'] == $delta) {
     $page++;
   }
 
-  if (isset($form['#node']->{$field['field_name']}[$langcode][$delta]) && isset($form['#node_edit_form']) && $form['#node_edit_form'] && !isset($form_state['triggering_element']['#button_id'])) {
+  if (isset($form['#node']->{$field['field_name']}[$langcode][$delta]) && isset($form['#node_edit_form']) && $form['#node_edit_form'] && !isset($form_state['triggering_element'])) {
     // Find the and set value.
     $brightcove_id = $form['#node']->{$field['field_name']}[$langcode][$delta]['brightcove_id'];
     // Have to page through the list.
@@ -127,7 +132,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   // Previous button.
   $element['brightcove_id_pager']['pager']['previous_button'] = [
     '#value' => t('Previous'),
-    '#button_id' => 'bc_pager_prev',
+    '#ajax_id' => 'bc_pager_prev',
   ];
   if ($page == 0) {
     $element['brightcove_id_pager']['pager']['previous_button']['#disabled'] = TRUE;
@@ -139,7 +144,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   // Next button.
   $element['brightcove_id_pager']['pager']['next_button'] = [
     '#value' => t('Next'),
-    '#button_id' => 'bc_pager_next',
+    '#ajax_id' => 'bc_pager_next',
   ];
   if ($offset + BRIGHTCOVE_PLAYLIST_MAX_ITEMS > $items_total) {
     $element['brightcove_id_pager']['pager']['next_button']['#disabled'] = TRUE;
@@ -169,10 +174,12 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
  * AJAX callback to update playlist table.
  */
 function brightcove_field_playlist_pager($form, &$form_state) {
-  $field = $form_state['triggering_element']['#field_name'];
-  $langcode = $form_state['triggering_element']['#langcode'];
-  $delta = $form_state['triggering_element']['#delta'];
-  return $form[$field][$langcode][$delta];
+  $parents = $form_state['triggering_element']['#parents'];
+  // Pop some parents as we have to update the whole field.
+  array_pop($parents);
+  array_pop($parents);
+  array_pop($parents);
+  return drupal_array_get_nested_value($form, $parents);
 }
 
 function _brightcove_field_get_playlists(Entity $client, $page) {
@@ -199,7 +206,5 @@ function _brightcove_field_get_playlists(Entity $client, $page) {
 function brightcove_field_playlist_client_ajax_callback($form, $form_state) {
   $parents = $form_state['triggering_element']['#parents'];
   array_pop($parents);
-  $parents[] = 'brightcove_id';
-  $return = drupal_array_get_nested_value($form, $parents);
-  return $return;
+  return drupal_array_get_nested_value($form, $parents);
 }
