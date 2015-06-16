@@ -10,7 +10,6 @@
  */
 function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, &$element) {
   // Select the client.
-  //$element['#tree'] = TRUE;
   $ajax_wrapper_id = "bc-playlist-{$field['field_name']}-{$delta}-ajax-wrapper";
 
   $element['#prefix'] = "<div id='{$ajax_wrapper_id}'>";
@@ -39,6 +38,10 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
 
   // Load client.
   $client = brightcove_client_load($bcid);
+
+  if (!$client) {
+    return $element;
+  }
 
   // Set field title.
   $element['brightcove_id_title'] = [
@@ -109,17 +112,16 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
   $offset = BRIGHTCOVE_PLAYLIST_MAX_ITEMS * $page;
 
   $element['brightcove_id_current_page'] = [
-    '#type' => 'textfield', // @TODO: debug, change back to hidden
+    '#type' => 'hidden',
     '#value' => $page,
-    '#size' => 1, // @TODO: debug, remove
   ];
 
   $element['brightcove_id'] = [
     '#type' => 'tableselect',
-    '#header' => array(
+    '#header' => [
       'id' => t('ID'),
       'title' =>t('Title')
-    ),
+    ],
     '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : BRIGHTCOVE_BCID_NONE,
     '#options' => $playlist_options,
     '#multiple' => FALSE,
@@ -165,6 +167,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     $item['#field_name'] = $field['field_name'];
     $item['#langcode'] = $langcode;
     $item['#delta'] = $delta;
+    $item['#name'] = "{$item['#ajax_id']}_{$field['field_name']}_{$delta}";
   }
 
   return $element;
