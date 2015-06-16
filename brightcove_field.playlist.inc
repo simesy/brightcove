@@ -93,21 +93,21 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
       // counts +1;
       $page = $page > 0 ? $page - 1 : 0;
     }
-
-    $player_list = [];
-    brightcove_try(function() use(&$player_list, $client) {
-      $player_list = brightcove_player_list($client->bcid);
-    });
-    $element['player'] = [
-      '#type' => 'select',
-      '#title' => t('Player'),
-      '#options' => $player_list,
-      '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : brightcove_get_default_player($client->bcid),
-    ];
   }
   else {
     $playlist_options = _brightcove_field_get_playlists($client, $page);
   }
+
+  $player_list = [];
+  brightcove_try(function() use(&$player_list, $client) {
+    $player_list = brightcove_player_list($client->bcid);
+  });
+  $element['player'] = [
+    '#type' => 'select',
+    '#title' => t('Player'),
+    '#options' => $player_list,
+    '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : brightcove_get_default_player($client->bcid),
+  ];
 
   $offset = BRIGHTCOVE_PLAYLIST_MAX_ITEMS * $page;
 
