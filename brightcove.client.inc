@@ -173,6 +173,7 @@ function brightcove_client_select_element() {
       '#options' => $client_options,
       '#title' => t('Client'),
       '#default_value' => $default_value,
+      '#disable_video_validation' => TRUE,
     ];
   }
   elseif (count($client_options) == 2) {
