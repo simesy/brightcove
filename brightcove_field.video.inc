@@ -71,6 +71,11 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     }
   }
 
+  $element['previous_client'] = [
+    '#type' => 'value',
+    '#value' => $bcid,
+  ];
+
   if (empty($brightcove_field_settings[$element['#field_name']])) {
     $brightcove_field_settings[$element['#field_name']] = [
       'brightcove_field' => [
@@ -97,7 +102,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   if (!empty($client)) {
     $element['brightcove_id'] = [
       '#type' => 'textfield',
-      '#default_value' => isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : NULL,
+      '#default_value' => !isset($form_state['values'][$field['field_name']][$langcode][$delta]['previous_client']) || $form_state['values'][$field['field_name']][$langcode][$delta]['previous_client'] === $bcid ? (isset($items[$delta]['brightcove_id']) ? $items[$delta]['brightcove_id'] : NULL) : NULL,
       '#title' => $element['#title'],
       '#maxlength' => 256,
       '#value_callback' => 'brightcove_field_video_browser_value',
