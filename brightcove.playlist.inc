@@ -361,7 +361,7 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
   }
   $wrapper_id = 'bc-playlist-data-wrapper';
 
-  $bcid = $form['bcid']['#default_value'];
+  $bcid = $form['bcid']['#value'];
   switch ($form['bcid']['#type']) {
     case 'select':
       $form['bcid']['#ajax'] = [
@@ -401,11 +401,20 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
       '#weight' => -10,
     ];
 
+    $players = brightcove_player_list($client->client_id);
+    $form['playlist_data']['player'] = [
+      '#type' => 'select',
+      '#title' => 'Player',
+      '#options' => $players,
+      '#default_value' => '',
+      '#weight' => -9,
+    ];
+
     $form['playlist_data']['description'] = [
       '#type' => 'textarea',
       '#title' => 'Short description',
       '#default_value' => empty($playlist) ? '' : $playlist->getDescription(),
-      '#weight' => -9,
+      '#weight' => -8,
     ];
 
     $form['playlist_data']['settings'] = [

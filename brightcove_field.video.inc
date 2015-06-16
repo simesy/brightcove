@@ -129,12 +129,18 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     brightcove_try(function() use(&$player_list, $client) {
       $player_list = brightcove_player_list($client->bcid);
     });
-    $element['player'] = [
-      '#type' => 'select',
-      '#title' => t('Player'),
-      '#options' => $player_list,
-      '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : brightcove_get_default_player($client->bcid),
-    ];
+
+    // Only show player selection on other entities than 'brightcove_playlist'.
+    // A video can have a player but a playlist determines the player for the
+    // videos in the list.
+    if ($element['#entity_type'] != 'brightcove_playlist') {
+      $element['player'] = [
+        '#type' => 'select',
+        '#title' => t('Player'),
+        '#options' => $player_list,
+        '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : brightcove_get_default_player($client->bcid),
+      ];
+    }
 
     $element['actions']['remove'] = [
       '#type' => 'button',
