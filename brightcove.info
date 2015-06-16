@@ -8,6 +8,7 @@ dependencies[] = ctools
 dependencies[] = entity
 dependencies[] = libraries
 dependencies[] = date_api
+dependencies[] = date_popup
 
 files[] = brightcove.module
 files[] = brightcove.admin.inc
