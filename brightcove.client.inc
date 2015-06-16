@@ -76,7 +76,7 @@ class BrightcoveClientEntityUIController extends EntityDefaultUIController {
   /**
    * @inheritdoc
    */
-  protected function overviewTableHeaders($conditions, $rows, $additional_header = array()) {
+  protected function overviewTableHeaders($conditions, $rows, $additional_header = []) {
     $header = $additional_header;
     $header[] = t('Default');
 

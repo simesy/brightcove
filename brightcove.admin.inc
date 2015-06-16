@@ -149,54 +149,12 @@ function brightcove_admin_settings($form, &$form_state) {
     '#default_value' => isset($cache_settings['port']) ? $cache_settings['port'] : BRIGHTCOVE_CACHE_MEMCACHE_PORT,
   ];
 
-  $form['player'] = [
-    '#type' => 'fieldset',
-    '#title' => t('Player settings'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  ];
-  $form['player']['brightcove_default_image'] = [
-    '#type' => 'textfield',
-    '#title' => t('Default image'),
-    '#description' => t("In case a video doesn't have a thumbnail or still image, display an image from this path"),
-    '#default_value' => variable_get('brightcove_default_thumbnail', brightcove_get_default_image()),
-  ];
-  $form['player']['brightcove_player_responsive'] = [
-    '#type' => 'checkbox',
-    '#title' => t('Make all players responsive'),
-    '#description' => t("Global setting to make all players responsive. Please note that this will change the template of the player."),
-    '#default_value' => variable_get('brightcove_player_responsive', FALSE),
-  ];
-  $form['player']['brightcove_player_full_api'] = [
-    '#type' => 'checkbox',
-    '#title' => t('Load full JavaScript API'),
-    '#description' => t("Optionally load the <a href=\"!url\">full Brightcove JavaScript API</a> rather than just the bare player logic.", ['!url' => 'http://support.brightcove.com/en/video-cloud/docs/using-javascript-flash-only-player-api']),
-    '#default_value' => variable_get('brightcove_player_full_api', FALSE),
-    '#states' => [
-      'disabled' => [
-        ':input[name="brightcove_player_smart_api"]' => ['checked' => TRUE],
-      ],
-    ]
-  ];
-  $form['player']['brightcove_player_smart_api'] = [
-    '#type' => 'checkbox',
-    '#title' => t('Use Smart Player API'),
-    '#description' => t("Optionally use the <a href=\"!url\">Brightcove Smart Player API</a>. You can only use it, if you avoid to load the full JavaScript API. Smart Player API doesn't support playlist players.", ['!url' => 'http://support.brightcove.com/en/video-cloud/docs/using-smart-player-api']),
-    '#default_value' => variable_get('brightcove_player_smart_api', FALSE),
-    '#states' => [
-      'disabled' => [
-        ':input[name="brightcove_player_full_api"]' => ['checked' => TRUE],
-      ],
-    ],
-  ];
-
   //Upload
   $form['upload'] = [
     '#type' => 'fieldset',
     '#title' => t('Upload settings'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
-    '#description' => t("Note that these settings apply only to non-FLV videos (MP4, AVI, QT, etc.)."),
   ];
   $form['upload']['brightcove_track_ingestion'] = [
     '#type' => 'checkbox',
@@ -223,26 +181,6 @@ function brightcove_admin_settings($form, &$form_state) {
         ':input[name=brightcove_auto_callback]' => ['checked' => FALSE],
       ],
     ],
-  ];
-
-  // Status
-  $form['status'] = [
-    '#type' => 'fieldset',
-    '#title' => t('Status settings'),
-    '#description' => t("Settings relating to the availability status of a video."),
-    '#collapsible' => TRUE,
-  ];
-  $form['status']['brightcove_check_for_unavailable'] = [
-    '#type' => 'checkbox',
-    '#title' => t('Check for unavailable videos'),
-    '#description' => t("If checked, then the message below will be displayed if a recently uploaded video is not yet available."),
-    '#default_value' => variable_get('brightcove_check_for_unavailable', TRUE),
-  ];
-  $form['status']['brightcove_status_display_unavailable'] = [
-    '#type' => 'textarea',
-    '#title' => t('Unavailable video message'),
-    '#description' => t("If the checkbox above is checked, and you have a message below (which may contain HTML), it will be displayed if a video is not yet available for viewing."),
-    '#default_value' => variable_get('brightcove_status_display_unavailable', 'This video is unavailable for the moment.'),
   ];
 
   $form = system_settings_form($form);
