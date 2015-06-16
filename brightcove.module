@@ -290,7 +290,7 @@ function brightcove_field_validate($entity_type, $entity, $field, $instance, $la
       break;
     case BRIGHTCOVE_PLAYLIST_WIDGET:
       foreach ($items as $delta => $item) {
-        if (!empty($item['brightcove_id']) && ($item['brightcove_id'] !== BRIGHTCOVE_BCID_NONE)) {
+        if (!empty($item['brightcove_id']) && ($item['brightcove_id'] !== BRIGHTCOVE_BCID_NONE) && (!isset($item['previous_client']) || $item['previous_client'] === $item['bcid'])) {
           $playlist = brightcove_load_playlist($item['brightcove_id'], $item['bcid']);
           if (empty($playlist)) {
             $errors[$field['field_name']][$langcode][$delta][] = [

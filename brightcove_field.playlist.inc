@@ -56,6 +56,16 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     return $element;
   }
 
+  $element['previous_client'] = [
+    '#type' => 'value',
+    '#value' => $bcid,
+  ];
+
+  if (isset($form_state['values'][$field['field_name']][$langcode][$delta]['previous_client']) && $form_state['values'][$field['field_name']][$langcode][$delta]['previous_client'] !== $bcid) {
+    $form_state['input'][$field['field_name']][$langcode][$delta]['brightcove_id'] = '';
+    $form_state['values'][$field['field_name']][$langcode][$delta]['brightcove_id'] = '';
+  }
+
   // Set field title.
   $element['brightcove_id_title'] = [
     '#type' => 'item',
