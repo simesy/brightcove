@@ -55,6 +55,9 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
         }
         elseif (isset($items[$delta]['bcid'])) {
           $bcid = $items[$delta]['bcid'];
+          if ($bcid === "0" && !empty($items[$delta]['brightcove_id'])) {
+            $bcid = variable_get('brightcove_client_default');
+          }
         }
         $element['bcid']['#default_value'] = $bcid;
         break;
@@ -68,6 +71,11 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
     }
   }
 
+  $element['previous_client'] = [
+    '#type' => 'value',
+    '#value' => $bcid,
+  ];
+
   if (empty($brightcove_field_settings[$element['#field_name']])) {
     $brightcove_field_settings[$element['#field_name']] = [
       'brightcove_field' => [
@@ -78,6 +86,11 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
         ],
       ],
     ];
+  }
+
+  if (isset($form_state['values'][$field['field_name']][$langcode][$delta]['previous_client']) && $form_state['values'][$field['field_name']][$langcode][$delta]['previous_client'] !== $bcid) {
+    $form_state['input'][$field['field_name']][$langcode][$delta]['brightcove_id'] = '';
+    $form_state['values'][$field['field_name']][$langcode][$delta]['brightcove_id'] = '';
   }
 
   // Since the actions buttons depend on the client selection,
@@ -181,6 +194,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
           'callback' => 'ajax_browse_video_dialog_callback',
         ],
         '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
+        '#disable_field_validation' => TRUE,
       ];
     }
 
@@ -203,6 +217,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
           'callback' => 'ajax_upload_video_dialog_callback',
         ],
         '#name' => $element['#field_name'] . '-' . $parent_delta . '-' . $delta,
+        '#disable_field_validation' => TRUE,
       ];
     }
   }
