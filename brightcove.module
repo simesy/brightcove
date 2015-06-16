@@ -65,7 +65,7 @@ function brightcove_init() {
 
   // Add Smart Player API related custom javascript, if it's necessary.
   if (variable_get('brightcove_player_smart_api', FALSE)) {
-    drupal_add_js(drupal_get_path('module', 'brightcove_field') . '/js/events.js');
+    drupal_add_js(drupal_get_path('module', 'brightcove') . '/js/events.js');
   }
 }
 

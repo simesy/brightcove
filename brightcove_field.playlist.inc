@@ -183,7 +183,9 @@ function brightcove_field_playlist_pager($form, &$form_state) {
   array_pop($parents);
   array_pop($parents);
   array_pop($parents);
-  return drupal_array_get_nested_value($form, $parents);
+  $return = drupal_array_get_nested_value($form, $parents);
+  unset($return['_weight']);
+  return $return;
 }
 
 function _brightcove_field_get_playlists(Entity $client, $page) {
@@ -210,5 +212,7 @@ function _brightcove_field_get_playlists(Entity $client, $page) {
 function brightcove_field_playlist_client_ajax_callback($form, $form_state) {
   $parents = $form_state['triggering_element']['#parents'];
   array_pop($parents);
-  return drupal_array_get_nested_value($form, $parents);
+  $return = drupal_array_get_nested_value($form, $parents);
+  unset($return['_weight']);
+  return $return;
 }
