@@ -55,6 +55,9 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
         }
         elseif (isset($items[$delta]['bcid'])) {
           $bcid = $items[$delta]['bcid'];
+          if ($bcid === "0" && !empty($items[$delta]['brightcove_id'])) {
+            $bcid = variable_get('brightcove_client_default');
+          }
         }
         $element['bcid']['#default_value'] = $bcid;
         break;
