@@ -362,7 +362,7 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
   }
   $wrapper_id = 'bc-playlist-data-wrapper';
 
-  $bcid = $form['bcid']['#value'];
+  $bcid = isset($form['bcid']['#default_value']) ? $form['bcid']['#default_value'] : $form['bcid']['#value'];
   switch ($form['bcid']['#type']) {
     case 'select':
       $form['bcid']['#ajax'] = [
