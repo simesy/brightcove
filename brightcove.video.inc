@@ -406,11 +406,11 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
   }
   $form['#attached'] = [
     'js' => [
-        drupal_get_path('module', 'brightcove_field') . '/js/brightcove.js',
+        drupal_get_path('module', 'brightcove') . '/js/brightcove.js',
     ],
     'css' => [
-      drupal_get_path('module', 'brightcove_field') . '/styles/upload.css',
-      drupal_get_path('module', 'brightcove_field') . '/brightcove_field.upload.css',
+      drupal_get_path('module', 'brightcove') . '/styles/upload.css',
+      drupal_get_path('module', 'brightcove') . '/brightcove_field.upload.css',
     ],
   ];
 
