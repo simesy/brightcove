@@ -47,8 +47,6 @@ define('BRIGHTCOVE_PLAYLIST_WIDGET', 'brightcove_field_playlist_browser');
 define('BRIGHTCOVE_ECONOMICS_FREE', 'FREE');
 define('BRIGHTCOVE_ECONOMICS_AD_SUPPORTED', 'AD_SUPPORTED');
 
-define('BRIGHTCOVE_PLAYLIST_MAX_ITEMS', 20);
-
 // Without this brightcove_playlist_access() is not always found.
 require_once 'brightcove.playlist.inc';
 require_once 'brightcove.client.inc';

@@ -12,7 +12,7 @@
  * @see system_settings_form()
  */
 function brightcove_admin_settings($form, &$form_state) {
-  // Account
+  // Account.
   $form['account'] = [
     '#type' => 'fieldset',
     '#title' => t('Account settings'),
@@ -59,7 +59,7 @@ function brightcove_admin_settings($form, &$form_state) {
       ],
     ],
   ];
-  // Database
+  // Database.
   $cache_settings = variable_get('brightcove_cache_db', []);
   $form['cache']['brightcove_cache_db'] = [
     '#type' => 'fieldset',
@@ -81,7 +81,7 @@ function brightcove_admin_settings($form, &$form_state) {
     '#element_validate' => ['element_validate_integer_positive'],
     '#default_value' => isset($cache_settings['cache_time']) ? $cache_settings['cache_time'] : BRIGHTCOVE_CACHE_LIFETIME,
   ];
-  // File
+  // File.
   $cache_settings = variable_get('brightcove_cache_file', []);
   $form['cache']['brightcove_cache_file'] = [
     '#type' => 'fieldset',
@@ -116,7 +116,7 @@ function brightcove_admin_settings($form, &$form_state) {
     '#field_prefix' => '.',
     '#default_value' => isset($cache_settings['ext']) ? $cache_settings['ext'] : BRIGHTCOVE_CACHE_FILE_EXT,
   ];
-  // Memcached
+  // Memcached.
   $cache_settings = variable_get('brightcove_cache_memcached', []);
   $form['cache']['brightcove_cache_memcached'] = [
     '#type' => 'fieldset',
@@ -149,7 +149,7 @@ function brightcove_admin_settings($form, &$form_state) {
     '#default_value' => isset($cache_settings['port']) ? $cache_settings['port'] : BRIGHTCOVE_CACHE_MEMCACHE_PORT,
   ];
 
-  //Upload
+  // Upload.
   $form['upload'] = [
     '#type' => 'fieldset',
     '#title' => t('Upload settings'),
@@ -181,6 +181,20 @@ function brightcove_admin_settings($form, &$form_state) {
         ':input[name=brightcove_auto_callback]' => ['checked' => FALSE],
       ],
     ],
+  ];
+
+  // Other.
+  $form['other'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Other'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  ];
+  $form['other']['brightcove_pager_max_items'] = [
+    '#type' => 'textfield',
+    '#title' => t('Playlists pager max items'),
+    '#default_value' => variable_get('brightcove_pager_max_items', 20),
+    '#description' => t('If you change this value you have to clear cache.'),
   ];
 
   $form = system_settings_form($form);

@@ -228,7 +228,7 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
       ];
     }
 
-    pager_default_initialize(_brightcove_playlist_items_total($client), BRIGHTCOVE_PLAYLIST_MAX_ITEMS, 0);
+    pager_default_initialize(_brightcove_playlist_items_total($client), variable_get('brightcove_pager_max_items', 20), 0);
     return theme('table', $table) . theme('pager');
   }
 
@@ -305,9 +305,10 @@ function brightcove_get_playlists(Entity $client, $sort = NULL, $page = 0, $cach
   $playlists = FALSE;
   brightcove_try(function() use(&$playlists, $client, $sort, $page) {
     list($cms, ) = _brightcove_create_classes($client);
-    $offset = BRIGHTCOVE_PLAYLIST_MAX_ITEMS * $page;
+    $max_items = variable_get('brightcove_pager_max_items', 20);
+    $offset = $max_items * $page;
 
-    $playlists = $cms->listPlaylists($sort, BRIGHTCOVE_PLAYLIST_MAX_ITEMS, $offset);
+    $playlists = $cms->listPlaylists($sort, $max_items, $offset);
   });
 
   if ($playlists) {

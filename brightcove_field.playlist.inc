@@ -109,7 +109,8 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     '#default_value' => isset($items[$delta]['player']) ? $items[$delta]['player'] : brightcove_get_default_player($client->bcid),
   ];
 
-  $offset = BRIGHTCOVE_PLAYLIST_MAX_ITEMS * $page;
+  $max_items = variable_get('brightcove_pager_max_items', 20);
+  $offset = $max_items * $page;
 
   $element['brightcove_id_current_page'] = [
     '#type' => 'hidden',
@@ -148,7 +149,7 @@ function _brightcove_field_playlist_widget_form(&$form, &$form_state, $field, $i
     '#value' => t('Next'),
     '#ajax_id' => 'bc_pager_next',
   ];
-  if ($offset + BRIGHTCOVE_PLAYLIST_MAX_ITEMS > $items_total) {
+  if ($offset + $max_items > $items_total) {
     $element['brightcove_id_pager']['pager']['next_button']['#disabled'] = TRUE;
   }
   else {
