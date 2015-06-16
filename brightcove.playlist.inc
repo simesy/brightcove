@@ -401,20 +401,11 @@ function brightcove_playlist_form($form, &$form_state, $playlist_entity) {
       '#weight' => -10,
     ];
 
-    $players = brightcove_player_list($client->client_id);
-    $form['playlist_data']['player'] = [
-      '#type' => 'select',
-      '#title' => 'Player',
-      '#options' => $players,
-      '#default_value' => '',
-      '#weight' => -9,
-    ];
-
     $form['playlist_data']['description'] = [
       '#type' => 'textarea',
       '#title' => 'Short description',
       '#default_value' => empty($playlist) ? '' : $playlist->getDescription(),
-      '#weight' => -8,
+      '#weight' => -9,
     ];
 
     $form['playlist_data']['settings'] = [
