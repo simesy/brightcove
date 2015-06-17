@@ -132,6 +132,7 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
  * Entity UI Controller class for brightcove playlists.
  */
 class BrightcovePlaylistEntityUIController extends EntityBundleableUIController {
+  private $form_state;
 
   public function hook_menu() {
     $items = parent::hook_menu();
@@ -152,6 +153,8 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
    * Overrides EntityDefaultUIController::overviewForm()
    */
   public function overviewForm($form, &$form_state) {
+    $this->form_state = $form_state;
+
     module_load_include('inc', 'brightcove', 'brightcove.client');
     $form['bcid'] = brightcove_client_select_element();
     $wrapper_id = 'bc-playlists';
@@ -165,7 +168,19 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
           'wrapper' => $wrapper_id,
           'callback' => 'brightcove_playlist_tables_ajax_callback'
         ];
-        $bcid = isset($form_state['values']['bcid']) ? $form_state['values']['bcid'] : $form['bcid']['#default_value'];
+        $form['bcid']['#ajax_id'] = 'bc_client_select';
+
+        $client_id = filter_input(INPUT_GET, 'client', FILTER_SANITIZE_NUMBER_INT);
+        if (!empty($client_id) && (!isset($form_state['triggering_element']['#ajax_id']) || isset($form_state['triggering_element']['#ajax_id']) && $form_state['triggering_element']['#ajax_id'] != 'bc_client_select')) {
+          $bcid = $client_id;
+        }
+        else {
+          $bcid = isset($form_state['values']['bcid']) ? $form_state['values']['bcid'] : $form['bcid']['#default_value'];
+        }
+
+        if (!empty($client_id)) {
+          $form['bcid']['#default_value'] = $bcid;
+        }
         break;
 
       case 'value' :
@@ -228,17 +243,20 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
       ];
     }
 
+    // Restore original url for the pager.
+    if (isset($this->form_state['complete form']['#action'])) {
+      $action = $this->form_state['complete form']['#action'];
+      $_GET['q'] = substr($action, 0, strripos($action, '?'));;
+    }
     pager_default_initialize(_brightcove_playlist_items_total($client), variable_get('brightcove_pager_max_items', 20), 0);
-    return theme('table', $table) . theme('pager');
+    return theme('table', $table) . theme('pager', ['parameters' => ['client' => $client->bcid]]);
   }
 
   /**
    * Renders a table row on the Brightcove playlist overview page.
    *
-   * @param Entity $client
-   *  The client entity object.
-   * @param \Brightcove\Object\Playlist $playlist
-   *   Playlist object.
+   * @param Entity $playlist
+   *  The playlist entity object.
    *
    * @return array
    *   Table row.
