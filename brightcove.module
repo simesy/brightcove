@@ -2627,6 +2627,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
       }
     });
     $video_entity->video = $video;
+    $video_entity->videoSaved = TRUE;
     // Save additional fields
     field_attach_submit('brightcove_video', $video_entity, $form['additional_fields'], $form_state);
     $video_entity->save();

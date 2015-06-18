@@ -82,7 +82,9 @@ class BrightcoveVideoEntityController extends EntityAPIController {
    * @inheritdoc
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
-    $entity->video = brightcove_save_video($entity->video, $entity->client);
+    if (empty($entity->videoSaved)) {
+      $entity->video = brightcove_save_video($entity->video, $entity->client);
+    }
     $entity->account_id = $entity->client->account_id;
     if (empty($entity->video_id)) {
       $entity->video_id = $entity->video->getId();
