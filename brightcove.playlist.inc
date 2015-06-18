@@ -9,7 +9,7 @@
  */
 class BrightcovePlaylistEntityController extends EntityAPIController {
 
- /**
+  /**
    * Overwrites EntityAPIController::create().
    */
   public function create(array $values = []) {
@@ -53,7 +53,7 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
     }, function (\Brightcove\API\Exception\APIException $ex) {
       throw $ex;
     });
-    brightcove_invalidate_cache('brightcove:playlist:list:' . $bcid);
+    brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
   }
 
   /**
@@ -120,8 +120,7 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
         }
         catch (Exception $e) {
            // Invalidate playlist cache.
-          brightcove_invalidate_cache('brightcove:playlist:' . $playlist_entity->bpid);
-          brightcove_invalidate_cache('brightcove:playlist:list', TRUE);
+          brightcove_invalidate_cache('brightcove:playlist', TRUE);
         }
       });
     }
@@ -270,6 +269,20 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
       l(t('edit'), "admin/config/media/brightcove/playlist/{$playlist->bpid}/edit"),
       l(t('delete'), "admin/config/media/brightcove/playlist/{$playlist->bpid}/delete"),
     ];
+  }
+
+  /**
+   * Override operationFormSubmit().
+   *
+   * @param $form
+   * @param $form_state
+   */
+  public function operationFormSubmit($form, &$form_state) {
+    parent::operationFormSubmit($form, $form_state);
+
+    // Redirect back to the playlist after submit.
+    $form_state['redirect'] = 'admin/config/media/brightcove/playlist';
+    $form_state['rebuild'] = FALSE;
   }
 }
 
