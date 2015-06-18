@@ -246,7 +246,8 @@ class BrightcovePlaylistEntityUIController extends EntityBundleableUIController 
     // Restore original url for the pager.
     if (isset($this->form_state['complete form']['#action'])) {
       $action = $this->form_state['complete form']['#action'];
-      $_GET['q'] = substr($action, 0, strripos($action, '?'));;
+      $qmark_pos = strripos($action, '?');
+      $_GET['q'] = $qmark_pos !== FALSE ? substr($action, 0, $qmark_pos) : substr($action, 0);
     }
     pager_default_initialize(_brightcove_playlist_items_total($client), variable_get('brightcove_pager_max_items', 20), 0);
     return theme('table', $table) . theme('pager', ['parameters' => ['client' => $client->bcid]]);
