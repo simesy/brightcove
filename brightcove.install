@@ -437,6 +437,9 @@ function brightcove_update_7600() {
 
   cache_clear_all();
 
+  module_load_include('inc', 'brightcove', 'brightcove.playlist');
+  _brightcove_configure_playlist_entity();
+
   drupal_set_message(t('The brightcove module has been updated. Because of the changes in the API, please visit the !admin-link to add your credentials.', [
     '!admin-link' => l(t('API Client page'), 'admin/config/media/brightcove/client'),
   ]));
