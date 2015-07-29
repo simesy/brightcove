@@ -164,6 +164,18 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
       '#title' => t('Video') . ' <span class="form-required" title="' . t('This field is required.') . '">*</span>',
       '#size' => 40,
     ];
+
+    $form['poster'] = [
+      '#type' => 'file',
+      '#title' => t('Poster image'),
+      '#site' => 40,
+    ];
+
+    $form['thumbnail'] = [
+      '#type' => 'file',
+      '#title' => t('Thumbnail image'),
+      '#size' => 40,
+    ];
   }
 
   $form['title'] = [

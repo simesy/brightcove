@@ -2359,14 +2359,18 @@ function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, cal
   list($cms, $di) = _brightcove_create_classes($client_entity);
 
   $video = new \Brightcove\Object\Video\Video();
+  $ingest_callback = NULL;
   if ($metadata_callback !== NULL) {
-    $metadata_callback($video, $cms);
+    $ingest_callback = $metadata_callback($video, $cms);
   }
 
   $video = $cms->createVideo($video);
   $request = \Brightcove\API\Request\IngestRequest::createRequest($url, $profile);
   if (($callback = _brightcove_get_ingest_callback($hash))) {
     $request->setCallbacks([$callback]);
+  }
+  if ($ingest_callback && is_callable($ingest_callback)) {
+    $ingest_callback($request);
   }
   $di->createIngest($video->getId(), $request);
 
@@ -2553,6 +2557,10 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
     'file_validate_extensions' => ['3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv'],
   ];
 
+  $image_validators = [
+    'file_validate_extensions' => ['png', 'gif', 'jpg', 'jpeg'],
+  ];
+
   $file = file_save_upload('file_upload', $validators, file_default_scheme() . '://');
 
   if (!$file) {
@@ -2566,16 +2574,26 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
     return $form;
   }
 
+  $poster = NULL;
+  if (!empty($form_state['values']['poster'])) {
+    $poster = file_save_upload('poster', $image_validators, file_default_scheme() . '://');
+  }
+
+  $thumbnail = NULL;
+  if (!empty($form_state['values']['thumbnail'])) {
+    $thumbnail = file_save_upload('thumbnail', $image_validators, file_default_scheme() . '://');
+  }
+
   if (form_get_errors()) {
     return $form;
   }
   brightcove_load_lib();
   $video_entity = $form['#entity'];
   $video_id = FALSE;
-  brightcove_try(function () use (&$video_id, $file, $form, &$form_state, $video_entity) {
+  brightcove_try(function () use (&$video_id, $file, $form, &$form_state, $video_entity, $poster, $thumbnail) {
     $client = $video_entity->client;
     $hash = hash('sha512', mt_rand());
-    $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, function ($video, $cms) use ($form_state) {
+    $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, function ($video, $cms) use ($form_state, $poster, $thumbnail) {
       // Generate a reference id if the user left it empty.
       $reference_id = (!empty($form_state['values']['reference_id']) ? $form_state['values']['reference_id'] : brightcove_generate_reference());
 
@@ -2626,6 +2644,28 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
         $tags = array_map('trim', $tags);
         $video->setTags($tags);
       }
+
+      return function(\Brightcove\API\Request\IngestRequest $ingest) use ($poster, $thumbnail) {
+        if ($poster) {
+        $poster_info = image_get_info($poster->uri);
+        $ingest->setPoster(
+          (new \Brightcove\API\Request\IngestRequest())
+            ->setUrl(file_create_url($poster->uri))
+            ->setWidth($poster_info['width'])
+            ->setHeight($poster_info['height'])
+          );
+        }
+
+        if ($thumbnail) {
+          $thumbnail_info = image_get_info($thumbnail->url);
+          $ingest->setThumbnail(
+            (new \Brightcove\API\Request\IngestRequest())
+              ->setUrl(file_create_url($thumbnail->uri))
+              ->setWidth($thumbnail_info['width'])
+              ->setHeight($thumbnail_info['height'])
+          );
+        }
+      };
     });
     $video_entity->video = $video;
     $video_entity->videoSaved = TRUE;
