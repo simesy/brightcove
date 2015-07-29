@@ -24,7 +24,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
   // Playlists already determine the client.
   if ($entity_type == 'brightcove_playlist') {
     // Editing a playlist.
-    if (!empty($form['#entity']->client && ($form['#entity']->client instanceof Entity))) {
+    if (!empty($form['#entity']->client) && ($form['#entity']->client instanceof Entity)) {
       $bcid = $form['#entity']->client->bcid;
     }
     // Adding a playlist.
