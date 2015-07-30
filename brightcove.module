@@ -2366,6 +2366,7 @@ function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, cal
 
   $video = $cms->createVideo($video);
   $request = \Brightcove\API\Request\IngestRequest::createRequest($url, $profile);
+  $request->setCaptureImages(TRUE);
   if (($callback = _brightcove_get_ingest_callback($hash))) {
     $request->setCallbacks([$callback]);
   }
@@ -2647,13 +2648,13 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
 
       return function(\Brightcove\API\Request\IngestRequest $ingest) use ($poster, $thumbnail) {
         if ($poster) {
-        $poster_info = image_get_info($poster->uri);
-        $ingest->setPoster(
-          (new \Brightcove\API\Request\IngestRequest())
-            ->setUrl(file_create_url($poster->uri))
-            ->setWidth($poster_info['width'])
-            ->setHeight($poster_info['height'])
-          );
+          $poster_info = image_get_info($poster->uri);
+          $ingest->setPoster(
+            (new \Brightcove\API\Request\IngestRequest())
+              ->setUrl(file_create_url($poster->uri))
+              ->setWidth($poster_info['width'])
+              ->setHeight($poster_info['height'])
+            );
         }
 
         if ($thumbnail) {
@@ -2664,6 +2665,10 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
               ->setWidth($thumbnail_info['width'])
               ->setHeight($thumbnail_info['height'])
           );
+        }
+
+        if ($poster || $thumbnail) {
+          $ingest->setCaptureImages(FALSE);
         }
       };
     });
