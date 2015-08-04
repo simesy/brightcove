@@ -2366,7 +2366,7 @@ function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, cal
 
   $video = $cms->createVideo($video);
   $request = \Brightcove\API\Request\IngestRequest::createRequest($url, $profile);
-  $request->setCaptureImages(TRUE);
+  $request->getMaster()->setCaptureImages(TRUE);
   if (($callback = _brightcove_get_ingest_callback($hash))) {
     $request->setCallbacks([$callback]);
   }
@@ -2559,7 +2559,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
   ];
 
   $image_validators = [
-    'file_validate_extensions' => ['png', 'gif', 'jpg', 'jpeg'],
+    'file_validate_extensions' => ['png gif jpg jpeg'],
   ];
 
   $file = file_save_upload('file_upload', $validators, file_default_scheme() . '://');
@@ -2575,15 +2575,9 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
     return $form;
   }
 
-  $poster = NULL;
-  if (!empty($form_state['values']['poster'])) {
-    $poster = file_save_upload('poster', $image_validators, file_default_scheme() . '://');
-  }
+  $poster = file_save_upload('poster', $image_validators, file_default_scheme() . '://');
 
-  $thumbnail = NULL;
-  if (!empty($form_state['values']['thumbnail'])) {
-    $thumbnail = file_save_upload('thumbnail', $image_validators, file_default_scheme() . '://');
-  }
+  $thumbnail = file_save_upload('thumbnail', $image_validators, file_default_scheme() . '://');
 
   if (form_get_errors()) {
     return $form;
@@ -2650,7 +2644,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
         if ($poster) {
           $poster_info = image_get_info($poster->uri);
           $ingest->setPoster(
-            (new \Brightcove\API\Request\IngestRequest())
+            (new \Brightcove\API\Request\IngestImage())
               ->setUrl(file_create_url($poster->uri))
               ->setWidth($poster_info['width'])
               ->setHeight($poster_info['height'])
@@ -2660,7 +2654,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
         if ($thumbnail) {
           $thumbnail_info = image_get_info($thumbnail->url);
           $ingest->setThumbnail(
-            (new \Brightcove\API\Request\IngestRequest())
+            (new \Brightcove\API\Request\IngestImage())
               ->setUrl(file_create_url($thumbnail->uri))
               ->setWidth($thumbnail_info['width'])
               ->setHeight($thumbnail_info['height'])
@@ -2668,7 +2662,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
         }
 
         if ($poster || $thumbnail) {
-          $ingest->setCaptureImages(FALSE);
+          $ingest->getMaster()->setCaptureImages(FALSE);
         }
       };
     });
