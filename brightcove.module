@@ -2652,7 +2652,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
         }
 
         if ($thumbnail) {
-          $thumbnail_info = image_get_info($thumbnail->url);
+          $thumbnail_info = image_get_info($thumbnail->uri);
           $ingest->setThumbnail(
             (new \Brightcove\API\Request\IngestImage())
               ->setUrl(file_create_url($thumbnail->uri))
