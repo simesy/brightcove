@@ -2366,7 +2366,7 @@ function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, cal
 
   $video = $cms->createVideo($video);
   $request = \Brightcove\API\Request\IngestRequest::createRequest($url, $profile);
-  $request->getMaster()->setCaptureImages(TRUE);
+  $request->setCaptureImages(TRUE);
   if (($callback = _brightcove_get_ingest_callback($hash))) {
     $request->setCallbacks([$callback]);
   }
@@ -2662,7 +2662,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
         }
 
         if ($poster || $thumbnail) {
-          $ingest->getMaster()->setCaptureImages(FALSE);
+          $ingest->setCaptureImages(FALSE);
         }
       };
     });
