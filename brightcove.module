@@ -67,6 +67,11 @@ function brightcove_init() {
   if (variable_get('brightcove_player_smart_api', FALSE)) {
     drupal_add_js(drupal_get_path('module', 'brightcove') . '/js/events.js');
   }
+
+  // Fix for AJAX fatal error.
+  if ($_GET['q'] === 'system/ajax' && isset($_POST['form_id']) && $_POST['form_id'] === 'brightcove_video_form') {
+    brightcove_load_lib();
+  }
 }
 
 /**
@@ -2562,6 +2567,10 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
     'file_validate_extensions' => ['png gif jpg jpeg'],
   ];
 
+  $caption_validators = [
+    'file_validate_extensions' => ['srt'],
+  ];
+
   $file = file_save_upload('file_upload', $validators, file_default_scheme() . '://');
 
   if (!$file) {
@@ -2579,16 +2588,29 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
 
   $thumbnail = file_save_upload('thumbnail', $image_validators, file_default_scheme() . '://');
 
+  $captions = [];
+
+  for ($i = 0; $i < $form_state['caption_num']; $i++) {
+    $caption = file_save_upload("caption_{$i}_file", $caption_validators, file_default_scheme() . '://');
+    $captions[] = [
+      'file' => $caption,
+      'label' => $form_state['values']["caption_{$i}_label"],
+      'srclang' => $form_state['values']["caption_{$i}_srclang"],
+      'kind' => $form_state['values']["caption_{$i}_kind"],
+      'default' => (bool) $form_state['values']["caption_{$i}_default"],
+    ];
+  }
+
   if (form_get_errors()) {
     return $form;
   }
   brightcove_load_lib();
   $video_entity = $form['#entity'];
   $video_id = FALSE;
-  brightcove_try(function () use (&$video_id, $file, $form, &$form_state, $video_entity, $poster, $thumbnail) {
+  brightcove_try(function () use (&$video_id, $file, $form, &$form_state, $video_entity, $poster, $thumbnail, $captions) {
     $client = $video_entity->client;
     $hash = hash('sha512', mt_rand());
-    $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, function ($video, $cms) use ($form_state, $poster, $thumbnail) {
+    $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, function ($video, $cms) use ($form_state, $poster, $thumbnail, $captions) {
       // Generate a reference id if the user left it empty.
       $reference_id = (!empty($form_state['values']['reference_id']) ? $form_state['values']['reference_id'] : brightcove_generate_reference());
 
@@ -2640,7 +2662,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
         $video->setTags($tags);
       }
 
-      return function(\Brightcove\API\Request\IngestRequest $ingest) use ($poster, $thumbnail) {
+      return function(\Brightcove\API\Request\IngestRequest $ingest) use ($poster, $thumbnail, $captions) {
         if ($poster) {
           $poster_info = image_get_info($poster->uri);
           $ingest->setPoster(
@@ -2663,6 +2685,20 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
 
         if ($poster || $thumbnail) {
           $ingest->setCaptureImages(FALSE);
+        }
+
+        $text_tracks = [];
+        foreach ($captions as $caption) {
+          $text_tracks[] = (new \Brightcove\API\Request\IngestTextTrack())
+            ->setLabel($caption['label'])
+            ->setKind($caption['kind'])
+            ->setSrclang($caption['srclang'])
+            ->setDefault($caption['default'])
+            ->setUrl(file_create_url($caption['file']->uri))
+          ;
+        }
+        if ($text_tracks) {
+          $ingest->setTextTracks($text_tracks);
         }
       };
     });
@@ -3022,4 +3058,13 @@ function _brightcove_playlist_items_total(Entity $client, $cache_reset = FALSE) 
   }
 
   return $playlist_count;
+}
+
+function _brightcove_video_form_add_caption($form, $form_state) {
+  return $form['captions'];
+}
+
+function _brightcove_video_form_add_caption_submit($form, &$form_state) {
+  $form_state['caption_num']++;
+  $form_state['rebuild'] = TRUE;
 }

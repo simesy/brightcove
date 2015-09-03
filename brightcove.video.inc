@@ -168,13 +168,73 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
     $form['poster'] = [
       '#type' => 'file',
       '#title' => t('Poster image'),
-      '#site' => 40,
+      '#size' => 40,
     ];
 
     $form['thumbnail'] = [
       '#type' => 'file',
       '#title' => t('Thumbnail image'),
       '#size' => 40,
+    ];
+
+    $form['captions'] = [
+      '#type' => 'container',
+      '#prefix' => '<div id="caption-container">',
+      '#suffix' => '</div>',
+    ];
+
+    $captions = isset($form_state['caption_num']) ? $form_state['caption_num'] : 0;
+    $form_state['caption_num'] = $captions;
+
+    for ($i = 0; $i < $captions; $i++) {
+      $form['captions']["caption_{$i}"] = [
+        '#type' => 'fieldset',
+        '#title' => t('Caption'),
+      ];
+
+      $form['captions']["caption_{$i}"]["caption_{$i}_label"] = [
+        '#type' => 'textfield',
+        '#title' => t('Label'),
+      ];
+
+      $form['captions']["caption_{$i}"]["caption_{$i}_file"] = [
+        '#type' => 'file',
+        '#title' => t('Caption file'),
+        '#size' => 40,
+      ];
+
+      $form['captions']["caption_{$i}"]["caption_{$i}_srclang"] = [
+        '#type' => 'textfield',
+        '#title' => t('Source language'),
+      ];
+
+      $form['captions']["caption_{$i}"]["caption_{$i}_kind"] = [
+        '#type' => 'select',
+        '#title' => t('Kind'),
+        '#options' => [
+          'captions' => t('Captions'),
+          'subtitles' => t('Subtitles'),
+          'descriptions' => t('Descriptions'),
+          'chapters' => t('Chapters'),
+          'metadata' => t('Metadata'),
+        ],
+      ];
+
+      $form['captions']["caption_{$i}"]["caption_{$i}_default"] = [
+        '#type' => 'checkbox',
+        '#title' => t("Default"),
+      ];
+    }
+
+    $form['captions']['add_caption'] = [
+      '#type' => 'submit',
+      '#value' => t('Add caption'),
+      '#submit' => ['_brightcove_video_form_add_caption_submit'],
+      '#limit_validation_errors' => [],
+      '#ajax' => [
+        'callback' => '_brightcove_video_form_add_caption',
+        'wrapper' => 'caption-container',
+      ],
     ];
   }
 
