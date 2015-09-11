@@ -202,7 +202,6 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
         '#type' => 'file',
         '#title' => t('WebVTT caption file'),
         '#size' => 40,
-        '#required' => TRUE,
       ];
 
       $form['captions']["caption_{$i}"]["caption_{$i}_srclang"] = [
