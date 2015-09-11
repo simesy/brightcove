@@ -201,6 +201,7 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
       $form['captions']["caption_{$i}"]["caption_{$i}_file"] = [
         '#type' => 'file',
         '#title' => t('WebVTT caption file'),
+        '#description' => t('.srt extension is required'),
         '#size' => 40,
       ];
 
