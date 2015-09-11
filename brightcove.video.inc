@@ -195,17 +195,21 @@ function brightcove_video_form($form, &$form_state, $video_entity) {
       $form['captions']["caption_{$i}"]["caption_{$i}_label"] = [
         '#type' => 'textfield',
         '#title' => t('Label'),
+        '#required' => TRUE,
       ];
 
       $form['captions']["caption_{$i}"]["caption_{$i}_file"] = [
         '#type' => 'file',
-        '#title' => t('Caption file'),
+        '#title' => t('WebVTT caption file'),
         '#size' => 40,
+        '#required' => TRUE,
       ];
 
       $form['captions']["caption_{$i}"]["caption_{$i}_srclang"] = [
         '#type' => 'textfield',
-        '#title' => t('Source language'),
+        '#title' => t('Source language code'),
+        '#required' => TRUE,
+        '#description' => t("Example: en"),
       ];
 
       $form['captions']["caption_{$i}"]["caption_{$i}_kind"] = [

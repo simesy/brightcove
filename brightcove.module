@@ -2568,7 +2568,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
   ];
 
   $caption_validators = [
-    'file_validate_extensions' => ['srt'],
+    'file_validate_extensions' => ['srt vtt'],
   ];
 
   $file = file_save_upload('file_upload', $validators, file_default_scheme() . '://');

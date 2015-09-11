@@ -191,7 +191,7 @@ function brightcove_requirements($phase) {
       'title' => $t('Brightcove API Wrapper'),
       'value' => isset($api_wrapper_library['version']) ? $api_wrapper_library['version'] : $t('Not installed'),
       'severity' => $api_wrapper_installed ? REQUIREMENT_OK : REQUIREMENT_ERROR,
-      'description' => $api_wrapper_installed ? '' : $t('The Brightcove PHP Wrapper is missing.'),
+      'description' => $api_wrapper_installed ? $t('The Brightcove PHP Wrapper is installed.') : $t('The Brightcove PHP Wrapper is missing.'),
     ];
   }
 
@@ -199,7 +199,7 @@ function brightcove_requirements($phase) {
     $requirements['curl']['title'] = $t('cURL');
     $requirements['curl']['description'] = $t('Brightcove MAPI SDK requires a cURL library. You should install it on your server.');
     $requirements['curl']['severity'] = REQUIREMENT_ERROR;
-    $requirements['curl']['value'] = $t(': missing');
+    $requirements['curl']['value'] = $t('Missing');
   }
 
   if ($phase === 'runtime') {
