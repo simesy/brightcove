@@ -25,37 +25,49 @@ class MigrateBrightcoveFieldHandler extends MigrateFieldHandler {
 
   public function prepare($entity, array $field_info, array $instance, array $values) {
     $arguments = [];
-    if (isset($values['arguments'])) {
-      $arguments = array_filter($values['arguments']);
-      unset($values['arguments']);
-    }
+
     $language = $this->getFieldLanguage($entity, $field_info, $arguments);
 
     // Setup the standard Field API array for saving.
     $delta = 0;
+    $return = array();
     foreach ($values as $value) {
-      if (isset($arguments['brightcove_id'])) {
-        if (is_array($arguments['brightcove_id'])) {
-          $item['brightcove_id'] = $arguments['brightcove_id'][$delta];
+      if (isset($value['brightcove_id'])) {
+        if (is_array($value['brightcove_id'])) {
+          $item['brightcove_id'] = $value['brightcove_id'][$delta];
         }
         else {
-          $item['brightcove_id'] = $arguments['brightcove_id'];
+          $item['brightcove_id'] = $value['brightcove_id'];
         }
       }
       else {
         $item['brightcove_id'] = 0;
       }
-      if (isset($arguments['player'])) {
-        if (is_array($arguments['player'])) {
-          $item['player'] = $arguments['player'][$delta];
+
+      if (isset($value['player'])) {
+        if (is_array($value['player'])) {
+          $item['player'] = $value['player'][$delta];
         }
         else {
-          $item['player'] = $arguments['player'];
+          $item['player'] = $value['player'];
         }
       }
       else {
         $item['player'] = 0;
       }
+
+      if (isset($value['bcid'])) {
+        if (is_array($value['bcid'])) {
+          $item['bcid'] = $value['bcid'][$delta];
+        }
+        else {
+          $item['bcid'] = $value['bcid'];
+        }
+      }
+      else {
+        $item['bcid'] = 0;
+      }
+
       $item['choice'] = $value;
       if (is_array($language)) {
         $current_language = $language[$delta];
@@ -68,4 +80,5 @@ class MigrateBrightcoveFieldHandler extends MigrateFieldHandler {
     }
     return isset($return) ? $return : NULL;
   }
+
 }
