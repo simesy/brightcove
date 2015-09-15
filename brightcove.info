@@ -14,4 +14,5 @@ files[] = brightcove.module
 files[] = brightcove.admin.inc
 files[] = brightcove.video.inc
 files[] = brightcove.client.inc
+files[] = brightcove_field.migrate.inc
 files[] = brightcove.playlist.inc
