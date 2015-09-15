@@ -7,7 +7,6 @@ body .ui-dialog .ui-dialog-titlebar,
 .browse-dialog.ui-dialog .ui-dialog-titlebar {
   position: relative;
   cursor: move;
-  height: 30px;
   background: #ccc;
   border: 1px solid #999;
   white-space: nowrap;
@@ -18,7 +17,6 @@ body .ui-dialog .ui-dialog-title,
 .upload-dialog.ui-dialog .ui-dialog-title,
 .browse-dialog.ui-dialog .ui-dialog-title {
   margin: 0 0 0 15px;
-  line-height: 30px;
   padding: 0;
   color: #333;
 }
