@@ -751,24 +751,6 @@ function brightcove_field_video_browser_value($element, $value, $form_state) {
 }
 
 /**
- * Callback for Brightcove field browser widget.
- * Will return a field value in "playlist-name [id:playlistId]" format.
- */
-function brightcove_field_playlist_browser_value($element, $value, $form_state) {
-  $input = drupal_array_get_nested_value($form_state['input'], $element['#parents']);
-  if (!$value && $input === NULL) {
-    $value = $element['#default_value'];
-  }
-  if (((int) $value) > 1) {
-    $playlist = brightcove_load_playlist($value);
-    if (!empty($playlist->id)) {
-      $value = check_plain($playlist->name) . " [id:{$playlist->id}]";
-    }
-  }
-  return $value;
-}
-
-/**
  * Validate callback for the video field.
  */
 function brightcove_field_browser_video_validate($element, &$form_state) {
@@ -815,47 +797,6 @@ function brightcove_field_browser_video_validate($element, &$form_state) {
       }
       else {
         $id = $result[0]->getId();
-      }
-    }
-  }
-  form_set_value($element, $id, $form_state);
-}
-
-/**
- * Validate callback for the playlist field.
- */
-function brightcove_field_browser_playlist_validate($element, &$form_state) {
-  $id = '';
-  $value = $element['#value'];
-  if (!empty($value)) {
-    // Assign ID to the value.
-    // 231289 [id:72431493001]
-    $id = brightcove_parse_id($value);
-
-    if (is_numeric($id)) {
-      // Matched ID, check if the video exists.
-      $playlist = brightcove_load_playlist($id);
-      if (empty($playlist)) {
-        form_error($element, t('%name: Found no valid playlist with that name.', ['%name' => t($element['#title'])]));
-      }
-    }
-    else {
-      $result = brightcove_field_get_matched_playlists($value);
-
-      if (count($result) > 1) {
-        // This title is ambiguous.
-        form_error($element, t('%name: Playlist title %title matched more than one playlist. In case of doubt, use text "title [id:ID_OF_THE_PLAYLIST]"', [
-          '%title',
-          $value,
-          '%name' => t($element['#title'])
-        ]));
-      }
-      elseif (count($result) == 0) {
-        // No video found.
-        form_error($element, t('%name: Found no valid playlist with that name.', ['%name' => t($element['#title'])]));
-      }
-      else {
-        $id = $result[0]->id;
       }
     }
   }
