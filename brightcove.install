@@ -189,7 +189,7 @@ function brightcove_requirements($phase) {
     $api_wrapper_installed = (($api_wrapper_library = libraries_detect('PHP-API-Wrapper')) && !empty($api_wrapper_library['installed']));
     $requirements['brightcove'] = [
       'title' => $t('Brightcove API Wrapper'),
-      'value' => isset($api_wrapper_library['version']) ? $api_wrapper_library['version'] : $t('Not installed'),
+      'value' => isset($api_wrapper_library['version']) ? $t('Installed') : $t('Not installed'),
       'severity' => $api_wrapper_installed ? REQUIREMENT_OK : REQUIREMENT_ERROR,
       'description' => $api_wrapper_installed ? $t('The Brightcove PHP Wrapper is installed.') : $t('The Brightcove PHP Wrapper is missing.'),
     ];
