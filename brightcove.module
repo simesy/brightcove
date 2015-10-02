@@ -47,6 +47,9 @@ define('BRIGHTCOVE_PLAYLIST_WIDGET', 'brightcove_field_playlist_browser');
 define('BRIGHTCOVE_ECONOMICS_FREE', 'FREE');
 define('BRIGHTCOVE_ECONOMICS_AD_SUPPORTED', 'AD_SUPPORTED');
 
+// Brightcove Authorization.
+define('BRIGHTCOVE_AUTHORIZATION_INTERVAL', 240);
+
 // Without this brightcove_playlist_access() is not always found.
 require_once 'brightcove.playlist.inc';
 require_once 'brightcove.client.inc';
@@ -2250,8 +2253,8 @@ function brightcove_expose_unavailable() {
  */
 function _brightcove_create_client(Entity $client_entity) {
   $cache = &drupal_static(__FUNCTION__, []);
-  if (!empty($cache[$client_entity->bcid])) {
-    return $cache[$client_entity->bcid];
+  if (!empty($cache[$client_entity->bcid]) && ($cache[$client_entity->bcid]['auth_time'] + BRIGHTCOVE_AUTHORIZATION_INTERVAL) >= time()) {
+    return $cache[$client_entity->bcid]['client'];
   }
 
   brightcove_load_lib();
@@ -2259,10 +2262,11 @@ function _brightcove_create_client(Entity $client_entity) {
   brightcove_try(function () use ($client_entity, &$cache) {
     $client_id = $client_entity->client_id;
     $client_secret = $client_entity->client_secret;
-    $cache[$client_entity->bcid] = \Brightcove\API\Client::authorize($client_id, $client_secret);
+    $cache[$client_entity->bcid]['auth_time'] = time();
+    $cache[$client_entity->bcid]['client'] = \Brightcove\API\Client::authorize($client_id, $client_secret);
   });
 
-  return isset($cache[$client_entity->bcid]) ? $cache[$client_entity->bcid] : NULL;
+  return isset($cache[$client_entity->bcid]) ? $cache[$client_entity->bcid]['client'] : NULL;
 }
 
 /**
