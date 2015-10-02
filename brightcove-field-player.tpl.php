@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file brightcove-field-player.tpl.php
+ * @file brightcove-field-embed.tpl.php
  * Default template for embeding brightcove players.
  *
  * Available variables:

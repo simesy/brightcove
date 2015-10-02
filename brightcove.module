@@ -2209,7 +2209,7 @@ function brightcove_theme() {
         'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
         'embed' => 'default',
       ],
-      'template' => 'brightcove-field-player',
+      'template' => 'brightcove-field-embed',
       'file' => 'theme.inc',
     ],
   ];
