@@ -1659,7 +1659,7 @@ function _filter_brightcove_settings($form, &$form_state, $filter, $format, $def
 function _filter_brightcove($text, $filter) {
   $current_filter = &drupal_static(__FUNCTION__);
   $current_filter = $filter;
-  return preg_replace_callback('#\[brightcove:([\d]+):([\d]+):([\da-f-]+)\]#i', '_filter_brightcove_replace', $text);
+  return preg_replace_callback('/\[brightcove:([\d]+):([\d]+):([a-z0-9]+)\]/i', '_filter_brightcove_replace', $text);
 }
 
 /**
