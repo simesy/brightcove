@@ -588,6 +588,10 @@ function brightcove_playlist_delete_form_submit($form, &$form_state) {
  * Create fields on the playlist entity when enabling or upgrading the module.
  */
 function _brightcove_configure_playlist_entity() {
+  // Clear field types from cache
+  _field_info_collate_types(TRUE);
+
+  // Add the brightcove_field field type.
   $field_type = 'brightcove_field';
   $field_name = 'brightcove_playlist_videos';
   $entity_type = 'brightcove_playlist';
