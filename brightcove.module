@@ -1662,7 +1662,28 @@ function _filter_brightcove_settings($form, &$form_state, $filter, $format, $def
 function _filter_brightcove($text, $filter) {
   $current_filter = &drupal_static(__FUNCTION__);
   $current_filter = $filter;
-  return preg_replace_callback('/\[brightcove:([\d]+):([\d]+):([a-z0-9]+)\]/i', '_filter_brightcove_replace', $text);
+  // new syntax
+  $text = preg_replace_callback('/\[brightcove:([\d]+):([\d]+):([a-z0-9]+)\]/i', '_filter_brightcove_replace', $text);
+  // old syntax
+  $text = preg_replace_callback('/\[brightcove:([\d]+)\]/i', '_filter_brightcove_replace_old', $text);
+
+  return $text;
+}
+
+/**
+ * Callback for preg_replace() in _filter_brightcove().
+ */
+function _filter_brightcove_replace_old($matches) {
+  $client = brightcove_client_load_or_default();
+  $player = brightcove_get_default_player($client->bcid);
+
+  $variables = [
+    'player_id' => $player,
+    'brightcove_id' => $matches[1],
+    'account_id' => $client->account_id,
+  ];
+
+  return theme('brightcove_field_embed', $variables);
 }
 
 /**
