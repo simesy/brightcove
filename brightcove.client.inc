@@ -133,7 +133,7 @@ class BrightcoveClientEntityController extends EntityAPIControllerExportable {
     parent::delete($ids, $transaction);
 
     $default_client = variable_get('brightcove_client_default');
-    if (in_array($default_client, $ids)) {
+    if (!in_array($default_client, $ids)) {
       $default_client = db_query('SELECT bcid FROM {brightcove_client} ORDER BY bcid ASC LIMIT 1')->fetchField();
       if ($default_client) {
         variable_set('brightcove_client_default', $default_client);
