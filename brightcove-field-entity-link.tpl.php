@@ -4,11 +4,11 @@
  * @file brightcove-field-entity-link.tpl.php
  * Image linked to entity theme implementation.
  *
- * This template is used when viewing a Brightcove video with a thumbnail or videoStill image linking to entity.
+ * This template is used when viewing a Brightcove video with a thumbnail or poster image linking to entity.
  *
  * Available variables:
  *   - $output: Formatted image with a link to entity, ready for printing.
- *   - $image_field: The name of the image field used from Media API. Can be thumbnailURL or videoStillURL.
+ *   - $image_field: The name of the image field used from Media API. Can be thumbnail or poster.
  *   - $destination: URL for the Brightcove video player.
  *   - $video_id: Video ID from Media API.
  *   - $field_name: Field name.
