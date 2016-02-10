@@ -111,6 +111,7 @@ function _brightcove_field_video_widget_form(&$form, &$form_state, $field, $inst
       '#title' => $element['#title'],
       '#maxlength' => 256,
       '#value_callback' => 'brightcove_field_video_browser_value',
+      '#autocomplete_path' => 'brightcove/autocomplete/videos/' . $bcid,
       '#attributes' => [
         'rel' => [$element['#field_name'] . '-' . $parent_delta . '-' . $delta],
         'class' => ['brightcove-video-field', $element['#field_name'] . '-' . $parent_delta . '-' . $delta],
