@@ -65,8 +65,10 @@ function theme_brightcove_field_image($variables) {
     if (empty($images[$elements['#brightcove_image_type']])) {
       $path = brightcove_get_default_image();
       $styled_path = image_style_path($elements['#brightcove_image_style'], $path);
-      $style = image_style_load($elements['#brightcove_image_style']);
-      image_style_create_derivative($style, $path, $styled_path);
+      if (!empty($elements['#brightcove_image_style'])) {
+        $style = image_style_load($elements['#brightcove_image_style']);
+        image_style_create_derivative($style, $path, $styled_path);
+      }
       $image = theme('image', ['path' => $styled_path]);
     }
     else {
