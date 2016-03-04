@@ -168,7 +168,7 @@ function brightcove_menu() {
   $items['brightcove_field/upload/video/%/%/%/%brightcove_client'] = [
     'title' => 'Upload video to Brightcove',
     'page callback' => 'brightcove_video_upload',
-    'page arguments' => [6],
+    'page arguments' => [3, 4, 5, 6],
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
     'access arguments' => ['upload videos', 3, 4, 5, 6],
@@ -269,6 +269,9 @@ function brightcove_field_instance_settings_form($field, $instance) {
       module_load_include('inc', 'brightcove', 'brightcove_field.playlist');
       break;
   }
+
+  drupal_alter('brightcove_field_instance_settings_form', $form, $field, $instance);
+
   return $form;
 }
 
@@ -2325,7 +2328,7 @@ function _brightcove_create_classes(Entity $client_entity) {
  * @param null|callable $metadata_callback
  * @return \Brightcove\Object\Video\Video
  */
-function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, callable $metadata_callback = NULL) {
+function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, $parent_entity_type, $parent_bundle_name, $parent_field_name, callable $metadata_callback = NULL) {
   brightcove_load_lib();
   list($cms, $di) = _brightcove_create_classes($client_entity);
 
@@ -2340,6 +2343,18 @@ function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, cal
   $request->setCaptureImages(TRUE);
   if (($callback = _brightcove_get_ingest_callback($hash))) {
     $request->setCallbacks([$callback]);
+    db_insert('brightcove_callback')
+      ->fields([
+        'id' => $video->getId(),
+        'expires' => time() + (60*60*24),
+        'fid' => 0,
+        'hash' => $hash,
+        'client' => $client_entity->bcid,
+        'parent_entity_type' => $parent_entity_type,
+        'parent_field_name' => $parent_field_name,
+        'parent_bundle_name' => $parent_bundle_name,
+      ])
+      ->execute();
   }
   if ($ingest_callback && is_callable($ingest_callback)) {
     $ingest_callback($request);
@@ -2362,17 +2377,22 @@ function _brightcove_get_ingest_callback($hash) {
 }
 
 function brightcove_handle_ingest_callback($hash) {
-  $row = db_query("SELECT * FROM {brightcove_callback} WHERE id = :hash", [':hash' => $hash])->fetchAssoc();
+  $row = db_query("SELECT * FROM {brightcove_callback} WHERE hash = :hash", [':hash' => $hash])->fetchAssoc();
   if (!$row) {
     drupal_not_found();
     return;
   }
 
   $fid = $row['fid'];
-  file_delete(file_load($fid));
+  $file = file_load($fid);
+  if ($file) {
+    file_delete($file);
+  }
   db_delete('brightcove_callback')
     ->condition('id', $hash)
     ->execute();
+
+  module_invoke_all('brightcove_ingest', $row);
 
   return NULL;
 }
@@ -2576,7 +2596,10 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
   brightcove_try(function () use (&$video_id, $file, $form, &$form_state, $video_entity, $poster, $thumbnail, $captions) {
     $client = $video_entity->client;
     $hash = hash('sha512', mt_rand());
-    $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, function ($video, $cms) use ($form_state, $poster, $thumbnail, $captions) {
+    $parent_entity_type = $form['#parent_entity_type'];
+    $parent_bundle_name = $form['#parent_bundle_name'];
+    $parent_field_name = $form['#parent_field_name'];
+    $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, $parent_entity_type, $parent_bundle_name, $parent_field_name, function ($video, $cms) use ($form_state, $poster, $thumbnail, $captions) {
       // Generate a reference id if the user left it empty.
       $reference_id = (!empty($form_state['values']['reference_id']) ? $form_state['values']['reference_id'] : brightcove_generate_reference());
 

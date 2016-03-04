@@ -115,11 +115,14 @@ function brightcove_save_video(\Brightcove\Object\Video\Video $video, Entity $cl
 /**
  * Brightcove video entity form.
  */
-function brightcove_video_form($form, &$form_state, $video_entity) {
+function brightcove_video_form($form, &$form_state, $video_entity, $entity_type = NULL, $bundle = NULL, $field_name = NULL) {
   brightcove_load_lib();
   $form['#entity'] = $video_entity;
   $form['#entity_type'] = 'brightcove_video';
   $form['#bundle'] = $video_entity->type;
+  $form['#parent_entity_type'] = $entity_type;
+  $form['#parent_bundle_name'] = $bundle;
+  $form['#parent_field_name'] = $field_name;
 
   $client = $video_entity->client;
   $video = $video_entity->video;
@@ -579,14 +582,22 @@ function brightcove_video_access($op, $entity, $account = NULL) {
 /**
  * Menu callback to display the video upload dialog.
  */
-function brightcove_video_upload($client) {
+function brightcove_video_upload($entity_type, $field_name, $bundle_or_id, $client) {
   $values = [
     'client' => $client,
     'type' => 'brightcove_video',
   ];
+  $bundle = $bundle_or_id;
+  if (is_numeric($bundle_or_id)) {
+    $entity = entity_load_single($entity_type, $bundle_or_id);
+    $info = entity_get_info($entity_type);
+    $bundle_key = $info['entity keys']['bundle'];
+    $bundle = $entity->{$bundle_key};
+  }
   $video_entity = brightcove_video_create($values);
-  $form = drupal_get_form('brightcove_video_form', $video_entity);
-  return drupal_render($form);}
+  $form = drupal_get_form('brightcove_video_form', $video_entity, $entity_type, $bundle, $field_name);
+  return drupal_render($form);
+}
 
 /**
  * Menu access callback for editing a video.
