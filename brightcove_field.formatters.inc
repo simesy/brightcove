@@ -61,21 +61,39 @@ function theme_brightcove_field_image($variables) {
   $type = ($elements['#brightcove_widget_type'] == BRIGHTCOVE_VIDEO_WIDGET) ? 'video' : 'playlist';
 
   if ($elements["#{$type}"]) {
-    if (empty($elements["#{$type}"]->{$elements['#brightcove_image_type']})) {
+    $images = $elements["#{$type}"]->getImages();
+    if (empty($images[$elements['#brightcove_image_type']])) {
       $path = brightcove_get_default_image();
-      $styled_path = image_style_path($elements['#brightcove_image_style'], 'default-image.png');
-      $style = image_style_load($elements['#brightcove_image_style']);
-      image_style_create_derivative($style, $path, $styled_path);
+      $styled_path = image_style_path($elements['#brightcove_image_style'], $path);
+      if (!empty($elements['#brightcove_image_style'])) {
+        $style = image_style_load($elements['#brightcove_image_style']);
+        image_style_create_derivative($style, $path, $styled_path);
+      }
       $image = theme('image', ['path' => $styled_path]);
     }
     else {
-      $remote_file = brightcove_remote_image($elements["#{$type}"]->{$elements['#brightcove_image_type']});
-      if ($elements['#brightcove_image_style']){
+      $cid = "brightcove:video:{$elements["#{$type}"]->getId()}:{$elements['#element']['bcid']}:{$elements['#brightcove_image_type']}";
+      $cache = brightcove_cache_get($cid);
+      if (!empty($cache)) {
+        $remote_file = $cache;
+      }
+      else {
+        $image_src = $images[$elements['#brightcove_image_type']]->getSrc();
+        $parse = parse_url($image_src);
+        $path = pathinfo($parse['path']);
+        $remote_file = system_retrieve_file($image_src, file_build_uri('brightcove_thumbnail/' . $path['basename']), FALSE, FILE_EXISTS_REPLACE);
+        if ($remote_file) {
+          brightcove_cache_set($cid, $remote_file);
+        }
+      }
+
+      if ($elements['#brightcove_image_style']) {
         $image = theme('image_style', [
           'style_name' => $elements['#brightcove_image_style'],
           'path' => $remote_file,
         ]);
-      }else{
+      }
+      else {
         $image = theme('image', ['path' => $remote_file]);
       }
     }

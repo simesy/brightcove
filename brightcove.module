@@ -148,6 +148,7 @@ function brightcove_menu() {
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
     'access arguments' => ['browse videos', 2, 3, 4, 5],
+    'theme callback' => 'brightcove_field_theme_callback',
     'file' => 'brightcove_field.browse.inc',
     'type' => MENU_CALLBACK,
   ];
@@ -159,6 +160,7 @@ function brightcove_menu() {
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
     'access arguments' => ['browse videos', 2, 3, 4, 5],
+    'theme callback' => 'brightcove_field_theme_callback',
     'file' => 'brightcove.video.inc',
     'file path' => drupal_get_path('module', 'brightcove'),
     'type' => MENU_CALLBACK,
@@ -172,6 +174,7 @@ function brightcove_menu() {
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
     'access arguments' => ['upload videos', 3, 4, 5, 6],
+    'theme callback' => 'brightcove_field_theme_callback',
     'file' => 'brightcove.video.inc',
     'file path' => drupal_get_path('module', 'brightcove'),
     'type' => MENU_CALLBACK,
@@ -497,8 +500,8 @@ function brightcove_field_formatter_settings_form($field, $instance, $view_mode,
 
     if ($instance['widget']['type'] == BRIGHTCOVE_VIDEO_WIDGET) {
       $image_types = [
-        'thumbnailURL' => t('thumbnailURL'),
-        'videoStillURL' => t('videoStillURL'),
+        'thumbnail' => t('Thumbnail'),
+        'poster' => t('Poster'),
       ];
 
       $element['brightcove_image_type'] = [
@@ -512,7 +515,7 @@ function brightcove_field_formatter_settings_form($field, $instance, $view_mode,
     else {
       $element['brightcove_image_type'] = [
         '#type' => 'value',
-        '#value' => 'thumbnailURL',
+        '#value' => 'thumbnail',
       ];
     }
   }
@@ -1032,6 +1035,19 @@ function brightcove_field_view_access($entity_type, $entity_id, $field_name) {
     }
   }
   return FALSE;
+}
+
+/**
+ * Theme callback for brightcove browser.
+ */
+function brightcove_field_theme_callback() {
+  // Use admin theme if it is set for creating/editing content.
+  if (variable_get('node_admin_theme', FALSE)) {
+    return variable_get('admin_theme');
+  }
+
+  // Otherwise use the default theme.
+  return variable_get('theme_default');
 }
 
 /**
