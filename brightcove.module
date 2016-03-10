@@ -1,439 +1,161 @@
 <?php
-/*
-   http://docs.brightcove.com/en/media/
-   http://support.brightcove.com/en/docs/category/players
-   http://support.brightcove.com/en/docs/media-api-error-message-reference
-   http://support.brightcove.com/en/docs/media-api-objects-reference
-   */
-
 /**
-  * @file
-  * Brightcove module is an integration layer between any modules using
-  * Brightcove API. It makes all necessary checks for the API and makes
-  * settings available to the user.
-  *
-  * @author
-  * Jakub Suchy <jakub@dynamiteheads.com>
-  * Parts of code taken from Media Brightcove module by Aaron Winborn - http://advomatic.com
-  * 
-  * Module development sponsored by Brightcove, Inc.
-  */
-
-define('BRIGHTCOVE_STATUS_COMPLETE', 'COMPLETE');
-define('BRIGHTCOVE_STATUS_ERROR', 'ERROR');
-
-/**
-  * Settings needed:
-  *  - API key
-  *  - Allow public videos
-  */
-
-/**
- * Implementation of hook_menu().
+ * @file
+ * Brightcove module.
  */
-function brightcove_menu() {
-  $items['admin/settings/brightcove'] = array(
-    'title' => 'Brightcove settings',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('brightcove_admin_settings'),
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('administer brightcove settings'),
-    'file' => 'brightcove.admin.inc',
-  );
-  return $items;
-}
+
+use Drupal\brightcove\Entity\BrightcoveAPIClient;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Database\Database;
 
 /**
-  * Implementation of hook_perm().
-  */
-function brightcove_perm() {
-  return array('administer brightcove settings');
-}
-
-function brightcove_init() {
-  // Autoload the BCMAPI class when needed.
-  spl_autoload_register('brightcove_autoload');
-} 
-
-/**
- * Autoload the BCMAPI class when needed.
+ * Initiates a Brightcove-to-Drupal sync by adding API clients to the queue.
+ *
+ * It does nothing if any of the five affected queues is non-empty.
+ *
+ * Syncing from Brightcove to Drupal works as follows.
+ * - This function adds all the API Clients (registered in the Drupal site) to
+ *   the brightcove_client_queue_worker.
+ * - BrightcoveClientQueueWorker::processItem() counts the videos and the
+ *   playlists on that API Client, then adds pages of them to the
+ *   brightcove_video_page_queue_worker and
+ *   brightcove_playlist_page_queue_worker. All those pages may contain up to
+ *   100 items.
+ * - Both BrightcoveVideoPageQueueWorker::processItem() and
+ *   BrightcovePlaylistPageQueueWorker::processItem() cycles through all the
+ *   videos/playlists on that page, and add them to
+ *   brightcove_video_queue_worker or brightcove_playlist_queue_worker,
+ *   respectively.
+ * - Both BrightcoveVideoQueueWorker::processItem() and
+ *   BrightcovePlaylistQueueWorker::processItem() process one video/playlist at
+ *   a time. However, the latter may throw an exception if it encounters with a
+ *   video which is not yet available on the Drupal side. In this case, the
+ *   playlist is not removed from the queue with the hope that the affected
+ *   video becomes available by the next time this playlist queue item is
+ *   processed.
+ *
+ * This process ensures that syncing from Brightcove to Drupal won't eat up all
+ * the server's resources, and those queues are run from cron, and it's even
+ * possible to run those queues from batches.
  */
-function brightcove_autoload($class_name) {
-  if (in_array($class_name, array('BCMAPI', 'BCMAPIException'))) {
-    include_once(brightcove_mapi_path() . '/bc-mapi.php');
-  }
-}
+function _brightcove_initiate_sync() {
+  // Get queues.
+  $client_queue = \Drupal::queue('brightcove_client_queue_worker');
+  $video_page_queue = \Drupal::queue('brightcove_video_page_queue_worker');
+  $video_queue = \Drupal::queue('brightcove_video_queue_worker');
+  $playlist_page_queue = \Drupal::queue('brightcove_playlist_page_queue_worker');
+  $playlist_queue = \Drupal::queue('brightcove_playlist_queue_worker');
 
-/**
- * Return the path to the Brightcove MAPI library.
- *
- * If brightcove_variable_get('brightcove_mapi_path') has not yet been set, then
- * this will attempt to autodiscover the path if the bc-mapi.php file exists
- * within sites/all/libraries/* or sites/example.com/libraries/*. It will also
- * set the path to media_brightcove_variable_get('brightcove_mapi_path').
- *
- * The library is available from http://opensource.brightcove.com/project/PHP-MAPI-Wrapper/.
- *
- * @param boolean $reset
- *  (Optional) If TRUE, then reset the variable and attempt a new autodiscovery.
- * @return string
- *  The path to the bc-mapi.php file.
- */
-function brightcove_mapi_path($reset = FALSE) {
-  static $path;
+  // Don't start new sync until all of the queues are not emptied.
+  if ($client_queue->numberOfItems() == 0 && $video_page_queue->numberOfItems() == 0 && $video_queue->numberOfItems() == 0 && $playlist_page_queue->numberOfItems() == 0 && $playlist_queue->numberOfItems() == 0) {
+    $brightcove_api_clients = BrightcoveAPIClient::loadMultiple();
 
-  if (!isset($path) || $reset) {
-    if (!($path = variable_get('brightcove_mapi_path', FALSE)) || $reset) {
-      $files = drupal_system_listing('^bc-mapi.php$', 'libraries', 'basename', 0);
-      if (isset($files['bc-mapi.php'])) {
-        $path = dirname($files['bc-mapi.php']->filename);
-        variable_set('brightcove_mapi_path', $path);
-      }
+    /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $api_client */
+    foreach ($brightcove_api_clients as $api_client) {
+      $client_queue->createItem($api_client->id());
     }
   }
-
-  return $path;
 }
 
-
 /**
-  * Include all BC MAPI SDK files.
-  */
-function _brightcove_initialize() {
+ * Implements hook_cron().
+ */
+function brightcove_cron() {
+  _brightcove_initiate_sync();
 
-  $read_token = variable_get('brightcove_read_api_key', '');
-  $write_token = variable_get('brightcove_write_api_key', '');
-
-  if (empty($read_token)) { 
-    drupal_set_message(t('Cannot initialize Brightcove API. Contact site administrators.'));
-    watchdog('brightcove', 'Brightcove Read API keys not found, cannot initialize Brightcove MAPI SDK.', array(), WATCHDOG_ERROR);
-    return FALSE;
+  // Delete expired Brightcove callback tokens.
+  try {
+    Database::getConnection()->delete('brightcove_callback')
+      ->condition('expires', time(), '<')
+      ->execute();
   }
-
-  $bc = new BCMAPI($read_token, $write_token);
-
-  return $bc;
-}
-
-
-/**
-  * Check a set of API keys to determine write access to Brightcove Studio.
-  * Only customers with Professional and higher accounts have write access.
-  *
-  * @return
-  *  TRUE for write access allowed.
-  *  FALSE for write access forbidden.
-  */
-function brightcove_write_api_access() {
-  if (variable_get('brightcove_write_api_key', '')) {
-    return TRUE;
-  } else {
-    return FALSE;
+  catch (\Exception $e) {
+    watchdog_exception('Brightcove', $e);
   }
 }
 
 /**
-  * Loads Brightcove video from BC Media API. Uses a 5 minutes cache to speed up lookups.
-  *
-  * @param $video_id
-  * Brightcove Studio video ID.
-  * @param $cache
-  * TRUE or FALSE. Whether to return a video from cache, if present.
-  *
-  * @return $video
-  * Video object or FALSE if video not found.
-  */
-function brightcove_video_load($video_id, $cache = TRUE) {
-  $cache = cache_get('bc:video:' . $video_id, 'cache');
-  $video = $cache->data;
-  if (!empty($video->id)) {
-    return $video;
-  } else {
-    $bc = _brightcove_initialize();
-    try {
-      $video = $bc->find('find_video_by_id', $video_id);
-    } catch (Exception $error) {
-      watchdog('brightcove', 'Loading Brightcove video failed.', array(), WATCHDOG_ERROR);
-      return FALSE;
-    }
-    if (!empty($video->id)) {
-      cache_set('bc:video:' . $video_id, $video, 'cache', $_SERVER['REQUEST_TIME'] + 300);
-      return $video;
+ * Implements hook_entity_extra_field_info().
+ */
+function brightcove_entity_extra_field_info() {
+  $extra = array();
+
+  $extra['brightcove_video']['brightcove_video']['display']['brightcove_video_player'] = [
+    'label' => t('Video'),
+    'description' => t('The video player'),
+    'weight' => -1000,
+    'visible' => TRUE,
+  ];
+
+  $extra['brightcove_playlist']['brightcove_playlist']['display']['brightcove_playlist_video_player'] = [
+    'label' => t('Playlist'),
+    'description' => t('The playlist video player'),
+    'weight' => -1000,
+    'visible' => TRUE,
+  ];
+
+  return $extra;
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view().
+ */
+function brightcove_brightcove_video_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+  if ($display->getComponent('brightcove_video_player')) {
+    // Only display the video player if we have all the info needed for it.
+    if ($video_id = $entity->getVideoId()) {
+      /** @var \Drupal\brightcove\Entity\BrightcoveApiClient $api_client */
+      $api_client = BrightcoveAPIClient::load($entity->getAPIClient());
+      $build['brightcove_video_player'] = [
+        '#theme' => ['brightcove_video_player'],
+        '#video_id' => $video_id,
+        '#account' => $api_client->getAccountID(),
+        '#player' => BrightcoveAPIClient::DEFAULT_PLAYER,
+      ];
     }
   }
-  return FALSE;
 }
 
 /**
-  * Function that saves a remote image as a local file.
-  *
-  * @param $url
-  * Remote image URL.
-  *
-  * @return
-  * Returns FALSE if image doesn't exist, cannot be saved or is not image (based on extension).
-  * Returns local file path if image already exists or was saved correctly.
-  */
-function brightcove_remote_image($url) {
-  $parse = parse_url($url);
-  $path = pathinfo($parse['path']);
-
-  $fullpath = file_directory_path() . '/brightcove_thumbnail';
-
-  $final_file = $fullpath . '/' . $path['basename'];
-
-  if (file_exists($final_file)) {
-    return $final_file;
+ * Implements hook_ENTITY_TYPE_view().
+ */
+function brightcove_brightcove_playlist_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+  if ($display->getComponent('brightcove_playlist_video_player')) {
+    // Only display the video player if we have all the info needed for it.
+    if ($playlist_id = $entity->getPlaylistId()) {
+      /** @var \Drupal\brightcove\Entity\BrightcoveApiClient $api_client */
+      $api_client = BrightcoveAPIClient::load($entity->getAPIClient());
+      $build['brightcove_playlist_video_player'] = [
+        '#theme' => ['brightcove_playlist_video_player'],
+        '#playlist_id' => $playlist_id,
+        '#account' => $api_client->getAccountID(),
+        '#player' => BrightcoveAPIClient::DEFAULT_PLAYER,
+      ];
+    }
   }
-
-  // Perform basic extension check.
-  if (!in_array(strtolower($path['extension']), array('jpg', 'jpeg', 'png', 'gif'))) {
-    return FALSE;
-  }
-
-  if (!file_check_directory($fullpath, FILE_CREATE_DIRECTORY)) {
-    return FALSE;
-  }
-
-  $ch = curl_init();
-  curl_setopt($ch, CURLOPT_URL, $url);
-  curl_setopt($ch, CURLOPT_HEADER, FALSE);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-  // Causes a warning if PHP safe mode is on.
-  @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
-  $rawdata = curl_exec($ch);
-  if (($fp = @fopen($final_file, 'x'))) {
-    fwrite($fp, $rawdata);
-    fclose($fp);
-  }
-  return $final_file;
 }
 
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme().
  */
 function brightcove_theme($existing, $type, $theme, $path) {
-  return array(
-    'brightcove_unavailable_message' => array(
-      'arguments' => array('message' => NULL),
-      ),
-    );
-} 
-
-function theme_brightcove_unavailable_message($message) {
-  return '<div class="video-unavailable">' . $message . '</div>';
-}
-
-/**
-  * Will return a default image for videos without a thumbnail or still image.
-  */
-function brightcove_get_default_image() {
-  return drupal_get_path('module', 'brightcove') . '/images/default-image.png';
-}
-
-/*
- * Return the status of a specific video.
- *
- * @param string $code
- * The code for the Brightcove video.
- * @param boolean $reset
- * (Optional) If TRUE, then reset the cached status.
- * @return string
- * The status code returned by Brightcove.
- */
-function brightcove_status($code, $reset = FALSE) {
-  static $status;
-  if (!isset($status) || $reset) {
-    $status = array();
-  }
-  if (!isset($status[$code])) {
-    if (($cache = cache_get('brightcove:status:'. $code, 'cache'))) {
-      $status[$code] = $cache->data;
-    }
-    else {
-      $bc = _brightcove_initialize();
-      try {
-        // Get the status of the desired status.
-        $status[$code] = $bc->getStatus('video', $code);
-      }
-      catch (BCMAPIException $error) {
-        watchdog('brightcove', 'Unhandled error from Brightcove when retrieving the status of video ID %video: %error', array('%video' => $code, '%error' => $error->getMessage()), WATCHDOG_ERROR);
-        $status[$code] = 'ERROR';
-      }
-      cache_set('brightcove:status:'. $code, $status[$code], 'cache', CACHE_TEMPORARY);
-    }
-  }
-  return $status[$code];
-} 
-
-/**
-  * Check if expose unavailability message in case the video is not available.
-  *
-  * @return
-  * Returns a themed message if checks are enabled.
-  */
-function brightcove_expose_unavailable() {
-  if (variable_get('brightcove_check_for_unavailable', TRUE) &&
-     ($unavailable_message = variable_get('brightcove_status_display_unavailable', 'This video is unavailable for the moment.'))) {
-    return theme('brightcove_unavailable_message', $unavailable_message, $status);
-  }
-}
-
-
-
-/**
- * Implementation of hook_media_mover().
- *
- * Taken from Media Brightcove module by Aaron Winborn - http:/advomatic.com
- * http://drupalcode.org/viewvc/drupal/contributions/modules/media_brightcove/media_brightcove.module?revision=1.1.2.14&content-type=text%2Fplain&view=co&pathrev=DRUPAL-6--1
- *
- * @param $op is the operator to return
- * @param $action is which action is being called
- * @param $verb is the verb being run
- * @param $configuration is the specific configuration saved for the action for this configuration
- * @param $file is the file in use
- * @param $job is the full configuration data currently running
- */
-function brightcove_media_mover($op = NULL, $action = NULL, $configuration = NULL, &$file=array(), $job = NULL, $nid = NULL) {
-  switch ($op) {
-    case 'name':
-      return t('Brightcove');
-      break;
-
-    case 'actions':
-      return array(
-          'process' => array(
-            1 => t('Upload video to Brightcove.'),
-            ),
-          'storage' => array(
-            2 => t('Upload video to Brightcove.'),
-            ),
-          'complete' => array(
-            3 => t('Attach Brightcove video to a CCK video field'),
-            ),
-          );
-      break;
-
-    case 'complete':
-      module_load_include('inc', 'brightcove', 'brightcove.media_mover');
-      return brightcove_mm_complete_video($file, $configuration);
-      break;
-
-    case 'process':
-    case 'storage':
-      module_load_include('inc', 'brightcove', 'brightcove.media_mover');
-      return brightcove_mm_upload_video($file, $configuration);
-      break;
-
-    case 'config':
-      switch ($action) {
-        case '1':
-        case '2':
-          module_load_include('inc', 'brightcove', 'brightcove.media_mover');
-          return brightcove_mm_config($configuration);
-          break;
-        case '3':
-          module_load_include('inc', 'brightcove', 'brightcove.media_mover');
-          return brightcove_mm_complete_config($configuration);
-          break;
-      }
-      break;
-  }
-}
-
-/**
-  * Upload video to Brightcove.
-  *
-  * @param $path
-  * Filepath to video file.
-  * @param $meta
-  * Meta data array. Required values:
-  *     array(
-  *       'name' => 'video name',
-  *       'shortDescription' => 'short description',
-  *     );
-  * @see http://support.brightcove.com/en/docs/media-api-objects-reference#Video
-  */
-function brightcove_upload_video($path, $meta) {
-  if (empty($meta['name'])) {
-    $meta['name'] = t('Video');
-  }
-  if (empty($meta['shortDescription'])) {
-    $meta['shortDescription'] = t('Short Description');
-  }
-  $bc = _brightcove_initialize();
-  try {
-    $id = $bc->createMedia('video', $path, $meta);
-  } catch (Exception $error) {
-    drupal_set_message(t('Video upload to Brightcove failed. Error: @error', array('@error' => $error)), 'error');
-    return;
-  }
-  return $id;
-}
-
-/**
-  * Parse a field value in form of "title [id:123]" and return 123
-  *
-  * @param $id
-  *  Video ID in form of "title [id:123]".
-  * @return
-  *  Int value of the ID.
-  */
-function brightcove_parse_id($id) {
-    preg_match('/\[id:([^\[]*)\]$/', $id, $matches);
-    return $matches[1];
-}
-
-/**
-  * Generate a reference ID based on Drupal version and User ID.
-  *
-  * @param $account
-  * Account UID that is responsible for this video. If NULL, logged in user is used.
-  */
-function brightcove_generate_reference($account = NULL) {
-  global $user;
-  if (!isset($account)) {
-    $account = $user->uid;
-  }
-  return "drupal:" . DRUPAL_CORE_COMPATIBILITY . ":" . $account . ":" . md5(microtime());
-}
-
-/**
- * Caches the status of a video for faster validation.
- *
- * This function also helps work around the lag in Brightcove API when
- * videos are uploaded.
- *
- * @param $id
- *  The Brightcove identifier for the video.
- *
- * @param $video
- *  The video object to be cached.
- */
-function brightcove_video_cache_set($id, $video) {
-  if (!isset($_SESSION['brightcove'])) {
-    $_SESSION['brightcove'] = array();
-  }
-
-  $id = (int) $id;
-  $_SESSION['brightcove']["video_{$id}"] = $video;
-}
-
-/**
- * Fetches a brighcove video object from the cache, if available.
- *
- * @param
- *  The Brightcove identifier for the video.
- *
- * @return
- *  Object the Brightcove video object.
- */
-function brightcove_video_cache_get($id) {
-  $id = (int) $id;
-  $key = "video_{$id}"; 
-  if ($id && isset($_SESSION['brightcove'][$key])) {
-    return $_SESSION['brightcove'][$key];
-  }
-
-  return NULL;
+  return [
+    'brightcove_video_player' => [
+      'variables' => [
+        'video_id' => 0,
+        'account' => 0,
+        'player' => BrightcoveAPIClient::DEFAULT_PLAYER,
+        'embed' => 'default',
+      ],
+    ],
+    'brightcove_playlist_video_player' => [
+      'variables' => [
+        'playlist_id' => 0,
+        'account' => 0,
+        'player' => BrightcoveAPIClient::DEFAULT_PLAYER,
+        'embed' => 'default',
+      ],
+    ],
+  ];
 }

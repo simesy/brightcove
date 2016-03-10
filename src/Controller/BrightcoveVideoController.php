@@ -1,0 +1,197 @@
+<?php
+/**
+ * @file
+ * Contains \Drupal\brightcove\Controller\BrightcoveVideo.
+ */
+
+namespace Drupal\brightcove\Controller;
+
+use Brightcove\API\Exception\APIException;
+use Drupal\brightcove\BrightcoveUtil;
+use Drupal\brightcove\Entity\BrightcoveVideo;
+use Drupal\Component\Serialization\Json;
+use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class BrightcoveVideoController extends ControllerBase {
+  /**
+   * The brightcove_video storage.
+   *
+   * @var \Drupal\Core\Entity\EntityStorageInterface
+   */
+  protected $storage;
+
+  /**
+   * Database connection.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $connection;
+
+  /**
+   * Controller constructor.
+   *
+   * @param \Drupal\Core\Entity\EntityStorageInterface $storage
+   * @param \Drupal\Core\Database\Connection $connection
+   */
+  public function __construct(EntityStorageInterface $storage, Connection $connection) {
+    $this->storage = $storage;
+    $this->connection = $connection;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager')->getStorage('brightcove_video'),
+      $container->get('database')
+    );
+  }
+
+   /**
+    * Menu callback to update the existing Video with the latest version.
+    *
+    * @param int $entity_id
+    *   The ID of the video in Drupal.
+    *
+    * @return \Symfony\Component\HttpFoundation\RedirectResponse
+    *   Redirection response.
+    */
+  public function update($entity_id) {
+    /** @var \Drupal\brightcove\Entity\BrightcoveVideo $video */
+    $video = BrightcoveVideo::load($entity_id);
+
+    /** @var \Brightcove\API\CMS $cms */
+    $cms = BrightcoveUtil::getCMSAPI($video->getAPIClient());
+
+    // Update video.
+    BrightcoveVideo::createOrUpdate($cms->getVideo($video->getVideoId()), $this->storage);
+
+    // Redirect back to the video edit form.
+    return $this->redirect('entity.brightcove_video.edit_form', ['brightcove_video' => $entity_id]);
+  }
+
+  /**
+   * Ingestion callback for Brightcove.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   Request object.
+   * @param int $token
+   *   The token which matches the video ID.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   An empty Response object.
+   */
+  public function ingestionCallback(Request $request, $token) {
+    $content = Json::decode($request->getContent());
+
+    if (is_array($content) && $content['status'] == 'SUCCESS' && $content['version'] == 1 && $content['action'] == 'CREATE') {
+      try {
+        $result = $this->connection->select('brightcove_callback', 'b')
+          ->fields('b', [
+            'video_id'
+          ])
+          ->condition('token', $token)
+          ->execute()
+          ->fetchAssoc();
+      }
+      catch (\Exception $e) {
+        watchdog_exception('brightcove', $e);
+      }
+
+      if (isset($result) && !empty($result['video_id'])) {
+        /** @var \Drupal\brightcove\Entity\BrightcoveVideo $video_entity */
+        $video_entity = BrightcoveVideo::load($result['video_id']);
+
+        if (!is_null($video_entity)) {
+          // Basic semaphore to prevent race conditions, this is needed because
+          // Brightcove may call this callback again before the previous one
+          // would finish.
+          // @TODO: Is there a better way to do this?
+          while (TRUE) {
+            // Try to acquire semaphore.
+            while ($this->state()->get('brightcove_video_semaphore', FALSE) == TRUE) {
+              // Wait random time between 100 and 500 milliseconds on each try.
+              usleep(mt_rand(100000, 500000));
+            }
+
+            // Make sure that other processes have not acquired the semaphore
+            // while we waited.
+            if ($this->state()->get('brightcove_video_semaphore', FALSE) == FALSE) {
+              // Acquire semaphore as soon as we can.
+              $this->state()->set('brightcove_video_semaphore', TRUE);
+              break;
+            }
+          }
+
+          $cms = BrightcoveUtil::getCMSAPI($video_entity->getAPIClient());
+
+          switch ($content['entityType']) {
+            // Video.
+            case 'TITLE':
+              // Delete video file from the entity.
+              $video_entity->setVideoFile(NULL);
+              $video_entity->save();
+              break;
+
+            // Assets.
+            case 'ASSET':
+              $client = BrightcoveUtil::getClient($video_entity->getAPIClient());
+              $api_client = BrightcoveUtil::getAPIClient($video_entity->getAPIClient());
+
+              // Check for each asset type by try-and-error, currently there is
+              // no other way to determine which asset is what...
+              $asset_types = [
+                BrightcoveVideo::IMAGE_TYPE_THUMBNAIL,
+                BrightcoveVideo::IMAGE_TYPE_POSTER,
+              ];
+              foreach ($asset_types as $type) {
+                try {
+                  $client->request('GET', 'cms', $api_client->getAccountID(), '/videos/' . $video_entity->getVideoId() . '/assets/' . $type . '/' . $content['entity'], NULL);
+
+                  switch ($type) {
+                    case BrightcoveVideo::IMAGE_TYPE_THUMBNAIL:
+                    case BrightcoveVideo::IMAGE_TYPE_POSTER:
+                      $images = $cms->getVideoImages($video_entity->getVideoId());
+                      $function = ucfirst($type);
+
+                      // @TODO: Download the image only if truly different.
+                      // But this may not be possible without downloading the
+                      // image.
+                      $video_entity->saveImage($type, $images->{"get{$function}"}());
+                      break 2;
+                  }
+                }
+                catch (APIException $e) {
+                  // Do nothing here, just catch the exception to not generate
+                  // an error.
+                }
+              }
+
+              // @TODO: Do we have to do anything with the rest of the assets?
+              break;
+
+            // Don't do anything if we got something else.
+            default:
+              return new Response();
+          }
+
+          // Update video entity with the latest update date.
+          $video = $cms->getVideo($video_entity->getVideoId());
+          $video_entity->setChangedTime(strtotime($video->getUpdatedAt()));
+          $video_entity->save();
+
+          // Release semaphore.
+          $this->state()->set('brightcove_video_semaphore', FALSE);
+        }
+      }
+    }
+
+    return new Response();
+  }
+}

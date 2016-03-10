@@ -1,0 +1,42 @@
+administer brightcove configuration:
+  title: 'Administer Brightcove configuration'
+
+add brightcove videos:
+  title: 'Create new Brightcove Videos'
+
+administer brightcove videos:
+  title: 'Administer Brightcove Videos'
+  description: 'Allow to access the administration form to configure Brightcove Videos.'
+  restrict access: true
+
+delete brightcove videos:
+  title: 'Delete Brightcove Videos'
+
+edit brightcove videos:
+  title: 'Edit Brightcove Videos'
+
+view published brightcove videos:
+  title: 'View published Brightcove Videos'
+
+view unpublished brightcove videos:
+  title: 'View unpublished Brightcove Videos'
+
+add brightcove playlists:
+  title: 'Create new Brightcove Playlists'
+
+administer brightcove playlists:
+  title: 'Administer Brightcove Playlists'
+  description: 'Allow to access the administration form to configure Brightcove Playlists.'
+  restrict access: true
+
+delete brightcove playlists:
+  title: 'Delete Brightcove Playlists'
+
+edit brightcove playlists:
+  title: 'Edit Brightcove Playlists'
+
+view published brightcove playlists:
+  title: 'View published Brightcove Playlists'
+
+view unpublished brightcove playlists:
+  title: 'View unpublished Brightcove Playlists'

@@ -1,0 +1,32 @@
+# Schema for the configuration files of the Brightcove module.
+
+brightcove.brightcove_api_client.*:
+  type: config_entity
+  label: 'Brightcove API Client config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    account_id:
+      type: string
+      label: 'Account ID'
+    client_id:
+      type: string
+      label: 'Client ID'
+    default_player:
+      type: string
+      label: 'Default player'
+    secret_key:
+      type: string
+      label: 'secret key'
+    uuid:
+      type: string
+    access_token:
+      type: text
+      label: 'access token'
+    access_token_expire_date:
+      tye: int
+      label: 'access token expire date'
