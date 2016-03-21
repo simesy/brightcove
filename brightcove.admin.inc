@@ -208,3 +208,26 @@ function brightcove_admin_settings_validate($form, &$form_state) {
     system_check_directory($form['cache']['brightcove_cache_file']['path']);
   }
 }
+
+function brightcove_integrations_page() {
+  $integrations = module_invoke_all('brightcove_integration_info');
+  $page = [
+    '#attached' => [
+      'css' => [
+        drupal_get_path('module', 'brightcove') . '/styles/integrations.css',
+      ],
+    ],
+  ];
+
+  foreach ($integrations as $integration) {
+    $page[] = [
+      '#theme' => 'brightcove_integration',
+      '#name' => $integration['name'],
+      '#description' => $integration['description'],
+      '#project' => $integration['project'],
+      '#image' => $integration['image'],
+    ];
+  }
+
+  return $page;
+}

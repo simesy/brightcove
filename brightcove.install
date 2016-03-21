@@ -389,8 +389,33 @@ function brightcove_update_7600() {
         'type' => 'int',
         'not null' => TRUE,
       ],
+      'hash' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'client' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'parent_entity_type' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'parent_field_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'parent_bundle_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
     ],
-    'primary key' => ['id'],
+    'primary key' => ['hash'],
   ];
 
   $schema['brightcove_video'] = [
@@ -496,4 +521,6 @@ function brightcove_update_7601() {
     'length' => 255,
     'not null' => TRUE,
   ]);
+  db_drop_primary_key('brightcove_callback');
+  db_add_primary_key('brightcove_callback', ['hash']);
 }

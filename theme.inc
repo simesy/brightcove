@@ -64,3 +64,26 @@ function theme_brightcove_field_browse_items($variables) {
   }
   return '<div id="brightcove-browse-table-table">' . theme('table', ['header' => [], 'rows' => $rows]) . '</div>';
 }
+
+function theme_brightcove_integration($variables) {
+  $name = check_plain($variables['name']);
+  $description = check_plain($variables['description']);
+  $project_link = '';
+  if ($variables['project']) {
+    $link = "https://drupal.org/project/{$variables['project']}";
+    $project_link = l($link, $link);
+  }
+  $image = '';
+  if ($variables['image']) {
+    $image = theme('image', ['path' => $variables['image']]);
+  }
+
+  return <<<EOS
+<div class="brightcove-integration">
+  <div class="brightcove-integration-image">{$image}</div>
+  <h3 class="brightcove-integration-name">{$name}</h3>
+  <p class="brightcove-integration-description">{$description}</p>
+  <p class="brightcove-integration-link">{$project_link}</p>
+</div>
+EOS;
+}
