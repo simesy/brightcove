@@ -197,6 +197,12 @@ function brightcove_admin_settings($form, &$form_state) {
     '#description' => t('If you change this value you have to clear cache.'),
   ];
 
+  $form['other']['brightcove_3rdparty'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Where applicable, show 3rd party integration help text.'),
+    '#default_value' => variable_get('brightcove_3rdparty', TRUE),
+  ];
+
   $form = system_settings_form($form);
   $form['#validate'][] = 'brightcove_admin_settings_validate';
 
@@ -219,13 +225,22 @@ function brightcove_integrations_page() {
     ],
   ];
 
-  foreach ($integrations as $integration) {
+  if ($integrations) {
+    foreach ($integrations as $integration) {
+      $page[] = [
+        '#theme' => 'brightcove_integration',
+        '#name' => $integration['name'],
+        '#description' => $integration['description'],
+        '#project' => $integration['project'],
+        '#image' => $integration['image'],
+      ];
+    }
+  }
+  else {
     $page[] = [
-      '#theme' => 'brightcove_integration',
-      '#name' => $integration['name'],
-      '#description' => $integration['description'],
-      '#project' => $integration['project'],
-      '#image' => $integration['image'],
+      '#markup' => '<p>' . t('No integrations has been installed. Visit the !link to learn more.', [
+          '!link' => l(t('Brightcove Video Connect project page'), 'https://drupal.org/project/brightcove'),
+        ]) . '</p>',
     ];
   }
 

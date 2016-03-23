@@ -243,6 +243,15 @@ function brightcove_video_form($form, &$form_state, $video_entity, $entity_type 
         'wrapper' => 'caption-container',
       ],
     ];
+
+    if (variable_get('brightcove_3rdparty', TRUE)) {
+      $form['captions']['3rdparty'] = [
+        '#type' => 'markup',
+        '#markup' => t('Note: automatic caption generation is available as a 3rd party integration on the !link.', [
+          '!link' => l(t('Brightcove Video Connect page'), 'https://www.drupal.org/project/brightcove'),
+        ]),
+      ];
+    }
   }
 
   $form['title'] = [

@@ -119,16 +119,13 @@ function brightcove_menu() {
     'weight' => -1,
   ];
 
-  $integrations = module_invoke_all('brightcove_integration_info');
-  if ($integrations) {
-    $items["{$base}/integrations"] = [
-      'title' => 'Integrations',
-      'type' => MENU_LOCAL_TASK,
-      'page callback' => 'brightcove_integrations_page',
-      'access arguments' => ['administer brightcove settings'],
-      'file' => 'brightcove.admin.inc',
-    ];
-  }
+  $items["{$base}/integrations"] = [
+    'title' => 'Integrations',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'brightcove_integrations_page',
+    'access arguments' => ['administer brightcove settings'],
+    'file' => 'brightcove.admin.inc',
+  ];
 
   // bc object type, entity type, field name
   $items['brightcove_field/autocomplete/video/%/%/%/%brightcove_client'] = [
