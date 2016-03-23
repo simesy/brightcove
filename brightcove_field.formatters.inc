@@ -61,15 +61,23 @@ function theme_brightcove_field_image($variables) {
   $type = ($elements['#brightcove_widget_type'] == BRIGHTCOVE_VIDEO_WIDGET) ? 'video' : 'playlist';
 
   if ($elements["#{$type}"]) {
-    $images = $elements["#{$type}"]->getImages();
+    $images = $type === 'video' ? $elements["#{$type}"]->getImages() : [];
     if (empty($images[$elements['#brightcove_image_type']])) {
       $path = brightcove_get_default_image();
-      $styled_path = image_style_path($elements['#brightcove_image_style'], $path);
+      $image_variables = [
+        'path' => $path,
+      ];
       if (!empty($elements['#brightcove_image_style'])) {
+        $styled_path = $elements['#brightcove_image_style'] ? image_style_path($elements['#brightcove_image_style'], $path) : $path;
         $style = image_style_load($elements['#brightcove_image_style']);
         image_style_create_derivative($style, $path, $styled_path);
+        $image_variables['path'] = image_style_path($elements['#brightcove_image_style'], $path);
       }
-      $image = theme('image', ['path' => $styled_path]);
+      else {
+        $image_variables['width'] = 222;
+        $image_variables['height'] = 222;
+      }
+      $image = theme('image', $image_variables);
     }
     else {
       $cid = "brightcove:video:{$elements["#{$type}"]->getId()}:{$elements['#element']['bcid']}:{$elements['#brightcove_image_type']}";
