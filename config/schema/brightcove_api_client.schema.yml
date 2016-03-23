@@ -30,3 +30,6 @@ brightcove.brightcove_api_client.*:
     access_token_expire_date:
       tye: int
       label: 'access token expire date'
+    max_custom_fields:
+      type: int
+      label: 'Maximum number of custom fields'

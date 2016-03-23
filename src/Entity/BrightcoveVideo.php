@@ -12,8 +12,7 @@ use Brightcove\API\Request\IngestRequest;
 use Brightcove\API\Request\IngestRequestMaster;
 use Brightcove\Object\Video\Link;
 use Brightcove\Object\Video\Schedule;
-use Brightcove\Object\Video\Video as BrightcoveAPIWrapperVideo;
-use Drupal\brightcove\Video;
+use Brightcove\Object\Video\Video;
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Database\Database;
@@ -73,7 +72,7 @@ use Drupal\time_formatter\Plugin\Field\FieldFormatter\TimeFieldFormatter;
  *   field_ui_base_route = "brightcove_video.settings"
  * )
  */
-class BrightcoveVideo extends BrightcoveCMSEntity implements BrightcoveVideoInterface {
+class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements BrightcoveVideoInterface {
   /**
    * Ingestion request object.
    *
@@ -212,6 +211,43 @@ class BrightcoveVideo extends BrightcoveCMSEntity implements BrightcoveVideoInte
     }
 
     return $this;
+  }
+
+  /**
+   * Create an ingestion request for image.
+   *
+   * @param $type
+   *   The type of the image, possible values are:
+   *     - IMAGE_TYPE_POSTER
+   *     - IMAGE_TYPE_THUMBNAIL
+   *
+   * @throws \Exception
+   *   If the $type is not matched with the possible types.
+   */
+  protected function createIngestImage($type) {
+    if (!in_array($type, [self::IMAGE_TYPE_POSTER, self::IMAGE_TYPE_THUMBNAIL])) {
+      throw new \Exception(t("Invalid type given: @type, the type argument must be either '@thumbnail' or '@poster'.", [
+        '@type' => $type,
+        '@thumbnail' => self::IMAGE_TYPE_THUMBNAIL,
+        '@poster' => self::IMAGE_TYPE_POSTER,
+      ]));
+    }
+
+    $function = ucfirst($type);
+
+    // Set up image ingestion.
+    if (!empty($this->{"get{$function}"}()['target_id'])) {
+      $ingest_request = $this->getIngestRequest();
+
+      /** @var \Drupal\file\Entity\File $image */
+      $image = File::load($this->{"get{$function}"}()['target_id']);
+
+      if (!is_null($image)) {
+        $ingest_image = new IngestImage();
+        $ingest_image->setUrl(file_create_url($image->getFileUri()));
+        $ingest_request->{"set{$function}"}($ingest_image);
+      }
+    }
   }
 
   /**
@@ -469,6 +505,26 @@ class BrightcoveVideo extends BrightcoveCMSEntity implements BrightcoveVideoInte
   /**
    * {@inheritdoc}
    */
+  public function getCustomFieldValues() {
+    $value = $this->get('custom_field_values')->getValue();
+
+    if (!empty($value)) {
+      return $value[0];
+    }
+
+    return $value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setCustomFieldValues(array $values) {
+    return $this->set('custom_field_values', $values);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getScheduleStartsAt() {
     $value = $this->get('schedule_starts_at')->getValue();
     if (empty($value)) {
@@ -586,6 +642,11 @@ class BrightcoveVideo extends BrightcoveCMSEntity implements BrightcoveVideoInte
         $video->setReferenceId($this->getReferenceID());
       }
 
+      // Save or update custom field values.
+      if ($this->isFieldChanged('custom_field_values')) {
+        $video->setCustomFields($this->getCustomFieldValues());
+      }
+
       // Save or update schedule start at date if needed.
       if ($this->isFieldChanged('schedule_starts_at') || $this->isFieldChanged('schedule_ends_at')) {
         $starts_at = $this->getScheduleStartsAt();
@@ -695,40 +756,27 @@ class BrightcoveVideo extends BrightcoveCMSEntity implements BrightcoveVideoInte
   }
 
   /**
-   * Create an ingestion request for image.
+   * {@inheritdoc}
    *
-   * @param $type
-   *   The type of the image, possible values are:
-   *     - IMAGE_TYPE_POSTER
-   *     - IMAGE_TYPE_THUMBNAIL
-   *
-   * @throws \Exception
-   *   If the $type is not matched with the possible types.
+   * @param bool $local_only
+   *   Whether to delete the local version only or both local and Brightcove
+   *   versions.
    */
-  protected function createIngestImage($type) {
-    if (!in_array($type, [self::IMAGE_TYPE_POSTER, self::IMAGE_TYPE_THUMBNAIL])) {
-      throw new \Exception(t("Invalid type given: @type, the type argument must be either '@thumbnail' or '@poster'.", [
-        '@type' => $type,
-        '@thumbnail' => self::IMAGE_TYPE_THUMBNAIL,
-        '@poster' => self::IMAGE_TYPE_POSTER,
-      ]));
+  public function delete($local_only = FALSE) {
+    // Delete video from Brightcove.
+    if (!$this->isNew() && !$local_only) {
+      $api_client = BrightcoveUtil::getAPIClient($this->getAPIClient());
+      $client = $api_client->getClient();
+
+      // Delete video references.
+      $client->request('DELETE', 'cms', $api_client->getAccountID(), "/videos/{$this->getVideoId()}/references", NULL);
+
+      // Delete video.
+      $cms = BrightcoveUtil::getCMSAPI($this->getAPIClient());
+      $cms->deleteVideo($this->getVideoId());
     }
 
-    $function = ucfirst($type);
-
-    // Set up image ingestion.
-    if (!empty($this->{"get{$function}"}()['target_id'])) {
-      $ingest_request = $this->getIngestRequest();
-
-      /** @var \Drupal\file\Entity\File $image */
-      $image = File::load($this->{"get{$function}"}()['target_id']);
-
-      if (!is_null($image)) {
-        $ingest_image = new IngestImage();
-        $ingest_image->setUrl(file_create_url($image->getFileUri()));
-        $ingest_request->{"set{$function}"}($ingest_image);
-      }
-    }
+    parent::delete();
   }
 
   /**
@@ -796,6 +844,22 @@ class BrightcoveVideo extends BrightcoveCMSEntity implements BrightcoveVideoInte
       ->setDescription(t('API Client to use for playing the video.'))
       ->setRequired(TRUE)
       ->setSetting('target_type', 'brightcove_api_client')
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+        'weight' => ++$weight,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'hidden',
+        'label' => 'inline',
+        'weight' => $weight,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['player'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Player'))
+      ->setDescription(t('Player to use for playing the video.'))
+      ->setSetting('target_type', 'brightcove_player')
       ->setDisplayOptions('form', [
         'type' => 'options_select',
         'weight' => ++$weight,
@@ -1081,7 +1145,8 @@ class BrightcoveVideo extends BrightcoveCMSEntity implements BrightcoveVideoInte
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    // @TODO: Custom fields
+    $fields['custom_field_values'] = BaseFieldDefinition::create('map');
+      //->setRevisionable(TRUE)
 
     $fields['schedule_starts_at'] = BaseFieldDefinition::create('datetime')
       ->setLabel(t('Scheduling Start Date'))
@@ -1456,7 +1521,7 @@ class BrightcoveVideo extends BrightcoveCMSEntity implements BrightcoveVideoInte
    * @throws \Exception
    *   If BrightcoveAPIClient ID is missing when a new entity is being created.
    */
-  public static function createOrUpdate(BrightcoveAPIWrapperVideo $video, EntityStorageInterface $storage, $api_client_id = NULL) {
+  public static function createOrUpdate(Video $video, EntityStorageInterface $storage, $api_client_id = NULL) {
     // Try to get an existing video.
     $existing_video = $storage->getQuery()
       ->condition('video_id', $video->getId())
@@ -1583,6 +1648,11 @@ class BrightcoveVideo extends BrightcoveCMSEntity implements BrightcoveVideoInte
       // Save or update reference ID field if needed.
       if ($video_entity->getReferenceID() != ($reference_id = $video->getReferenceId())) {
         $video_entity->setReferenceID($reference_id);
+      }
+
+      // Save or update custom field values.
+      if ($video_entity->getCustomFieldValues() != $custom_fields = $video->getCustomFields()) {
+        $video_entity->setCustomFieldValues($custom_fields);
       }
 
       // Save or update schedule dates if needed.

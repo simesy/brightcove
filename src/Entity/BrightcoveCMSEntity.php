@@ -71,21 +71,6 @@ abstract class BrightcoveCMSEntity extends ContentEntityBase implements Brightco
   /**
    * {@inheritdoc}
    */
-  public function getReferenceID() {
-    return $this->get('reference_id')->value;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setReferenceID($reference_id) {
-    $this->set('reference_id', $reference_id);
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getDescription() {
     return $this->get('description')->value;
   }
@@ -95,21 +80,6 @@ abstract class BrightcoveCMSEntity extends ContentEntityBase implements Brightco
    */
   public function setDescription($description) {
     $this->set('description', $description);
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function isPublished() {
-    return (bool) $this->getEntityKey('status');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setPublished($published) {
-    $this->set('status', $published ? NODE_PUBLISHED : NODE_NOT_PUBLISHED);
     return $this;
   }
 

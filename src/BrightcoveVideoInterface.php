@@ -317,6 +317,25 @@ interface BrightcoveVideoInterface {
   public function getScheduleStartsAt();
 
   /**
+   * Returns the custom field values.
+   *
+   * @return array
+   *   Each field's value keyed by it's field ID.
+   */
+  public function getCustomFieldValues();
+
+  /**
+   * Sets the custom field values.
+   *
+   * @param array $values
+   *   Field values keyed by field's ID.
+   *
+   * @return \Drupal\brightcove\BrightcoveVideoInterface
+   *   The called Brightcove Video.
+   */
+  public function setCustomFieldValues(array $values);
+
+  /**
    * Sets the video's schedule starts at date.
    *
    * @param string $schedule_starts_at

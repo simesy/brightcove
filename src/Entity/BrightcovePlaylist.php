@@ -7,9 +7,8 @@
 
 namespace Drupal\brightcove\Entity;
 
-use Brightcove\Object\Playlist as BrightcoveAPIWrapperPlaylist;
+use Brightcove\Object\Playlist;
 use Drupal\brightcove\BrightcoveUtil;
-use Drupal\brightcove\Playlist;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -60,7 +59,7 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  *   field_ui_base_route = "brightcove_playlist.settings"
  * )
  */
-class BrightcovePlaylist extends BrightcoveCMSEntity implements BrightcovePlaylistInterface {
+class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements BrightcovePlaylistInterface {
   /**
    * Indicates that the playlist type is manual.
    */
@@ -241,6 +240,23 @@ class BrightcovePlaylist extends BrightcoveCMSEntity implements BrightcovePlayli
 
   /**
    * {@inheritdoc}
+   *
+   * @param bool $local_only
+   *   Whether to delete the local version only or both local and Brightcove
+   *   versions.
+   */
+  public function delete($local_only = FALSE) {
+    // Delete playlist from Brightcove.
+    if (!$this->isNew() && !$local_only) {
+      $cms = BrightcoveUtil::getCMSAPI($this->getAPIClient());
+      $cms->deletePlaylist($this->getPlaylistId());
+    }
+
+    parent::delete();
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     // Set weights based on the real order of the fields.
@@ -335,6 +351,22 @@ class BrightcovePlaylist extends BrightcoveCMSEntity implements BrightcovePlayli
         'label' => 'inline',
         'weight' => $weight,
       ))
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['player'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Player'))
+      ->setDescription(t('Player to use for the playlist.'))
+      ->setSetting('target_type', 'brightcove_player')
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+        'weight' => ++$weight,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'hidden',
+        'label' => 'inline',
+        'weight' => $weight,
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -524,7 +556,7 @@ class BrightcovePlaylist extends BrightcoveCMSEntity implements BrightcovePlayli
    * @throws \Exception
    *   Thrown when any of the videos is unavailable on the Drupal side.
    */
-  protected static function extractVideosArray(BrightcoveAPIWrapperPlaylist $playlist, EntityStorageInterface $video_storage) {
+  protected static function extractVideosArray(Playlist $playlist, EntityStorageInterface $video_storage) {
     $videos = $playlist->getVideoIds();
     if (!$videos) {
       return NULL;
@@ -565,7 +597,7 @@ class BrightcovePlaylist extends BrightcoveCMSEntity implements BrightcovePlayli
    * @throws \Exception
    *   If BrightcoveAPIClient ID is missing when a new entity is being created.
    */
-  public static function createOrUpdate(BrightcoveAPIWrapperPlaylist $playlist, EntityStorageInterface $playlist_storage, EntityStorageInterface $video_storage, $api_client_id = NULL) {
+  public static function createOrUpdate(Playlist $playlist, EntityStorageInterface $playlist_storage, EntityStorageInterface $video_storage, $api_client_id = NULL) {
     // May throw an \Exception if any of the videos is not found.
     $videos = self::extractVideosArray($playlist, $video_storage);
 

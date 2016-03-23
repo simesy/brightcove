@@ -8,9 +8,15 @@
 namespace Drupal\brightcove\Form;
 
 use Brightcove\API\Exception\APIException;
+use Brightcove\API\PM;
+use Drupal\brightcove\BrightcoveUtil;
+use Drupal\brightcove\Entity\BrightcovePlayer;
 use Drupal\Core\Config\Config;
+use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Entity\EntityForm;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Queue\QueueInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\brightcove\Entity\BrightcoveAPIClient;
 use Brightcove\API\Exception\AuthenticationException;
@@ -23,7 +29,6 @@ use Brightcove\API\CMS;
  * @package Drupal\brightcove\Form
  */
 class BrightcoveAPIClientForm extends EntityForm {
-
   /**
    * The config for brightcove.settings.
    *
@@ -32,21 +37,62 @@ class BrightcoveAPIClientForm extends EntityForm {
   protected $config;
 
   /**
+   * The brightcove_player storage.
+   *
+   * @var \Drupal\Core\Entity\EntityStorageInterface
+   */
+  protected $player_storage;
+
+  /**
+   * The player queue object.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $player_queue;
+
+  /**
+   * The custom field queue object.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $custom_field_queue;
+
+  /**
+   * Query factory.
+   *
+   * @var \Drupal\Core\Entity\Query\QueryFactory
+   */
+  protected $query_factory;
+
+  /**
    * Constructs a new BrightcoveAPIClientForm.
    *
    * @param \Drupal\Core\Config\Config $config
    *   The config for brightcove.settings.
+   * @param \Drupal\Core\Entity\EntityStorageInterface $player_storage
+   *   Player entity storage.
+   * @param \Drupal\Core\Queue\QueueInterface $player_queue
+   *   Player queue.
+   * @param \Drupal\Core\Entity\Query\QueryFactory $query_factory
    */
-  public function __construct(Config $config) {
+  public function __construct(Config $config, EntityStorageInterface $player_storage, QueueInterface $player_queue, QueueInterface $custom_field_queue, QueryFactory $query_factory) {
     $this->config = $config;
+    $this->player_storage = $player_storage;
+    $this->player_queue = $player_queue;
+    $this->query_factory = $query_factory;
+    $this->custom_field_queue = $custom_field_queue;
   }
 
   /**
    * @inheritdoc
    */
-  public static function create(ContainerInterface $containerInterface) {
+  public static function create(ContainerInterface $container) {
     return new static(
-      $containerInterface->get('config.factory')->getEditable('brightcove.settings')
+      $container->get('config.factory')->getEditable('brightcove.settings'),
+      $container->get('entity_type.manager')->getStorage('brightcove_player'),
+      $container->get('queue')->get('brightcove_player_queue_worker'),
+      $container->get('queue')->get('brightcove_custom_field_queue_worker'),
+      $container->get('entity.query')
     );
   }
 
@@ -114,13 +160,13 @@ class BrightcoveAPIClientForm extends EntityForm {
     $form['default_player'] = array(
       '#type' => 'select',
       '#title' => $this->t('Default player'),
-      '#options' => [
-        // Other players will be implemented later (as configuration entities).
-        $brightcove_api_client::DEFAULT_PLAYER => $this->t('Brightcove Default Player'),
-      ],
-      '#default_value' => $brightcove_api_client->getDefaultPlayer() ? $brightcove_api_client->getDefaultPlayer() : 'default',
+      '#options' => BrightcovePlayer::getList($brightcove_api_client->id()),
+      '#default_value' => $brightcove_api_client->getDefaultPlayer() ? $brightcove_api_client->getDefaultPlayer() : BrightcoveAPIClient::DEFAULT_PLAYER,
       '#required' => TRUE,
     );
+    if ($brightcove_api_client->isNew()) {
+      $form['default_player']['#description'] = t('The rest of the players will be available after saving.');
+    }
 
     $form['secret_key'] = array(
       '#type' => 'textfield',
@@ -130,11 +176,15 @@ class BrightcoveAPIClientForm extends EntityForm {
       '#required' => TRUE,
     );
 
+    // Count BrightcoveAPIClients.
+    $api_clients_number = $this->query_factory->get('brightcove_api_client')
+      ->count()->execute();
+
     $form['default_client'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Default API Client'),
       '#description' => $this->t('Enable this to make this API Client the default.'),
-      '#default_value' => ($this->config->get('defaultAPIClient') == $brightcove_api_client->id()),
+      '#default_value' => $api_clients_number == 0 || ($this->config->get('defaultAPIClient') == $brightcove_api_client->id()),
     ];
 
     return $form;
@@ -146,15 +196,16 @@ class BrightcoveAPIClientForm extends EntityForm {
   public function validateForm(array &$form, FormStateInterface $form_state) {
     try {
       // Try to authorize client and save values on success.
-      $json = BrightcoveAPIClient::authorize($form_state->getValue('client_id'), $form_state->getValue('secret_key'));
+      $client = Client::authorize($form_state->getValue('client_id'), $form_state->getValue('secret_key'));
 
       // Test account ID.
-      $client = new Client($json['access_token']);
       $cms = new CMS($client, $form_state->getValue('account_id'));
       $cms->countVideos();
 
-      $form_state->setValue('access_token', $json['access_token']);
-      $form_state->setValue('access_token_expire_date', REQUEST_TIME + intval($json['expires_in']));
+      $form_state->setValue('access_token', $client->getAccessToken());
+      // @see: Token expire date calculation explanation is in
+      //       BrightcoveAPIClient::authorizeClient() method.
+      $form_state->setValue('access_token_expire_date', REQUEST_TIME + intval($client->getExpiresIn() - 30));
     }
     catch (AuthenticationException $e) {
       $form_state->setErrorByName('client_id', $e->getMessage());
@@ -162,6 +213,48 @@ class BrightcoveAPIClientForm extends EntityForm {
     }
     catch (APIException $e) {
       $form_state->setErrorByName('account_id', $e->getMessage());
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $entity */
+    $entity = $this->entity;
+
+    $client = new Client($form_state->getValue('access_token'), $form_state->getValue('access_token_expire_date'));
+    $cms = new CMS($client, $form_state->getValue('account_id'));
+
+    /** @var \Brightcove\Object\CustomFields $video_fields */
+    $video_fields = $cms->getVideoFields();
+    $entity->setMaxCustomFields($video_fields->getMaxCustomFields());
+
+    foreach ($video_fields->getCustomFields() as $custom_field) {
+      // Create queue item.
+      $this->custom_field_queue->createItem([
+        'api_client_id' => $this->entity->id(),
+        'custom_field' => $custom_field,
+      ]);
+    }
+
+    parent::submitForm($form, $form_state);
+
+    // Get Players the first time when the API client is being saved.
+    if ($entity->isNew()) {
+      $pm = new PM($client, $form_state->getValue('account_id'));
+      $player_list = $pm->listPlayers();
+      $players = [];
+      if (!empty($player_list) && !empty($player_list->getItems())) {
+        $players = $player_list->getItems();
+      }
+      foreach ($players as $player) {
+        // Create queue item.
+        $this->player_queue->createItem([
+          'api_client_id' => $this->entity->id(),
+          'player' => $player,
+        ]);
+      }
     }
   }
 
@@ -177,6 +270,15 @@ class BrightcoveAPIClientForm extends EntityForm {
         drupal_set_message($this->t('Created the %label Brightcove API Client.', [
           '%label' => $brightcove_api_client->label(),
         ]));
+
+        // Initialize batch.
+        batch_set([
+          'operations' => [
+            [[BrightcoveUtil::class, 'runQueue'], ['brightcove_player_queue_worker']],
+            [[BrightcoveUtil::class, 'runQueue'], ['brightcove_custom_field_queue_worker']],
+          ],
+        ]);
+
         break;
 
       default:
@@ -191,5 +293,4 @@ class BrightcoveAPIClientForm extends EntityForm {
 
     $form_state->setRedirectUrl($brightcove_api_client->urlInfo('collection'));
   }
-
 }

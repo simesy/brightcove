@@ -14,7 +14,7 @@ use Drupal\Core\Queue\QueueWorkerBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Processes Entity Update Tasks for My Module.
+ * Processes Entity Update Tasks for Playlist.
  *
  * @QueueWorker(
  *   id = "brightcove_playlist_queue_worker",

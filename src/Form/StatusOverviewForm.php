@@ -7,12 +7,11 @@
 
 namespace Drupal\brightcove\Form;
 
+use Drupal\brightcove\BrightcoveUtil;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Queue\QueueWorkerInterface;
-use Drupal\Core\Queue\SuspendQueueException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Queue\QueueFactory;
 
@@ -47,8 +46,12 @@ class StatusOverviewForm extends FormBase {
   /**
    * Constructs a StatusOverviewForm object.
    *
-   * @param \Drupal\Core\Queue\QueueFactory $queue
+   * @param \Drupal\Core\Queue\QueueFactory $queueFactory
    *   The queue factory.
+   * @param \Drupal\Core\Database\Connection $connection
+   *   Database connection.
+   * @param \Drupal\Core\Entity\EntityTypeManager $entityTypeManager
+   *   Entity type manager.
    */
   public function __construct(QueueFactory $queueFactory, Connection $connection, EntityTypeManager $entityTypeManager) {
     $this->queueFactory = $queueFactory;
@@ -78,15 +81,26 @@ class StatusOverviewForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $video_num = $this->entityTypeManager->getStorage('brightcove_video')->getQuery()->count()->execute();
+    $playlist_num = $this->entityTypeManager->getStorage('brightcove_playlist')->getQuery()->count()->execute();
+
     $counts = [
       'client' => $this->entityTypeManager->getStorage('brightcove_api_client')->getQuery()->count()->execute(),
-      'video' => $this->entityTypeManager->getStorage('brightcove_video')->getQuery()->count()->execute(),
-      'playlist' => $this->entityTypeManager->getStorage('brightcove_playlist')->getQuery()->count()->execute(),
+      'video' => $video_num,
+      'video_delete' => $video_num,
+      'playlist' => $playlist_num,
+      'playlist_delete' => $playlist_num,
+      'player' => $this->entityTypeManager->getStorage('brightcove_player')->getQuery()->count()->execute(),
+      'custom_field' => $this->entityTypeManager->getStorage('brightcove_custom_field')->getQuery()->count()->execute(),
     ];
     $queues = [
       'client' => $this->t('Client'),
       'video' => $this->t('Video'),
+      'video_delete' => $this->t('Check deleted videos *'),
       'playlist' => $this->t('Playlist'),
+      'playlist_delete' => $this->t('Check deleted playlists *'),
+      'player' => $this->t('Player'),
+      'custom_field' => $this->t('Custom field'),
     ];
 
     // There is no form element (ie. widget) in the table, so it's safe to
@@ -107,6 +121,11 @@ class StatusOverviewForm extends FormBase {
         $this->queueFactory->get("brightcove_{$queue}_queue_worker")->numberOfItems(),
       ];
     }
+
+    $form['notice'] = [
+      '#type' => 'item',
+      '#markup' => '<em>* ' . $this->t('May run slowly with lots of items.') . '</em>',
+    ];
 
     $form['sync'] = array(
       '#name' => 'sync',
@@ -134,24 +153,37 @@ class StatusOverviewForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     if ($triggering_element = $form_state->getTriggeringElement()) {
       $batch_operations = [];
+      $util_class = BrightcoveUtil::class;
       switch ($triggering_element['#name']) {
         case 'sync':
           $batch_operations[] = ['_brightcove_initiate_sync', []];
           // There is intentionally no break here.
         case 'run':
-          $batch_operations[] = [[self::class, 'runQueue'], ['brightcove_client_queue_worker']];
-          $batch_operations[] = [[self::class, 'runQueue'], ['brightcove_video_page_queue_worker']];
-          $batch_operations[] = [[self::class, 'runQueue'], ['brightcove_video_queue_worker']];
-          $batch_operations[] = [[self::class, 'runQueue'], ['brightcove_playlist_page_queue_worker']];
-          $batch_operations[] = [[self::class, 'runQueue'], ['brightcove_playlist_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_client_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_player_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_player_delete_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_custom_field_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_custom_field_delete_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_video_page_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_video_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_playlist_page_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_playlist_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_video_delete_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_playlist_delete_queue_worker']];
           break;
 
         case 'clear':
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_client_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_player_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_player_delete_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_custom_field_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_custom_field_delete_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_video_page_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_video_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_playlist_page_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_playlist_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_video_delete_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_playlist_delete_queue_worker']];
           break;
       }
       if ($batch_operations) {
@@ -185,52 +217,4 @@ class StatusOverviewForm extends FormBase {
     // use dependency injection here.
     \Drupal::queue($queue)->deleteQueue();
   }
-
-  /**
-   * Runs a queue.
-   *
-   * @param $queue
-   *   The queue name to clear.
-   * @param &$context
-   *   The Batch API context.
-   */
-  public static function runQueue($queue, &$context) {
-    // This is a static function called by Batch API, so it's not possible to
-    // use dependency injection here.
-    /** @var QueueWorkerInterface $queue_worker */
-    $queue_worker = \Drupal::getContainer()->get('plugin.manager.queue_worker')->createInstance($queue);
-    $queue = \Drupal::queue($queue);
-
-    // Let's process ALL the items in the queue, 5 by 5, to avoid PHP timeouts.
-    // If there's any problem with processing any of those 5 items, stop sooner.
-    $limit = 5;
-    $handled_all = TRUE;
-    while (($limit > 0) && ($item = $queue->claimItem(5))) {
-      try {
-        $queue_worker->processItem($item->data);
-        $queue->deleteItem($item);
-      }
-      catch (SuspendQueueException $e) {
-        $queue->releaseItem($item);
-        $handled_all = FALSE;
-        break;
-      }
-      catch (\Exception $e) {
-        watchdog_exception(self::class, $e);
-        \Drupal::logger('brightcove')->notice($e->getMessage());
-        $handled_all = FALSE;
-      }
-      $limit--;
-    }
-
-    // As this batch may be run synchronously with the queue's cron processor,
-    // we can't be sure about the number of items left for the batch as long as
-    // there is any. So let's just inform the user about the number of remaining
-    // items, as we don't really care if they are processed by this batch
-    // processor or the cron one.
-    $remaining = $queue->numberOfItems();
-    $context['message'] = t('@count item(s) left in current queue', ['@count' => $remaining]);
-    $context['finished'] = $handled_all && ($remaining == 0);
-  }
-
 }

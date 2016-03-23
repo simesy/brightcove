@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\brightcove\BrightcoveUtil;
 
 /**
- * Processes Entity Update Tasks for My Module.
+ * Processes Entity Update Tasks for Video.
  *
  * @QueueWorker(
  *   id = "brightcove_video_page_queue_worker",

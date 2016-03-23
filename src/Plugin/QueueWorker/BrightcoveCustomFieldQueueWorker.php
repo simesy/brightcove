@@ -2,36 +2,36 @@
 
 /**
  * @file
- * Contains \Drupal\brightcove\Plugin\QueueWorker\BrightcoveVideoQueueWorker.
+ * Contains \Drupal\brightcove\Plugin\QueueWorker\BrightcoveCustomFieldQueueWorker.
  */
 
 namespace Drupal\brightcove\Plugin\QueueWorker;
 
+use Drupal\brightcove\Entity\BrightcoveCustomField;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\brightcove\Entity\BrightcoveVideo;
 
 /**
- * Processes Entity Update Tasks for Video.
+ * Processes Entity Update Tasks for Custom Fields.
  *
  * @QueueWorker(
- *   id = "brightcove_video_queue_worker",
- *   title = @Translation("Brightcove video queue worker."),
+ *   id = "brightcove_custom_field_queue_worker",
+ *   title = @Translation("Brightcove custom field queue worker."),
  *   cron = { "time" = 30 }
  * )
  */
-class BrightcoveVideoQueueWorker extends QueueWorkerBase implements ContainerFactoryPluginInterface {
+class BrightcoveCustomFieldQueueWorker extends QueueWorkerBase implements ContainerFactoryPluginInterface {
   /**
-   * The brightcove_video storage.
+   * The brightcove_custom_field storage.
    *
    * @var \Drupal\Core\Entity\EntityStorageInterface
    */
   protected $storage;
 
   /**
-   * Constructs a new BrightcoveVideoQueueWorker object.
+   * Constructs a new BrightcoveCustomFieldQueueWorker object.
    *
    * @param array $configuration
    *   A configuration array containing information about the plugin instance.
@@ -55,7 +55,7 @@ class BrightcoveVideoQueueWorker extends QueueWorkerBase implements ContainerFac
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('entity_type.manager')->getStorage('brightcove_video')
+      $container->get('entity_type.manager')->getStorage('brightcove_custom_field')
     );
   }
 
@@ -63,9 +63,9 @@ class BrightcoveVideoQueueWorker extends QueueWorkerBase implements ContainerFac
    * {@inheritdoc}
    */
   public function processItem($data) {
-    /** @var \Brightcove\Object\Video\Video $video */
-    $video = $data['video'];
+    /** @var \Brightcove\Object\CustomField $custom_field */
+    $custom_field = $data['custom_field'];
 
-    BrightcoveVideo::createOrUpdate($video, $this->storage, $data['api_client_id']);
+    BrightcoveCustomField::createOrUpdate($custom_field, $this->storage, $data['api_client_id']);
   }
 }

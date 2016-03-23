@@ -8,10 +8,14 @@ namespace Drupal\brightcove;
 
 use Brightcove\API\CMS;
 use Brightcove\API\DI;
+use Brightcove\API\Exception\APIException;
+use Brightcove\API\PM;
 use Drupal\brightcove\Entity\BrightcoveAPIClient;
-use Drupal\brightcove\Entity\BrightcoveCMSEntity;
+use Drupal\brightcove\Entity\BrightcovePlayer;
 use Drupal\brightcove\Entity\BrightcovePlaylist;
 use Drupal\brightcove\Entity\BrightcoveVideo;
+use Drupal\Core\Queue\QueueWorkerInterface;
+use Drupal\Core\Queue\SuspendQueueException;
 use Drupal\Core\Url;
 
 /**
@@ -38,6 +42,13 @@ class BrightcoveUtil {
    * @var \Brightcove\API\DI[]
    */
   protected static $di_apis = [];
+
+  /**
+   * Array of PM objects.
+   *
+   * @var \Brightcove\API\PM[]
+   */
+  protected static $pm_apis = [];
 
   /**
    * Convert Brightcove date make it digestible by Drupal.
@@ -117,7 +128,7 @@ class BrightcoveUtil {
    *   Initialized Brightcove CMS API.
    */
   public static function getDIAPI($entity_id) {
-    // Create new \Brightcove\API\CMS object if it is not exists yet.
+    // Create new \Brightcove\API\DI object if it is not exists yet.
     if (!isset(self::$di_apis[$entity_id])) {
       $client = self::getClient($entity_id);
       self::$di_apis[$entity_id] = new DI($client, self::$api_clients[$entity_id]->getAccountID());
@@ -127,37 +138,153 @@ class BrightcoveUtil {
   }
 
   /**
+   * Gets Brightcove PM API.
+   *
+   * @param int $entity_id
+   *   BrightcoveAPIClient entity ID.
+   *
+   * @return \Brightcove\API\PM
+   *   Initialized Brightcove PM API.
+   */
+  public static function getPMAPI($entity_id) {
+    // Create new \Brightcove\API\PM object if it is not exists yet.
+    if (!isset(self::$pm_apis[$entity_id])) {
+      $client = self::getClient($entity_id);
+      self::$pm_apis[$entity_id] = new PM($client, self::$api_clients[$entity_id]->getAccountID());
+    }
+
+    return self::$pm_apis[$entity_id];
+  }
+
+  /**
    * Check updated version of the CMS entity.
    *
    * If the checked CMS entity has a newer version of it on Brightcove then
    * show a message about it with a link to be able to update the local
    * version.
    *
-   * @param \Drupal\brightcove\Entity\BrightcoveCMSEntity $entity
+   * @param \Drupal\brightcove\BrightcoveCMSEntityInterface $entity
+   *   Brightcove CMS Entity, can be BrightcoveVideo or BrightcovePlaylist.
+   *   Player is currently not supported.
+   *
+   * @throws \Exception
+   *   If the version for the given entity is cannot be checked.
    */
-  public static function checkUpdatedVersion(BrightcoveCMSEntity $entity) {
-    /** @var \Brightcove\API\CMS $cms */
-    $cms = self::getCMSAPI($entity->getAPIClient());
+  public static function checkUpdatedVersion(BrightcoveCMSEntityInterface $entity) {
+    $client = self::getClient($entity->getAPIClient());
 
-    $entity_type = '';
-    if ($entity instanceof BrightcoveVideo) {
-      $cms_entity = $cms->getVideo($entity->getVideoId());
-      $entity_type = 'video';
-    }
-    else if ($entity instanceof BrightcovePlaylist) {
-      $cms_entity = $cms->getPlaylist($entity->getPlaylistId());
-      $entity_type = 'playlist';
-    }
+    if (!is_null($client)) {
+      $cms = self::getCMSAPI($entity->getAPIClient());
 
-    if (isset($cms_entity)) {
-      if ($entity->getChangedTime() < strtotime($cms_entity->getUpdatedAt())) {
-        $url = Url::fromRoute("brightcove_manual_update_{$entity_type}", ['entity_id' => $entity->id()], ['query' => ['token' => \Drupal::getContainer()->get('csrf_token')->get("brightcove_{$entity_type}/{$entity->id()}/update")]]);
+      $entity_type = '';
+      try {
+        if ($entity instanceof BrightcoveVideo) {
+          $entity_type = 'video';
+          $cms_entity = $cms->getVideo($entity->getVideoId());
+        }
+        else if ($entity instanceof BrightcovePlaylist) {
+          $entity_type = 'playlist';
+          $cms_entity = $cms->getPlaylist($entity->getPlaylistId());
+        }
+        else {
+          throw new \Exception(t("Can't check version for :entity_type entity.", [
+            ':entity_type' => get_class($entity),
+          ]));
+        }
 
-        drupal_set_message(t("There is a newer version of this :type on Brightcove, you may want to <a href=':url'>update the local version</a> before editing it.", [
-          ':type' => $entity_type,
-          ':url' => $url->toString(),
-        ]), 'warning');
+        if (isset($cms_entity)) {
+          if ($entity->getChangedTime() < strtotime($cms_entity->getUpdatedAt())) {
+            $url = Url::fromRoute("brightcove_manual_update_{$entity_type}", ['entity_id' => $entity->id()], ['query' => ['token' => \Drupal::getContainer()->get('csrf_token')->get("brightcove_{$entity_type}/{$entity->id()}/update")]]);
+
+            drupal_set_message(t("There is a newer version of this :type on Brightcove, you may want to <a href=':url'>update the local version</a> before editing it.", [
+              ':type' => $entity_type,
+              ':url' => $url->toString(),
+            ]), 'warning');
+          }
+        }
+      }
+      catch (APIException $e) {
+        if (!empty($entity_type)) {
+          $url = Url::fromRoute("entity.brightcove_{$entity_type}.delete_form", ["brightcove_{$entity_type}" => $entity->id()]);
+          drupal_set_message(t("This :type no longer exists on Brightcove. You may want to <a href=':url'>delete the local version</a> too.", [
+            ':type' => $entity_type,
+            ':url' => $url->toString(),
+          ]), 'error');
+        }
+        else {
+          drupal_set_message($e->getMessage(), 'error');
+        }
       }
     }
+    else {
+      drupal_set_message(t('Brightcove API connection error: :error', [
+        ':error' => self::getAPIClient($entity->getAPIClient())->getClientStatusMessage()
+      ]), 'error');
+    }
+  }
+
+  /**
+   * Runs a queue.
+   *
+   * @param $queue
+   *   The queue name to clear.
+   * @param &$context
+   *   The Batch API context.
+   */
+  public static function runQueue($queue, &$context) {
+    // This is a static function called by Batch API, so it's not possible to
+    // use dependency injection here.
+    /** @var QueueWorkerInterface $queue_worker */
+    $queue_worker = \Drupal::getContainer()->get('plugin.manager.queue_worker')->createInstance($queue);
+    $queue = \Drupal::queue($queue);
+
+    // Let's process ALL the items in the queue, 5 by 5, to avoid PHP timeouts.
+    // If there's any problem with processing any of those 5 items, stop sooner.
+    $limit = 5;
+    $handled_all = TRUE;
+    while (($limit > 0) && ($item = $queue->claimItem(5))) {
+      try {
+        $queue_worker->processItem($item->data);
+        $queue->deleteItem($item);
+      }
+      catch (SuspendQueueException $e) {
+        $queue->releaseItem($item);
+        $handled_all = FALSE;
+        break;
+      }
+      catch (\Exception $e) {
+        watchdog_exception(self::class, $e);
+        \Drupal::logger('brightcove')->notice($e->getMessage());
+        $handled_all = FALSE;
+      }
+      $limit--;
+    }
+
+    // As this batch may be run synchronously with the queue's cron processor,
+    // we can't be sure about the number of items left for the batch as long as
+    // there is any. So let's just inform the user about the number of remaining
+    // items, as we don't really care if they are processed by this batch
+    // processor or the cron one.
+    $remaining = $queue->numberOfItems();
+    $context['message'] = t('@count item(s) left in current queue', ['@count' => $remaining]);
+    $context['finished'] = $handled_all && ($remaining == 0);
+  }
+
+  /**
+   * Helper function to get default player for the given entity.
+   *
+   * @param \Drupal\brightcove\BrightcoveVideoPlaylistCMSEntityInterface $entity
+   *   Video or playlist entity.
+   *
+   * @return string
+   *   The ID of the player.
+   */
+  public static function getDefaultPlayer(BrightcoveVideoPlaylistCMSEntityInterface $entity) {
+    if ($player = $entity->getPlayer()) {
+      return BrightcovePlayer::load($player)->getPlayerId();
+    }
+
+    $api_client = self::getAPIClient($entity->getAPIClient());
+    return $api_client->getDefaultPlayer();
   }
 }

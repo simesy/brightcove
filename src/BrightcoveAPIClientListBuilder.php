@@ -7,6 +7,7 @@
 
 namespace Drupal\brightcove;
 
+use Drupal\brightcove\Entity\BrightcovePlayer;
 use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -39,9 +40,7 @@ class BrightcoveAPIClientListBuilder extends ConfigEntityListBuilder {
     $header['label'] = $this->t('Brightcove API Client');
     $header['id'] = $this->t('Machine name');
     $header['account_id'] = $this->t('Account ID');
-    $header['client_id'] = $this->t('Client ID');
     $header['default_player'] = $this->t('Default player');
-    $header['secret_key'] = $this->t('Secret key');
     $header['client_status'] = $this->t('Status');
     return $header + parent::buildHeader();
   }
@@ -60,9 +59,7 @@ class BrightcoveAPIClientListBuilder extends ConfigEntityListBuilder {
       $row['id'] .= $this->t(' (default)');
     }
     $row['account_id'] = $entity->getAccountID();
-    $row['client_id'] = $entity->getClientID();
-    $row['default_player'] = $entity->getDefaultPlayer();
-    $row['secret_key'] = $entity->getSecretKey();
+    $row['default_player'] = BrightcovePlayer::getList($entity->id())[$entity->getDefaultPlayer()];
     $row['client_status'] = $entity->getClientStatus() ? $this->t('OK') : $this->t('Error');
     return $row + parent::buildRow($entity);
   }

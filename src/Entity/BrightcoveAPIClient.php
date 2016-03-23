@@ -132,6 +132,13 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
   private $re_authorization_tried = FALSE;
 
   /**
+   * Maximum number of Custom fields.
+   *
+   * @var array
+   */
+  protected $max_custom_fields;
+
+  /**
    * @inheritdoc
    */
   public function getLabel() {
@@ -203,6 +210,13 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getMaxCustomFields() {
+    return $this->max_custom_fields;
+  }
+
+  /**
    * @inheritdoc
    */
   public function setLabel($label) {
@@ -230,8 +244,7 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
    * @inheritdoc
    */
   public function setDefaultPlayer($default_player) {
-    // This is intentional: currently only the 'default' player is supported.
-    $this->default_player = 'default';
+    $this->default_player = $default_player;
     return $this;
   }
 
@@ -273,6 +286,14 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function setMaxCustomFields($max_custom_fields) {
+    $this->max_custom_fields = $max_custom_fields;
+    return $this;
+  }
+
+  /**
    * Authorize client with Brightcove API and store client on the entity.
    *
    * @return $this
@@ -283,26 +304,26 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
       // Use the got access token while it is not expired.
       if (REQUEST_TIME < $this->access_token_expire_date) {
         // Create new client.
-        $this->setClient(new Client($this->access_token));
+        $this->setClient(new Client($this->access_token, $this->access_token_expire_date));
       }
       // Otherwise get a new access token.
       else {
-        $json = self::authorize($this->client_id, $this->secret_key);
+        $client = Client::authorize($this->client_id, $this->secret_key);
 
         // Update access information. This will ensure that in the current
         // session we will get the correct access data.
-        $this->setAccessToken($json['access_token']);
+        $this->setAccessToken($client->getAccessToken());
         // Set token expire date and subtract the default php
         // max_execution_time from it.
         // We have to use the default php max_execution_time because if we
         // would get the value from ini_get('max_execution_time'), then it
         // could be larger than the Brightcove's expire date causing to always
         // get a new access token.
-        $this->setAccessTokenExpireDate(REQUEST_TIME + intval($json['expires_in'] - 30));
+        $this->setAccessTokenExpireDate(REQUEST_TIME + intval($client->getExpiresIn() - 30));
         $this->save();
 
         // Create new client.
-        $this->setClient(new Client($this->access_token));
+        $this->setClient(new Client($this->access_token, $this->access_token_expire_date));
       }
 
       // Test account ID.
@@ -331,40 +352,4 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
 
     return $this;
   }
-
-  /**
-   * Authorize client with Brightcove API.
-   *
-   * @param $client_id
-   *   Brightcove client ID.
-   * @param $secret_key
-   *   Brightcove secret key.
-   *
-   * @return \Brightcove\API\Client
-   *   Authorized Brightcove client.
-   *
-   * @throws \Brightcove\API\Exception\AuthenticationException
-   */
-  public static function authorize($client_id, $secret_key) {
-    // Copied from Brightcove API to be able to save access_token until the
-    // expire date is not passed.
-    list($code, $response) = Client::HTTPRequest('POST', 'https://oauth.brightcove.com/v3/access_token',
-      array('Content-Type: application/x-www-form-urlencoded'),
-      'grant_type=client_credentials',
-      function ($ch) use ($client_id, $secret_key) {
-        curl_setopt($ch, CURLOPT_USERPWD, "{$client_id}:{$secret_key}");
-      });
-
-    if ($code !== 200) {
-      throw new AuthenticationException(t("Can't authenticate with the given credentials."));
-    }
-
-    $json = json_decode($response, TRUE);
-    if ($json['token_type'] !== 'Bearer') {
-      throw new AuthenticationException(t('Unsupported token type: @token_type', array('@token_type' => $json['token_type'])));
-    }
-
-    return $json;
-  }
-
 }

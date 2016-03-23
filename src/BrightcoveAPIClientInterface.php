@@ -112,6 +112,14 @@ interface BrightcoveAPIClientInterface extends ConfigEntityInterface {
   public function getAccessTokenExpireDate();
 
   /**
+   * Returns the maximum number of addable custom fields.
+   *
+   * @return int
+   *   The maximum number of addable custom fields.
+   */
+  public function getMaxCustomFields();
+
+  /**
    * Sets the API Client label.
    *
    * @param string $label
@@ -180,4 +188,14 @@ interface BrightcoveAPIClientInterface extends ConfigEntityInterface {
    * @return $this
    */
   public function setAccessTokenExpireDate($expire_date);
+
+  /**
+   * Sets the maximum addable custom fields number.
+   *
+   * @param $max_custom_fields
+   *   The maximum custom fields number.
+   *
+   * @return $this
+   */
+  public function setMaxCustomFields($max_custom_fields);
 }

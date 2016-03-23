@@ -12,21 +12,21 @@ use Drupal\user\EntityOwnerInterface;
 
 interface BrightcoveCMSEntityInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
   /**
-   * Gets the Brightcove Playlist name.
+   * Gets the Brightcove CMS entity name.
    *
    * @return string
-   *   Name of the Brightcove Playlist.
+   *   Name of the Brightcove CMS entity.
    */
   public function getName();
 
   /**
-   * Sets the Brightcove Playlist name.
+   * Sets the Brightcove CMS entity name.
    *
    * @param string $name
-   *   The Brightcove Playlist name.
+   *   The Brightcove CMS entity name.
    *
-   * @return \Drupal\brightcove\BrightcovePlaylistInterface
-   *   The called Brightcove Playlist.
+   * @return \Drupal\brightcove\BrightcoveCMSEntityInterface
+   *   The called Brightcove CMS entity.
    */
   public function setName($name);
 
@@ -44,86 +44,46 @@ interface BrightcoveCMSEntityInterface extends ContentEntityInterface, EntityCha
    * @param int $api_client
    *   Target ID of the Brightcove Client API.
    *
-   * @return \Drupal\brightcove\BrightcovePlaylistInterface
-   *   The called Brightcove Playlist.
+   * @return \Drupal\brightcove\BrightcoveCMSEntityInterface
+   *   The called Brightcove CMS entity.
    */
   public function setAPIClient($api_client);
-
-  /**
-   * Returns the reference ID of the video.
-   *
-   * @return string
-   *   Reference ID.
-   */
-  public function getReferenceID();
-
-  /**
-   * Sets the video's reference ID.
-   *
-   * @param string $reference_id
-   *   The reference ID of the video.
-   *
-   * @return \Drupal\brightcove\BrightcoveVideoInterface
-   *   The called Brightcove Video.
-   */
-  public function setReferenceID($reference_id);
 
   /**
    * Returns the description.
    *
    * @return string
-   *   The description of the playlist.
+   *   The description of the CMS entity.
    */
   public function getDescription();
 
   /**
-   * Sets the playlist's description.
+   * Sets the CMS entity's description.
    *
    * @param string $description
-   *   The description of the playlist.
+   *   The description of the CMS entity.
    *
-   * @return \Drupal\brightcove\BrightcovePlaylistInterface
-   *   The called Brightcove Playlist.
+   * @return \Drupal\brightcove\BrightcoveCMSEntityInterface
+   *   The called Brightcove CMS entity.
    */
   public function setDescription($description);
 
   /**
-   * Returns the Brightcove Video published status indicator.
-   *
-   * Unpublished Brightcove Video are only visible to restricted users.
-   *
-   * @return bool
-   *   TRUE if the Brightcove Video is published.
-   */
-  public function isPublished();
-
-  /**
-   * Sets the published status of a Brightcove Video.
-   *
-   * @param bool $published
-   *   TRUE to set this Brightcove Video to published, FALSE to set it to unpublished.
-   *
-   * @return \Drupal\brightcove\BrightcoveVideoInterface
-   *   The called Brightcove Video.
-   */
-  public function setPublished($published);
-
-  /**
-   * Gets the Brightcove Video creation timestamp.
+   * Gets the Brightcove CMS entity creation timestamp.
    *
    * @return int
-   *   Creation timestamp of the Brightcove Video.
+   *   Creation timestamp of the Brightcove CMS entity.
    */
   public function getCreatedTime();
 
   /**
-   * Sets the Brightcove Video creation timestamp.
+   * Sets the Brightcove CMS entity creation timestamp.
    *
    * @param int $timestamp
-   *   The Brightcove Video creation timestamp.
+   *   The Brightcove CMS entity creation timestamp.
    *
-   * @return \Drupal\brightcove\BrightcoveVideoInterface
-   *   The called Brightcove Video.
+   * @return \Drupal\brightcove\BrightcoveCMSEntityInterface
+   *   The called Brightcove CMS entity.
    */
   public function setCreatedTime($timestamp);
 }
