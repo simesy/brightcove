@@ -2409,8 +2409,8 @@ function brightcove_create_callback($hash, $video_id, $client_id, $fid = 0, $par
   return $callback;
 }
 
-function _brightcove_get_ingest_callback($hash) {
-  if (!variable_get('brightcove_track_ingestion')) {
+function _brightcove_get_ingest_callback($hash, $force = FALSE) {
+  if (!variable_get('brightcove_track_ingestion') && !$force) {
     return FALSE;
   }
 
