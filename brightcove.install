@@ -164,6 +164,10 @@ function brightcove_schema() {
         'length' => 255,
         'not null' => TRUE,
       ],
+      'metadata' => [
+        'type' => 'text',
+        'not null' => TRUE,
+      ],
     ],
     'primary key' => ['id'],
   ];
@@ -520,6 +524,11 @@ function brightcove_update_7601() {
     'type' => 'varchar',
     'length' => 255,
     'not null' => TRUE,
+  ]);
+  db_add_field('brightcove_callback', 'metadata', [
+    'type' => 'text',
+    'not null' => TRUE,
+    'initial' => '',
   ]);
   db_drop_primary_key('brightcove_callback');
   db_add_primary_key('brightcove_callback', ['hash']);
