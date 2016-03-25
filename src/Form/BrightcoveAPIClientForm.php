@@ -73,7 +73,10 @@ class BrightcoveAPIClientForm extends EntityForm {
    *   Player entity storage.
    * @param \Drupal\Core\Queue\QueueInterface $player_queue
    *   Player queue.
+   * @param \Drupal\Core\Queue\QueueInterface $custom_field_queue
+   *   Custom field queue.
    * @param \Drupal\Core\Entity\Query\QueryFactory $query_factory
+   *   Query factory.
    */
   public function __construct(Config $config, EntityStorageInterface $player_storage, QueueInterface $player_queue, QueueInterface $custom_field_queue, QueryFactory $query_factory) {
     $this->config = $config;
@@ -240,8 +243,8 @@ class BrightcoveAPIClientForm extends EntityForm {
 
     parent::submitForm($form, $form_state);
 
-    // Get Players the first time when the API client is being saved.
     if ($entity->isNew()) {
+      // Get Players the first time when the API client is being saved.
       $pm = new PM($client, $form_state->getValue('account_id'));
       $player_list = $pm->listPlayers();
       $players = [];
@@ -253,6 +256,17 @@ class BrightcoveAPIClientForm extends EntityForm {
         $this->player_queue->createItem([
           'api_client_id' => $this->entity->id(),
           'player' => $player,
+        ]);
+      }
+
+      // Get Custom fields the first time when the API client is being saved.
+      /** @var \Brightcove\Object\CustomFields $video_fields */
+      $video_fields = $cms->getVideoFields();
+      foreach ($video_fields->getCustomFields() as $custom_field) {
+        // Create queue item.
+        $this->custom_field_queue->createItem([
+          'api_client_id' => $this->entity->id(),
+          'custom_field' => $custom_field,
         ]);
       }
     }

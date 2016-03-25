@@ -194,4 +194,14 @@ class BrightcoveVideoController extends ControllerBase {
 
     return new Response();
   }
+
+  /**
+   * Destructor.
+   */
+  public function __destruct() {
+    // Make sure that the semaphore gets released.
+    if ($this->state()->get('brightcove_video_semaphore', FALSE) == TRUE) {
+      $this->state()->set('brightcove_video_semaphore', FALSE);
+    }
+  }
 }

@@ -9,6 +9,7 @@ namespace Drupal\brightcove\Form;
 
 use Drupal\brightcove\Entity\BrightcoveCustomField;
 use Drupal\brightcove\Entity\BrightcoveVideo;
+use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 
@@ -27,21 +28,51 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
     /** @var $entity \Drupal\brightcove\Entity\BrightcoveVideo */
     $entity = $this->entity;
 
+    // Get api client from the form settings.
+    $api_client = NULL;
+    if (!empty($form_state->getValue('api_client'))) {
+      $api_client = $form_state->getValue('api_client')[0]['target_id'];
+    }
+    else {
+      $api_client = $form['api_client']['widget']['#default_value'];
+    }
+
+    // Get the correct profiles' list for the selected api client.
+    if ($entity->isNew()) {
+      // Class this class's update form method instead of the supper class's.
+      $form['api_client']['widget']['#ajax']['callback'] = [
+        self::class, 'apiClientUpdateForm',
+      ];
+
+      // Add ajax wrapper for profile.
+      $form['profile']['widget']['#ajax_id'] = 'ajax-profile-wrapper';
+      $form['profile']['widget']['#prefix'] = '<div id="' . $form['profile']['widget']['#ajax_id'] . '">';
+      $form['profile']['widget']['#suffix'] = '</div>';
+
+      // Update allowed values for profile.
+      $form['profile']['widget']['#options'] = BrightcoveVideo::getProfileAllowedValues($api_client);
+    }
+
     // Set default profile.
     if (!$form['profile']['widget']['#default_value']) {
-      $profile_allowed_values = BrightcoveVideo::getProfileAllowedValues();
-      $form['profile']['widget']['#default_value'] = reset($profile_allowed_values);
+      $profile_keys = array_keys($form['profile']['widget']['#options']);
+      $form['profile']['widget']['#default_value'] = reset($profile_keys);
     }
 
     /** @var \Drupal\brightcove\Entity\BrightcoveCustomField[] $custom_fields */
-    $custom_fields = BrightcoveCustomField::loadMultipleByAPIClient($entity->getAPIClient());
+    $custom_fields = BrightcoveCustomField::loadMultipleByAPIClient($api_client);
+
+    // Add ajax wrapper for custom fields.
+    if ($entity->isNew()) {
+      $form['custom_fields']['#ajax_id'] = 'ajax-custom-fields-wrapper';
+      $form['custom_fields']['#prefix'] = '<div id="' . $form['custom_fields']['#ajax_id'] . '">';
+      $form['custom_fields']['#suffix'] = '</div>';
+    }
 
     // Show custom fields.
     if (count($custom_fields) > 0) {
-      $form['custom_fields'] = [
-        '#type' => 'details',
-        '#title' => $this->t('Custom fields'),
-      ];
+      $form['custom_fields']['#type'] = 'details';
+      $form['custom_fields']['#title'] = $this->t('Custom fields');
 
       $has_required = FALSE;
       $custom_field_values = $entity->getCustomFieldValues();
@@ -81,6 +112,12 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
         // Add options for enum types.
         if ($custom_field_type == $custom_field::TYPE_ENUM) {
           $options = [];
+
+          // Add none option if the field is not required.
+          if (!$form['custom_fields'][$custom_field_id]['#required']) {
+            $options[''] = $this->t(' - None -');
+          }
+          
           foreach ($custom_field->getEnumValues() as $enum) {
             $options[$enum['value']] = $enum['value'];
           }
@@ -106,7 +143,8 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
 
     // Save custom field values.
     $custom_field_values = [];
-    foreach (Element::children($form['custom_fields']) as $field_name) {
+    $elements = !empty($form['custom_fields']) ? $form['custom_fields'] : [];
+    foreach (Element::children($elements) as $field_name) {
       $custom_field_values[$field_name] = $form_state->getValue($field_name);
     }
     $entity->setCustomFieldValues($custom_field_values);
@@ -126,5 +164,31 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
         ]));
     }
     $form_state->setRedirect('entity.brightcove_video.canonical', ['brightcove_video' => $entity->id()]);
+  }
+
+  /**
+   * Ajax callback to update the profile and player options list.
+   *
+   * @param $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   */
+  public static function apiClientUpdateForm($form, FormStateInterface $form_state) {
+    $response = parent::apiClientUpdateForm($form, $form_state);
+
+    // Update profile field.
+    $response->addCommand(new ReplaceCommand(
+      '#' . $form['profile']['widget']['#ajax_id'],
+      $form['profile']
+    ));
+
+    // Update custom fields.
+    $response->addCommand(new ReplaceCommand(
+      '#' . $form['custom_fields']['#ajax_id'],
+      $form['custom_fields']
+    ));
+
+    return $response;
   }
 }

@@ -7,6 +7,7 @@
 
 namespace Drupal\brightcove\Entity;
 
+use Brightcove\API\Exception\APIException;
 use Brightcove\API\Request\IngestImage;
 use Brightcove\API\Request\IngestRequest;
 use Brightcove\API\Request\IngestRequestMaster;
@@ -643,7 +644,11 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       }
 
       // Save or update custom field values.
-      if ($this->isFieldChanged('custom_field_values')) {
+      $custom_field_num = \Drupal::entityQuery('brightcove_custom_field')
+        ->condition('api_client', $this->getAPIClient())
+        ->count()
+        ->execute();
+      if ($this->isFieldChanged('custom_field_values') && $custom_field_num) {
         $video->setCustomFields($this->getCustomFieldValues());
       }
 
@@ -713,7 +718,8 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         $ingest_master->setUrl(file_create_url($file->getFileUri()));
 
         $ingest_request->setMaster($ingest_master);
-        $ingest_request->setProfile($this->getProfile());
+        $profiles = self::getProfileAllowedValues($this->getAPIClient());
+        $ingest_request->setProfile($profiles[$this->getProfile()]);
       }
 
       // Send the ingest request if there was an ingestible asset.
@@ -769,14 +775,30 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       $client = $api_client->getClient();
 
       // Delete video references.
-      $client->request('DELETE', 'cms', $api_client->getAccountID(), "/videos/{$this->getVideoId()}/references", NULL);
+      try {
+        $client->request('DELETE', 'cms', $api_client->getAccountID(), "/videos/{$this->getVideoId()}/references", NULL);
 
-      // Delete video.
-      $cms = BrightcoveUtil::getCMSAPI($this->getAPIClient());
-      $cms->deleteVideo($this->getVideoId());
+        // Delete video.
+        $cms = BrightcoveUtil::getCMSAPI($this->getAPIClient());
+        $cms->deleteVideo($this->getVideoId());
+
+        parent::delete();
+      }
+      catch (APIException $e) {
+        if ($e->getCode() == 404) {
+          drupal_set_message(t('The video was not found on Brightcove, only the local version was deleted.'), 'warning');
+          parent::delete();
+        }
+        else {
+          drupal_set_message(t('There was an error while trying to delete the Video from Brightcove: @error', [
+            '@error' => ($e->getMessage()),
+          ]), 'error');
+        }
+      }
     }
-
-    parent::delete();
+    else {
+      parent::delete();
+    }
   }
 
   /**
@@ -1455,32 +1477,43 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
   /**
    * Gets the allowed values for video profile.
+   *
+   * @param string $api_client
+   *   The API Client ID.
+   *
+   * @return array
+   *   The list of profiles.
    */
-  public static function getProfileAllowedValues() {
-    // @TODO: Should we get this list from brightcove?
-    $profiles = [
-      'Express Standard',
-      'Live - HD',
-      'Live - Premium HD',
-      'Live - Standard',
-      'audio-only',
-      'balanced-high-definition',
-      'balanced-nextgen-player',
-      'balanced-standard-definition',
-      'high-bandwidth-devices',
-      'high-resolution',
-      'low-bandwidth-devices',
-      'mp4-only',
-      'screencast',
-      'screencast-1280',
-      'single-bitrate-high',
-      'single-bitrate-standard',
-      'single-rendition',
-      'smart-player-transition',
-      'videocloud-default-v1',
-    ];
+  public static function getProfileAllowedValues($api_client) {
+    $profiles = [];
 
-    return array_combine($profiles, $profiles);
+    if (!empty($api_client)) {
+      $cid = 'brightcove:video:profiles:' . $api_client;
+
+      // If we have a hit in the cache, return the results.
+      if ($cache = \Drupal::cache()->get($cid)) {
+        $profiles = $cache->data;
+      }
+      // Otherwise download the profiles from brightcove and cache the results.
+      else {
+        /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $api_client_entity */
+        $api_client_entity = BrightcoveAPIClient::load($api_client);
+        $client = $api_client_entity->getClient();
+        $json = $client->request('GET', 'ingestion', $api_client_entity->getAccountID(), '/profiles', NULL);
+
+        foreach ($json as $profile) {
+          $profiles[$profile['id']] = $profile['name'];
+        }
+
+        // Order profiles by value.
+        asort($profiles);
+
+        // Save the results to cache.
+        \Drupal::cache()->set($cid, $profiles);
+      }
+    }
+
+    return $profiles;
   }
 
   /**
@@ -1505,7 +1538,25 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
    *   allowed values for all possible entities and bundles.
    */
   public static function profileAllowedValues(FieldStorageDefinitionInterface $definition, FieldableEntityInterface $entity = NULL, &$cacheable = TRUE) {
-    return self::getProfileAllowedValues();
+    $profiles = [];
+
+    if ($entity instanceof BrightcoveVideo) {
+      // Collect profiles for all of the api clients if the ID is not set.
+      if (empty($entity->id())) {
+        $api_clients = \Drupal::entityQuery('brightcove_api_client')
+          ->execute();
+
+        foreach ($api_clients as $api_client_id) {
+          $profiles[$api_client_id] = self::getProfileAllowedValues($api_client_id);
+        }
+      }
+      // Otherwise just return the results for the given api client.
+      else {
+        $profiles = self::getProfileAllowedValues($entity->getAPIClient());
+      }
+    }
+
+    return $profiles;
   }
 
   /**

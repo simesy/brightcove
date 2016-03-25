@@ -36,11 +36,17 @@ class BrightcoveCustomFieldDeleteQueueWorker extends QueueWorkerBase implements 
    * {@inheritdoc}
    */
   public function processItem($data) {
-    $custom_field = $data['custom_field_entity'];
-
     // Delete custom field.
-    if ($custom_field instanceof BrightcoveCustomField) {
-      $custom_field->delete();
+    if ($data instanceof BrightcoveCustomField) {
+      $data->delete();
+    }
+    else {
+      /** @var \Drupal\brightcove\Entity\BrightcoveCustomField $custom_field_entity */
+      $custom_field_entity = BrightcoveCustomField::load($data);
+
+      if (!is_null($data)) {
+        $custom_field_entity->delete();
+      }
     }
   }
 }

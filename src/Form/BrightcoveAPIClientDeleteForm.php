@@ -7,19 +7,97 @@
 
 namespace Drupal\brightcove\Form;
 
+use Drupal\brightcove\BrightcoveUtil;
 use Drupal\Core\Entity\EntityConfirmFormBase;
+use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\Url;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Builds the form to delete Brightcove API Client entities.
  */
 class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
   /**
+   * Query factory.
+   *
+   * @var \Drupal\Core\Entity\Query\QueryFactory
+   */
+  protected $query_factory;
+
+  /**
+   * The playlist local delete queue object.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $playlist_local_delete_queue;
+
+  /**
+   * The video local delete queue object.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $video_local_delete_queue;
+
+  /**
+   * The player local delete queue object.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $player_delete_queue;
+
+  /**
+   * The custom field local delete queue object.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $custom_field_delete_queue;
+
+  /**
+   * Constructs a new BrightcoveAPIClientDeleteForm.
+   *
+   * @param \Drupal\Core\Entity\Query\QueryFactory $query_factory
+   *   Query factory.
+   * @param \Drupal\Core\Queue\QueueInterface $playlist_local_delete_queue
+   *   Playlist local delete queue worker.
+   * @param \Drupal\Core\Queue\QueueInterface $video_local_delete_queue
+   *   Video local delete queue worker.
+   * @param \Drupal\Core\Queue\QueueInterface $player_delete_queue
+   *   Player local delete queue worker.
+   * @param \Drupal\Core\Queue\QueueInterface $custom_field_delete_queue
+   *   Custom field local delete queue worker.
+   */
+  public function __construct(QueryFactory $query_factory, QueueInterface $playlist_local_delete_queue, QueueInterface $video_local_delete_queue, QueueInterface $player_delete_queue, QueueInterface $custom_field_delete_queue) {
+    $this->query_factory = $query_factory;
+    $this->playlist_local_delete_queue = $playlist_local_delete_queue;
+    $this->video_local_delete_queue = $video_local_delete_queue;
+    $this->player_delete_queue = $player_delete_queue;
+    $this->custom_field_delete_queue = $custom_field_delete_queue;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity.query'),
+      $container->get('queue')->get('brightcove_playlist_local_delete_queue_worker'),
+      $container->get('queue')->get('brightcove_video_local_delete_queue_worker'),
+      $container->get('queue')->get('brightcove_player_delete_queue_worker'),
+      $container->get('queue')->get('brightcove_custom_field_delete_queue_worker')
+    );
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function getQuestion() {
     return $this->t('Are you sure you want to delete %name?', array('%name' => $this->entity->label()));
+  }
+
+  public function getDescription() {
+    return parent::getDescription() . '<br>' . $this->t('Warning: By deleting API Client all of its local contents will be deleted too, including videos, playlists, players and custom fields.');
   }
 
   /**
@@ -40,16 +118,57 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->entity->delete();
+    /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $entity */
+    $entity = $this->entity;
 
-    drupal_set_message(
-      $this->t('Entity @type: deleted @label.',
-        [
-          '@type' => $this->entity->bundle(),
-          '@label' => $this->entity->label()
-        ]
-        )
-    );
+    // Collect all playlists belonging for the api client.
+    $playlists = $this->query_factory->get('brightcove_playlist')
+      ->condition('api_client', $entity->id())
+      ->execute();
+    foreach ($playlists as $playlist) {
+      $this->playlist_local_delete_queue->createItem($playlist);
+    }
+
+    // Collect all videos belonging for the api client.
+    $videos = $this->query_factory->get('brightcove_video')
+      ->condition('api_client', $entity->id())
+      ->execute();
+    foreach ($videos as $video) {
+      $this->video_local_delete_queue->createItem($video);
+    }
+
+    // Collect all players belonging for the api client.
+    $players = $this->query_factory->get('brightcove_player')
+      ->condition('api_client', $entity->id())
+      ->execute();
+    foreach ($players as $player) {
+      $this->player_delete_queue->createItem(['player_entity_id' => $player]);
+    }
+
+    // Collect all custom fields belonging for the api client.
+    $custom_fields = $this->query_factory->get('brightcove_custom_field')
+      ->condition('api_client', $entity->id())
+      ->execute();
+    foreach ($custom_fields as $custom_field) {
+      $this->custom_field_delete_queue->createItem($custom_field);
+    }
+
+    // Initialize batch.
+    batch_set([
+      'operations' => [
+        [[BrightcoveUtil::class, 'runQueue'], ['brightcove_playlist_local_delete_queue_worker']],
+        [[BrightcoveUtil::class, 'runQueue'], ['brightcove_video_local_delete_queue_worker']],
+        [[BrightcoveUtil::class, 'runQueue'], ['brightcove_player_delete_queue_worker']],
+        [[BrightcoveUtil::class, 'runQueue'], ['brightcove_custom_field_delete_queue_worker']],
+      ],
+    ]);
+
+    // Delete api client.
+    $entity->delete();
+    drupal_set_message($this->t('Entity @type: deleted @label.', [
+      '@type' => $this->entity->bundle(),
+      '@label' => $this->entity->label()
+    ]));
 
     $form_state->setRedirectUrl($this->getCancelUrl());
   }

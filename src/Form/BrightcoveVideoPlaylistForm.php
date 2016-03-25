@@ -8,11 +8,13 @@ namespace Drupal\brightcove\Form;
 
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\brightcove\Entity\BrightcovePlayer;
+use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Site\Settings;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -73,7 +75,7 @@ abstract class BrightcoveVideoPlaylistForm extends ContentEntityForm {
 
       // Update player list on client selection.
       $form['api_client']['widget']['#ajax'] = [
-        'callback' => [self::class, 'updatePlayerSelection'],
+        'callback' => [self::class, 'apiClientUpdateForm'],
         'event' => 'change',
         'wrapper' => 'player-ajax-wrapper',
       ];
@@ -123,7 +125,7 @@ abstract class BrightcoveVideoPlaylistForm extends ContentEntityForm {
    *
    * @return \Drupal\Core\Ajax\AjaxResponse
    */
-  public static function updatePlayerSelection($form, FormStateInterface $form_state) {
+  public static function apiClientUpdateForm($form, FormStateInterface $form_state) {
     $form['player']['widget']['#options'] = self::getPlayerOptions($form, $form_state);
 
     $response = new AjaxResponse();

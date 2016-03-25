@@ -10,7 +10,6 @@ namespace Drupal\brightcove\Plugin\QueueWorker;
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\brightcove\Entity\BrightcoveCustomField;
 use Drupal\brightcove\Entity\BrightcovePlayer;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
@@ -69,13 +68,6 @@ class BrightcoveClientQueueWorker extends QueueWorkerBase implements ContainerFa
   protected $custom_field_delete_queue;
 
   /**
-   * The brightcove_player storage.
-   *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
-   */
-  protected $player_storage;
-
-  /**
    * Constructs a new BrightcoveClientQueueWorker object.
    *
    * @param array $configuration
@@ -96,10 +88,8 @@ class BrightcoveClientQueueWorker extends QueueWorkerBase implements ContainerFa
    *   The custom field queue object.
    * @param \Drupal\Core\Queue\QueueInterface $custom_field_delete_queue
    *   The custom field queue object.
-   * @param \Drupal\Core\Entity\EntityStorageInterface $player_storage
-   *   Brightcove Player entity storage.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, QueueInterface $video_page_queue, QueueInterface $playlist_page_queue, QueueInterface $player_queue, QueueInterface $player_delete_queue, QueueInterface $custom_field_queue, QueueInterface $custom_field_delete_queue, EntityStorageInterface $player_storage) {
+  public function __construct(array $configuration, $plugin_id, array $plugin_definition, QueueInterface $video_page_queue, QueueInterface $playlist_page_queue, QueueInterface $player_queue, QueueInterface $player_delete_queue, QueueInterface $custom_field_queue, QueueInterface $custom_field_delete_queue) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->video_page_queue = $video_page_queue;
     $this->playlist_page_queue = $playlist_page_queue;
@@ -107,7 +97,6 @@ class BrightcoveClientQueueWorker extends QueueWorkerBase implements ContainerFa
     $this->player_delete_queue = $player_delete_queue;
     $this->custom_field_queue = $custom_field_queue;
     $this->custom_field_delete_queue = $custom_field_delete_queue;
-    $this->player_storage = $player_storage;
   }
 
   /**
@@ -123,8 +112,7 @@ class BrightcoveClientQueueWorker extends QueueWorkerBase implements ContainerFa
       $container->get('queue')->get('brightcove_player_queue_worker'),
       $container->get('queue')->get('brightcove_player_delete_queue_worker'),
       $container->get('queue')->get('brightcove_custom_field_queue_worker'),
-      $container->get('queue')->get('brightcove_custom_field_delete_queue_worker'),
-      $container->get('entity_type.manager')->getStorage('brightcove_player')
+      $container->get('queue')->get('brightcove_custom_field_delete_queue_worker')
     );
   }
 
@@ -156,7 +144,7 @@ class BrightcoveClientQueueWorker extends QueueWorkerBase implements ContainerFa
     // Remove non-existing players.
     foreach (array_keys($player_entities) as $player_id) {
       // Create queue item for deletion.
-      $this->player_delete_queue->createItem($player_id);
+      $this->player_delete_queue->createItem(['player_id' => $player_id]);
     }
 
     /** @var \Brightcove\Object\CustomFields $video_fields */
@@ -175,9 +163,7 @@ class BrightcoveClientQueueWorker extends QueueWorkerBase implements ContainerFa
     $custom_field_entities = BrightcoveCustomField::loadMultipleByAPIClient($data);
     foreach ($custom_field_entities as $custom_field_entity) {
       if (!in_array($custom_field_entity->getCustomFieldId(), $custom_fields)) {
-        $this->custom_field_delete_queue->createItem([
-          'custom_field_entity' => $custom_field_entity,
-        ]);
+        $this->custom_field_delete_queue->createItem($custom_field_entity);
       }
     }
 
