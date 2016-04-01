@@ -67,7 +67,21 @@ function theme_brightcove_field_browse_items($variables) {
 
 function theme_brightcove_integration($variables) {
   $name = check_plain($variables['name']);
-  $description = check_plain($variables['description']);
+  $description = filter_xss($variables['description'], [
+    'a',
+    'em',
+    'strong',
+    'cite',
+    'blockquote',
+    'code',
+    'ul',
+    'ol',
+    'li',
+    'dl',
+    'dt',
+    'dd',
+    'br',
+  ]);
   $project_link = '';
   if ($variables['project']) {
     $link = "https://drupal.org/project/{$variables['project']}";

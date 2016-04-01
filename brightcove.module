@@ -163,7 +163,7 @@ function brightcove_menu() {
 
   $items['brightcove_field/edit_video/%/%/%/%brightcove_client/%'] = [
     'title' => 'Brightcove Video editor',
-    'page arguments' => [5, 6],
+    'page arguments' => [2, 3, 4, 5, 6],
     'page callback' => 'brightcove_video_edit',
     'delivery callback' => 'brightcove_field_deliver_dialog',
     'access callback' => 'brightcove_field_browse_access',
@@ -2361,7 +2361,7 @@ function _brightcove_create_classes(Entity $client_entity) {
  * @param null|callable $metadata_callback
  * @return \Brightcove\Object\Video\Video
  */
-function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, $parent_entity_type, $parent_bundle_name, $parent_field_name, callable $metadata_callback = NULL) {
+function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, $parent_entity_type, $parent_bundle_name, $parent_field_name, callable $metadata_callback = NULL, $form_state = NULL) {
   brightcove_load_lib();
   list($cms, $di) = _brightcove_create_classes($client_entity);
 
@@ -2375,7 +2375,9 @@ function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, $pa
   $request = \Brightcove\API\Request\IngestRequest::createRequest($url, $profile);
   $request->setCaptureImages(TRUE);
 
-  if (($callback = brightcove_create_callback($hash, $video->getId(), $client_entity->bcid, 0, $parent_entity_type, $parent_field_name, $parent_bundle_name))) {
+  $callback_metadata = module_invoke_all('brightcove_ingest_metadata', $form_state);
+
+  if (($callback = brightcove_create_callback($hash, $video->getId(), $client_entity->bcid, 0, $parent_entity_type, $parent_field_name, $parent_bundle_name, $callback_metadata))) {
     $request->setCallbacks([$callback]);
   }
 
@@ -2387,7 +2389,7 @@ function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, $pa
   return $video;
 }
 
-function brightcove_create_callback($hash, $video_id, $client_id, $fid = 0, $parent_entity_type = '', $parent_field_name = '', $parent_bundle_name = '') {
+function brightcove_create_callback($hash, $video_id, $client_id, $fid = 0, $parent_entity_type = '', $parent_field_name = '', $parent_bundle_name = '', $metadata = []) {
   $callback = _brightcove_get_ingest_callback($hash);
   if (!$callback) {
     return FALSE;
@@ -2403,7 +2405,7 @@ function brightcove_create_callback($hash, $video_id, $client_id, $fid = 0, $par
       'parent_entity_type' => $parent_entity_type,
       'parent_field_name' => $parent_field_name,
       'parent_bundle_name' => $parent_bundle_name,
-      'metadata' => '',
+      'metadata' => json_encode($metadata),
     ])
     ->execute();
 
@@ -2759,7 +2761,7 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
           $ingest->setTextTracks($text_tracks);
         }
       };
-    });
+    }, $form_state);
     $video_entity->video = $video;
     $video_entity->videoSaved = TRUE;
     // Save additional fields

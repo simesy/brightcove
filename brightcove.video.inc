@@ -127,6 +127,7 @@ function brightcove_video_form($form, &$form_state, $video_entity, $entity_type 
   $client = $video_entity->client;
   $video = $video_entity->video;
   $video_id = $video->getId();
+  $form['#op'] = empty($video_id) ? 'upload' : 'edit';
   // Edit form
   if (!empty($video_id)) {
     $form_state = [];
@@ -623,9 +624,13 @@ function brightcove_video_edit_access($perm, $entity_type, $field_name, $entity_
  *
  * @return string
  */
-function brightcove_video_edit(Entity $client, $video_id) {
+function brightcove_video_edit($entity_type, $field_name, $entity_id, Entity $client, $video_id) {
   $video_entity = brightcove_video_load_by_video_id($video_id, $client);
-  $form = drupal_get_form('brightcove_video_form', $video_entity);
+  $entity_info = entity_get_info($entity_type);
+  $bundle_key = $entity_info['entity keys']['bundle'];
+  $entity = entity_load_single($entity_type, $entity_id);
+  $bundle_name = $entity->{$bundle_key};
+  $form = drupal_get_form('brightcove_video_form', $video_entity, $entity_type, $bundle_name, $field_name);
   return drupal_render($form);
 }
 
