@@ -129,8 +129,7 @@ function brightcove_video_form($form, &$form_state, $video_entity, $entity_type 
   $video_id = $video->getId();
   $form['#op'] = empty($video_id) ? 'upload' : 'edit';
   // Edit form
-  if (!empty($video_id)) {
-    $form_state = [];
+  if (!empty($video_id) && empty($form_state['values'])) {
     $form_state['values'] = [
       'title' => $video->getName(),
       'short' => $video->getDescription(),
@@ -154,7 +153,6 @@ function brightcove_video_form($form, &$form_state, $video_entity, $entity_type 
     }
   }
 
-  $form_state += form_state_defaults();
   drupal_prepare_form('brightcove_upload_form', $form, $form_state);
 
   $form['client'] = [
