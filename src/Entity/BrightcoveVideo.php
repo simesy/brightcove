@@ -11,8 +11,11 @@ use Brightcove\API\Exception\APIException;
 use Brightcove\API\Request\IngestImage;
 use Brightcove\API\Request\IngestRequest;
 use Brightcove\API\Request\IngestRequestMaster;
+use Brightcove\API\Request\IngestTextTrack;
 use Brightcove\Object\Video\Link;
 use Brightcove\Object\Video\Schedule;
+use Brightcove\Object\Video\TextTrack;
+use Brightcove\Object\Video\TextTrackSource;
 use Brightcove\Object\Video\Video;
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\Component\Utility\Crypt;
@@ -46,9 +49,9 @@ use Drupal\time_formatter\Plugin\Field\FieldFormatter\TimeFieldFormatter;
  *       "default" = "Drupal\brightcove\Form\BrightcoveVideoForm",
  *       "add" = "Drupal\brightcove\Form\BrightcoveVideoForm",
  *       "edit" = "Drupal\brightcove\Form\BrightcoveVideoForm",
- *       "delete" = "Drupal\brightcove\Form\BrightcoveVideoDeleteForm",
+ *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
  *     },
- *     "access" = "Drupal\brightcove\BrightcoveVideoAccessControlHandler",
+ *     "access" = "Drupal\brightcove\Access\BrightcoveVideoAccessControlHandler",
  *     "route_provider" = {
  *       "html" = "Drupal\brightcove\BrightcoveVideoHtmlRouteProvider",
  *     },
@@ -565,6 +568,20 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
   /**
    * {@inheritdoc}
+   */
+  public function getTextTracks() {
+    return $this->get('text_tracks')->getValue();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTextTracks($text_tracks) {
+    return $this->set('text_tracks', $text_tracks);
+  }
+
+  /**
+   * {@inheritdoc}
    *
    * @param bool $upload
    *   Whether to upload the video to Brightcove or not.
@@ -677,6 +694,72 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         }
       }
 
+      // Upload text tracks.
+      if ($this->isFieldChanged('text_tracks')) {
+        $video_text_tracks = [];
+        $ingest_text_tracks = [];
+        foreach ($this->getTextTracks() as $text_track) {
+          if (!empty($text_track['target_id'])) {
+            /** @var \Drupal\brightcove\Entity\BrightcoveTextTrack $text_track_entity */
+            $text_track_entity = BrightcoveTextTrack::load($text_track['target_id']);
+
+            if (!is_null($text_track_entity)) {
+              // Setup ingestion request if there was a text track uploaded.
+              $webvtt_file = $text_track_entity->getWebVTTFile();
+              if (!empty($webvtt_file[0]['target_id'])) {
+                /** @var \Drupal\file\Entity\File $file */
+                $file = File::load($webvtt_file[0]['target_id']);
+
+                if (!is_null($file)) {
+                  $ingest_text_tracks[] = (new IngestTextTrack())
+                    ->setSrclang($text_track_entity->getSourceLanguage())
+                    ->setUrl(file_create_url($file->getFileUri()))
+                    ->setKind($text_track_entity->getKind())
+                    ->setLabel($text_track_entity->getLabel())
+                    ->setDefault($text_track_entity->isDefault());
+                }
+              }
+              // Build the whole text track for Brightcove.
+              else {
+                $video_text_track = (new TextTrack())
+                  ->setId($text_track_entity->getTextTrackId())
+                  ->setSrclang($text_track_entity->getSourceLanguage())
+                  ->setLabel($text_track_entity->getLabel())
+                  ->setKind($text_track_entity->getKind())
+                  ->setMimeType($text_track_entity->getMimeType())
+                  ->setAssetId($text_track_entity->getAssetId());
+
+                // If asset ID is set the src will be ignored, so in this case
+                // we don't set the src.
+                if (!empty($text_track_entity->getAssetId())) {
+                  $video_text_track->setAssetId($text_track_entity->getAssetId());
+                }
+                // Otherwise set the src.
+                else {
+                  $video_text_track->setSrc($text_track_entity->getSource());
+                }
+
+                // Get text track sources.
+                $video_text_track_sources = [];
+                foreach ($text_track_entity->getSources() as $source) {
+                  $text_track_source = new TextTrackSource();
+                  $text_track_source->setSrc($source['uri']);
+                  $video_text_track_sources[] = $text_track_source;
+                }
+                $video_text_track->setSources($video_text_track_sources);
+
+                $video_text_tracks[] = $video_text_track;
+              }
+            }
+          }
+        }
+
+        // Set existing text tracks.
+        if (!empty($video_text_tracks)) {
+          $video->setTextTracks($video_text_tracks);
+        }
+      }
+
       // Create or update a video.
       switch ($status) {
         case SAVED_NEW:
@@ -720,6 +803,12 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         $ingest_request->setMaster($ingest_master);
         $profiles = self::getProfileAllowedValues($this->getAPIClient());
         $ingest_request->setProfile($profiles[$this->getProfile()]);
+      }
+
+      // Set ingestion for text tracks.
+      if (!empty($ingest_text_tracks)) {
+        $ingest_request = $this->getIngestRequest();
+        $ingest_request->setTextTracks($ingest_text_tracks);
       }
 
       // Send the ingest request if there was an ingestible asset.
@@ -1004,7 +1093,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
     $fields['reference_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Reference ID'))
-      // TODO: Check if it's really unique.
+      ->addConstraint('UniqueField')
       ->setDescription(t('Value specified must be unique'))
 //      ->setRevisionable(TRUE)
       ->setSettings([
@@ -1090,8 +1179,6 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setDisplayConfigurable('view', TRUE);
 
     // @TODO: Folder
-    // @TODO: Manual playlists
-    // @TODO: Sharing
 
     $fields['video_file'] = BaseFieldDefinition::create('file')
       ->setLabel(t('Video file'))
@@ -1202,8 +1289,6 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    // @TODO: Text tracks
-
     // FIXME: Should we have a separate "State" field for determining whether the video is playable or not?
     $fields['status'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Status'))
@@ -1222,6 +1307,26 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setDisplayOptions('view', [
         'type' => 'boolean',
         'label' => 'inline',
+        'weight' => $weight,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['text_tracks'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Text Tracks'))
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setDescription(t('Referenced text tracks which belong to the video.'))
+      ->setSetting('target_type', 'brightcove_text_track')
+      ->setDisplayOptions('form', [
+        'type' => 'brightcove_inline_entity_form_complex',
+        'settings' => [
+          'allow_new' => TRUE,
+          'allow_existing' => FALSE,
+        ],
+        'weight' => ++$weight,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'entity_reference_label',
         'weight' => $weight,
       ])
       ->setDisplayConfigurable('form', TRUE)
@@ -1569,6 +1674,9 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
    * @param int|NULL $api_client_id
    *   The ID of the BrightcoveAPIClient entity.
    *
+   * @return int
+   *   The saved BrightcoveVideo entity ID.
+   *
    * @throws \Exception
    *   If BrightcoveAPIClient ID is missing when a new entity is being created.
    */
@@ -1721,7 +1829,10 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         $video_entity->setScheduleEndsAt(NULL);
       }
 
+      // Save video entity.
       $video_entity->save();
     }
+
+    return $video_entity;
   }
 }

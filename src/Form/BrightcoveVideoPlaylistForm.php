@@ -8,13 +8,11 @@ namespace Drupal\brightcove\Form;
 
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\brightcove\Entity\BrightcovePlayer;
-use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Site\Settings;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -61,9 +59,10 @@ abstract class BrightcoveVideoPlaylistForm extends ContentEntityForm {
 
     /** @var $entity \Drupal\brightcove\Entity\BrightcoveVideoPlaylistCMSEntity */
     $entity = $this->entity;
+    $triggering_element = $form_state->getTriggeringElement();
 
     // Check for an updated version of the Video.
-    if ($entity->id()) {
+    if ($entity->id() && empty($triggering_element)) {
       BrightcoveUtil::checkUpdatedVersion($entity);
     }
 

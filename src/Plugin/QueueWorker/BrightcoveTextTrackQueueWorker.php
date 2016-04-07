@@ -2,36 +2,36 @@
 
 /**
  * @file
- * Contains \Drupal\brightcove\Plugin\QueueWorker\BrightcovePlayerDeleteQueueWorker.
+ * Contains \Drupal\brightcove\Plugin\QueueWorker\BrightcoveTextTrackQueueWorker.
  */
 
 namespace Drupal\brightcove\Plugin\QueueWorker;
 
-use Drupal\brightcove\Entity\BrightcovePlayer;
+use Drupal\brightcove\Entity\BrightcoveTextTrack;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Processes Entity Delete Tasks for Player.
+ * Processes Entity Update Tasks for Text Track.
  *
  * @QueueWorker(
- *   id = "brightcove_player_delete_queue_worker",
- *   title = @Translation("Brightcove player delete queue worker."),
+ *   id = "brightcove_text_track_queue_worker",
+ *   title = @Translation("Brightcove text track queue worker."),
  *   cron = { "time" = 30 }
  * )
  */
-class BrightcovePlayerDeleteQueueWorker extends QueueWorkerBase implements ContainerFactoryPluginInterface {
+class BrightcoveTextTrackQueueWorker extends QueueWorkerBase implements ContainerFactoryPluginInterface {
   /**
-   * The brightcove_player storage.
+   * The brightcove_text_track storage.
    *
    * @var \Drupal\Core\Entity\EntityStorageInterface
    */
   protected $storage;
 
   /**
-   * Constructs a new BrightcovePlayerDeleteQueueWorker object.
+   * Constructs a new BrightcoveTextTrackQueueWorker object.
    *
    * @param array $configuration
    *   A configuration array containing information about the plugin instance.
@@ -55,7 +55,7 @@ class BrightcovePlayerDeleteQueueWorker extends QueueWorkerBase implements Conta
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('entity_type.manager')->getStorage('brightcove_player')
+      $container->get('entity_type.manager')->getStorage('brightcove_text_track')
     );
   }
 
@@ -63,21 +63,9 @@ class BrightcovePlayerDeleteQueueWorker extends QueueWorkerBase implements Conta
    * {@inheritdoc}
    */
   public function processItem($data) {
-    if (isset($data['player_id'])) {
-      /** @var \Drupal\brightcove\Entity\BrightcovePlayer $player */
-      $player = BrightcovePlayer::loadByPlayerId($data['player_id']);
+    /** @var \Brightcove\Object\Video\TextTrack $text_track */
+    $text_track = $data['text_track'];
 
-      if (!is_null($player)) {
-        $player->delete();
-      }
-    }
-    elseif (isset($data['player_entity_id'])) {
-      /** @var \Drupal\brightcove\Entity\BrightcovePlayer $player */
-      $player = BrightcovePlayer::load($data['player_entity_id']);
-
-      if (!is_null($player)) {
-        $player->delete();
-      }
-    }
+    BrightcoveTextTrack::createOrUpdate($text_track, $this->storage, $data['video_entity_id']);
   }
 }

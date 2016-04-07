@@ -8,6 +8,7 @@
 namespace Drupal\brightcove\Form;
 
 use Drupal\brightcove\BrightcoveUtil;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityConfirmFormBase;
 use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Form\FormStateInterface;
@@ -25,6 +26,13 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
    * @var \Drupal\Core\Entity\Query\QueryFactory
    */
   protected $query_factory;
+
+  /**
+   * Database connection
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $connection;
 
   /**
    * The playlist local delete queue object.
@@ -55,10 +63,19 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
   protected $custom_field_delete_queue;
 
   /**
+   * The playlist page queue object.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $text_track_delete_queue;
+
+  /**
    * Constructs a new BrightcoveAPIClientDeleteForm.
    *
    * @param \Drupal\Core\Entity\Query\QueryFactory $query_factory
    *   Query factory.
+   * @param \Drupal\Core\Database\Connection $connection
+   *   Database connection.
    * @param \Drupal\Core\Queue\QueueInterface $playlist_local_delete_queue
    *   Playlist local delete queue worker.
    * @param \Drupal\Core\Queue\QueueInterface $video_local_delete_queue
@@ -67,13 +84,17 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
    *   Player local delete queue worker.
    * @param \Drupal\Core\Queue\QueueInterface $custom_field_delete_queue
    *   Custom field local delete queue worker.
+   * @param \Drupal\Core\Queue\QueueInterface $text_track_delete_queue
+   *   Text track delete queue object.
    */
-  public function __construct(QueryFactory $query_factory, QueueInterface $playlist_local_delete_queue, QueueInterface $video_local_delete_queue, QueueInterface $player_delete_queue, QueueInterface $custom_field_delete_queue) {
+  public function __construct(QueryFactory $query_factory, Connection $connection, QueueInterface $playlist_local_delete_queue, QueueInterface $video_local_delete_queue, QueueInterface $player_delete_queue, QueueInterface $custom_field_delete_queue, QueueInterface $text_track_delete_queue) {
     $this->query_factory = $query_factory;
+    $this->connection = $connection;
     $this->playlist_local_delete_queue = $playlist_local_delete_queue;
     $this->video_local_delete_queue = $video_local_delete_queue;
     $this->player_delete_queue = $player_delete_queue;
     $this->custom_field_delete_queue = $custom_field_delete_queue;
+    $this->text_track_delete_queue = $text_track_delete_queue;
   }
 
   /**
@@ -82,10 +103,12 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity.query'),
+      $container->get('database'),
       $container->get('queue')->get('brightcove_playlist_local_delete_queue_worker'),
       $container->get('queue')->get('brightcove_video_local_delete_queue_worker'),
       $container->get('queue')->get('brightcove_player_delete_queue_worker'),
-      $container->get('queue')->get('brightcove_custom_field_delete_queue_worker')
+      $container->get('queue')->get('brightcove_custom_field_delete_queue_worker'),
+      $container->get('queue')->get('brightcove_text_track_delete_queue_worker')
     );
   }
 
@@ -129,6 +152,17 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
       $this->playlist_local_delete_queue->createItem($playlist);
     }
 
+    // Collect all text tracks belonging for the api client.
+    $query = $this->connection->select('brightcove_text_track', 'btt')
+      ->fields('btt', ['text_track_id']);
+    $query->innerJoin('brightcove_video__text_tracks', 'bvtt', '%alias.text_tracks_target_id = btt.bcttid');
+    $query->innerJoin('brightcove_video', 'bv', '%alias.bcvid = bvtt.entity_id');
+    $text_tracks = $query->condition('api_client', $entity->id())
+      ->execute();
+    foreach ($text_tracks as $text_track) {
+      $this->text_track_delete_queue->createItem($text_track->text_track_id);
+    }
+
     // Collect all videos belonging for the api client.
     $videos = $this->query_factory->get('brightcove_video')
       ->condition('api_client', $entity->id())
@@ -160,6 +194,7 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
         [[BrightcoveUtil::class, 'runQueue'], ['brightcove_video_local_delete_queue_worker']],
         [[BrightcoveUtil::class, 'runQueue'], ['brightcove_player_delete_queue_worker']],
         [[BrightcoveUtil::class, 'runQueue'], ['brightcove_custom_field_delete_queue_worker']],
+        [[BrightcoveUtil::class, 'runQueue'], ['brightcove_text_track_delete_queue_worker']],
       ],
     ]);
 

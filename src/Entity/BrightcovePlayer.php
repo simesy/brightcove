@@ -50,6 +50,48 @@ class BrightcovePlayer extends BrightcoveCMSEntity implements BrightcovePlayerIn
   /**
    * {@inheritdoc}
    */
+  public function isAdjusted() {
+    return $this->get('adjusted')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setAdjusted($adjusted) {
+    return $this->set('adjusted', $adjusted);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getHeight() {
+    return $this->get('height')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setHeight($height) {
+    return $this->set('height', $height);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getWidth() {
+    return $this->get('width')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setWidth($width) {
+    return $this->set('width', $width);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields['bcpid'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('ID'))
@@ -102,6 +144,18 @@ class BrightcovePlayer extends BrightcoveCMSEntity implements BrightcovePlayerIn
       ->setDescription(t('Unique Player ID assigned by Brightcove.'))
       ->setReadOnly(TRUE);
 
+    $fields['adjusted'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Adjusted'))
+      ->setDescription(t('Indicates if player dimensions should be adjusted for playlist.'));
+
+    $fields['height'] = BaseFieldDefinition::create('float')
+      ->setLabel(t('Adjusted'))
+      ->setDescription(t('The height of the player.'));
+
+    $fields['width'] = BaseFieldDefinition::create('float')
+      ->setLabel(t('Adjusted'))
+      ->setDescription(t('The width of the player.'));
+
     return $fields;
   }
 
@@ -128,6 +182,8 @@ class BrightcovePlayer extends BrightcoveCMSEntity implements BrightcovePlayerIn
 
     $branches = $player->getBranches();
     $master = $branches->getMaster();
+    $configuration = $master->getConfiguration();
+    $studio_configuration = $configuration->getStudioConfiguration();
 
     // Update existing player.
     if (!empty($existing_player)) {
@@ -138,6 +194,32 @@ class BrightcovePlayer extends BrightcoveCMSEntity implements BrightcovePlayerIn
       // Update player if it is changed on Brightcove.
       if ($player_entity->getChangedTime() < strtotime($master->getUpdatedAt())) {
         $needs_save = TRUE;
+      }
+
+      // Set player configs if they are set.
+      if (!empty($studio_configuration)) {
+        $player_config = $studio_configuration->getPlayer();
+
+        // Save or update adjusted if needed.
+        if ($player_entity->isAdjusted() != ($adjusted = $player_config->isAdjusted())) {
+          $player_entity->setAdjusted($adjusted);
+        }
+
+        // Save or update height if needed.
+        if ($player_entity->getHeight() != ($height = $player_config->getHeight())) {
+          $player_entity->setHeight($height);
+        }
+
+        // Save or update width if needed.
+        if ($player_entity->getWidth() != ($width = $player_config->getWidth())) {
+          $player_entity->setWidth($width);
+        }
+      }
+      else {
+        // Remove configs if there are none set.
+        $player_entity->setAdjusted(NULL);
+        $player_entity->setHeight(NULL);
+        $player_entity->setWidth(NULL);
       }
     }
     // Create player if it does not exist.
@@ -155,6 +237,15 @@ class BrightcovePlayer extends BrightcoveCMSEntity implements BrightcovePlayerIn
         ],
         'created' => strtotime($player->getCreatedAt()),
       ];
+
+      // Set player settings.
+      if (!empty($studio_configuration)) {
+        $player_config = $studio_configuration->getPlayer();
+        $values['adjusted'] = $player_config->isAdjusted();
+        $values['height'] = $player_config->getHeight();
+        $values['width'] = $player_config->getWidth();
+      }
+
       $player_entity = self::create($values);
       $needs_save = TRUE;
     }

@@ -8,23 +8,19 @@ namespace Drupal\brightcove\Controller;
 
 use Brightcove\API\Exception\APIException;
 use Drupal\brightcove\BrightcoveUtil;
+use Drupal\brightcove\Entity\BrightcoveTextTrack;
 use Drupal\brightcove\Entity\BrightcoveVideo;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Queue\QueueInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class BrightcoveVideoController extends ControllerBase {
-  /**
-   * The brightcove_video storage.
-   *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
-   */
-  protected $storage;
-
   /**
    * Database connection.
    *
@@ -33,14 +29,43 @@ class BrightcoveVideoController extends ControllerBase {
   protected $connection;
 
   /**
+   * The brightcove_video storage.
+   *
+   * @var \Drupal\Core\Entity\EntityStorageInterface
+   */
+  protected $video_storage;
+
+  /**
+   * The brightcove_text_track storage.
+   *
+   * @var \Drupal\Core\Entity\EntityStorageInterface
+   */
+  protected $text_track_storage;
+
+  /**
+   * The video queue object.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $video_queue;
+
+  /**
    * Controller constructor.
    *
-   * @param \Drupal\Core\Entity\EntityStorageInterface $storage
+   * @param \Drupal\Core\Entity\EntityStorageInterface $video_storage
+   *   Brightcove Video entity storage.
+   * @param \Drupal\Core\Entity\EntityStorageInterface $text_track_storage
+   *   Brightcove Text Track entity storage.
    * @param \Drupal\Core\Database\Connection $connection
+   *   Database connection.
+   * @param \Drupal\Core\Queue\QueueInterface $video_queue
+   *   The Video queue object.
    */
-  public function __construct(EntityStorageInterface $storage, Connection $connection) {
-    $this->storage = $storage;
+  public function __construct(Connection $connection, EntityStorageInterface $video_storage, EntityStorageInterface $text_track_storage, QueueInterface $video_queue) {
     $this->connection = $connection;
+    $this->video_storage = $video_storage;
+    $this->text_track_storage = $text_track_storage;
+    $this->video_queue = $video_queue;
   }
 
   /**
@@ -48,8 +73,10 @@ class BrightcoveVideoController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('database'),
       $container->get('entity_type.manager')->getStorage('brightcove_video'),
-      $container->get('database')
+      $container->get('entity_type.manager')->getStorage('brightcove_text_track'),
+      $container->get('queue')->get('brightcove_video_queue_worker')
     );
   }
 
@@ -63,17 +90,30 @@ class BrightcoveVideoController extends ControllerBase {
     *   Redirection response.
     */
   public function update($entity_id) {
-    /** @var \Drupal\brightcove\Entity\BrightcoveVideo $video */
-    $video = BrightcoveVideo::load($entity_id);
+    /** @var \Drupal\brightcove\Entity\BrightcoveVideo $video_entity */
+    $video_entity = BrightcoveVideo::load($entity_id);
 
     /** @var \Brightcove\API\CMS $cms */
-    $cms = BrightcoveUtil::getCMSAPI($video->getAPIClient());
+    $cms = BrightcoveUtil::getCMSAPI($video_entity->getAPIClient());
 
     // Update video.
-    BrightcoveVideo::createOrUpdate($cms->getVideo($video->getVideoId()), $this->storage);
+    $video = $cms->getVideo($video_entity->getVideoId());
+    $this->video_queue->createItem(array(
+      'api_client_id' => $video_entity->getAPIClient(),
+      'video' => $video,
+    ));
 
-    // Redirect back to the video edit form.
-    return $this->redirect('entity.brightcove_video.edit_form', ['brightcove_video' => $entity_id]);
+    // Run batch.
+    batch_set([
+      'operations' => [
+        [[BrightcoveUtil::class, 'runQueue'], ['brightcove_video_queue_worker']],
+        [[BrightcoveUtil::class, 'runQueue'], ['brightcove_text_track_queue_worker']],
+        [[BrightcoveUtil::class, 'runQueue'], ['brightcove_text_track_delete_queue_worker']],
+      ],
+    ]);
+
+    // Run batch and redirect back to the video edit form.
+    return batch_process(Url::fromRoute('entity.brightcove_video.edit_form', ['brightcove_video' => $entity_id]));
   }
 
   /**
@@ -141,35 +181,76 @@ class BrightcoveVideoController extends ControllerBase {
 
             // Assets.
             case 'ASSET':
-              $client = BrightcoveUtil::getClient($video_entity->getAPIClient());
-              $api_client = BrightcoveUtil::getAPIClient($video_entity->getAPIClient());
+              // Check for Text Track ID format. There is no other way to
+              // determine whether the asset is a text track or something
+              // else...
+              if (preg_match('/^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/i', $content['entity'])) {
+                $text_tracks = $video_entity->getTextTracks();
+                foreach ($text_tracks as $key => $text_track) {
+                  if (!empty($text_track['target_id'])) {
+                    /** @var \Drupal\brightcove\Entity\BrightcoveTextTrack $text_track_entity */
+                    $text_track_entity = BrightcoveTextTrack::load($text_track['target_id']);
 
-              // Check for each asset type by try-and-error, currently there is
-              // no other way to determine which asset is what...
-              $asset_types = [
-                BrightcoveVideo::IMAGE_TYPE_THUMBNAIL,
-                BrightcoveVideo::IMAGE_TYPE_POSTER,
-              ];
-              foreach ($asset_types as $type) {
-                try {
-                  $client->request('GET', 'cms', $api_client->getAccountID(), '/videos/' . $video_entity->getVideoId() . '/assets/' . $type . '/' . $content['entity'], NULL);
+                    if (!is_null($text_track_entity) && empty($text_track_entity->getTextTrackId())) {
+                      // Remove text track without Brightcove ID.
+                      $text_track_entity->delete();
 
-                  switch ($type) {
-                    case BrightcoveVideo::IMAGE_TYPE_THUMBNAIL:
-                    case BrightcoveVideo::IMAGE_TYPE_POSTER:
-                      $images = $cms->getVideoImages($video_entity->getVideoId());
-                      $function = ucfirst($type);
+                      // Try to find the ingested text track on the video
+                      // object and recreate it.
+                      $cms = BrightcoveUtil::getCMSAPI($video_entity->getAPIClient());;
+                      $video = $cms->getVideo($video_entity->getVideoId());
+                      $api_text_tracks = $video->getTextTracks();
+                      $found_api_text_track = NULL;
+                      foreach ($api_text_tracks as $api_text_track) {
+                        if ($api_text_track->getId() == $content['entity']) {
+                          $found_api_text_track = $api_text_track;
+                          break;
+                        }
+                      }
 
-                      // @TODO: Download the image only if truly different.
-                      // But this may not be possible without downloading the
-                      // image.
-                      $video_entity->saveImage($type, $images->{"get{$function}"}());
-                      break 2;
+                      // Create new text track.
+                      if (!is_null($found_api_text_track)) {
+                        BrightcoveTextTrack::createOrUpdate($found_api_text_track,  $this->text_track_storage, $video_entity->id());
+                      }
+
+                      // We need to process only one per request.
+                      break;
+                    }
                   }
                 }
-                catch (APIException $e) {
-                  // Do nothing here, just catch the exception to not generate
-                  // an error.
+              }
+              // Try to figure out other assets.
+              else {
+                $client = BrightcoveUtil::getClient($video_entity->getAPIClient());
+                $api_client = BrightcoveUtil::getAPIClient($video_entity->getAPIClient());
+
+                // Check for each asset type by try-and-error, currently there is
+                // no other way to determine which asset is what...
+                $asset_types = [
+                  BrightcoveVideo::IMAGE_TYPE_THUMBNAIL,
+                  BrightcoveVideo::IMAGE_TYPE_POSTER,
+                ];
+                foreach ($asset_types as $type) {
+                  try {
+                    $client->request('GET', 'cms', $api_client->getAccountID(), '/videos/' . $video_entity->getVideoId() . '/assets/' . $type . '/' . $content['entity'], NULL);
+
+                    switch ($type) {
+                      case BrightcoveVideo::IMAGE_TYPE_THUMBNAIL:
+                      case BrightcoveVideo::IMAGE_TYPE_POSTER:
+                        $images = $cms->getVideoImages($video_entity->getVideoId());
+                        $function = ucfirst($type);
+
+                        // @TODO: Download the image only if truly different.
+                        // But this may not be possible without downloading the
+                        // image.
+                        $video_entity->saveImage($type, $images->{"get{$function}"}());
+                        break 2;
+                    }
+                  }
+                  catch (APIException $e) {
+                    // Do nothing here, just catch the exception to not generate
+                    // an error.
+                  }
                 }
               }
 

@@ -32,9 +32,9 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  *       "default" = "Drupal\brightcove\Form\BrightcovePlaylistForm",
  *       "add" = "Drupal\brightcove\Form\BrightcovePlaylistForm",
  *       "edit" = "Drupal\brightcove\Form\BrightcovePlaylistForm",
- *       "delete" = "Drupal\brightcove\Form\BrightcovePlaylistDeleteForm",
+ *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
  *     },
- *     "access" = "Drupal\brightcove\BrightcovePlaylistAccessControlHandler",
+ *     "access" = "Drupal\brightcove\Access\BrightcovePlaylistAccessControlHandler",
  *     "route_provider" = {
  *       "html" = "Drupal\brightcove\BrightcovePlaylistHtmlRouteProvider",
  *     },
@@ -409,7 +409,7 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
 
     $fields['reference_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Reference ID'))
-      // TODO: Check if it's really unique.
+      ->addConstraint('UniqueField')
       ->setDescription(t('Value specified must be unique'))
 //      ->setRevisionable(TRUE)
       ->setSettings(array(

@@ -88,6 +88,7 @@ class StatusOverviewForm extends FormBase {
       'client' => $this->entityTypeManager->getStorage('brightcove_api_client')->getQuery()->count()->execute(),
       'video' => $video_num,
       'video_delete' => $video_num,
+      'text_track' => $this->entityTypeManager->getStorage('brightcove_text_track')->getQuery()->count()->execute(),
       'playlist' => $playlist_num,
       'playlist_delete' => $playlist_num,
       'player' => $this->entityTypeManager->getStorage('brightcove_player')->getQuery()->count()->execute(),
@@ -95,12 +96,13 @@ class StatusOverviewForm extends FormBase {
     ];
     $queues = [
       'client' => $this->t('Client'),
-      'video' => $this->t('Video'),
-      'video_delete' => $this->t('Check deleted videos *'),
-      'playlist' => $this->t('Playlist'),
-      'playlist_delete' => $this->t('Check deleted playlists *'),
       'player' => $this->t('Player'),
       'custom_field' => $this->t('Custom field'),
+      'video' => $this->t('Video'),
+      'text_track' => $this->t('Text Track'),
+      'playlist' => $this->t('Playlist'),
+      'video_delete' => $this->t('Check deleted videos *'),
+      'playlist_delete' => $this->t('Check deleted playlists *'),
     ];
 
     // There is no form element (ie. widget) in the table, so it's safe to
@@ -159,6 +161,19 @@ class StatusOverviewForm extends FormBase {
           $batch_operations[] = ['_brightcove_initiate_sync', []];
           // There is intentionally no break here.
         case 'run':
+          // These queues are responsible for synchronizing from Brightcove to
+          // Drupal (IOW pulling). The order is important.
+          // - The client queue must be run first, that's out of question: this
+          //   worker populates most of the other queues.
+          // - Players should be pulled before videos and playlists.
+          // - Custom fields (which means custom field definitions, not values)
+          //   should be pulled before videos.
+          // - Text tracks can only be pulled after videos.
+          // - Playlists can only be pulled after videos.
+          // - Custom fields (again: their definitions) have to be deleted
+          //   before pulling videos.
+          // - Text tracks have to be deleted before videos are pulled or
+          //   deleted.
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_client_queue_worker']];
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_player_queue_worker']];
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_player_delete_queue_worker']];
@@ -166,6 +181,8 @@ class StatusOverviewForm extends FormBase {
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_custom_field_delete_queue_worker']];
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_video_page_queue_worker']];
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_video_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_text_track_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_text_track_delete_queue_worker']];
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_playlist_page_queue_worker']];
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_playlist_queue_worker']];
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_video_delete_queue_worker']];
@@ -173,6 +190,8 @@ class StatusOverviewForm extends FormBase {
           break;
 
         case 'clear':
+          // The order shouldn't really matter for clearing the queues, but we
+          // are repeating the order from above for the sake of consistency.
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_client_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_player_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_player_delete_queue_worker']];
@@ -180,6 +199,8 @@ class StatusOverviewForm extends FormBase {
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_custom_field_delete_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_video_page_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_video_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_text_track_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_text_track_delete_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_playlist_page_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_playlist_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_video_delete_queue_worker']];

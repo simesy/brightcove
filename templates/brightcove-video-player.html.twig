@@ -19,6 +19,13 @@
   data-account="{{- account -}}"
   data-player="{{- player -}}"
   data-embed="{{- embed -}}"
-  class="video-js" controls>
+  {% if height != null %}
+    height="{{ height }}"
+  {% endif %}
+  {% if width != null %}
+    width="{{ width }}"
+  {% endif %}
+  class="video-js" controls
+  >
 </video>
 <script src="//players.brightcove.net/{{- account -}}/{{- player -}}_{{- embed -}}/index.min.js"></script>

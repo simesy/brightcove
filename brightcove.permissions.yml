@@ -1,6 +1,8 @@
+# API client configuration.
 administer brightcove configuration:
   title: 'Administer Brightcove configuration'
 
+# Video entities.
 add brightcove videos:
   title: 'Create new Brightcove Videos'
 
@@ -21,6 +23,7 @@ view published brightcove videos:
 view unpublished brightcove videos:
   title: 'View unpublished Brightcove Videos'
 
+# Playlist entities.
 add brightcove playlists:
   title: 'Create new Brightcove Playlists'
 
@@ -40,3 +43,16 @@ view published brightcove playlists:
 
 view unpublished brightcove playlists:
   title: 'View unpublished Brightcove Playlists'
+
+# Text Track entities.
+add brightcove text track entities:
+  title: 'Create new Brightcove Text Track entities'
+
+delete brightcove text track entities:
+  title: 'Delete Brightcove Text Track entities'
+
+view published brightcove text track entities:
+  title: 'View published Brightcove Text Track entities'
+
+view unpublished brightcove text track entities:
+  title: 'View unpublished Brightcove Text Track entities'

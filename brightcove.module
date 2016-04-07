@@ -10,6 +10,7 @@ use Drupal\Core\Database\Database;
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\brightcove\Entity\BrightcoveAPIClient;
 use Drupal\brightcove\Entity\BrightcoveCustomField;
+use Drupal\brightcove\Entity\BrightcovePlayer;
 
 /**
  * Initiates a Brightcove-to-Drupal sync by adding API clients to the queue.
@@ -51,6 +52,8 @@ function _brightcove_initiate_sync() {
   $video_page_queue = \Drupal::queue('brightcove_video_page_queue_worker');
   $video_queue = \Drupal::queue('brightcove_video_queue_worker');
   $video_delete_queue = \Drupal::queue('brightcove_video_delete_queue_worker');
+  $text_track_queue = \Drupal::queue('brightcove_text_track_queue_worker');
+  $text_track_queue_delete = \Drupal::queue('brightcove_text_track_delete_queue_worker');
   $playlist_page_queue = \Drupal::queue('brightcove_playlist_page_queue_worker');
   $playlist_queue = \Drupal::queue('brightcove_playlist_queue_worker');
   $playlist_delete_queue = \Drupal::queue('brightcove_playlist_delete_queue_worker');
@@ -66,6 +69,8 @@ function _brightcove_initiate_sync() {
     && $custom_field_delete_queue->numberOfItems() == 0
     && $video_page_queue->numberOfItems() == 0
     && $video_queue->numberOfItems() == 0
+    && $text_track_queue->numberOfItems() == 0
+    && $text_track_queue_delete->numberOfItems() == 0
     && $playlist_page_queue->numberOfItems() == 0
     && $playlist_queue->numberOfItems() == 0;
 
@@ -166,11 +171,18 @@ function brightcove_brightcove_video_view(array &$build, EntityInterface $entity
       /** @var \Drupal\brightcove\Entity\BrightcoveApiClient $api_client */
       $api_client = BrightcoveAPIClient::load($video_entity->getAPIClient());
 
+      /** @var \Drupal\brightcove\Entity\BrightcovePlayer $player */
+      if (!empty($player = $video_entity->getPlayer())) {
+        $player = BrightcovePlayer::load($player);
+      }
+
       $build['brightcove_video_player'] = [
         '#theme' => ['brightcove_video_player'],
         '#video_id' => $video_id,
         '#account' => $api_client->getAccountID(),
         '#player' => BrightcoveUtil::getDefaultPlayer($video_entity),
+        '#height' => !empty($player) ? $player->getHeight() : NULL,
+        '#width' => !empty($player) ? $player->getWidth() : NULL,
       ];
     }
   }
@@ -212,11 +224,18 @@ function brightcove_brightcove_playlist_view(array &$build, EntityInterface $ent
       /** @var \Drupal\brightcove\Entity\BrightcoveApiClient $api_client */
       $api_client = BrightcoveUtil::getAPIClient($playlist_entity->getAPIClient());
 
+      /** @var \Drupal\brightcove\Entity\BrightcovePlayer $player */
+      if (!empty($player = $playlist_entity->getPlayer())) {
+        $player = BrightcovePlayer::load($player);
+      }
+
       $build['brightcove_playlist_video_player'] = [
         '#theme' => ['brightcove_playlist_video_player'],
         '#playlist_id' => $playlist_id,
         '#account' => $api_client->getAccountID(),
         '#player' => BrightcoveUtil::getDefaultPlayer($playlist_entity),
+        '#height' => !empty($player) ? $player->getHeight() : NULL,
+        '#width' => !empty($player) ? $player->getWidth() : NULL,
       ];
     }
   }
@@ -233,6 +252,8 @@ function brightcove_theme($existing, $type, $theme, $path) {
         'account' => 0,
         'player' => BrightcoveAPIClient::DEFAULT_PLAYER,
         'embed' => 'default',
+        'height' => NULL,
+        'width' => NULL,
       ],
     ],
     'brightcove_playlist_video_player' => [
@@ -241,6 +262,8 @@ function brightcove_theme($existing, $type, $theme, $path) {
         'account' => 0,
         'player' => BrightcoveAPIClient::DEFAULT_PLAYER,
         'embed' => 'default',
+        'height' => NULL,
+        'width' => NULL,
       ],
     ],
   ];

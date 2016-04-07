@@ -7,6 +7,7 @@
 namespace Drupal\brightcove\Entity;
 
 use Drupal\brightcove\BrightcoveCMSEntityInterface;
+use Drupal\brightcove\EntityChangedFieldsTrait;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -17,26 +18,7 @@ use Drupal\user\UserInterface;
  */
 abstract class BrightcoveCMSEntity extends ContentEntityBase implements BrightcoveCMSEntityInterface {
   use EntityChangedTrait;
-
-  /**
-   * Changed fields.
-   *
-   * @var bool[]
-   */
-  protected $changedFields;
-
-  /**
-   * Returns whether the field is changed or not.
-   *
-   * @param $name
-   *   The name of the field on the entity.
-   *
-   * @return bool
-   *   The changed status of the field, TRUE if changed, FALSE otherwise.
-   */
-  public function isFieldChanged($name) {
-    return !empty($this->changedFields[$name]);
-  }
+  use EntityChangedFieldsTrait;
 
   /**
    * {@inheritdoc}
@@ -132,52 +114,7 @@ abstract class BrightcoveCMSEntity extends ContentEntityBase implements Brightco
    * {@inheritdoc}
    */
   public function preSave(EntityStorageInterface $storage) {
-    // Collect object getters.
-    $methods = [];
-    foreach (get_class_methods($this) as $key => $method) {
-      // Create a matchable key for the get methods.
-      if (preg_match('/get[\w\d_]+/i', $method)) {
-        $methods[strtolower($method)] = $method;
-      }
-    }
-
-    // Check fields if they were updated and mark them if changed.
-    if (!empty($this->id())) {
-      /** @var \Drupal\brightcove\Entity\BrightcoveVideo $original_entity */
-      $original_entity = $storage->loadUnchanged($this->id());
-
-      if ($original_entity->getChangedTime() != $this->getChangedTime()) {
-        /**
-         * @var string $name
-         * @var \Drupal\Core\Field\FieldItemList $field
-         */
-        foreach ($this->getFields() as $name => $field) {
-          // Acquire getter method name.
-          $getter_name = 'get' . str_replace('_', '', $name);
-          $getter = isset($methods[$getter_name]) ? $methods[$getter_name] : NULL;
-
-          // If the getter is available for the field then compare the two
-          // field and if changed mark it.
-          if (!is_null($getter) && $this->$getter() != $original_entity->$getter()) {
-            $this->changedFields[$name] = TRUE;
-          }
-        }
-      }
-    }
-    // If there is no original entity, mark all fields modified, because in
-    // this case the entity is being created.
-    else {
-      foreach ($this->getFields() as $name => $field) {
-        // Acquire getter method name.
-        $getter_name = 'get' . str_replace('_', '', $name);
-        $getter = isset($methods[$getter_name]) ? $methods[$getter_name] : NULL;
-
-        if (!is_null($getter)) {
-          $this->changedFields[$name] = TRUE;
-        }
-      }
-    }
-
+    $this->checkUpdatedFields($storage);
     return parent::preSave($storage);
   }
 

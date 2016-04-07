@@ -37,6 +37,11 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
       $api_client = $form['api_client']['widget']['#default_value'];
     }
 
+    // Remove _none value to make sure the first item is selected.
+    if (isset($form['profile']['widget']['#options']['_none'])) {
+      unset($form['profile']['widget']['#options']['_none']);
+    }
+
     // Get the correct profiles' list for the selected api client.
     if ($entity->isNew()) {
       // Class this class's update form method instead of the supper class's.
@@ -117,7 +122,7 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
           if (!$form['custom_fields'][$custom_field_id]['#required']) {
             $options[''] = $this->t(' - None -');
           }
-          
+
           foreach ($custom_field->getEnumValues() as $enum) {
             $options[$enum['value']] = $enum['value'];
           }
@@ -143,11 +148,12 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
 
     // Save custom field values.
     $custom_field_values = [];
-    $elements = !empty($form['custom_fields']) ? $form['custom_fields'] : [];
-    foreach (Element::children($elements) as $field_name) {
-      $custom_field_values[$field_name] = $form_state->getValue($field_name);
+    if (!empty($form['custom_fields'])) {
+      foreach (Element::children($form['custom_fields']) as $field_name) {
+        $custom_field_values[$field_name] = $form_state->getValue($field_name);
+      }
+      $entity->setCustomFieldValues($custom_field_values);
     }
-    $entity->setCustomFieldValues($custom_field_values);
 
     $status = $entity->save(TRUE);
 

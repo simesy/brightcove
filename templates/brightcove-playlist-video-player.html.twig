@@ -19,6 +19,12 @@
   data-account="{{- account -}}"
   data-player="{{- player -}}"
   data-embed="{{- embed -}}"
+  {% if height != null %}
+    height="{{ height }}"
+  {% endif %}
+  {% if width != null %}
+    width="{{ width }}"
+  {% endif %}
   class="video-js" controls>
 </video>
 <ol class="vjs-playlist"></ol>

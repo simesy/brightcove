@@ -27,14 +27,14 @@ entity.brightcove_playlist.collection:
   route_name: entity.brightcove_playlist.collection
   description: 'List Brightcove Playlists.'
   parent: system.admin_content
-  weight: 101
+  weight: 102
 
 brightcove_playlist.settings:
   title: 'Brightcove Playlist settings'
   description: 'Configure Brightcove Playlists.'
   route_name: brightcove_playlist.settings
   parent: system.admin_structure
-  weight: 101
+  weight: 102
 
 # Brightcove Status Overview menu item definition.
 brightcove_status_overview:
@@ -42,4 +42,3 @@ brightcove_status_overview:
   route_name: brightcove_status_overview
   description: 'List all Brightcove entities and queues with the number of items in them.'
   parent: system.admin_reports
-
