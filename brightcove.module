@@ -2454,7 +2454,25 @@ function brightcove_handle_ingest_callback($hash) {
   return NULL;
 }
 
-function brightcove_update_callback_metadata($hash, $metadata) {
+function brightcove_metadata($hash, callable $func) {
+  if (!lock_acquire(__FUNCTION__)) {
+    if (lock_wait(__FUNCTION__)) {
+      return FALSE;
+    }
+    else {
+      return brightcove_metadata($hash, $func);
+    }
+  }
+
+  $metadata = brightcove_get_callback_metadata($hash);
+  $new_metadata = $func($metadata);
+  brightcove_update_callback_metadata($hash, $new_metadata);
+  lock_release(__FUNCTION__);
+
+  return TRUE;
+}
+
+function brightcove_update_callback_metadata($hash, array $metadata) {
   return (bool) db_update('brightcove_callback')
     ->fields([
       'metadata' => json_encode($metadata),
