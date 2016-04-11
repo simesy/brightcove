@@ -2,7 +2,7 @@
 entity.brightcove_api_client.collection:
   title: 'Brightcove API Client'
   route_name: entity.brightcove_api_client.collection
-  description: 'List Brightcove API Client (bundles).'
+  description: 'Configure Brightcove API Clients (credentials).'
   parent: system.admin_config_media
   weight: 99
 

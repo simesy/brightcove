@@ -72,6 +72,9 @@ abstract class BrightcoveVideoPlaylistForm extends ContentEntityForm {
         $form['api_client']['widget']['#default_value'] = $this->defaultAPIClient;
       }
 
+      // Add default reference ID.
+      $form['reference_id']['widget'][0]['value']['#default_value'] = 'drupal:' . \Drupal::CORE_COMPATIBILITY . ":" . \Drupal::currentUser()->id() . ":" . md5(microtime());
+
       // Update player list on client selection.
       $form['api_client']['widget']['#ajax'] = [
         'callback' => [self::class, 'apiClientUpdateForm'],

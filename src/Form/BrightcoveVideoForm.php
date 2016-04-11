@@ -7,6 +7,7 @@
 
 namespace Drupal\brightcove\Form;
 
+use Brightcove\API\Exception\APIException;
 use Drupal\brightcove\Entity\BrightcoveCustomField;
 use Drupal\brightcove\Entity\BrightcoveVideo;
 use Drupal\Core\Ajax\ReplaceCommand;
@@ -146,30 +147,35 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
     /** @var $entity \Drupal\brightcove\Entity\BrightcoveVideo */
     $entity = $this->entity;
 
-    // Save custom field values.
-    $custom_field_values = [];
-    if (!empty($form['custom_fields'])) {
-      foreach (Element::children($form['custom_fields']) as $field_name) {
-        $custom_field_values[$field_name] = $form_state->getValue($field_name);
+    try {
+      // Save custom field values.
+      $custom_field_values = [];
+      if (!empty($form['custom_fields'])) {
+        foreach (Element::children($form['custom_fields']) as $field_name) {
+          $custom_field_values[$field_name] = $form_state->getValue($field_name);
+        }
+        $entity->setCustomFieldValues($custom_field_values);
       }
-      $entity->setCustomFieldValues($custom_field_values);
+
+      $status = $entity->save(TRUE);
+
+      switch ($status) {
+        case SAVED_NEW:
+          drupal_set_message($this->t('Created the %label Brightcove Video.', [
+            '%label' => $entity->label(),
+          ]));
+          break;
+
+        default:
+          drupal_set_message($this->t('Saved the %label Brightcove Video.', [
+            '%label' => $entity->label(),
+          ]));
+      }
+      $form_state->setRedirect('entity.brightcove_video.canonical', ['brightcove_video' => $entity->id()]);
     }
-
-    $status = $entity->save(TRUE);
-
-    switch ($status) {
-      case SAVED_NEW:
-        drupal_set_message($this->t('Created the %label Brightcove Video.', [
-          '%label' => $entity->label(),
-        ]));
-        break;
-
-      default:
-        drupal_set_message($this->t('Saved the %label Brightcove Video.', [
-          '%label' => $entity->label(),
-        ]));
+    catch (APIException $e) {
+      drupal_set_message($e->getMessage(), 'error');
     }
-    $form_state->setRedirect('entity.brightcove_video.canonical', ['brightcove_video' => $entity->id()]);
   }
 
   /**

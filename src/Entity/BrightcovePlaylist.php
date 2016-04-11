@@ -10,6 +10,7 @@ namespace Drupal\brightcove\Entity;
 use Brightcove\Object\Playlist;
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\brightcove\BrightcovePlaylistInterface;
@@ -61,18 +62,88 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  */
 class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements BrightcovePlaylistInterface {
   /**
-   * Indicates that the playlist type is manual.
+   * Manual playlist type.
    */
-  const TYPE_MANUAL = 'EXPLICIT';
+  const TYPE_MANUAL = 0;
 
   /**
-   * Indicates that the playlist type is smart.
-   *
-   * TODO: Add support for other types of "smart" playlists.
+   * Smart playlist type.
+   */
+  const TYPE_SMART = 1;
+
+  /**
+   * Get Playlist types.
    *
    * @see http://docs.brightcove.com/en/video-cloud/cms-api/references/playlist-fields-reference.html
+   *
+   * @param int|NULL $type Get specific type of playlist types.
+   *   Possible values are TYPE_MANUAL, TYPE_SMART.
+   *
+   * @return array
+   *   Manual and smart playlist types.
+   *
+   * @throws \Exception
+   *   If an invalid type was given.
    */
-  const TYPE_SMART = 'ALPHABETICAL';
+  public static function getTypes($type = NULL) {
+    $manual = [
+      'EXPLICIT' => t('Manual: Add videos manually'),
+    ];
+
+    $smart_label = t('Smart: Add videos automatically based on tags')->render();
+    $smart = [
+      $smart_label => [
+        'ACTIVATED_OLDEST_TO_NEWEST' => t('Smart: Activated Date (Oldest First)'),
+        'ACTIVATED_NEWEST_TO_OLDEST' => t('Smart: Activated Date (Newest First)'),
+        'ALPHABETICAL' => t('Smart: Video Name (A-Z)'),
+        'PLAYS_TOTAL' => t('Smart: Total Plays'),
+        'PLAYS_TRAILING_WEEK' => t('Smart: Trailing Week Plays'),
+        'START_DATE_OLDEST_TO_NEWEST' => t('Smart: Start Date (Oldest First)'),
+        'START_DATE_NEWEST_TO_OLDEST' => t('Smart: Start Date (Newest First)'),
+      ],
+    ];
+
+    // Get specific type of playlist if set.
+    if (!is_null($type)) {
+      switch ($type) {
+        case self::TYPE_MANUAL:
+          return $manual;
+
+        case self::TYPE_SMART:
+          return reset($smart);
+
+        default:
+          throw new \Exception('The type must be either TYPE_MANUAL or TYPE_SMART');
+      }
+    }
+
+    return $manual + $smart;
+  }
+
+  /**
+   * Implements callback_allowed_values_function().
+   *
+   * @param \Drupal\Core\Field\FieldStorageDefinitionInterface $definition
+   *   The field storage definition.
+   * @param \Drupal\Core\Entity\FieldableEntityInterface|null $entity
+   *   (optional) The entity context if known, or NULL if the allowed values
+   *   are being collected without the context of a specific entity.
+   * @param bool &$cacheable
+   *   (optional) If an $entity is provided, the $cacheable parameter should be
+   *   modified by reference and set to FALSE if the set of allowed values
+   *   returned was specifically adjusted for that entity and cannot not be
+   *   reused for other entities. Defaults to TRUE.
+   *
+   * @return array
+   *   The array of allowed values. Keys of the array are the raw stored values
+   *   (number or text), values of the array are the display labels. If $entity
+   *   is NULL, you should return the list of all the possible allowed values
+   *   in any context so that other code (e.g. Views filters) can support the
+   *   allowed values for all possible entities and bundles.
+   */
+  public static function typeAllowedValues(FieldStorageDefinitionInterface $definition, FieldableEntityInterface $entity = NULL, &$cacheable = TRUE) {
+    return self::getTypes();
+  }
 
   /**
    * {@inheritdoc}
@@ -85,18 +156,7 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
    * {@inheritdoc}
    */
   public function setType($type) {
-    switch ($type) {
-      case self::TYPE_MANUAL:
-        // Intentionally no break here.
-      case self::TYPE_SMART:
-        $this->set('type', $type);
-        break;
-
-      default:
-        throw new \InvalidArgumentException('Invalid Brightcove Playlist type');
-        break;
-    }
-    return $this;
+    return $this->set('type', $type);
   }
 
   /**
@@ -290,13 +350,10 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setLabel(t('Playlist Type'))
 //      ->setRevisionable(TRUE)
       ->setRequired(TRUE)
-      ->setDefaultValue(BrightcovePlaylist::TYPE_MANUAL)
-      ->setSetting('allowed_values', array(
-        BrightcovePlaylist::TYPE_MANUAL => 'Manual: Add videos manually',
-        BrightcovePlaylist::TYPE_SMART => 'Smart: Add videos automatically based on tags',
-      ))
+      ->setDefaultValue('EXPLICIT')
+      ->setSetting('allowed_values_function', [self::class, 'typeAllowedValues'])
       ->setDisplayOptions('form', array(
-        'type' => 'options_buttons',
+        'type' => 'options_select',
         'weight' => ++$weight,
       ))
       ->setDisplayOptions('view', array(
@@ -641,7 +698,7 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
 
     if ($needs_save) {
       // Update type field if needed.
-      if ($playlist->getType() != ($type = $playlist->getType())) {
+      if ($playlist_entity->getType() != ($type = $playlist->getType())) {
         $playlist_entity->setType($type);
       }
 

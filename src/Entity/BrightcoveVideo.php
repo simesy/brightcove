@@ -760,6 +760,11 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         }
       }
 
+      // Update status field based on Brightcove's Video state.
+      if ($this->isFieldChanged('status')) {
+        $video->setState($this->isPublished() ? self::STATE_ACTIVE : self::STATE_INACTIVE);
+      }
+
       // Create or update a video.
       switch ($status) {
         case SAVED_NEW:
@@ -1289,11 +1294,10 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    // FIXME: Should we have a separate "State" field for determining whether the video is playable or not?
     $fields['status'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Status'))
-//      ->setDescription(t('A boolean indicating whether the Brightcove Video is published.'))
-//      ->setRevisionable(TRUE)
+      ->setDescription(t('Whether the Brightcove Video is published or not.'))
+      //->setRevisionable(TRUE)
       ->setRequired(TRUE)
       ->setDefaultValue(TRUE)
       ->setSettings([
@@ -1603,18 +1607,24 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       else {
         /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $api_client_entity */
         $api_client_entity = BrightcoveAPIClient::load($api_client);
-        $client = $api_client_entity->getClient();
-        $json = $client->request('GET', 'ingestion', $api_client_entity->getAccountID(), '/profiles', NULL);
 
-        foreach ($json as $profile) {
-          $profiles[$profile['id']] = $profile['name'];
+        if (!is_null($api_client_entity)) {
+          $client = $api_client_entity->getClient();
+          $json = $client->request('GET', 'ingestion', $api_client_entity->getAccountID(), '/profiles', NULL);
+
+          foreach ($json as $profile) {
+            $profiles[$profile['id']] = $profile['name'];
+          }
+
+          // Order profiles by value.
+          asort($profiles);
+
+          // Save the results to cache.
+          \Drupal::cache()->set($cid, $profiles);
         }
-
-        // Order profiles by value.
-        asort($profiles);
-
-        // Save the results to cache.
-        \Drupal::cache()->set($cid, $profiles);
+        else {
+          $profiles[] = t('Error: unable to fetch the list');
+        }
       }
     }
 
@@ -1827,6 +1837,14 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       else {
         $video_entity->setScheduleStartsAt(NULL);
         $video_entity->setScheduleEndsAt(NULL);
+      }
+
+      // Save or update state.
+      // We are settings the video as published only if the state is ACTIVE,
+      // otherwise it is set as unpublished.
+      $state = $video->getState() == self::STATE_ACTIVE ? TRUE : FALSE;
+      if ($video_entity->isPublished() != $state) {
+        $video_entity->setPublished($state);
       }
 
       // Save video entity.

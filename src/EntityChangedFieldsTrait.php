@@ -67,10 +67,13 @@ trait EntityChangedFieldsTrait {
     $methods = [];
     foreach (get_class_methods($this) as $key => $method) {
       // Create a matchable key for the get methods.
-      if (preg_match('/get[\w\d_]+/i', $method)) {
+      if (preg_match('/^(?:get|is)[\w\d_]+$/i', $method)) {
         $methods[strtolower($method)] = $method;
       }
     }
+
+    // Get entity key's status field alias.
+    $status = self::getEntityType()->getKey('status');
 
     // Check fields if they were updated and mark them if changed.
     if (!empty($this->id())) {
@@ -83,9 +86,23 @@ trait EntityChangedFieldsTrait {
          * @var \Drupal\Core\Field\FieldItemList $field
          */
         foreach ($this->getFields() as $name => $field) {
+          $function_part_name = $name;
+
+          // Use the correct function for the status field.
+          if ($name == $status) {
+            $function_part_name = 'published';
+          }
+
           // Acquire getter method name.
-          $getter_name = 'get' . str_replace('_', '', $name);
-          $getter = isset($methods[$getter_name]) ? $methods[$getter_name] : NULL;
+          $getter_name = 'get' . str_replace('_', '', $function_part_name);
+          $is_getter_name = 'is' . str_replace('_', '', $function_part_name);
+          $getter = NULL;
+          if (isset($methods[$getter_name])) {
+            $getter = $methods[$getter_name];
+          }
+          elseif (isset($methods[$is_getter_name])) {
+            $getter = $methods[$is_getter_name];
+          }
 
           // If the getter is available for the field then compare the two
           // field and if changed mark it.

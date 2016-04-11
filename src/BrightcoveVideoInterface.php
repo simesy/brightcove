@@ -44,6 +44,16 @@ interface BrightcoveVideoInterface {
   const ECONOMICS_TYPE_AD_SUPPORTED = 'AD_SUPPORTED';
 
   /**
+   * Brightcove active state.
+   */
+  const STATE_ACTIVE = 'ACTIVE';
+
+  /**
+   * Brightcove inactive state.
+   */
+  const STATE_INACTIVE = 'INACTIVE';
+
+  /**
    * Helper function to save the image for the entity.
    *
    * @param string $type

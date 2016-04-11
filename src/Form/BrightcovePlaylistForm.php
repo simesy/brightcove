@@ -7,6 +7,7 @@
 
 namespace Drupal\brightcove\Form;
 
+use Brightcove\API\Exception\APIException;
 use Drupal\brightcove\Entity\BrightcovePlaylist;
 use Drupal\Core\Form\FormStateInterface;
 
@@ -24,15 +25,21 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
     $form = parent::buildForm($form, $form_state);
 
     // Manual playlist: no search, only videos.
+    $manual_type = array_keys(BrightcovePlaylist::getTypes(BrightcovePlaylist::TYPE_MANUAL));
     $form['videos']['#states'] = [
       'visible' => [
-        'input[name="type"]' => ['value' => BrightcovePlaylist::TYPE_MANUAL],
+        ':input[name="type"]' => ['value' => reset($manual_type)],
       ],
     ];
+
     // Smart playlist: no videos, only search.
+    $smart_types = [];
+    foreach (array_keys(BrightcovePlaylist::getTypes(BrightcovePlaylist::TYPE_SMART)) as $smart_type) {
+      $smart_types[] = ['value' => $smart_type];
+    }
     $form['search']['#states'] = [
       'visible' => [
-        'input[name="type"]' => ['value' => BrightcovePlaylist::TYPE_SMART],
+        ':input[name="type"]' => $smart_types,
       ],
     ];
 
@@ -45,20 +52,26 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
   public function save(array $form, FormStateInterface $form_state) {
     /** @var $entity \Drupal\brightcove\Entity\BrightcovePlaylist */
     $entity = $this->entity;
-    $status = $entity->save(TRUE);
 
-    switch ($status) {
-      case SAVED_NEW:
-        drupal_set_message($this->t('Created the %label Brightcove Playlist.', [
-          '%label' => $entity->label(),
-        ]));
-        break;
+    try {
+      $status = $entity->save(TRUE);
 
-      default:
-        drupal_set_message($this->t('Saved the %label Brightcove Playlist.', [
-          '%label' => $entity->label(),
-        ]));
+      switch ($status) {
+        case SAVED_NEW:
+          drupal_set_message($this->t('Created the %label Brightcove Playlist.', [
+            '%label' => $entity->label(),
+          ]));
+          break;
+
+        default:
+          drupal_set_message($this->t('Saved the %label Brightcove Playlist.', [
+            '%label' => $entity->label(),
+          ]));
+      }
+      $form_state->setRedirect('entity.brightcove_playlist.canonical', ['brightcove_playlist' => $entity->id()]);
     }
-    $form_state->setRedirect('entity.brightcove_playlist.canonical', ['brightcove_playlist' => $entity->id()]);
+    catch (APIException $e) {
+      drupal_set_message($e->getMessage(), 'error');
+    }
   }
 }
