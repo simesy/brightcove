@@ -49,11 +49,6 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
       ],
     ];
 
-    // Remove none value.
-    if (isset($form['videos']['widget']['#options']['_none'])) {
-      unset($form['videos']['widget']['#options']['_none']);
-    }
-
     // Smart playlist: no videos, only search.
     $smart_types = [];
     foreach (array_keys(BrightcovePlaylist::getTypes(BrightcovePlaylist::TYPE_SMART)) as $smart_type) {

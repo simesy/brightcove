@@ -603,7 +603,7 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setSetting('target_type', 'brightcove_video')
       ->setSetting('handler', 'default')
       ->setDisplayOptions('form', array(
-        'type' => 'options_select',
+        'type' => 'entity_reference_autocomplete',
         'weight' => ++$weight,
       ))
       ->setDisplayOptions('view', array(
