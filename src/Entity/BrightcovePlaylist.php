@@ -72,6 +72,16 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
   const TYPE_SMART = 1;
 
   /**
+   * Tag search condition "one_or_more".
+   */
+  const TAG_SEARCH_CONTAINS_ONE_OR_MORE = 'contains_one_or_more';
+
+  /**
+   * Tag search condition "all".
+   */
+  const TAG_SEARCH_CONTAINS_ALL = 'contains_all';
+
+  /**
    * Get Playlist types.
    *
    * @see http://docs.brightcove.com/en/video-cloud/cms-api/references/playlist-fields-reference.html
@@ -184,15 +194,29 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
   /**
    * {@inheritdoc}
    */
-  public function getSearch() {
-    return $this->get('search')->value;
+  public function getTagsSearchCondition() {
+    return $this->get('tags_search_condition')->value;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setSearch($search) {
-    $this->set('search', $search);
+  public function setTagsSearchCondition($condition) {
+    return $this->set('tags_search_condition', $condition);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTags() {
+    return $this->get('tags')->getValue();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTags($tags) {
+    $this->set('tags', $tags);
     return $this;
   }
 
@@ -235,6 +259,17 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       // Save or update type if needed.
       if ($this->isFieldChanged('type')) {
         $playlist->setType($this->getType());
+
+        // Unset search if the playlist is manual.
+        if ($playlist->getType() == 'EXPLICIT') {
+          $playlist->setSearch('');
+          $this->setTags([]);
+        }
+        // Otherwise if the playlist is smart, unset video references.
+        else {
+          $playlist->setVideoIds([]);
+          $this->setVideos([]);
+        }
       }
 
       // Save or update description if needed.
@@ -248,8 +283,30 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       }
 
       // Save or update search if needed.
-      if ($this->isFieldChanged('search')) {
-        $playlist->setSearch($this->getSearch());
+      if ($this->isFieldChanged('tags') || $this->isFieldChanged('tags_search_condition')) {
+        $condition = '';
+        if ($this->getTagsSearchCondition() == self::TAG_SEARCH_CONTAINS_ALL) {
+          $condition = '+';
+        }
+
+        $tags = '';
+        if (!empty($tag_items = $this->getTags())) {
+          if (count($tag_items) == 1) {
+            $this->setTagsSearchCondition(self::TAG_SEARCH_CONTAINS_ALL);
+          }
+
+          $tags .= $condition . 'tags:"';
+          $first = TRUE;
+          foreach ($tag_items as $tag) {
+            $tags .= $first ? $tag['value'] : '","' . $tag['value'];
+            if ($first) {
+              $first = FALSE;
+            }
+          }
+          $tags .= '"';
+        }
+
+        $playlist->setSearch($tags);
       }
 
       // Save or update videos list if needed.
@@ -505,25 +562,37 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
         ],
       ]);
 
-    $fields['search'] = BaseFieldDefinition::create('string_long')
-      ->setLabel(t('Search'))
-//      ->setRevisionable(TRUE)
+    $fields['tags_search_condition'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(t('Tags search condition'))
+      ->setRequired(TRUE)
+      //->setRevisionable(TRUE)
+      ->setDefaultValue(self::TAG_SEARCH_CONTAINS_ONE_OR_MORE)
+      ->setSetting('allowed_values', [
+        self::TAG_SEARCH_CONTAINS_ONE_OR_MORE => t('contains one or more'),
+        self::TAG_SEARCH_CONTAINS_ALL => t('contains all'),
+      ])
       ->setDisplayOptions('form', array(
-        'type' => 'string_textarea',
+        'type' => 'options_select',
+        'weight' => ++$weight,
+      ))
+      ->setDisplayConfigurable('form', TRUE);
+
+    $fields['tags'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(t('Tags'))
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      //->setRevisionable(TRUE)
+      ->setSetting('allowed_values_function', [self::class, 'tagsAllowedValues'])
+      ->setDisplayOptions('form', array(
+        'type' => 'options_select',
         'weight' => ++$weight,
       ))
       ->setDisplayOptions('view', array(
-        'type' => 'basic_string',
+        'type' => 'string',
         'label' => 'inline',
         'weight' => $weight,
       ))
       ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE)
-      ->addPropertyConstraints('value', [
-        'Length' => [
-          'max' => 5000,
-        ],
-      ]);
+      ->setDisplayConfigurable('view', TRUE);
 
     $fields['videos'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Videos'))
@@ -595,6 +664,91 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setTranslatable(TRUE);
 
     return $fields;
+  }
+
+  /**
+   * Get allowed values for tags by API client.
+   *
+   * @param $api_client
+   *   The ID of the API client.
+   * @return array
+   *   The list of tags for the given API client.
+   */
+  public static function getTagsAllowedValues($api_client) {
+    $tags = [];
+
+    if (!empty($api_client)) {
+      $cid = 'brightcove:playlist:tags:' . $api_client;
+
+      // If we have a hit in the cache, return the results.
+      if ($cache = \Drupal::cache()->get($cid)) {
+        $tags = $cache->data;
+      }
+      // Otherwise gather all tags.
+      else {
+        /** @var \Drupal\brightcove\Entity\BrightcoveVideo[] $videos */
+        $videos = BrightcoveVideo::loadMultipleByAPIClient($api_client);
+
+        foreach ($videos as $video) {
+          $video_tags = $video->getTags();
+
+          foreach ($video_tags as $tag) {
+            $tags += [$tag['value'] => $tag['value']];
+          }
+        }
+
+        // Order profiles by value.
+        asort($tags);
+
+        // Save the results to cache.
+        \Drupal::cache()->set($cid, $tags);
+      }
+    }
+
+    return $tags;
+  }
+
+  /**
+   * Implements callback_allowed_values_function().
+   *
+   * @param \Drupal\Core\Field\FieldStorageDefinitionInterface $definition
+   *   The field storage definition.
+   * @param \Drupal\Core\Entity\FieldableEntityInterface|null $entity
+   *   (optional) The entity context if known, or NULL if the allowed values
+   *   are being collected without the context of a specific entity.
+   * @param bool &$cacheable
+   *   (optional) If an $entity is provided, the $cacheable parameter should be
+   *   modified by reference and set to FALSE if the set of allowed values
+   *   returned was specifically adjusted for that entity and cannot not be
+   *   reused for other entities. Defaults to TRUE.
+   *
+   * @return array
+   *   The array of allowed values. Keys of the array are the raw stored values
+   *   (number or text), values of the array are the display labels. If $entity
+   *   is NULL, you should return the list of all the possible allowed values
+   *   in any context so that other code (e.g. Views filters) can support the
+   *   allowed values for all possible entities and bundles.
+   */
+  public static function tagsAllowedValues(FieldStorageDefinitionInterface $definition, FieldableEntityInterface $entity = NULL, &$cacheable = TRUE) {
+    $tags = [];
+
+    if ($entity instanceof BrightcovePlaylist) {
+      // Collect tags for all of the api clients if the ID is not set.
+      if (empty($entity->id())) {
+        $api_clients = \Drupal::entityQuery('brightcove_api_client')
+          ->execute();
+
+        foreach ($api_clients as $api_client_id) {
+          $tags[$api_client_id] = self::getTagsAllowedValues($api_client_id);
+        }
+      }
+      // Otherwise just return the results for the given api client.
+      else {
+        $tags = self::getTagsAllowedValues($entity->getAPIClient());
+      }
+    }
+
+    return $tags;
   }
 
   /**
@@ -724,9 +878,23 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
         $playlist_entity->setDescription($description);
       }
 
-      // Update search field if needed.
-      if ($playlist_entity->getSearch() != ($search = $playlist->getSearch())) {
-        $playlist_entity->setSearch($search);
+      // Update tags field if needed.
+      $playlist_entity_tags = array_values($playlist_entity->getTags());
+      $playlist_search = $playlist->getSearch();
+      preg_match('/^(\+?)([^\+].*):(?:,?"(.*?[^"])")$/i', $playlist_search, $matches);
+      if (count($matches) == 4 && $matches[2] == 'tags') {
+        $playlist_tags = explode('","', $matches[3]);
+
+        // Save or update tag search condition if needed.
+        $playlist_search_condition = $matches[1] == '+' ? self::TAG_SEARCH_CONTAINS_ALL : self::TAG_SEARCH_CONTAINS_ONE_OR_MORE;
+        if ($playlist_entity->getTagsSearchCondition() != $playlist_search_condition) {
+          $playlist_entity->setTagsSearchCondition($playlist_search_condition);
+        }
+
+        // Save or update tags if needed.
+        if ($playlist_entity_tags != $playlist_tags) {
+          $playlist_entity->setTags($playlist_tags);
+        }
       }
 
       // Update videos field if needed.
