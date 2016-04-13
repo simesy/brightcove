@@ -3,6 +3,7 @@
  * Contains a minimal theme for the tags chosen field.
  */
 
+.field--name-videos,
 .field--name-tags {
   max-width: 350px;
 }
