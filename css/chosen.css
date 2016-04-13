@@ -1,0 +1,8 @@
+/**
+ * @file
+ * Contains a minimal theme for the tags chosen field.
+ */
+
+.field--name-tags {
+  max-width: 350px;
+}
