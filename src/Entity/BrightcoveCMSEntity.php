@@ -141,4 +141,25 @@ abstract class BrightcoveCMSEntity extends ContentEntityBase implements Brightco
       'uid' => \Drupal::currentUser()->id(),
     ];
   }
+
+  /**
+   * Load multiple CMS Entity for the given api client.
+   *
+   * @param string $api_client
+   *   The ID of the BrightcoveAPIClient entity.
+   * @param bool $status
+   *   The status of the entity, if TRUE then published entities will be
+   *   returned, otherwise the unpublished entities.
+   *
+   * @return \Drupal\brightcove\Entity\BrightcoveCMSEntity[]
+   *   An array of BrightcoveCMSEntity objects.
+   */
+  public static function loadMultipleByAPIClient($api_client, $status = TRUE) {
+    $repository = \Drupal::getContainer()->get('entity_type.repository');
+    $entity_ids = \Drupal::entityQuery($repository->getEntityTypeFromClass(get_called_class()))
+      ->condition('api_client', $api_client)
+      ->condition('status', $status ? 1 : 0)
+      ->execute();
+    return self::loadMultiple($entity_ids);
+  }
 }

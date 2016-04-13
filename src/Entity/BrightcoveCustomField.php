@@ -104,23 +104,6 @@ class BrightcoveCustomField extends BrightcoveCMSEntity implements BrightcoveCus
   }
 
   /**
-   * Load multiple custom fields for the given api client.
-   *
-   * @param string $api_client
-   *   The ID of the BrightcoveAPIClient entity.
-   *
-   * @return \Drupal\brightcove\Entity\BrightcoveCustomField[]
-   *   An array of BrightcoveCustomField objects.
-   */
-  public static function loadMultipleByAPIClient($api_client) {
-    $custom_field_ids = \Drupal::entityQuery('brightcove_custom_field')
-      ->condition('api_client', $api_client)
-      ->condition('status', 1)
-      ->execute();
-    return self::loadMultiple($custom_field_ids);
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
