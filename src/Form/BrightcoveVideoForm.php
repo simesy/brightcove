@@ -30,7 +30,6 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
     $entity = $this->entity;
 
     // Get api client from the form settings.
-    $api_client = NULL;
     if (!empty($form_state->getValue('api_client'))) {
       $api_client = $form_state->getValue('api_client')[0]['target_id'];
     }
