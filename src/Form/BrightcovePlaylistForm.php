@@ -9,6 +9,7 @@ namespace Drupal\brightcove\Form;
 
 use Brightcove\API\Exception\APIException;
 use Drupal\brightcove\Entity\BrightcovePlaylist;
+use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -21,8 +22,24 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    /* @var $entity \Drupal\brightcove\Entity\BrightcovePlaylist */
     $form = parent::buildForm($form, $form_state);
+
+    /* @var $entity \Drupal\brightcove\Entity\BrightcovePlaylist */
+    $entity = $this->entity;
+
+    // Get api client from the form settings.
+    if (!empty($form_state->getValue('api_client'))) {
+      $api_client = $form_state->getValue('api_client')[0]['target_id'];
+    }
+    else {
+      $api_client = $form['api_client']['widget']['#default_value'];
+
+      if (is_array($api_client)) {
+        $api_client = reset($api_client);
+      }
+    }
+
+    $form['#attached']['library'][] = 'brightcove/brightcove.chosen';
 
     // Manual playlist: no search, only videos.
     $manual_type = array_keys(BrightcovePlaylist::getTypes(BrightcovePlaylist::TYPE_MANUAL));
@@ -37,11 +54,32 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
     foreach (array_keys(BrightcovePlaylist::getTypes(BrightcovePlaylist::TYPE_SMART)) as $smart_type) {
       $smart_types[] = ['value' => $smart_type];
     }
-    $form['search']['#states'] = [
+
+    $form['tags_search_condition']['#states'] = [
       'visible' => [
         ':input[name="type"]' => $smart_types,
       ],
     ];
+
+    $form['tags']['#states'] = [
+      'visible' => [
+        ':input[name="type"]' => $smart_types,
+      ],
+    ];
+
+    // Get tags for the given api client.
+    $form['tags']['widget']['#options'] = BrightcovePlaylist::getTagsAllowedValues($api_client);
+
+    // Ajax wrapper to be able to update the tags list on api client change.
+    if ($entity->isNew()) {
+      $form['api_client']['widget']['#ajax']['callback'] = [
+        self::class, 'apiClientUpdateForm',
+      ];
+
+      $form['tags']['widget']['#ajax_id'] = 'ajax-tags-wrapper';
+      $form['tags']['widget']['#prefix'] = '<div id="' . $form['tags']['widget']['#ajax_id'] . '">';
+      $form['tags']['widget']['#suffix'] = '</div>';
+    }
 
     return $form;
   }
@@ -73,5 +111,25 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
     catch (APIException $e) {
       drupal_set_message($e->getMessage(), 'error');
     }
+  }
+
+  /**
+   * Ajax callback to update the tags list.
+   *
+   * @param $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   */
+  public static function apiClientUpdateForm($form, FormStateInterface $form_state) {
+    $response = parent::apiClientUpdateForm($form, $form_state);
+
+    // Update profile field.
+    $response->addCommand(new ReplaceCommand(
+      '#' . $form['tags']['widget']['#ajax_id'],
+      $form['tags']
+    ));
+
+    return $response;
   }
 }
