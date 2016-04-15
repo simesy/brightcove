@@ -620,10 +620,20 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
       // Save or update tags if needed.
       if ($this->isFieldChanged('tags')) {
-        $tags = [];
+        // Get term IDs.
+        $term_ids = [];
         foreach ($this->getTags() as $tag) {
-          $tags[] = $tag['value'];
+          $term_ids[] = $tag['target_id'];
         }
+
+        // Load terms.
+        /** @var \Drupal\taxonomy\Entity\Term[] $terms */
+        $terms = Term::loadMultiple($term_ids);
+        $tags = [];
+        foreach ($terms as $term) {
+          $tags[] = $term->getName();
+        }
+
         $video->setTags($tags);
       }
 
