@@ -30,6 +30,7 @@ use Drupal\Core\Site\Settings;
 use Drupal\Core\Url;
 use Drupal\file\Entity\File;
 use Drupal\link\LinkItemInterface;
+use Drupal\taxonomy\Entity\Term;
 use Drupal\time_formatter\Plugin\Field\FieldFormatter\TimeFieldFormatter;
 
 /**
@@ -1755,11 +1756,73 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
       // Save or update tags field if needed.
       $tags = [];
-      foreach ($video_entity->getTags() as $tag) {
-        $tags[] = $tag['value'];
+      $video_entity_tags = $video_entity->getTags();
+      foreach ($video_entity_tags as $index => $tag) {
+        /** @var \Drupal\taxonomy\Entity\Term $term */
+        $term = Term::load($tag['target_id']);
+        if (!is_null($term)) {
+          $tags[$term->id()] = $term->getName();
+        }
+        // Remove non-existing tag references from the video, if there would
+        // be any.
+        else {
+          unset($video_entity_tags[$index]);
+          $video_entity->setTags($video_entity_tags);
+        }
       }
-      if (!empty(array_diff($tags, $video_tags = $video->getTags())) || !empty(array_diff($video_tags, $tags))) {
-        $video_entity->setTags($video_tags);
+      if (array_values($tags) != ($video_tags = $video->getTags())) {
+        $connection = Database::getConnection();
+
+        // Remove no longer used taxonomy term tags.
+        if (!empty($video_entity->id())) {
+          // Calculate diff.
+          $tags_to_remove = array_diff($tags, $video_tags);
+
+          // Then check for existing references.
+          $results = [];
+          if (!empty($tags_to_remove)) {
+            $results = $connection->select('brightcove_video__tags', 'tags')
+              ->fields('tags', ['tags_target_id'])
+              ->condition('tags_target_id', array_keys($tags_to_remove), 'IN')
+              ->condition('entity_id', $video_entity->id(), '!=')
+              ->execute()
+              ->fetchAll(\PDO::FETCH_COLUMN, 0);
+          }
+
+          // Finally remove only the non-referenced tags.
+          foreach ($tags_to_remove as $entity_id => $tag) {
+            if (!in_array($entity_id, $results)) {
+              $term = Term::load($entity_id);
+              $term->delete();
+            }
+            unset($tags[$entity_id]);
+          }
+        }
+
+        // Add new tags.
+        $new_tags = array_diff($video_tags, $tags);
+        $tags = array_keys($tags);
+        foreach ($new_tags as $tag) {
+          $existing_tags = \Drupal::entityQuery('taxonomy_term')
+            ->condition('name', $tag)
+            ->condition('brightcove_api_client', $api_client_id)
+            ->execute();
+
+          // Create new Taxonomy term item.
+          if (empty($existing_tags)) {
+            $values = [
+              'name' => $tag,
+              'vid' => 'brightcove_video_tags',
+              'brightcove_api_client' => [
+                'target_id' => $api_client_id,
+              ],
+            ];
+            $taxonomy_term = Term::create($values);
+            $taxonomy_term->save();
+          }
+          $tags[] = isset($taxonomy_term) ? $taxonomy_term->id() : reset($existing_tags);
+        }
+        $video_entity->setTags($tags);
       }
 
       // Get images.
