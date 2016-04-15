@@ -39,8 +39,6 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
       }
     }
 
-    $form['#attached']['library'][] = 'brightcove/brightcove.chosen';
-
     // Manual playlist: no search, only videos.
     $manual_type = array_keys(BrightcovePlaylist::getTypes(BrightcovePlaylist::TYPE_MANUAL));
     $form['videos']['#states'] = [
