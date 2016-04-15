@@ -1073,21 +1073,26 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         ],
       ]);
 
-    // TODO: Replace this with an entityreference to a taxonomy term eventually.
-    $fields['tags'] = BaseFieldDefinition::create('string')
+    $fields['tags'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Tags'))
       ->setDescription(t('Max 1200 tags per video'))
       // We can't really say 1200 here as it'd yield 1200 textfields on the UI.
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setSettings([
-        'max_length' => 128,
-        'text_processing' => 0,
+        'target_type' => 'taxonomy_term',
+        'handler_settings' => [
+          'target_bundles' => ['brightcove_video_tags' => 'brightcove_video_tags'],
+          'auto_create' => TRUE,
+        ],
       ])
-      ->setDisplayOptions('form', [
-        'type' => 'string_textfield',
+      ->setDisplayOptions('form', array(
+        'type' => 'entity_reference_autocomplete',
         'weight' => ++$weight,
-      ])
+        'settings' => array(
+          'autocomplete_type' => 'tags',
+        ),
+      ))
       ->setDisplayOptions('view', [
         'type' => 'string',
         'label' => 'inline',
