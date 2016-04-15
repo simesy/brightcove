@@ -1,0 +1,20 @@
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.brightcove_api_client
+    - taxonomy.vocabulary.brightcove_video_tags
+id: taxonomy_term.brightcove_video_tags.brightcove_api_client
+field_name: brightcove_api_client
+entity_type: taxonomy_term
+bundle: brightcove_video_tags
+label: 'API Client'
+description: 'The API Client where the tag belongs to.'
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:brightcove_api_client'
+  handler_settings:
+    target_bundles: null
+field_type: entity_reference

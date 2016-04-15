@@ -1,0 +1,18 @@
+status: true
+dependencies:
+  module:
+    - brightcove
+    - taxonomy
+id: taxonomy_term.brightcove_api_client
+field_name: brightcove_api_client
+entity_type: taxonomy_term
+type: entity_reference
+settings:
+  target_type: brightcove_api_client
+module: core
+locked: true
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false
