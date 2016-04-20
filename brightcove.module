@@ -2394,12 +2394,8 @@ function brightcove_create_callback($hash, $video_id, $client_id, $fid = 0, $par
   if (!$callback) {
     return FALSE;
   }
-
-  // Using db_merge() instead of db_insert() to avoid PDO exceptions caused by
-  // duplicated id entries when multiple calls of this function occur through
-  // webhooks for the same video id.
-  db_merge('brightcove_callback')
-    ->key(['id' => $video_id])
+  
+  db_insert('brightcove_callback')
     ->fields([
       'id' => $video_id,
       'expires' => time() + (60*60*24),
