@@ -83,7 +83,7 @@ function brightcove_init() {
 function brightcove_menu() {
   $items = [];
 
-  $items['brightcove/callback/%'] = [
+  $items['brightcove/callback/%brightcove_callback'] = [
     'title' => 'Brightcove Ingestion callback',
     'type' => MENU_CALLBACK,
     'page callback' => 'brightcove_handle_ingest_callback',
@@ -2395,7 +2395,11 @@ function brightcove_create_callback($hash, $video_id, $client_id, $fid = 0, $par
     return FALSE;
   }
 
-  db_insert('brightcove_callback')
+  // Using db_merge() instead of db_insert() to avoid PDO exceptions caused by
+  // duplicated id entries when multiple calls of this function occur through
+  // webhooks for the same video id.
+  db_merge('brightcove_callback')
+    ->key(['id' => $video_id])
     ->fields([
       'id' => $video_id,
       'expires' => time() + (60*60*24),
@@ -2424,24 +2428,44 @@ function _brightcove_get_ingest_callback($hash, $force = FALSE) {
   return rtrim(variable_get('brightcove_callback'), '/') . "/{$hash}";
 }
 
-function brightcove_handle_ingest_callback($hash) {
-  $row = db_query("SELECT * FROM {brightcove_callback} WHERE hash = :hash", [':hash' => $hash])->fetchAssoc();
-  if (!$row) {
-    drupal_not_found();
-    return;
-  }
+/**
+ * Load function Brightcove ingestion page callback.
+ *
+ * @param $hash
+ *   Callback hash.
+ *
+ * @return mixed
+ *   Returns with callback data according to the $hash parameter
+ *   and returns FALSE if callback data is not found.
+ *
+ * @see brightcove_menu()
+ */
+function brightcove_callback_load($hash) {
+  return db_query("SELECT * FROM {brightcove_callback} WHERE hash = :hash", [':hash' => $hash])->fetchAssoc();
+}
 
+/**
+ * Page callback for Brightcove ingestion.
+ *
+ * @param $callback
+ *   A callback data array returned by brightcove_callback_load().
+ *
+ * @return null
+ *
+ * @see brightcove_menu()
+ */
+function brightcove_handle_ingest_callback($callback) {
   // The metadata here could be obsolete if a module implementing hook_brightcove_ingest() updates it.
   // Best to unset it here. If you need it use brightcove_get_callback_metadata().
-  unset($row['metadata']);
+  unset($callback['metadata']);
 
-  $fid = $row['fid'];
+  $fid = $callback['fid'];
   $file = file_load($fid);
   if ($file) {
     file_delete($file);
   }
   db_delete('brightcove_callback')
-    ->condition('id', $hash)
+    ->condition('hash', $callback['hash'])
     ->execute();
 
   $json = file_get_contents("php://input");
@@ -2449,7 +2473,7 @@ function brightcove_handle_ingest_callback($hash) {
 
   watchdog('ingest', var_export($data, TRUE), [], WATCHDOG_DEBUG);
 
-  module_invoke_all('brightcove_ingest', $row, $data);
+  module_invoke_all('brightcove_ingest', $callback, $data);
 
   return NULL;
 }
