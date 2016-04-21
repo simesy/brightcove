@@ -53,17 +53,6 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
       ],
     ];
 
-    // Ajax wrapper to be able to update the tags list on api client change.
-    if ($entity->isNew()) {
-      $form['api_client']['widget']['#ajax']['callback'] = [
-        self::class, 'apiClientUpdateForm',
-      ];
-
-      $form['tags']['widget']['#ajax_id'] = 'ajax-tags-wrapper';
-      $form['tags']['widget']['#prefix'] = '<div id="' . $form['tags']['widget']['#ajax_id'] . '">';
-      $form['tags']['widget']['#suffix'] = '</div>';
-    }
-
     return $form;
   }
 
@@ -94,25 +83,5 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
     catch (APIException $e) {
       drupal_set_message($e->getMessage(), 'error');
     }
-  }
-
-  /**
-   * Ajax callback to update the tags list.
-   *
-   * @param $form
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *
-   * @return \Drupal\Core\Ajax\AjaxResponse
-   */
-  public static function apiClientUpdateForm($form, FormStateInterface $form_state) {
-    $response = parent::apiClientUpdateForm($form, $form_state);
-
-    // Update profile field.
-    $response->addCommand(new ReplaceCommand(
-      '#' . $form['tags']['widget']['#ajax_id'],
-      $form['tags']
-    ));
-
-    return $response;
   }
 }
