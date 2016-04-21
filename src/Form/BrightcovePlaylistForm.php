@@ -27,18 +27,6 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
     /* @var $entity \Drupal\brightcove\Entity\BrightcovePlaylist */
     $entity = $this->entity;
 
-    // Get api client from the form settings.
-    if (!empty($form_state->getValue('api_client'))) {
-      $api_client = $form_state->getValue('api_client')[0]['target_id'];
-    }
-    else {
-      $api_client = $form['api_client']['widget']['#default_value'];
-
-      if (is_array($api_client)) {
-        $api_client = reset($api_client);
-      }
-    }
-
     // Manual playlist: no search, only videos.
     $manual_type = array_keys(BrightcovePlaylist::getTypes(BrightcovePlaylist::TYPE_MANUAL));
     $form['videos']['#states'] = [
@@ -64,9 +52,6 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
         ':input[name="type"]' => $smart_types,
       ],
     ];
-
-    // Get tags for the given api client.
-    $form['tags']['widget']['#options'] = BrightcovePlaylist::getTagsAllowedValues($api_client);
 
     // Ajax wrapper to be able to update the tags list on api client change.
     if ($entity->isNew()) {
