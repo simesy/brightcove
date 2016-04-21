@@ -1781,30 +1781,10 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         }
       }
       if (array_values($tags) != ($video_tags = $video->getTags())) {
-        $connection = Database::getConnection();
-
-        // Remove no longer used taxonomy term tags.
+        // Remove deleted tags from the video.
         if (!empty($video_entity->id())) {
-          // Calculate diff.
           $tags_to_remove = array_diff($tags, $video_tags);
-
-          // Then check for existing references.
-          $results = [];
-          if (!empty($tags_to_remove)) {
-            $results = $connection->select('brightcove_video__tags', 'tags')
-              ->fields('tags', ['tags_target_id'])
-              ->condition('tags_target_id', array_keys($tags_to_remove), 'IN')
-              ->condition('entity_id', $video_entity->id(), '!=')
-              ->execute()
-              ->fetchAll(\PDO::FETCH_COLUMN, 0);
-          }
-
-          // Finally remove only the non-referenced tags.
-          foreach ($tags_to_remove as $entity_id => $tag) {
-            if (!in_array($entity_id, $results)) {
-              $term = Term::load($entity_id);
-              $term->delete();
-            }
+          foreach (array_keys($tags_to_remove) as $entity_id) {
             unset($tags[$entity_id]);
           }
         }
@@ -1815,7 +1795,6 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         foreach ($new_tags as $tag) {
           $existing_tags = \Drupal::entityQuery('taxonomy_term')
             ->condition('name', $tag)
-            ->condition('brightcove_api_client', $api_client_id)
             ->execute();
 
           // Create new Taxonomy term item.
