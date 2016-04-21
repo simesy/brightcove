@@ -17,6 +17,7 @@ use Drupal\brightcove\Entity\BrightcoveVideo;
 use Drupal\Core\Queue\QueueWorkerInterface;
 use Drupal\Core\Queue\SuspendQueueException;
 use Drupal\Core\Url;
+use Drupal\taxonomy\Entity\Term;
 
 /**
  * Utility class for Brightcove.
@@ -286,5 +287,66 @@ class BrightcoveUtil {
 
     $api_client = self::getAPIClient($entity->getAPIClient());
     return $api_client->getDefaultPlayer();
+  }
+
+  /**
+   * Helper function to save or update tags.
+   *
+   * @param \Drupal\brightcove\BrightcoveVideoPlaylistCMSEntityInterface $entity
+   *   Video or playlist entity.
+   * @param string $api_client_id
+   *   API Client ID.
+   * @param array $tags
+   *   The list of tags from brightcove.
+   */
+  public static function saveOrUpdateTags(BrightcoveVideoPlaylistCMSEntityInterface $entity, $api_client_id, array $tags = array()) {
+    $entity_tags = [];
+    $video_entity_tags = $entity->getTags();
+    foreach ($video_entity_tags as $index => $tag) {
+      /** @var \Drupal\taxonomy\Entity\Term $term */
+      $term = Term::load($tag['target_id']);
+      if (!is_null($term)) {
+        $entity_tags[$term->id()] = $term->getName();
+      }
+      // Remove non-existing tag references from the video, if there would
+      // be any.
+      else {
+        unset($video_entity_tags[$index]);
+        $entity->setTags($video_entity_tags);
+      }
+    }
+    if (array_values($entity_tags) != $tags) {
+      // Remove deleted tags from the video.
+      if (!empty($entity->id())) {
+        $tags_to_remove = array_diff($entity_tags, $tags);
+        foreach (array_keys($tags_to_remove) as $entity_id) {
+          unset($entity_tags[$entity_id]);
+        }
+      }
+
+      // Add new tags.
+      $new_tags = array_diff($tags, $entity_tags);
+      $entity_tags = array_keys($entity_tags);
+      foreach ($new_tags as $tag) {
+        $existing_tags = \Drupal::entityQuery('taxonomy_term')
+          ->condition('name', $tag)
+          ->execute();
+
+        // Create new Taxonomy term item.
+        if (empty($existing_tags)) {
+          $values = [
+            'name' => $tag,
+            'vid' => 'brightcove_video_tags',
+            'brightcove_api_client' => [
+              'target_id' => $api_client_id,
+            ],
+          ];
+          $taxonomy_term = Term::create($values);
+          $taxonomy_term->save();
+        }
+        $entity_tags[] = isset($taxonomy_term) ? $taxonomy_term->id() : reset($existing_tags);
+      }
+      $entity->setTags($entity_tags);
+    }
   }
 }
