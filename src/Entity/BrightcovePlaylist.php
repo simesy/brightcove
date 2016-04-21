@@ -15,6 +15,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\brightcove\BrightcovePlaylistInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\taxonomy\Entity\Term;
 
 /**
  * Defines the Brightcove Playlist.
@@ -298,7 +299,8 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
           $tags .= $condition . 'tags:"';
           $first = TRUE;
           foreach ($tag_items as $tag) {
-            $tags .= $first ? $tag['value'] : '","' . $tag['value'];
+            $tag_term = Term::load($tag['target_id']);
+            $tags .= ($first ? '' : '","') . $tag_term->getName();
             if ($first) {
               $first = FALSE;
             }
@@ -577,18 +579,27 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ))
       ->setDisplayConfigurable('form', TRUE);
 
-    $fields['tags'] = BaseFieldDefinition::create('list_string')
+    $fields['tags'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Tags'))
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       //->setRevisionable(TRUE)
-      ->setSetting('allowed_values_function', [self::class, 'tagsAllowedValues'])
+      ->setSettings([
+        'target_type' => 'taxonomy_term',
+        'handler_settings' => [
+          'target_bundles' => ['brightcove_video_tags' => 'brightcove_video_tags'],
+          'auto_create' => TRUE,
+        ],
+      ])
       ->setDisplayOptions('form', array(
-        'type' => 'options_select',
+        'type' => 'entity_reference_autocomplete',
         'weight' => ++$weight,
+        'settings' => array(
+          'autocomplete_type' => 'tags',
+        ),
       ))
       ->setDisplayOptions('view', array(
-        'type' => 'string',
-        'label' => 'inline',
+        'type' => 'entity_reference_label',
+        'label' => 'above',
         'weight' => $weight,
       ))
       ->setDisplayConfigurable('form', TRUE)
@@ -664,91 +675,6 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setTranslatable(TRUE);
 
     return $fields;
-  }
-
-  /**
-   * Get allowed values for tags by API client.
-   *
-   * @param $api_client
-   *   The ID of the API client.
-   * @return array
-   *   The list of tags for the given API client.
-   */
-  public static function getTagsAllowedValues($api_client) {
-    $tags = [];
-
-    if (!empty($api_client)) {
-      $cid = 'brightcove:playlist:tags:' . $api_client;
-
-      // If we have a hit in the cache, return the results.
-      if ($cache = \Drupal::cache()->get($cid)) {
-        $tags = $cache->data;
-      }
-      // Otherwise gather all tags.
-      else {
-        /** @var \Drupal\brightcove\Entity\BrightcoveVideo[] $videos */
-        $videos = BrightcoveVideo::loadMultipleByAPIClient($api_client);
-
-        foreach ($videos as $video) {
-          $video_tags = $video->getTags();
-
-          foreach ($video_tags as $tag) {
-            $tags += [$tag['value'] => $tag['value']];
-          }
-        }
-
-        // Order profiles by value.
-        asort($tags);
-
-        // Save the results to cache.
-        \Drupal::cache()->set($cid, $tags);
-      }
-    }
-
-    return $tags;
-  }
-
-  /**
-   * Implements callback_allowed_values_function().
-   *
-   * @param \Drupal\Core\Field\FieldStorageDefinitionInterface $definition
-   *   The field storage definition.
-   * @param \Drupal\Core\Entity\FieldableEntityInterface|null $entity
-   *   (optional) The entity context if known, or NULL if the allowed values
-   *   are being collected without the context of a specific entity.
-   * @param bool &$cacheable
-   *   (optional) If an $entity is provided, the $cacheable parameter should be
-   *   modified by reference and set to FALSE if the set of allowed values
-   *   returned was specifically adjusted for that entity and cannot not be
-   *   reused for other entities. Defaults to TRUE.
-   *
-   * @return array
-   *   The array of allowed values. Keys of the array are the raw stored values
-   *   (number or text), values of the array are the display labels. If $entity
-   *   is NULL, you should return the list of all the possible allowed values
-   *   in any context so that other code (e.g. Views filters) can support the
-   *   allowed values for all possible entities and bundles.
-   */
-  public static function tagsAllowedValues(FieldStorageDefinitionInterface $definition, FieldableEntityInterface $entity = NULL, &$cacheable = TRUE) {
-    $tags = [];
-
-    if ($entity instanceof BrightcovePlaylist) {
-      // Collect tags for all of the api clients if the ID is not set.
-      if (empty($entity->id())) {
-        $api_clients = \Drupal::entityQuery('brightcove_api_client')
-          ->execute();
-
-        foreach ($api_clients as $api_client_id) {
-          $tags[$api_client_id] = self::getTagsAllowedValues($api_client_id);
-        }
-      }
-      // Otherwise just return the results for the given api client.
-      else {
-        $tags = self::getTagsAllowedValues($entity->getAPIClient());
-      }
-    }
-
-    return $tags;
   }
 
   /**
@@ -879,7 +805,6 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       }
 
       // Update tags field if needed.
-      $playlist_entity_tags = array_values($playlist_entity->getTags());
       $playlist_search = $playlist->getSearch();
       preg_match('/^(\+?)([^\+].*):(?:,?"(.*?[^"])")$/i', $playlist_search, $matches);
       if (count($matches) == 4 && $matches[2] == 'tags') {
@@ -891,10 +816,7 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
           $playlist_entity->setTagsSearchCondition($playlist_search_condition);
         }
 
-        // Save or update tags if needed.
-        if ($playlist_entity_tags != $playlist_tags) {
-          $playlist_entity->setTags($playlist_tags);
-        }
+        BrightcoveUtil::saveOrUpdateTags($playlist_entity, $api_client_id, $playlist_tags);
       }
 
       // Update videos field if needed.
