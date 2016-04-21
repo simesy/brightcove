@@ -1,7 +1,6 @@
 status: true
 dependencies:
   config:
-    - field.field.taxonomy_term.brightcove_video_tags.brightcove_api_client
     - taxonomy.vocabulary.brightcove_video_tags
   module:
     - path
@@ -11,14 +10,6 @@ targetEntityType: taxonomy_term
 bundle: brightcove_video_tags
 mode: default
 content:
-  brightcove_api_client:
-    type: entity_reference_autocomplete
-    weight: 1
-    settings:
-      match_operator: CONTAINS
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
   description:
     type: text_textarea
     weight: 2

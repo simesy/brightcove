@@ -1,7 +1,6 @@
 status: true
 dependencies:
   config:
-    - field.field.taxonomy_term.brightcove_video_tags.brightcove_api_client
     - taxonomy.vocabulary.brightcove_video_tags
   module:
     - text
@@ -10,13 +9,6 @@ targetEntityType: taxonomy_term
 bundle: brightcove_video_tags
 mode: default
 content:
-  brightcove_api_client:
-    type: entity_reference_label
-    weight: 0
-    label: above
-    settings:
-      link: true
-    third_party_settings: {  }
   description:
     label: hidden
     type: text_default
