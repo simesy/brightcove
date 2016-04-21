@@ -167,25 +167,6 @@ interface BrightcoveVideoInterface {
   public function setDescription($description);
 
   /**
-   * Returns the tags.
-   *
-   * @return array
-   *   The list of tags on the video entity.
-   */
-  public function getTags();
-
-  /**
-   * Sets the video's tags.
-   *
-   * @param array $tags
-   *   The tags on the video.
-   *
-   * @return \Drupal\brightcove\BrightcoveVideoInterface
-   *   The called Brightcove Video.
-   */
-  public function setTags($tags);
-
-  /**
    * Returns the video's related link.
    *
    * @return array

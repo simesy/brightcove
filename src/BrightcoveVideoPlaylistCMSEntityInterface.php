@@ -50,6 +50,25 @@ interface BrightcoveVideoPlaylistCMSEntityInterface extends BrightcoveCMSEntityI
   public function setReferenceID($reference_id);
 
   /**
+   * Returns the tags.
+   *
+   * @return string
+   *   The list of tags.
+   */
+  public function getTags();
+
+  /**
+   * Sets the tags.
+   *
+   * @param array $tags
+   *   List of tags.
+   *
+   * @return \Drupal\brightcove\BrightcoveVideoPlaylistCMSEntityInterface
+   *   The called Brightcove Video or Playlist.
+   */
+  public function setTags($tags);
+
+  /**
    * Returns the entity published status indicator.
    *
    * Unpublished entities are only visible to restricted users.

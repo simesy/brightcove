@@ -43,6 +43,21 @@ abstract class BrightcoveVideoPlaylistCMSEntity extends BrightcoveCMSEntity impl
   /**
    * {@inheritdoc}
    */
+  public function getTags() {
+    return $this->get('tags')->getValue();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTags($tags) {
+    $this->set('tags', $tags);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function isPublished() {
     return (bool) $this->getEntityKey('status');
   }

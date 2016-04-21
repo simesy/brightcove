@@ -209,21 +209,6 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
   /**
    * {@inheritdoc}
    */
-  public function getTags() {
-    return $this->get('tags')->getValue();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setTags($tags) {
-    $this->set('tags', $tags);
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getVideos() {
     return $this->get('videos')->getValue();
   }

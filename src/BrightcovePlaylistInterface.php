@@ -88,25 +88,6 @@ interface BrightcovePlaylistInterface {
   public function setTagsSearchCondition($condition);
 
   /**
-   * Returns the tags for the smart playlist.
-   *
-   * @return string
-   *   The list of tags for the smart playlist.
-   */
-  public function getTags();
-
-  /**
-   * Sets the playlist's tags for the smart playlist.
-   *
-   * @param string $tags
-   *   List of tags.
-   *
-   * @return \Drupal\brightcove\BrightcovePlaylistInterface
-   *   The called Brightcove Playlist.
-   */
-  public function setTags($tags);
-
-  /**
    * Returns the list of videos on the playlist.
    *
    * @return int[]

@@ -328,21 +328,6 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
   /**
    * {@inheritdoc}
    */
-  public function getTags() {
-    return $this->get('tags')->getValue();
-  }
-
-  /**
-   * {inheritdoc}
-   */
-  public function setTags($tags) {
-    $this->set('tags', $tags);
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getRelatedLink() {
     $value = $this->get('related_link')->getValue();
 
