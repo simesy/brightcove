@@ -329,6 +329,7 @@ class BrightcoveTextTrack extends ContentEntityBase implements BrightcoveTextTra
 
     $fields['webvtt_file'] = BaseFieldDefinition::create('file')
       ->setLabel(t('WebVTT file'))
+      ->setRequired(TRUE)
       //->setRevisionable(TRUE)
       ->setSettings([
         'file_extensions' => 'vtt',
