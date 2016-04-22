@@ -751,9 +751,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         }
 
         // Set existing text tracks.
-        if (!empty($video_text_tracks)) {
-          $video->setTextTracks($video_text_tracks);
-        }
+        $video->setTextTracks($video_text_tracks);
       }
 
       // Update status field based on Brightcove's Video state.
