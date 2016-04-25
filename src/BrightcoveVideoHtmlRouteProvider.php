@@ -57,7 +57,7 @@ class BrightcoveVideoHtmlRouteProvider extends AdminHtmlRouteProvider {
       $route
         ->setDefaults([
           '_entity_list' => $entity_type_id,
-          '_title' => "{$entity_type->getLabel()} list",
+          '_title' => "Brightcove Videos",
         ])
         ->setRequirement('_permission', 'view brightcove videos')
         ->setOption('_admin_route', TRUE);

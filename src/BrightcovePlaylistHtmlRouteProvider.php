@@ -57,7 +57,7 @@ class BrightcovePlaylistHtmlRouteProvider extends AdminHtmlRouteProvider {
       $route
         ->setDefaults([
           '_entity_list' => $entity_type_id,
-          '_title' => "{$entity_type->getLabel()} list",
+          '_title' => 'Brightcove Playlists',
         ])
         ->setRequirement('_permission', 'view brightcove playlists')
         ->setOption('_admin_route', TRUE);
