@@ -26,6 +26,8 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
 
+    $form['#attached']['library'][] = 'brightcove/brightcove.video';
+
     /** @var $entity \Drupal\brightcove\Entity\BrightcoveVideo */
     $entity = $this->entity;
 
