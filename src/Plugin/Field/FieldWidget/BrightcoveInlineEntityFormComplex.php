@@ -42,4 +42,22 @@ class BrightcoveInlineEntityFormComplex extends InlineEntityFormComplex {
 
     return $element;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function buildEntityFormActions($element) {
+    $parent_element = parent::buildEntityFormActions($element);
+
+    // Override add/update button labels.
+    if ($element['#op'] == 'add') {
+      $save_label = t('Save Text Track');
+    }
+    else {
+      $save_label = t('Update Text Track');
+    }
+    $parent_element['actions']['ief_' . $element['#op'] . '_save']['#value'] = $save_label;
+
+    return $parent_element;
+  }
 }

@@ -181,6 +181,8 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
       }
     }
 
+    $form['text_tracks']['widget']['actions']['ief_add']['#value'] = $this->t('Add Text Track');
+
     return $form;
   }
 
