@@ -919,10 +919,66 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setDescription(t('The Brightcove Video UUID.'))
       ->setReadOnly(TRUE);
 
+    $fields['api_client'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('API Client'))
+      ->setDescription(t('Brightcove API credentials (account) to use.'))
+      ->setRequired(TRUE)
+      ->setSetting('target_type', 'brightcove_api_client')
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+        'weight' => ++$weight,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'hidden',
+        'label' => 'inline',
+        'weight' => $weight,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['player'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Player'))
+      ->setDescription(t('Brightcove Player to be used for playback.'))
+      ->setSetting('target_type', 'brightcove_player')
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+        'weight' => ++$weight,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'hidden',
+        'label' => 'inline',
+        'weight' => $weight,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    // Status field, tied together with the status of the entity.
+    $fields['status'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Status'))
+      ->setDescription(t('Determines whether the video is playable.'))
+      //->setRevisionable(TRUE)
+      ->setDefaultValue(TRUE)
+      ->setSettings([
+        'on_label' => t('Active'),
+        'off_label' => t('Inactive'),
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'label' => 'above',
+        'weight' => ++$weight,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'boolean',
+        'label' => 'inline',
+        'weight' => $weight,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['name'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Name'))
-      ->setDescription(t('The name of the Brightcove Video.'))
-//      ->setRevisionable(TRUE)
+      ->setDescription(t('Title of the video.'))
+      //->setRevisionable(TRUE)
       ->setRequired(TRUE)
       ->setSettings([
         'max_length' => 60,
@@ -942,45 +998,12 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     $fields['langcode'] = BaseFieldDefinition::create('language')
       ->setLabel(t('Language code'))
       ->setDescription(t('The language code for the Brightcove Video.'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setDisplayOptions('form', [
         'type' => 'language_select',
         'weight' => ++$weight,
       ])
       ->setDisplayConfigurable('form', TRUE);
-
-    $fields['api_client'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('API Client'))
-      ->setDescription(t('API Client to use for playing the video.'))
-      ->setRequired(TRUE)
-      ->setSetting('target_type', 'brightcove_api_client')
-      ->setDisplayOptions('form', [
-        'type' => 'options_select',
-        'weight' => ++$weight,
-      ])
-      ->setDisplayOptions('view', [
-        'type' => 'hidden',
-        'label' => 'inline',
-        'weight' => $weight,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['player'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Player'))
-      ->setDescription(t('Player to use for playing the video.'))
-      ->setSetting('target_type', 'brightcove_player')
-      ->setDisplayOptions('form', [
-        'type' => 'options_select',
-        'weight' => ++$weight,
-      ])
-      ->setDisplayOptions('view', [
-        'type' => 'hidden',
-        'label' => 'inline',
-        'weight' => $weight,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
 
     /**
      * Additional Brightcove fields, based on
@@ -1010,7 +1033,6 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
      * Scheduling Start Date - date (Day/Time for the video be displayed in the
      *   player)
      * Short Description - text(250)
-     * Status - boolean (Active/Inactive)
      * Tags - text (Separate tags with a comma; no tag > 128 characters. Max
      *   1200 tags per video)
      * Thumbnail - image file (Suggested size: 120 x 90 pixels, JPG)
@@ -1049,7 +1071,8 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
     $fields['description'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Short description'))
-//      ->setRevisionable(TRUE)
+      ->setDescription(t('Max 250 characters.'))
+      //->setRevisionable(TRUE)
       ->setDisplayOptions('form', [
         'type' => 'string_textarea',
         'weight' => ++$weight,
@@ -1095,30 +1118,9 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['reference_id'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Reference ID'))
-      ->addConstraint('UniqueField')
-      ->setDescription(t('Value specified must be unique'))
-//      ->setRevisionable(TRUE)
-      ->setSettings([
-        'max_length' => 150,
-        'text_processing' => 0,
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'string_textfield',
-        'weight' => ++$weight,
-      ])
-      ->setDisplayOptions('view', [
-        'type' => 'string',
-        'label' => 'inline',
-        'weight' => $weight,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
     $fields['related_link'] = BaseFieldDefinition::create('link')
       ->setLabel(t('Related Link'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setSettings([
         'max_length' => 150,
         'link_type' => LinkItemInterface::LINK_GENERIC,
@@ -1140,9 +1142,31 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
+    $fields['reference_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Reference ID'))
+      ->addConstraint('UniqueField')
+      ->setDescription(t('Value specified must be unique'))
+      //->setRevisionable(TRUE)
+      ->setSettings([
+        'max_length' => 150,
+        'text_processing' => 0,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => ++$weight,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'string',
+        'label' => 'inline',
+        'weight' => $weight,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['long_description'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Long description'))
-//      ->setRevisionable(TRUE)
+      ->setDescription(t('Max 5000 characters'))
+      //->setRevisionable(TRUE)
       ->setDisplayOptions('form', [
         'type' => 'string_textarea',
         'weight' => ++$weight,
@@ -1163,7 +1187,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     // Advertising field, but Brightcove calls it 'economics' in the API.
     $fields['economics'] = BaseFieldDefinition::create('list_string')
       ->setLabel(t('Advertising'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setRequired(TRUE)
       ->setDefaultValue(self::ECONOMICS_TYPE_FREE)
       ->setSetting('allowed_values', [
@@ -1185,8 +1209,8 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     // @TODO: Folder
 
     $fields['video_file'] = BaseFieldDefinition::create('file')
-      ->setLabel(t('Video file'))
-//      ->setRevisionable(TRUE)
+      ->setLabel(t('Video source'))
+      //->setRevisionable(TRUE)
       ->setSettings([
         'file_extensions' => 'flv mp4',
         'file_directory' => '[random:hash:md5]',
@@ -1204,8 +1228,8 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['profile'] = BaseFieldDefinition::create('list_string')
-      ->setLabel(t('Profile'))
-//      ->setRevisionable(TRUE)
+      ->setLabel(t('Encoding profile'))
+      //->setRevisionable(TRUE)
       ->setRequired(TRUE)
       ->setSetting('allowed_values_function', [self::class, 'profileAllowedValues'])
       ->setDisplayOptions('form', [
@@ -1216,10 +1240,9 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
     $fields['poster'] = BaseFieldDefinition::create('image')
       ->setLabel(t('Video Still'))
-      ->setDescription(t('Suggested size: 400 x 360 pixels'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setSettings([
-        'file_extensions' => 'jpg jpeg',
+        'file_extensions' => 'jpg jpeg png',
         'file_directory' => self::VIDEOS_IMAGES_POSTERS_DIR,
         'alt_field' => FALSE,
         'alt_field_required' => FALSE,
@@ -1238,10 +1261,9 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
     $fields['thumbnail'] = BaseFieldDefinition::create('image')
       ->setLabel(t('Thumbnail'))
-      ->setDescription(t('Suggested size: 120 x 90 pixels'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setSettings([
-        'file_extensions' => 'jpg jpeg',
+        'file_extensions' => 'jpg jpeg png',
         'file_directory' => self::VIDEOS_IMAGES_THUMBNAILS_DIR,
         'alt_field' => FALSE,
         'alt_field_required' => FALSE,
@@ -1263,8 +1285,8 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
     $fields['schedule_starts_at'] = BaseFieldDefinition::create('datetime')
       ->setLabel(t('Scheduling Start Date'))
-      ->setDescription(t('Day/Time for the video be displayed in the player'))
-//      ->setRevisionable(TRUE)
+      ->setDescription(t('If not specified, the video will be Available Immediately.'))
+      //->setRevisionable(TRUE)
       ->setDisplayOptions('form', [
         'type' => 'datetime_default',
         'weight' => ++$weight,
@@ -1279,36 +1301,14 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
     $fields['schedule_ends_at'] = BaseFieldDefinition::create('datetime')
       ->setLabel(t('Scheduling End Date'))
-      ->setDescription(t('Day/Time for the video to be hidden in the player'))
-//      ->setRevisionable(TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'datetime_default',
-        'weight' => ++$weight,
-      ])
-      ->setDisplayOptions('view', [
-        'type' => 'datetime_default',
-        'label' => 'inline',
-        'weight' => $weight,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['status'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Status'))
-      ->setDescription(t('Whether the Brightcove Video is published or not.'))
+      ->setDescription(t('If not specified, the video will have No End Date.'))
       //->setRevisionable(TRUE)
-      ->setRequired(TRUE)
-      ->setDefaultValue(TRUE)
-      ->setSettings([
-        'on_label' => t('Active'),
-        'off_label' => t('Inactive'),
-      ])
       ->setDisplayOptions('form', [
-        'type' => 'options_buttons',
+        'type' => 'datetime_default',
         'weight' => ++$weight,
       ])
       ->setDisplayOptions('view', [
-        'type' => 'boolean',
+        'type' => 'datetime_default',
         'label' => 'inline',
         'weight' => $weight,
       ])
@@ -1338,7 +1338,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     $fields['uid'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Authored by'))
       ->setDescription(t('The username of the Brightcove Video author.'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setTranslatable(TRUE)
       ->setDefaultValueCallback('Drupal\brightcove\Entity\BrightcoveVideo::getCurrentUserId')
       ->setSetting('target_type', 'user')
@@ -1363,7 +1363,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setDescription(t('The time that the Brightcove Video was created.'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setTranslatable(TRUE)
       ->setDisplayOptions('view', [
         'label' => 'inline',
@@ -1375,13 +1375,13 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     $fields['changed'] = BaseFieldDefinition::create('changed')
       ->setLabel(t('Changed'))
       ->setDescription(t('The time that the Brightcove Video was last edited.'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setTranslatable(TRUE);
 
     // FIXME: Couldn't find this on the Brightcove UI: https://studio.brightcove.com/products/videocloud/media/videos/4585854207001
     $fields['force_ads'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Force Ads'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setDefaultValue(FALSE);
 
     // FIXME: Couldn't find this on the Brightcove UI: https://studio.brightcove.com/products/videocloud/media/videos/4585854207001
@@ -1389,7 +1389,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setLabel(t('Geo-filtering Country List'))
       ->setDescription(t('ISO-3166 country code list.'))
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setSettings([
         'max_length' => 5,
         'text_processing' => 0,
@@ -1411,7 +1411,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     // FIXME: Couldn't find this on the Brightcove UI: https://studio.brightcove.com/products/videocloud/media/videos/4585854207001
     $fields['geo_restricted'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Geo-filtering On'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setDefaultValue(FALSE)
       ->setDisplayOptions('form', [
         'type' => 'hidden', // Usable default: boolean_checkbox.
@@ -1432,7 +1432,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     $fields['geo_exclude_countries'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Geo-filtering Options: Exclude countries'))
       ->setDescription(t('If enabled, country list is treated as a list of countries excluded from viewing.'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setDisplayOptions('form', [
         'type' => 'hidden', // Usable default: boolean_checkbox.
         'weight' => ++$weight,
@@ -1452,7 +1452,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     $fields['logo_alignment'] = BaseFieldDefinition::create('list_string')
       ->setLabel(t('Logo Overlay Alignment'))
       ->setCardinality(4)
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setSetting('allowed_values', [
         'top_left' => 'Top Left',
         'top_right' => 'Top Right',
@@ -1474,7 +1474,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     // FIXME: Couldn't find this on the Brightcove UI: https://studio.brightcove.com/products/videocloud/media/videos/4585854207001
     $fields['logo_image'] = BaseFieldDefinition::create('image')
       ->setLabel(t('Logo Overlay Image'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setSettings([
         'file_extensions' => 'png gif',
         'file_directory' => '[random:hash:md5]',
@@ -1496,7 +1496,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     // FIXME: Couldn't find this on the Brightcove UI: https://studio.brightcove.com/products/videocloud/media/videos/4585854207001
     $fields['logo_tooltip'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Logo Overlay Tooltip'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setSettings([
         'max_length' => 128,
         'text_processing' => 0,
@@ -1515,7 +1515,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
     $fields['logo_url'] = BaseFieldDefinition::create('link')
       ->setLabel(t('Logo Overlay URL'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setSettings([
         'max_length' => 128,
         'link_type' => LinkItemInterface::LINK_GENERIC,
@@ -1541,7 +1541,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     $fields['bumper_video'] = BaseFieldDefinition::create('file')
       ->setLabel(t('Bumper Video'))
       ->setDescription(t('FLV or H264 video file to playback before the Video content'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setSettings([
         'file_extensions' => 'flv',
         'file_directory' => '[random:hash:md5]',
@@ -1562,7 +1562,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     $fields['viral'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Viral Distribution'))
       ->setDescription(t('Enables the get code and blogging menu options for the video'))
-//      ->setRevisionable(TRUE)
+      //->setRevisionable(TRUE)
       ->setDefaultValue(FALSE)
       ->setDisplayOptions('form', [
         'type' => 'hidden', // Usable default: boolean_checkbox.
