@@ -390,6 +390,39 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setDescription(t('The Brightcove Playlist UUID.'))
       ->setReadOnly(TRUE);
 
+    $fields['api_client'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('API Client'))
+      ->setDescription(t('Brightcove API credentials (account) to use.'))
+      ->setRequired(TRUE)
+      ->setSetting('target_type', 'brightcove_api_client')
+      ->setDisplayOptions('form', array(
+        'type' => 'options_select',
+        'weight' => ++$weight,
+      ))
+      ->setDisplayOptions('view', array(
+        'type' => 'hidden',
+        'label' => 'inline',
+        'weight' => $weight,
+      ))
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['player'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Player'))
+      ->setDescription(t('Brightcove Player to be used for playback.'))
+      ->setSetting('target_type', 'brightcove_player')
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+        'weight' => ++$weight,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'hidden',
+        'label' => 'inline',
+        'weight' => $weight,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['type'] = BaseFieldDefinition::create('list_string')
       ->setLabel(t('Playlist Type'))
 //      ->setRevisionable(TRUE)
@@ -410,7 +443,7 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
 
     $fields['name'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Playlist name'))
-      ->setDescription(t('The name of the Brightcove Playlist.'))
+      ->setDescription(t('Title of the playlist.'))
 //      ->setRevisionable(TRUE)
       ->setRequired(TRUE)
       ->setSettings(array(
@@ -437,39 +470,6 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
         'weight' => ++$weight,
       ))
       ->setDisplayConfigurable('form', TRUE);
-
-    $fields['api_client'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('API Client'))
-      ->setDescription(t('API Client to use for playing the video.'))
-      ->setRequired(TRUE)
-      ->setSetting('target_type', 'brightcove_api_client')
-      ->setDisplayOptions('form', array(
-        'type' => 'options_select',
-        'weight' => ++$weight,
-      ))
-      ->setDisplayOptions('view', array(
-        'type' => 'hidden',
-        'label' => 'inline',
-        'weight' => $weight,
-      ))
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['player'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Player'))
-      ->setDescription(t('Player to use for the playlist.'))
-      ->setSetting('target_type', 'brightcove_player')
-      ->setDisplayOptions('form', [
-        'type' => 'options_select',
-        'weight' => ++$weight,
-      ])
-      ->setDisplayOptions('view', [
-        'type' => 'hidden',
-        'label' => 'inline',
-        'weight' => $weight,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
 
     /**
      * Additional Brightcove fields, based on
