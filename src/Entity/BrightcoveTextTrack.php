@@ -368,9 +368,9 @@ class BrightcoveTextTrack extends ContentEntityBase implements BrightcoveTextTra
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['source_language'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Source language'))
+      ->setLabel(t('Language'))
       //->setRevisionable(TRUE)
-      ->setDescription(t('ISO-639-1 language code (en, fr, hu, etc.).'))
+      ->setDescription(t('ISO-639-1 language code with optional ISO-3166 country name (en, en-US, de, de-DE).'))
       ->setRequired(TRUE)
       ->setSettings(array(
         'max_length' => 10,
@@ -390,8 +390,7 @@ class BrightcoveTextTrack extends ContentEntityBase implements BrightcoveTextTra
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Label'))
-      ->setDescription(t('A user-readable title.'))
-      ->setRequired(TRUE)
+      ->setDescription(t('Title to be displayed in the player menu.'))
       ->setSettings(array(
         'max_length' => 255,
         'text_processing' => 0,
