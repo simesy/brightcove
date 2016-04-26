@@ -284,7 +284,7 @@ class BrightcoveTextTrack extends ContentEntityBase implements BrightcoveTextTra
 
     // Generate name for the text track if the label is missing.
     if (empty($this->getLabel())) {
-      $this->setName($this->getSourceLanguage() . ' ' . $this->getTextTrackId());
+      $this->setName($this->getSourceLanguage());
     }
     // Otherwise set name as the label.
     else {
