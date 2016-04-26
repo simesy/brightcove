@@ -131,7 +131,7 @@ class BrightcoveAPIClientForm extends EntityForm {
       '#title' => $this->t('Label'),
       '#maxlength' => 255,
       '#default_value' => $brightcove_api_client->label(),
-      '#description' => $this->t('Label for the Brightcove API Client.'),
+      '#description' => $this->t('A label to identify the API Client (authentication credentials).'),
       '#required' => TRUE,
     );
 
@@ -144,21 +144,34 @@ class BrightcoveAPIClientForm extends EntityForm {
       '#disabled' => !$brightcove_api_client->isNew(),
     );
 
+    $form['client_id'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Brightcove API Client ID'),
+      '#description' => $this->t('The Client ID of the Brightcove API Authentication credentials, available <a href=":link" target="_blank">here</a>.', [':link' => 'https://studio.brightcove.com/products/videocloud/admin/oauthsettings']),
+      '#maxlength' => 255,
+      '#default_value' => $brightcove_api_client->getClientID(),
+      '#required' => TRUE,
+    );
+
+    $form['secret_key'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Brightcove API Secret Key'),
+      '#description' => $this->t('The Secret Key associated with the Client ID above, only visible once when Registering New Application.
+'),
+      '#maxlength' => 255,
+      '#default_value' => $brightcove_api_client->getSecretKey(),
+      '#required' => TRUE,
+    );
+
     $form['account_id'] = array(
       '#type' => 'textfield',
-      '#title' => $this->t('Account ID'),
+      '#title' => $this->t('Brightcove Account ID'),
+      '#description' => $this->t('The number of one of the Brightcove accounts "selected for authorization" with the API Client above.'),
       '#maxlength' => 255,
       '#default_value' => $brightcove_api_client->getAccountID(),
       '#required' => TRUE,
     );
 
-    $form['client_id'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Client ID'),
-      '#maxlength' => 255,
-      '#default_value' => $brightcove_api_client->getClientID(),
-      '#required' => TRUE,
-    );
 
     $form['default_player'] = array(
       '#type' => 'select',
@@ -171,22 +184,13 @@ class BrightcoveAPIClientForm extends EntityForm {
       $form['default_player']['#description'] = t('The rest of the players will be available after saving.');
     }
 
-    $form['secret_key'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Secret key'),
-      '#maxlength' => 255,
-      '#default_value' => $brightcove_api_client->getSecretKey(),
-      '#required' => TRUE,
-    );
-
     // Count BrightcoveAPIClients.
     $api_clients_number = $this->query_factory->get('brightcove_api_client')
       ->count()->execute();
-
     $form['default_client'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Default API Client'),
-      '#description' => $this->t('Enable this to make this API Client the default.'),
+      '#description' => $this->t('Enable to make this the default API Client.'),
       '#default_value' => $api_clients_number == 0 || ($this->config->get('defaultAPIClient') == $brightcove_api_client->id()),
     ];
 
