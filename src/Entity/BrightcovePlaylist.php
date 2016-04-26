@@ -34,7 +34,7 @@ use Drupal\taxonomy\Entity\Term;
  *       "default" = "Drupal\brightcove\Form\BrightcovePlaylistForm",
  *       "add" = "Drupal\brightcove\Form\BrightcovePlaylistForm",
  *       "edit" = "Drupal\brightcove\Form\BrightcovePlaylistForm",
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
+ *       "delete" = "Drupal\brightcove\Form\BrightcoveEntityDeleteForm",
  *     },
  *     "access" = "Drupal\brightcove\Access\BrightcovePlaylistAccessControlHandler",
  *     "route_provider" = {

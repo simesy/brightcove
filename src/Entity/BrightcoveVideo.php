@@ -50,7 +50,7 @@ use Drupal\time_formatter\Plugin\Field\FieldFormatter\TimeFieldFormatter;
  *       "default" = "Drupal\brightcove\Form\BrightcoveVideoForm",
  *       "add" = "Drupal\brightcove\Form\BrightcoveVideoForm",
  *       "edit" = "Drupal\brightcove\Form\BrightcoveVideoForm",
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
+ *       "delete" = "Drupal\brightcove\Form\BrightcoveEntityDeleteForm",
  *     },
  *     "access" = "Drupal\brightcove\Access\BrightcoveVideoAccessControlHandler",
  *     "route_provider" = {
