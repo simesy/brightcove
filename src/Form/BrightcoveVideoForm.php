@@ -66,6 +66,48 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
       $form['profile']['widget']['#default_value'] = reset($profile_keys);
     }
 
+    // Add pseudo title for status field.
+    $form['status']['pseudo_title'] = [
+      '#markup' =>  $this->t('Status'),
+      '#prefix' => '<div id="status-pseudo-title">',
+      '#suffix' => '</div>',
+      '#weight' => -100,
+    ];
+
+    // Group video fields together.
+    $form['video'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Video'),
+      '#weight' => $form['economics']['#weight'] += 0.001,
+      'video_file' => $form['video_file'],
+      'profile' => $form['profile'],
+    ];
+    unset($form['video_file']);
+    unset($form['profile']);
+
+    // Group image fields together.
+    $form['images'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Images'),
+      '#weight' => $form['video']['#weight'] += 0.001,
+      '#description' => $this->t('For best results, use JPG or PNG format with a minimum width of 640px for video stills and 160px for thumbnails. Aspect ratios should match the video, generally 16:9 or 4:3. <a href=":link" target="_blank">Read More</a>', [':link' => 'https://support.brightcove.com/en/video-cloud/docs/uploading-video-still-and-thumbnail-images']),
+      'poster' => $form['poster'],
+      'thumbnail' => $form['thumbnail'],
+    ];
+    unset($form['poster']);
+    unset($form['thumbnail']);
+
+    // Group scheduling fields together.
+    $form['availability'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Availability'),
+      '#weight' => $form['images']['#weight'] += 0.001,
+      'schedule_starts_at' => $form['schedule_starts_at'],
+      'schedule_ends_at' => $form['schedule_ends_at'],
+    ];
+    unset($form['schedule_starts_at']);
+    unset($form['schedule_ends_at']);
+
     /** @var \Drupal\brightcove\Entity\BrightcoveCustomField[] $custom_fields */
     $custom_fields = BrightcoveCustomField::loadMultipleByAPIClient($api_client);
 
@@ -80,6 +122,7 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
     if (count($custom_fields) > 0) {
       $form['custom_fields']['#type'] = 'details';
       $form['custom_fields']['#title'] = $this->t('Custom fields');
+      $form['custom_fields']['#weight'] = $form['availability']['#weight'] += 0.001;
 
       $has_required = FALSE;
       $custom_field_values = $entity->getCustomFieldValues();
