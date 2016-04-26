@@ -629,7 +629,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         $is_link_set = FALSE;
 
         if (!empty($related_link['uri'])) {
-          $link->setUrl($related_link['uri']);
+          $link->setUrl(Url::fromUri($related_link['uri'], ['absolute' => TRUE])->toString());
           $is_link_set = TRUE;
         }
 
