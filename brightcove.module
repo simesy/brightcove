@@ -4,9 +4,12 @@
  * Brightcove module.
  */
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Database\Database;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\taxonomy\TermInterface;
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\brightcove\Entity\BrightcoveAPIClient;
 use Drupal\brightcove\Entity\BrightcoveCustomField;
@@ -267,4 +270,15 @@ function brightcove_theme($existing, $type, $theme, $path) {
       ],
     ],
   ];
+}
+
+/**
+ * Implements hook_entity_access().
+ */
+function brightcove_entity_access(EntityInterface $entity, $operation, AccountInterface $account) {
+  // Disable editing/deleting video tags.
+  if ($entity instanceof TermInterface && $entity->getVocabularyId() == 'brightcove_video_tags' && ($operation == 'update' || $operation == 'delete')) {
+    return AccessResult::forbidden();
+  }
+  return AccessResult::neutral();
 }
