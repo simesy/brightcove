@@ -7,6 +7,7 @@
 
 namespace Drupal\brightcove;
 
+use Drupal\Core\Datetime\DateFormatter;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -32,15 +33,24 @@ class BrightcovePlaylistListBuilder extends EntityListBuilder {
   protected $accountProxy;
 
   /**
+   * Date formatter.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatter
+   */
+  protected $dateFormatter;
+
+  /**
    * Constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
    * @param \Drupal\Core\Entity\EntityStorageInterface $storage
    * @param \Drupal\Core\Session\AccountProxy $account_proxy
+   * @param \Drupal\Core\Datetime\DateFormatter $date_formatter
    */
-  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, AccountProxy $account_proxy) {
+  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, AccountProxy $account_proxy, DateFormatter $date_formatter) {
     parent::__construct($entity_type, $storage);
     $this->accountProxy = $account_proxy;
+    $this->dateFormatter = $date_formatter;
   }
 
   /**
@@ -50,8 +60,23 @@ class BrightcovePlaylistListBuilder extends EntityListBuilder {
     return new static(
       $entity_type,
       $container->get('entity_type.manager')->getStorage($entity_type->id()),
-      $container->get('current_user')
+      $container->get('current_user'),
+      $container->get('date.formatter')
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getEntityIds() {
+    $query = $this->getStorage()->getQuery()
+      ->sort('changed', 'DESC');
+
+    // Only add the pager if a limit is specified.
+    if ($this->limit) {
+      $query->pager($this->limit);
+    }
+    return $query->execute();
   }
 
   /**
@@ -60,8 +85,9 @@ class BrightcovePlaylistListBuilder extends EntityListBuilder {
   public function buildHeader() {
     // Assemble header columns.
     $header = [
-      'id' => $this->t('Brightcove Playlist ID'),
       'name' => $this->t('Name'),
+      'updated' => $this->t('Updated'),
+      'reference_id' => $this->t('Reference ID'),
     ];
 
     // Add operations header column only if the user has access.
@@ -93,8 +119,9 @@ class BrightcovePlaylistListBuilder extends EntityListBuilder {
 
     // Assemble row.
     $row = [
-      'id' => $entity->id(),
       'name' => $name,
+      'updated' => $this->dateFormatter->format($entity->getChangedTime(), 'short'),
+      'reference_id' => $entity->getReferenceID(),
     ];
 
     // Add operations column only if the user has access.
