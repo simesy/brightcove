@@ -1284,7 +1284,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       //->setRevisionable(TRUE)
 
     $fields['schedule_starts_at'] = BaseFieldDefinition::create('datetime')
-      ->setLabel(t('Scheduling Start Date'))
+      ->setLabel(t('Scheduled Start Date'))
       ->setDescription(t('If not specified, the video will be Available Immediately.'))
       //->setRevisionable(TRUE)
       ->setDisplayOptions('form', [
@@ -1300,7 +1300,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['schedule_ends_at'] = BaseFieldDefinition::create('datetime')
-      ->setLabel(t('Scheduling End Date'))
+      ->setLabel(t('Scheduled End Date'))
       ->setDescription(t('If not specified, the video will have No End Date.'))
       //->setRevisionable(TRUE)
       ->setDisplayOptions('form', [
