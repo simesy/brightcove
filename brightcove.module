@@ -2658,7 +2658,7 @@ function _brightcove_schedule_start_end_date_pre_render($elements) {
  */
 function _brightcove_upload_form_callback(&$form, $form_state) {
   $validators = [
-    'file_validate_extensions' => ['3g2 3gp asf avi dv flv f4v m4v mov mp4 mpeg mpg mts m2ts qt wmv'],
+    'file_validate_extensions' => ['3gp 3g2 aac ac3 asf avchd avi avs bdav dv dxa ea eac3 f4v flac flv h261 h263 h264 m2p m2ts m4a m4v mjpeg mka mks mkv mov mp3 mp4 mpeg mpegts mpg mt2s mts ogg ps qt rtsp thd ts vc1 wav webm wma wmv'],
   ];
 
   $image_validators = [
