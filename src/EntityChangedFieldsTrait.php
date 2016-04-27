@@ -72,9 +72,6 @@ trait EntityChangedFieldsTrait {
       }
     }
 
-    // Get entity key's status field alias.
-    $status = self::getEntityType()->getKey('status');
-
     // Check fields if they were updated and mark them if changed.
     if (!empty($this->id())) {
       /** @var \Drupal\brightcove\Entity\BrightcoveVideo $original_entity */
@@ -86,23 +83,7 @@ trait EntityChangedFieldsTrait {
          * @var \Drupal\Core\Field\FieldItemList $field
          */
         foreach ($this->getFields() as $name => $field) {
-          $function_part_name = $name;
-
-          // Use the correct function for the status field.
-          if ($name == $status) {
-            $function_part_name = 'published';
-          }
-
-          // Acquire getter method name.
-          $getter_name = 'get' . str_replace('_', '', $function_part_name);
-          $is_getter_name = 'is' . str_replace('_', '', $function_part_name);
-          $getter = NULL;
-          if (isset($methods[$getter_name])) {
-            $getter = $methods[$getter_name];
-          }
-          elseif (isset($methods[$is_getter_name])) {
-            $getter = $methods[$is_getter_name];
-          }
+          $getter = $this->getGetterName($name, $methods);
 
           // If the getter is available for the field then compare the two
           // field and if changed mark it.
@@ -116,14 +97,47 @@ trait EntityChangedFieldsTrait {
     // this case the entity is being created.
     else {
       foreach ($this->getFields() as $name => $field) {
-        // Acquire getter method name.
-        $getter_name = 'get' . str_replace('_', '', $name);
-        $getter = isset($methods[$getter_name]) ? $methods[$getter_name] : NULL;
-
-        if (!is_null($getter)) {
+        if (!is_null($this->getGetterName($name, $methods))) {
           $this->changedFields[$name] = TRUE;
         }
       }
     }
+  }
+
+  /**
+   * Get getter method from the name of the field.
+   *
+   * @param string $name
+   *   The name of the field.
+   * @param array $methods
+   *   The available methods.
+   *
+   * @return string
+   *   The name of the getter function.
+   */
+  public function getGetterName($name, array $methods) {
+    $function_part_name = $name;
+
+    // Get entity key's status field alias.
+    $status = self::getEntityType()->getKey('status');
+
+    // Use the correct function for the status field.
+    if ($name == $status) {
+      $function_part_name = 'published';
+    }
+
+    // Acquire getter method name.
+    $getter_name = 'get' . str_replace('_', '', $function_part_name);
+    $is_getter_name = 'is' . str_replace('_', '', $function_part_name);
+
+    $getter = NULL;
+    if (isset($methods[$getter_name])) {
+      $getter = $methods[$getter_name];
+    }
+    elseif (isset($methods[$is_getter_name])) {
+      $getter = $methods[$is_getter_name];
+    }
+
+    return $getter;
   }
 }
