@@ -6,6 +6,10 @@ administer brightcove configuration:
 add brightcove videos:
   title: 'Create new Brightcove Videos'
 
+access brightcove videos overview page:
+  title: 'Access the Brightcove Videos overview page'
+  description: 'Get an overview of all Brightcove Video.'
+
 administer brightcove videos:
   title: 'Administer Brightcove Videos'
   description: 'Allow to access the administration form to configure Brightcove Videos.'
@@ -26,6 +30,10 @@ view unpublished brightcove videos:
 # Playlist entities.
 add brightcove playlists:
   title: 'Create new Brightcove Playlists'
+
+access brightcove playlists overview page:
+  title: 'Access the Brightcove Playlists overview page'
+  description: 'Get an overview of all Brightcove Playlist.'
 
 administer brightcove playlists:
   title: 'Administer Brightcove Playlists'

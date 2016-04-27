@@ -30,6 +30,22 @@ entity.brightcove_api_client.delete_form:
   requirements:
     _permission: 'administer brightcove configuration'
 
+entity.brightcove_video.collection:
+  path: '/admin/content/brightcove_video'
+  defaults:
+    _entity_list: 'brightcove_video'
+    _title: 'Brightcove Videos'
+  requirements:
+    _permission: 'access brightcove videos overview page'
+
+entity.brightcove_playlist.collection:
+  path: '/admin/content/brightcove_playlist'
+  defaults:
+    _entity_list: 'brightcove_playlist'
+    _title: 'Brightcove Playlist'
+  requirements:
+    _permission: 'access brightcove playlists overview page'
+
 brightcove_manual_update_video:
   path: '/brightcove_video/{entity_id}/update'
   defaults:
