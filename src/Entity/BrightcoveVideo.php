@@ -1212,7 +1212,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setLabel(t('Video source'))
       //->setRevisionable(TRUE)
       ->setSettings([
-        'file_extensions' => 'flv mp4',
+        'file_extensions' => '3gp 3g2 aac ac3 asf avchd avi avs bdav dv dxa ea eac3 f4v flac flv h261 h263 h264 m2p m2ts m4a m4v mjpeg mka mks mkv mov mp3 mp4 mpeg mpegts mpg mt2s mts ogg ps qt rtsp thd ts vc1 wav webm wma wmv',
         'file_directory' => '[random:hash:md5]',
       ])
       ->setDisplayOptions('form', [
