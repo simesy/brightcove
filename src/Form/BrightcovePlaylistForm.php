@@ -42,6 +42,9 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
     }
     else {
       $api_client = $form['api_client']['widget']['#default_value'];
+      if (is_array($api_client)) {
+        $api_client = reset($api_client);
+      }
     }
 
     if ($entity->isNew()) {
