@@ -596,8 +596,17 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       //->setDefaultValue('')
 //      ->setRevisionable(TRUE)
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setSetting('target_type', 'brightcove_video')
-      ->setSetting('handler', 'default')
+      ->setSettings([
+        'target_type' => 'brightcove_video',
+        'handler' => 'views',
+        'handler_settings' => [
+          'view' => [
+            'view_name' => 'brightcove_videos_by_api_client',
+            'display_name' => 'videos_entity_reference',
+            'arguments' => [],
+          ],
+        ],
+      ])
       ->setDisplayOptions('form', array(
         'type' => 'entity_reference_autocomplete',
         'weight' => ++$weight,
