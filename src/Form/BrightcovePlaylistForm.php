@@ -11,6 +11,7 @@ use Brightcove\API\Exception\APIException;
 use Drupal\brightcove\Entity\BrightcovePlaylist;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element;
 
 /**
  * Form controller for Brightcove Playlist edit forms.
@@ -26,6 +27,43 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
 
     /* @var $entity \Drupal\brightcove\Entity\BrightcovePlaylist */
     $entity = $this->entity;
+
+    // Get api client from the form settings.
+    if (!empty($api_client_value = $form_state->getValue('api_client'))) {
+      if (is_array($api_client_value)) {
+        $api_client = $api_client_value[0]['target_id'];
+      }
+      else {
+        $api_client =  $api_client_value;
+      }
+    }
+    elseif (!empty($user_input = $form_state->getUserInput()) && isset($user_input['api_client'])) {
+      $api_client =  $user_input['api_client'];
+    }
+    else {
+      $api_client = $form['api_client']['widget']['#default_value'];
+    }
+
+    if ($entity->isNew()) {
+      // Class this class's update form method instead of the supper class's.
+      $form['api_client']['widget']['#ajax']['callback'] = [
+        self::class, 'apiClientUpdateForm',
+      ];
+
+      // Add ajax wrapper for videos.
+      $form['videos']['#ajax_id'] = 'ajax-videos-wrapper';
+      $form['videos']['#prefix'] = '<div id="' . $form['videos']['#ajax_id'] . '">';
+      $form['videos']['#suffix'] = '</div>';
+    }
+
+    // Set videos reference field argument.
+    foreach (Element::children($form['videos']['widget']) as $delta) {
+      if (is_numeric($delta)) {
+        if (empty($form['videos']['widget'][$delta]['target_id']['#selection_settings']['view']['arguments'])) {
+          $form['videos']['widget'][$delta]['target_id']['#selection_settings']['view']['arguments'] = [$api_client];
+        }
+      }
+    }
 
     // Manual playlist: no search, only videos.
     $manual_type = array_keys(BrightcovePlaylist::getTypes(BrightcovePlaylist::TYPE_MANUAL));
@@ -83,5 +121,32 @@ class BrightcovePlaylistForm extends BrightcoveVideoPlaylistForm {
     catch (APIException $e) {
       drupal_set_message($e->getMessage(), 'error');
     }
+  }
+
+  /**
+   * Ajax callback to update the profile and player options list.
+   *
+   * @param $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   */
+  public static function apiClientUpdateForm($form, FormStateInterface $form_state) {
+    $response = parent::apiClientUpdateForm($form, $form_state);
+
+    // Remove videos from the field if the api client is changed.
+    foreach (Element::children($form['videos']['widget']) as $delta) {
+      if (is_numeric($delta)) {
+        $form['videos']['widget'][$delta]['target_id']['#value'] = '';
+      }
+    }
+
+    // Update videos fields.
+    $response->addCommand(new ReplaceCommand(
+      '#' . $form['videos']['#ajax_id'],
+      $form['videos']
+    ));
+
+    return $response;
   }
 }
