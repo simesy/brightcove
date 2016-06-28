@@ -200,7 +200,7 @@ function brightcove_admin_settings($form, &$form_state) {
   $form['other']['brightcove_3rdparty'] = [
     '#type' => 'checkbox',
     '#title' => t('Where applicable, show 3rd party integration help text.'),
-    '#default_value' => variable_get('brightcove_3rdparty', TRUE),
+    '#default_value' => variable_get('brightcove_3rdparty', FALSE),
   ];
 
   $form = system_settings_form($form);
