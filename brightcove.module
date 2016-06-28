@@ -75,6 +75,33 @@ function brightcove_init() {
   if ($_GET['q'] === 'system/ajax' && isset($_POST['form_id']) && $_POST['form_id'] === 'brightcove_video_form') {
     brightcove_load_lib();
   }
+
+  _brightcove_configure_proxy();
+}
+
+function _brightcove_configure_proxy() {
+  static $confmap = [
+    'http_proxy_tunnel' => 'httpProxyTunnel',
+    'proxy_auth' => 'proxyAuth',
+    'proxy_port' => 'proxyPort',
+    'proxy_type' => 'proxyType',
+    'proxy' => 'proxy',
+    'proxy_user_password' => 'proxyUserPassword',
+  ];
+
+  $loaded = FALSE;
+
+  foreach ($confmap as $name => $property) {
+    $val = variable_get("brightcove_{$name}");
+    if ($val) {
+      if (!$loaded) {
+        brightcove_load_lib();
+        $loaded = TRUE;
+      }
+
+      \Brightcove\API\Client::$$property = $val;
+    }
+  }
 }
 
 /**
@@ -2397,7 +2424,7 @@ function brightcove_create_callback($hash, $video_id, $client_id, $fid = 0, $par
   if (!$callback) {
     return FALSE;
   }
-  
+
   db_insert('brightcove_callback')
     ->fields([
       'id' => $video_id,
