@@ -216,6 +216,7 @@ function brightcove_admin_settings_validate($form, &$form_state) {
 }
 
 function brightcove_integrations_page() {
+  $integrations = module_invoke_all('brightcove_integration_info');
   $page = [
     '#attached' => [
       'css' => [
@@ -224,34 +225,22 @@ function brightcove_integrations_page() {
     ],
   ];
 
-  $integrations = [
-    'clarify_brightcove' => [
-      'name' => 'Clarify',
-      'description' => '<strong>' .
-        t('Transcription, autotagging and search for video and audio.') . '</strong><br />' .
-        t('The clarify_brightcove.module is an integration with Brightcove Video Connect which allows you to automatically generate captions for uploaded media via Clarify.io.'),
-      'more_info' => 'https://www.drupal.org/project/clarify',
-      'image' => drupal_get_path('module', 'brightcove') . '/images/clarify-integration.png',
-    ],
-  ];
-
-  foreach ($integrations as $name => $integration) {
-    $status = module_exists($name);
-    $configure = NULL;
-    if ($status) {
-      $info = drupal_parse_info_file(drupal_get_path('module', $name) . '/' . $name . '.info');
-      if (!empty($info['configure'])) {
-        $configure = $info['configure'];
-      }
+  if ($integrations) {
+    foreach ($integrations as $integration) {
+      $page[] = [
+        '#theme' => 'brightcove_integration',
+        '#name' => $integration['name'],
+        '#description' => $integration['description'],
+        '#project' => $integration['project'],
+        '#image' => $integration['image'],
+      ];
     }
+  }
+  else {
     $page[] = [
-      '#theme' => 'brightcove_integration',
-      '#name' => $integration['name'],
-      '#description' => $integration['description'],
-      '#more_info' => $integration['more_info'],
-      '#image' => $integration['image'],
-      '#configure' => $configure,
-      '#status' => $status,
+      '#markup' => '<p>' . t('No integrations has been installed. Visit the !link to learn more.', [
+          '!link' => l(t('Brightcove Video Connect project page'), 'https://drupal.org/project/brightcove'),
+        ]) . '</p>',
     ];
   }
 

@@ -247,10 +247,8 @@ function brightcove_video_form($form, &$form_state, $video_entity, $entity_type 
       $form['captions']['3rdparty'] = [
         '#type' => 'container',
         'default' => [
-          '#markup' => t('Note: automatic caption generation is available through the !link.', [
-            '!link' => l(t('Clarify.io module'), 'https://www.drupal.org/project/clarify', [
-              'attributes' => ['target' => '_blank'],
-            ]),
+          '#markup' => t('Note: automatic caption generation is available as a 3rd party integration on the !link.', [
+            '!link' => l(t('Brightcove Video Connect page'), 'https://www.drupal.org/project/brightcove'),
           ]),
         ],
       ];

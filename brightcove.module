@@ -2295,10 +2295,8 @@ function brightcove_theme() {
       'variables' => [
         'name' => '',
         'description' => '',
-        'more_info' => '',
+        'project' => NULL,
         'image' => NULL,
-        'configure' => '',
-        'status' => NULL,
       ],
       'file' => 'theme.inc',
     ],

@@ -82,26 +82,22 @@ function theme_brightcove_integration($variables) {
     'dd',
     'br',
   ]);
+  $project_link = '';
+  if ($variables['project']) {
+    $link = "https://drupal.org/project/{$variables['project']}";
+    $project_link = l($link, $link);
+  }
   $image = '';
   if ($variables['image']) {
     $image = theme('image', ['path' => $variables['image']]);
   }
-  $status = t('Currently <strong>@status</strong>.', [
-    '@status' => $variables['status'] ? 'enabled' : 'disabled',
-  ]);
-  if ($variables['status']) {
-    $status .= ' ' . l(t('Configuration'), $variables['configure']);
-  }
-  else {
-    $status .= ' ' . t('More info:') . ' ' . l($variables['more_info'], $variables['more_info'], [
-      'attributes' => ['target' => '_blank'],
-    ]);
-  }
-  
-  return '<div class="brightcove-integration">' .
-    '<div class="brightcove-integration-image">' .  $image. '</div>' .
-    '<h3 class="brightcove-integration-name">' . $name . '</h3>' .
-    '<p class="brightcove-integration-description">' . $description . '</p>' .
-    '<p class="brightcove-integration-status">' . $status . '</p>' .
-  '</div>';
+
+  return <<<EOS
+<div class="brightcove-integration">
+  <div class="brightcove-integration-image">{$image}</div>
+  <h3 class="brightcove-integration-name">{$name}</h3>
+  <p class="brightcove-integration-description">{$description}</p>
+  <p class="brightcove-integration-link">{$project_link}</p>
+</div>
+EOS;
 }
