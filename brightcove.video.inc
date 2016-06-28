@@ -243,7 +243,7 @@ function brightcove_video_form($form, &$form_state, $video_entity, $entity_type 
       ],
     ];
 
-    if (variable_get('brightcove_3rdparty', TRUE)) {
+    if (variable_get('brightcove_3rdparty', FALSE)) {
       $form['captions']['3rdparty'] = [
         '#type' => 'container',
         'default' => [
