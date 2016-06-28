@@ -316,7 +316,9 @@ function brightcove_video_form($form, &$form_state, $video_entity, $entity_type 
       'string' => 'textfield',
       'enum' => 'select',
     ];
+    $has_custom_fields = FALSE;
     foreach ($fields->getCustomFields() as $field) {
+      $has_custom_fields = TRUE;
       $has_required = $has_required || $field->isRequired();
       $form['custom_fields']["custom_field_{$field->getId()}"] = [
         '#title' => $field->getDisplayName(),
@@ -333,6 +335,7 @@ function brightcove_video_form($form, &$form_state, $video_entity, $entity_type 
       }
     }
     $form['custom_fields']['#collapsed'] = !$has_required;
+    $form['custom_fields']['#access'] = $has_custom_fields;
   }
   catch (\Brightcove\API\Exception\APIException $ex) {
     $form['custom_fields']['#access'] = FALSE;

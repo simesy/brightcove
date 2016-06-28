@@ -2867,7 +2867,9 @@ function _brightcove_edit_form_callback($form, $form_state) {
   foreach ($custom_field_definitions as $def) {
     $custom_fields[$def->getId()] = isset($form_state['values']["custom_field_{$def->getId()}"]) ? $form_state['values']["custom_field_{$def->getId()}"] : NULL;
   }
-  $video->setCustomFields($custom_fields);
+  if ($custom_fields) {
+    $video->setCustomFields($custom_fields);
+  }
   $schedule = new \Brightcove\Object\Video\Schedule();
   $schedule_set = FALSE;
   if ($form_state['values']['start_date'] !== 'immediately') {
