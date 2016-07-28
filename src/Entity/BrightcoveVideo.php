@@ -981,7 +981,11 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       //->setRevisionable(TRUE)
       ->setRequired(TRUE)
       ->setSettings([
-        'max_length' => 60,
+        // Not applying the max_length setting any longer. Without an explicit
+        // max_length setting Drupal will use a varchar(255) field, at least on
+        // my MySQL backend. BC docs currently say the length of the 'name'
+        // field is 1..255, but let's just not apply any explicit limit any
+        // longer on the Drupal end.
         'text_processing' => 0,
       ])
       ->setDisplayOptions('form', [
@@ -1010,6 +1014,8 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
      * @see https://videocloud.brightcove.com/admin/fields
      * superseded by
      * @see http://docs.brightcove.com/en/video-cloud/cms-api/references/cms-api/versions/v1/index.html#api-videoGroup-Get_Videos
+     * superseded by
+     * @see http://docs.brightcove.com/en/video-cloud/cms-api/references/cms-api/versions/v1/index.html#api-videoGroup-Create_Video
      *
      * Brightcove ID - string (Not editable. Unique Video ID assigned by
      *   Brightcove)
@@ -1023,23 +1029,23 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
      * Logo Overlay Image - image file (Transparent PNG or GIF)
      * Logo Overlay Tooltip - text(128)
      * Logo Overlay URL - URL(128)
-     * Long Description - text(5000)
+     * Long Description - string(0..5000)
      * Bumper Video - video file (FLV or H264 video file to playback before the
      *   Video content)
-     * Reference ID - text(150) (Value specified must be unique)
+     * Reference ID - string(..150) (Value specified must be unique)
      * Related Link Text - text(40)
      * Scheduling End Date - date (Day/Time for the video to be hidden in the
      *   player)
      * Scheduling Start Date - date (Day/Time for the video be displayed in the
      *   player)
-     * Short Description - text(250)
+     * Short Description - string(0..250)
      * Tags - text (Separate tags with a comma; no tag > 128 characters. Max
      *   1200 tags per video)
      * Thumbnail - image file (Suggested size: 120 x 90 pixels, JPG)
      * Video Duration - number (Not editable. Stores the length of the video
      *   file.)
      * Video Files - video file (One or more FLV or H264 video files)
-     * Video Name - text(60)
+     * Video Name - string(1..255)
      * Video Still - image file (Suggested size: 480 x 360 pixels, JPG)
      * Viral Distribution - boolean (Enables the get code and blogging menu
      *   options for the video)
