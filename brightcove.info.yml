@@ -9,5 +9,8 @@ dependencies:
   - inline_entity_form
   - link
   - options
+  - path
   - time_formatter
+  - taxonomy
   - token
+  - views
