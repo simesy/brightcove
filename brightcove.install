@@ -15,7 +15,7 @@ function brightcove_requirements($phase) {
   );
 
   // Check for API availability.
-  if (!is_dir(DRUPAL_ROOT . '/vendor/brightcove')) {
+  if (!class_exists('Brightcove\API\API')) {
     $requirements['brightcove'] += array(
       'description' => t("Missing Brightcove API from the vendor folder"),
       'severity' => REQUIREMENT_ERROR,
