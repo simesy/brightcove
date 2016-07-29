@@ -56,6 +56,7 @@ use Drupal\time_formatter\Plugin\Field\FieldFormatter\TimeFieldFormatter;
  *     "route_provider" = {
  *       "html" = "Drupal\brightcove\BrightcoveVideoHtmlRouteProvider",
  *     },
+ *     "inline_form" = "Drupal\brightcove\Form\BrightcoveInlineForm",
  *   },
  *   base_table = "brightcove_video",
  *   admin_permission = "administer brightcove videos",

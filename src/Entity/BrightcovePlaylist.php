@@ -40,6 +40,7 @@ use Drupal\taxonomy\Entity\Term;
  *     "route_provider" = {
  *       "html" = "Drupal\brightcove\BrightcovePlaylistHtmlRouteProvider",
  *     },
+ *     "inline_form" = "Drupal\brightcove\Form\BrightcoveInlineForm",
  *   },
  *   base_table = "brightcove_playlist",
  *   admin_permission = "administer brightcove playlists",
