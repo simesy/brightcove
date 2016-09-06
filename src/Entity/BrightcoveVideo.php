@@ -245,12 +245,18 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     if (!empty($this->{"get{$function}"}()['target_id'])) {
       $ingest_request = $this->getIngestRequest();
 
-      /** @var \Drupal\file\Entity\File $image */
-      $image = File::load($this->{"get{$function}"}()['target_id']);
+      /** @var \Drupal\file\Entity\File $file */
+      $file = File::load($this->{"get{$function}"}()['target_id']);
+
+      // Load the image object factory so we can access height and width.
+      $image_factory = \Drupal::service('image.factory');
+      $image = $image_factory->get($file->getFileUri());
 
       if (!is_null($image)) {
         $ingest_image = new IngestImage();
-        $ingest_image->setUrl(file_create_url($image->getFileUri()));
+        $ingest_image->setUrl(file_create_url($file->getFileUri()));
+        $ingest_image->setWidth($image->getWidth());
+        $ingest_image->setHeight($image->getHeight());
         $ingest_request->{"set{$function}"}($ingest_image);
       }
     }
