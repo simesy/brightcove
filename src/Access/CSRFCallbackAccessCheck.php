@@ -19,19 +19,6 @@ class CSRFCallbackAccessCheck implements AccessInterface {
    */
   public function access(RouteMatchInterface $route_match) {
     $token = $route_match->getParameter('token');
-
-    try {
-      $result = Database::getConnection()->select('brightcove_callback', 'b')
-        ->fields('b', ['token'])
-        ->condition('token', $token)
-        ->condition('expires', REQUEST_TIME, '>')
-        ->execute()
-        ->fetchAssoc();
-    }
-    catch (\Exception $e) {
-      watchdog_exception('brightcove', $e);
-    }
-
-    return AccessResult::allowedIf(isset($result) && !empty($result['token']));
+    return AccessResult::allowedIf(\Drupal::keyValueExpirable('brightcove_callback')->has($token));
   }
 }

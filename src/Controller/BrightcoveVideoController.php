@@ -131,22 +131,12 @@ class BrightcoveVideoController extends ControllerBase {
     $content = Json::decode($request->getContent());
 
     if (is_array($content) && $content['status'] == 'SUCCESS' && $content['version'] == 1 && $content['action'] == 'CREATE') {
-      try {
-        $result = $this->connection->select('brightcove_callback', 'b')
-          ->fields('b', [
-            'video_id'
-          ])
-          ->condition('token', $token)
-          ->execute()
-          ->fetchAssoc();
-      }
-      catch (\Exception $e) {
-        watchdog_exception('brightcove', $e);
-      }
+      $video_id = \Drupal::keyValueExpirable('brightcove_callback')
+        ->get($token);
 
-      if (isset($result) && !empty($result['video_id'])) {
+      if (!empty($video_id)) {
         /** @var \Drupal\brightcove\Entity\BrightcoveVideo $video_entity */
-        $video_entity = BrightcoveVideo::load($result['video_id']);
+        $video_entity = BrightcoveVideo::load($video_id);
 
         if (!is_null($video_entity)) {
           // Basic semaphore to prevent race conditions, this is needed because

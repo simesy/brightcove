@@ -119,16 +119,6 @@ function _brightcove_initiate_sync() {
  */
 function brightcove_cron() {
   _brightcove_initiate_sync();
-
-  // Delete expired Brightcove callback tokens.
-  try {
-    Database::getConnection()->delete('brightcove_callback')
-      ->condition('expires', time(), '<')
-      ->execute();
-  }
-  catch (\Exception $e) {
-    watchdog_exception('brightcove', $e);
-  }
 }
 
 /**

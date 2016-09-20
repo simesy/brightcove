@@ -272,31 +272,20 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     $token = NULL;
 
     try {
-      // Get database connection.
-      $connection = Database::getConnection();
-
       // Generate unique token.
       do {
         $token = Crypt::hmacBase64($this->getVideoId(), Crypt::randomBytesBase64() . Settings::getHashSalt());
-        $db_token = $connection->select('brightcove_callback', 'bc')
-          ->fields('bc', ['token'])
-          ->condition('token', $token)
-          ->execute()
-          ->fetchField();
       }
-      while (!empty($db_token));
+      while (\Drupal::keyValueExpirable('brightcove_callback')->has($token));
 
       // Insert unique token into database.
-      $connection->insert('brightcove_callback')
-        ->fields([
-          'token' => $token,
-          'video_id' => $this->id(),
-          'expires' => time() + \Drupal::config('brightcove.settings')->get('notification.callbackExpirationTime'),
-        ])
-        ->execute();
+      \Drupal::keyValueExpirable('brightcove_callback')
+        ->setWithExpire($token, $this->id(), \Drupal::config('brightcove.settings')->get('notification.callbackExpirationTime'));
     }
     catch (\Exception $e) {
       watchdog_exception('brightcove', $e);
+      // Reset token to NULL.
+      $token = NULL;
     }
 
     return $token;

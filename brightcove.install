@@ -35,39 +35,44 @@ function brightcove_requirements($phase) {
 }
 
 /**
- * Implements hook_schema().
+ * Copy values from brightcove_callback table to a expirable key value store.
  */
-function brightcove_schema() {
-  $schema = [];
+function brightcove_update_8100(&$sandbox) {
+  // Get database connection.
+  $database = \Drupal::database();
 
-  $schema['brightcove_callback'] = [
-    'description' => 'The callback token for each Brightcove ingestion notification',
-    'fields' => [
-      'id' => [
-        'type' => 'serial',
-        'not null' => TRUE,
-        'description' => 'Primary key'
-      ],
-      'token' => [
-        'type' => 'char',
-        'length' => 43,
-        'not null' => TRUE,
-        'description' => 'Random-generated token to identify the video for the Brightcove callback'
-      ],
-      'video_id' => [
-        'type' => 'int',
-        'not null' => TRUE,
-        'description' => 'BrightcoveVideo entity ID',
-      ],
-      'expires' => [
-        'type' => 'int',
-        'not null' => TRUE,
-        'description' => 'Expiration date of the callback token'
-      ],
-    ],
-    'primary key' => ['id'],
-    'unique keys' => ['token' => ['token']],
-  ];
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['max'] = $database->select('brightcove_callback', 'bc')
+      ->fields('bc', ['id'])
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+  }
 
-  return $schema;
+  $key_value_expirable = \Drupal::keyValueExpirable('brightcove_callback');
+  $entries = $database->select('brightcove_callback')
+    ->fields('brightcove_callback')
+    ->orderBy('id', 'ASC')
+    ->range($sandbox['progress'], 50)
+    ->execute()
+    ->fetchAll();
+  foreach ($entries as $entry) {
+    $sandbox['progress']++;
+
+    if (REQUEST_TIME < $entry->expires) {
+      $key_value_expirable->setWithExpire($entry->token, $entry->video_id, $entry->expires - REQUEST_TIME);
+    }
+  }
+
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+}
+
+/**
+ * Drop brightcove_callback table.
+ */
+function brightcove_update_8101() {
+  \Drupal::database()
+    ->schema()
+    ->dropTable('brightcove_callback');
 }
