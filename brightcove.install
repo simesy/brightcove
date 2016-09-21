@@ -76,3 +76,17 @@ function brightcove_update_8101() {
     ->schema()
     ->dropTable('brightcove_callback');
 }
+
+/**
+ * Update BrightcoveAPIClient config entity's schema.
+ */
+function brightcove_update_8102() {
+  $config_factory = \Drupal::configFactory();
+  foreach ($config_factory->listAll('brightcove.brightcove_api_client.') as $brightcove_api_client_config) {
+    $config = $config_factory->getEditable($brightcove_api_client_config);
+    $config->clear('access_token');
+    $config->clear('access_token_expire_date');
+    $config->save(TRUE);
+  }
+  drupal_flush_all_caches();
+}

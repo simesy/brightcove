@@ -16,6 +16,7 @@ use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface;
 use Drupal\Core\Queue\QueueInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\brightcove\Entity\BrightcoveAPIClient;
@@ -65,6 +66,13 @@ class BrightcoveAPIClientForm extends EntityForm {
   protected $query_factory;
 
   /**
+   * Key/Value expirable store.
+   *
+   * @var \Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface
+   */
+  protected $key_value_expirable_store;
+
+  /**
    * Constructs a new BrightcoveAPIClientForm.
    *
    * @param \Drupal\Core\Config\Config $config
@@ -77,13 +85,16 @@ class BrightcoveAPIClientForm extends EntityForm {
    *   Custom field queue.
    * @param \Drupal\Core\Entity\Query\QueryFactory $query_factory
    *   Query factory.
+   * @param \Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface $key_value_expirable_store
+   *   Key/Value expirable store for "brightcove_access_token".
    */
-  public function __construct(Config $config, EntityStorageInterface $player_storage, QueueInterface $player_queue, QueueInterface $custom_field_queue, QueryFactory $query_factory) {
+  public function __construct(Config $config, EntityStorageInterface $player_storage, QueueInterface $player_queue, QueueInterface $custom_field_queue, QueryFactory $query_factory, KeyValueStoreExpirableInterface $key_value_expirable_store) {
     $this->config = $config;
     $this->player_storage = $player_storage;
     $this->player_queue = $player_queue;
     $this->query_factory = $query_factory;
     $this->custom_field_queue = $custom_field_queue;
+    $this->key_value_expirable_store = $key_value_expirable_store;
   }
 
   /**
@@ -95,7 +106,8 @@ class BrightcoveAPIClientForm extends EntityForm {
       $container->get('entity_type.manager')->getStorage('brightcove_player'),
       $container->get('queue')->get('brightcove_player_queue_worker'),
       $container->get('queue')->get('brightcove_custom_field_queue_worker'),
-      $container->get('entity.query')
+      $container->get('entity.query'),
+      $container->get('keyvalue.expirable')->get('brightcove_access_token')
     );
   }
 
@@ -209,10 +221,7 @@ class BrightcoveAPIClientForm extends EntityForm {
       $cms = new CMS($client, $form_state->getValue('account_id'));
       $cms->countVideos();
 
-      $form_state->setValue('access_token', $client->getAccessToken());
-      // @see: Token expire date calculation explanation is in
-      //       BrightcoveAPIClient::authorizeClient() method.
-      $form_state->setValue('access_token_expire_date', REQUEST_TIME + intval($client->getExpiresIn() - 30));
+      $this->key_value_expirable_store->setWithExpire($form_state->getValue('id'),  $client->getAccessToken(), intval($client->getExpiresIn()) - 30);
     }
     catch (AuthenticationException $e) {
       $form_state->setErrorByName('client_id', $e->getMessage());
@@ -230,7 +239,7 @@ class BrightcoveAPIClientForm extends EntityForm {
     /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $entity */
     $entity = $this->entity;
 
-    $client = new Client($form_state->getValue('access_token'), $form_state->getValue('access_token_expire_date'));
+    $client = new Client($this->key_value_expirable_store->get($form_state->getValue('id')));
     $cms = new CMS($client, $form_state->getValue('account_id'));
 
     /** @var \Brightcove\Object\CustomFields $video_fields */
@@ -296,7 +305,6 @@ class BrightcoveAPIClientForm extends EntityForm {
             [[BrightcoveUtil::class, 'runQueue'], ['brightcove_custom_field_queue_worker']],
           ],
         ]);
-
         break;
 
       default:

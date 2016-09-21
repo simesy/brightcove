@@ -104,14 +104,6 @@ interface BrightcoveAPIClientInterface extends ConfigEntityInterface {
   public function getAccessToken();
 
   /**
-   * Returns access token expire date.
-   *
-   * @return int
-   *   The access token expire date.
-   */
-  public function getAccessTokenExpireDate();
-
-  /**
    * Returns the maximum number of addable custom fields.
    *
    * @return int
@@ -174,20 +166,12 @@ interface BrightcoveAPIClientInterface extends ConfigEntityInterface {
    *
    * @param string $access_token
    *   The access token.
+   * @param int $expire
+   *   The time for which the token is valid in seconds.
    *
    * @return $this
    */
-  public function setAccessToken($access_token);
-
-  /**
-   * Sets access token expire date.
-   *
-   * @param int $expire_date
-   *   The date which on the access token will expire.
-   *
-   * @return $this
-   */
-  public function setAccessTokenExpireDate($expire_date);
+  public function setAccessToken($access_token, $expire);
 
   /**
    * Sets the maximum addable custom fields number.

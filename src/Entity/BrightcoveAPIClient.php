@@ -111,20 +111,6 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
   protected $client_status_message;
 
   /**
-   * Access token.
-   *
-   * @var string
-   */
-  protected $access_token;
-
-  /**
-   * Access token expire date
-   *
-   * @var int
-   */
-  protected $access_token_expire_date;
-
-  /**
    * Indicate if there was an re-authorization attempt or not.
    *
    * @var bool
@@ -137,6 +123,13 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
    * @var array
    */
   protected $max_custom_fields;
+
+  /**
+   * Expirable key/value store for the client.
+   *
+   * @var \Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface
+   */
+  protected $key_value_expirable_store;
 
   /**
    * @inheritdoc
@@ -199,14 +192,7 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
    * @inheritdoc
    */
   public function getAccessToken() {
-    return $this->access_token;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function getAccessTokenExpireDate() {
-    return $this->access_token_expire_date;
+    return $this->key_value_expirable_store->get($this->client_id, NULL);
   }
 
   /**
@@ -272,16 +258,8 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
   /**
    * @inheritdoc
    */
-  public function setAccessToken($access_token) {
-    $this->access_token = $access_token;
-    return $this;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function setAccessTokenExpireDate($expire_date) {
-    $this->access_token_expire_date = $expire_date;
+  public function setAccessToken($access_token, $expire) {
+    $this->key_value_expirable_store->setWithExpire($this->client_id, $access_token, $expire);
     return $this;
   }
 
@@ -294,6 +272,15 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function __construct(array $values, $entity_type) {
+    parent::__construct($values, $entity_type);
+
+    $this->key_value_expirable_store = \Drupal::keyValueExpirable('brightcove_access_token');
+  }
+
+  /**
    * Authorize client with Brightcove API and store client on the entity.
    *
    * @return $this
@@ -302,9 +289,9 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
   public function authorizeClient() {
     try {
       // Use the got access token while it is not expired.
-      if (REQUEST_TIME < $this->access_token_expire_date) {
+      if ($this->key_value_expirable_store->has($this->client_id)) {
         // Create new client.
-        $this->setClient(new Client($this->access_token, $this->access_token_expire_date));
+        $this->setClient(new Client($this->getAccessToken()));
       }
       // Otherwise get a new access token.
       else {
@@ -312,18 +299,17 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
 
         // Update access information. This will ensure that in the current
         // session we will get the correct access data.
-        $this->setAccessToken($client->getAccessToken());
-        // Set token expire date and subtract the default php
+        // Set token expire time in seconds and subtract the default php
         // max_execution_time from it.
         // We have to use the default php max_execution_time because if we
         // would get the value from ini_get('max_execution_time'), then it
         // could be larger than the Brightcove's expire date causing to always
         // get a new access token.
-        $this->setAccessTokenExpireDate(REQUEST_TIME + intval($client->getExpiresIn() - 30));
+        $this->setAccessToken($client->getAccessToken(), intval($client->getExpiresIn()) - 30);
         $this->save();
 
         // Create new client.
-        $this->setClient(new Client($this->access_token, $this->access_token_expire_date));
+        $this->setClient(new Client($this->getAccessToken()));
       }
 
       // Test account ID.

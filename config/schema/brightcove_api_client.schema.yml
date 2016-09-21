@@ -24,12 +24,6 @@ brightcove.brightcove_api_client.*:
       label: 'secret key'
     uuid:
       type: string
-    access_token:
-      type: text
-      label: 'access token'
-    access_token_expire_date:
-      tye: int
-      label: 'access token expire date'
     max_custom_fields:
       type: int
       label: 'Maximum number of custom fields'
