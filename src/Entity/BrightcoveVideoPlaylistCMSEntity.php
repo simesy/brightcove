@@ -41,6 +41,20 @@ abstract class BrightcoveVideoPlaylistCMSEntity extends BrightcoveCMSEntity impl
   }
 
   /**
+   * Default value callback for 'reference_id' base field definition.
+   *
+   * @see ::baseFieldDefinitions()
+   *
+   * @return array
+   *   An array of default values.
+   */
+  public static function getDefaultReferenceId() {
+    return [
+      'drupal:' . \Drupal::CORE_COMPATIBILITY . ":" . \Drupal::currentUser()->id() . ":" . md5(microtime()),
+    ];
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function getTags() {

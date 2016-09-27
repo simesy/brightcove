@@ -90,3 +90,18 @@ function brightcove_update_8102() {
   }
   drupal_flush_all_caches();
 }
+
+/**
+ * Sets a default callback for the reference_id.
+ */
+function brightcove_update_8103() {
+  /** @var \Drupal\Core\Field\BaseFieldDefinition $installed_field_definition */
+  $installed_field_definition = \Drupal::entityDefinitionUpdateManager()->getFieldStorageDefinition('reference_id', 'brightcove_video');
+  $installed_field_definition->setDefaultValueCallback('\Drupal\brightcove\Entity\BrightcoveVideo::getDefaultReferenceId');
+  \Drupal::entityDefinitionUpdateManager()->updateFieldStorageDefinition($installed_field_definition);
+
+  /** @var \Drupal\Core\Field\BaseFieldDefinition $installed_field_definition */
+  $installed_field_definition = \Drupal::entityDefinitionUpdateManager()->getFieldStorageDefinition('reference_id', 'brightcove_playlist');
+  $installed_field_definition->setDefaultValueCallback('\Drupal\brightcove\Entity\BrightcovePlaylist::getDefaultReferenceId');
+  \Drupal::entityDefinitionUpdateManager()->updateFieldStorageDefinition($installed_field_definition);
+}

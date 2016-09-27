@@ -1162,6 +1162,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         'label' => 'inline',
         'weight' => $weight,
       ])
+      ->setDefaultValueCallback(static::class . '::getDefaultReferenceId')
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 

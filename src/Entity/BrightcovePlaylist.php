@@ -527,6 +527,7 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
         'label' => 'inline',
         'weight' => $weight,
       ))
+      ->setDefaultValueCallback(static::class . '::getDefaultReferenceId')
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
