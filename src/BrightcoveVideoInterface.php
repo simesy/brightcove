@@ -243,6 +243,24 @@ interface BrightcoveVideoInterface {
   public function setVideoFile($video_file);
 
   /**
+   * Returns the video URL.
+   *
+   * @return string
+   *   The video URL.
+   */
+  public function getVideoUrl();
+
+  /**
+   * Sets the video URL.
+   *
+   * @param string $video_url
+   *   The video URL.
+   *
+   * @return $this
+   */
+  public function setVideoUrl($video_url);
+
+  /**
    * Returns the video's profile.
    *
    * @return string

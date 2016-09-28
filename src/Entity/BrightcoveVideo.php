@@ -418,6 +418,21 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
   /**
    * {@inheritdoc}
    */
+  public function getVideoUrl() {
+    return $this->get('video_url')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setVideoUrl($video_url) {
+    $this->set('video_url', $video_url);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getProfile() {
     return $this->get('profile')->value;
   }
@@ -795,6 +810,17 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         $ingest_master = new IngestRequestMaster();
         $ingest_master->setUrl(file_create_url($file->getFileUri()));
 
+        $ingest_request->setMaster($ingest_master);
+        $profiles = self::getProfileAllowedValues($this->getAPIClient());
+        $ingest_request->setProfile($profiles[$this->getProfile()]);
+      }
+
+      // Set ingestion for video url.
+      if ($this->isFieldChanged('video_url') && !empty($this->getVideoUrl())) {
+        $ingest_request = $this->getIngestRequest();
+
+        $ingest_master = new IngestRequestMaster();
+        $ingest_master->setUrl($this->getVideoUrl());
         $ingest_request->setMaster($ingest_master);
         $profiles = self::getProfileAllowedValues($this->getAPIClient());
         $ingest_request->setProfile($profiles[$this->getProfile()]);
@@ -1226,6 +1252,25 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         'type' => 'file_url_plain',
         'label' => 'inline',
         'weight' => $weight,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    // Provide an external URL
+    $fields['video_url'] = BaseFieldDefinition::create('uri')
+      ->setLabel(t('Video source URL'))
+      ->setDisplayOptions('form', [
+        'type' => 'uri',
+        'weight' => ++$weight,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'uri_link',
+        'label' => 'inline',
+        'weight' => $weight,
+        'settings' => [
+          'trim_length' => 150,
+          'target' => '_blank',
+        ],
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);

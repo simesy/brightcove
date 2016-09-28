@@ -74,15 +74,41 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
       '#weight' => -100,
     ];
 
+    $upload_type = [
+      '#type' => 'select',
+      '#title' => $this->t('Upload type'),
+      '#options' => [
+        'file' => $this->t('File'),
+        'url' => $this->t('URL'),
+      ],
+      '#default_value' => !empty($form['video_url']['widget'][0]['value']['#default_value']) ? 'url' : 'file',
+      '#weight' => -100,
+    ];
+
+    $form['video_file']['#states'] = [
+      'visible' => [
+        'select[name="upload_type"]' => ['value' => 'file'],
+      ],
+    ];
+
+    $form['video_url']['#states'] = [
+      'visible' => [
+        'select[name="upload_type"]' => ['value' => 'url'],
+      ],
+    ];
+
     // Group video fields together.
     $form['video'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Video'),
       '#weight' => $form['economics']['#weight'] += 0.001,
+      'upload_type' => &$upload_type,
       'video_file' => $form['video_file'],
+      'video_url' => $form['video_url'],
       'profile' => $form['profile'],
     ];
     unset($form['video_file']);
+    unset($form['video_url']);
     unset($form['profile']);
 
     // Group image fields together.
@@ -184,6 +210,35 @@ class BrightcoveVideoForm extends BrightcoveVideoPlaylistForm {
     $form['text_tracks']['widget']['actions']['ief_add']['#value'] = $this->t('Add Text Track');
 
     return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    parent::validateForm($form, $form_state);
+
+    /** @var $entity \Drupal\brightcove\Entity\BrightcoveVideo */
+    $entity = $this->entity;
+
+    switch ($form_state->getValue('upload_type')) {
+      case 'file':
+        if ($entity->isNew() || !empty($form_state->getValue('video_file')[0]['fids'])) {
+          $form_state->unsetValue('video_url');
+          $entity->setVideoUrl(NULL);
+        }
+        break;
+
+      case 'url':
+        if ($entity->isNew()) {
+          $form_state->unsetValue('video_file');
+        }
+        elseif (!empty($form_state->getValue('video_url')[0]['value'])) {
+          $form_state->unsetValue('video_file');
+          $entity->setVideoFile(NULL);
+        }
+        break;
+    }
   }
 
   /**

@@ -3,6 +3,7 @@
  * @file
  * Brightcove install file.
  */
+use Drupal\Core\Field\BaseFieldDefinition;
 
 /**
  * Implements hook_requirements().
@@ -104,4 +105,28 @@ function brightcove_update_8103() {
   $installed_field_definition = \Drupal::entityDefinitionUpdateManager()->getFieldStorageDefinition('reference_id', 'brightcove_playlist');
   $installed_field_definition->setDefaultValueCallback('\Drupal\brightcove\Entity\BrightcovePlaylist::getDefaultReferenceId');
   \Drupal::entityDefinitionUpdateManager()->updateFieldStorageDefinition($installed_field_definition);
+}
+
+/**
+ * Updates the entity with the video_url base field.
+ */
+function brightcove_update_8104() {
+  $storage_definition = BaseFieldDefinition::create('uri')
+    ->setLabel(t('Video source URL'))
+    ->setDisplayOptions('form', [
+      'type' => 'uri',
+    ])
+    ->setDisplayOptions('view', [
+      'type' => 'uri_link',
+      'label' => 'inline',
+      'settings' => [
+        'trim_length' => 150,
+        'target' => '_blank',
+      ],
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  \Drupal::entityDefinitionUpdateManager()
+    ->installFieldStorageDefinition('video_url', 'brightcove_video', 'brightcove_video', $storage_definition);
 }
