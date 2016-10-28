@@ -2,7 +2,7 @@ name: Brightcove
 type: module
 description: Brightcove Video Connect
 core: 8.x
-package: Custom
+package: Brightcove
 dependencies:
   - datetime
   - image
