@@ -18,7 +18,7 @@ function brightcove_requirements($phase) {
   // Check for API availability.
   if (!class_exists('Brightcove\API\API')) {
     $requirements['brightcove'] += [
-      'description' => t('Missing Brightcove API from the vendor folder'),
+      'description' => t('Missing Brightcove API from the vendor folder.'),
       'severity' => REQUIREMENT_ERROR,
     ];
   }
