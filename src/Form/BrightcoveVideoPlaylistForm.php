@@ -112,7 +112,7 @@ abstract class BrightcoveVideoPlaylistForm extends ContentEntityForm {
     }
 
     return [
-      '_none' => t('Use default'),
+      '_none' => t("Use API Client's default player"),
     ] + BrightcovePlayer::getList($api_client, TRUE);
   }
 
