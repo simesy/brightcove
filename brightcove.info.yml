@@ -7,6 +7,7 @@ dependencies:
   - datetime
   - image
   - inline_entity_form
+  - key
   - link
   - options
   - path
