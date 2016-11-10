@@ -19,9 +19,8 @@ brightcove.brightcove_api_client.*:
     default_player:
       type: string
       label: 'Default player'
-    secret_key:
+    secret_key_id:
       type: string
-      label: 'secret key'
     uuid:
       type: string
     max_custom_fields:
