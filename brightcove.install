@@ -4,6 +4,8 @@
  * Brightcove install file.
  */
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Updater\UpdaterException;
+use Drupal\key\Entity\Key;
 
 /**
  * Implements hook_requirements().
@@ -129,4 +131,46 @@ function brightcove_update_8104() {
 
   \Drupal::entityDefinitionUpdateManager()
     ->installFieldStorageDefinition('video_url', 'brightcove_video', 'brightcove_video', $storage_definition);
+}
+
+/**
+ * Update BrightcoveAPIClient config entity's schema to use the key repository.
+ */
+function brightcove_update_8105() {
+  /** @var \Drupal\Core\Extension\ModuleHandler $module_handler */
+  $module_handler = \Drupal::service('module_handler');
+
+  if (!$module_handler->moduleExists('key')) {
+    throw new UpdaterException('The required key.module is not installed, please install it.');
+  }
+
+  try {
+    $config_factory = \Drupal::configFactory();
+    foreach ($config_factory->listAll('brightcove.brightcove_api_client.') as $brightcove_api_client_config) {
+      $config = $config_factory->getEditable($brightcove_api_client_config);
+
+      if (!empty($config->get('secret_key'))) {
+        $key = new Key([
+          'id' => "brightcove_secret_{$config->get('id')}",
+          'label' => "Brightcove ({$config->get('label')})",
+          'description' => 'Brightcove API Secret key.',
+          'key_type' => 'authentication',
+          'key_provider' => 'config',
+          'key_provider_settings' => [
+            'key_value' => $config->get('secret_key'),
+          ],
+        ], 'key');
+        $key->save();
+
+        $config->clear('secret_key');
+        $config->set('secret_key_id', $key->id());
+        $config->save(TRUE);
+      }
+    }
+  }
+  catch (Exception $e) {
+    throw new UpdaterException($e->getMessage(), $e->getCode(), $e->getPrevious());
+  }
+
+  drupal_flush_all_caches();
 }
