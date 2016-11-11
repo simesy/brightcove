@@ -18,6 +18,7 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface;
 use Drupal\Core\Queue\QueueInterface;
+use Drupal\key\KeyRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\brightcove\Entity\BrightcoveAPIClient;
 use Brightcove\API\Exception\AuthenticationException;
@@ -73,6 +74,13 @@ class BrightcoveAPIClientForm extends EntityForm {
   protected $key_value_expirable_store;
 
   /**
+   * Key repository.
+   *
+   * @var \Drupal\key\KeyRepositoryInterface
+   */
+  protected $key_repository;
+
+  /**
    * Constructs a new BrightcoveAPIClientForm.
    *
    * @param \Drupal\Core\Config\Config $config
@@ -87,14 +95,17 @@ class BrightcoveAPIClientForm extends EntityForm {
    *   Query factory.
    * @param \Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface $key_value_expirable_store
    *   Key/Value expirable store for "brightcove_access_token".
+   * @param \Drupal\key\KeyRepositoryInterface
+   *   Key repository.
    */
-  public function __construct(Config $config, EntityStorageInterface $player_storage, QueueInterface $player_queue, QueueInterface $custom_field_queue, QueryFactory $query_factory, KeyValueStoreExpirableInterface $key_value_expirable_store) {
+  public function __construct(Config $config, EntityStorageInterface $player_storage, QueueInterface $player_queue, QueueInterface $custom_field_queue, QueryFactory $query_factory, KeyValueStoreExpirableInterface $key_value_expirable_store, KeyRepositoryInterface $key_repository) {
     $this->config = $config;
     $this->player_storage = $player_storage;
     $this->player_queue = $player_queue;
     $this->query_factory = $query_factory;
     $this->custom_field_queue = $custom_field_queue;
     $this->key_value_expirable_store = $key_value_expirable_store;
+    $this->key_repository = $key_repository;
   }
 
   /**
@@ -107,7 +118,8 @@ class BrightcoveAPIClientForm extends EntityForm {
       $container->get('queue')->get('brightcove_player_queue_worker'),
       $container->get('queue')->get('brightcove_custom_field_queue_worker'),
       $container->get('entity.query'),
-      $container->get('keyvalue.expirable')->get('brightcove_access_token')
+      $container->get('keyvalue.expirable')->get('brightcove_access_token'),
+      $container->get('key.repository')
     );
   }
 
@@ -175,6 +187,40 @@ class BrightcoveAPIClientForm extends EntityForm {
       '#required' => TRUE,
     );
 
+    $form['secret_key_provider'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Secret key provider'),
+      '#options' => [
+        'config' => $this->t('Configuration'),
+        'file' => $this->t('File'),
+      ],
+    ];
+
+    $form['secret_key_folder'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Secret key folder'),
+      '#description' => $this->t("Provide only the folder's location, the file will be created automatically."),
+      '#default_value' => 'private://keys',
+      '#states' => [
+        'visible' => [
+          ':input[name="secret_key_provider"]' => ['value' => 'file'],
+        ],
+      ],
+    ];
+
+    // Set default values for the key fields.
+    $key = $this->key_repository->getKey($brightcove_api_client->getSecretKeyId());
+    if (!empty($key)) {
+      $provider = $key->getKeyProvider();
+
+      $form['secret_key_provider']['#default_value'] = $provider->getPluginId();
+
+      if ($provider->getPluginId() == 'file') {
+        $config = $provider->getConfiguration();
+        $form['secret_key_folder']['#default_value'] = substr($config['file_location'], 0, strrpos(str_replace('\\', '/', $config['file_location']), '/'));
+      }
+    }
+
     $form['account_id'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Brightcove Account ID'),
@@ -183,7 +229,6 @@ class BrightcoveAPIClientForm extends EntityForm {
       '#default_value' => $brightcove_api_client->getAccountID(),
       '#required' => TRUE,
     );
-
 
     $form['default_player'] = array(
       '#type' => 'select',
@@ -289,8 +334,25 @@ class BrightcoveAPIClientForm extends EntityForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
+    /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $brightcove_api_client */
     $brightcove_api_client = $this->entity;
-    $status = $brightcove_api_client->save();
+
+    try {
+      $brightcove_api_client->setSecretKey($form_state->getValue('secret_key'), [
+        'key_provider' => $form_state->getValue('secret_key_provider'),
+        'key_folder' => $form_state->getValue('secret_key_folder'),
+      ]);
+      $status = $brightcove_api_client->save();
+    }
+    catch (\Exception $e) {
+      watchdog_exception('brightcove', $e, 'Failed to create the Brightcove API Client entity.');
+      drupal_set_message(t('Failed to create the Brightcove Video entity: %message', array(
+        '%message' => $e->getMessage(),
+      )), 'error');
+
+      $form_state->setRebuild(true);
+      return;
+    }
 
     switch ($status) {
       case SAVED_NEW:
