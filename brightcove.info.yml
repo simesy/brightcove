@@ -3,6 +3,7 @@ type: module
 description: Brightcove Video Connect
 core: 8.x
 package: Brightcove
+configure: entity.brightcove_api_client.collection
 dependencies:
   - datetime
   - image
