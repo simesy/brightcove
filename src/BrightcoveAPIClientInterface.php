@@ -70,6 +70,14 @@ interface BrightcoveAPIClientInterface extends ConfigEntityInterface {
   public function getSecretKey();
 
   /**
+   * Returns the API Client secret key's ID for the key repository.
+   *
+   * @return string
+   *   The ID of the Secret Key in the key repository.
+   */
+  public function getSecretKeyId();
+
+  /**
    * Returns the loaded API client.
    *
    * @return \Brightcove\API\Client
@@ -156,10 +164,24 @@ interface BrightcoveAPIClientInterface extends ConfigEntityInterface {
    *
    * @param string $secret_key
    *   The desired secret key.
+   * @param array $key_config
+   *   Contains configuration for the key provider, values:
+   *     - key_provider (string): Either 'configuration' or 'file'.
+   *     - key_folder (string): A valid, writable folder for the secret key.
    *
    * @return $this
    */
-  public function setSecretKey($secret_key);
+  public function setSecretKey($secret_key, array $key_config);
+
+  /**
+   * Sets the API Client secret key's ID for the key repository.
+   *
+   * @param string
+   *   The ID of the Secret key in the key repository.
+   *
+   * @return $this
+   */
+  public function setSecretKeyId($secret_key_id);
 
   /**
    * Sets access token.

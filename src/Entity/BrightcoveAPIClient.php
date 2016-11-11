@@ -12,7 +12,7 @@ use Brightcove\API\Exception\APIException;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\brightcove\BrightcoveAPIClientInterface;
 use Brightcove\API\Client;
-use Brightcove\API\Exception\AuthenticationException;
+use Drupal\key\Entity\Key;
 
 /**
  * Defines the Brightcove API Client entity.
@@ -86,6 +86,20 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
    * @var string
    */
   protected $secret_key;
+
+  /**
+   * The ID for the Secret key in the key repository.
+   *
+   * @var string
+   */
+  protected $secret_key_id;
+
+  /**
+   * Key provider configuration.
+   *
+   * @var string
+   */
+  protected $key_config;
 
   /**
    * The loaded API client.
@@ -169,6 +183,14 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
   /**
    * @inheritdoc
    */
+  public function getSecretKeyId() {
+    // Return empty string instead of NULL if the secret_key_id is not set yet.
+    return empty($this->secret_key_id) ? '' : $this->secret_key_id;
+  }
+
+  /**
+   * @inheritdoc
+   */
   public function getClient() {
     $this->authorizeClient();
     return $this->client;
@@ -237,8 +259,17 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
   /**
    * @inheritdoc
    */
-  public function setSecretKey($secret_key) {
+  public function setSecretKey($secret_key, array $key_config) {
     $this->secret_key = $secret_key;
+    $this->key_config = $key_config;
+    return $this;
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public function setSecretKeyId($secret_key_id) {
+    $this->secret_key_id = $secret_key_id;
     return $this;
   }
 
@@ -272,12 +303,33 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
   }
 
   /**
+   * File system helper service.
+   *
+   * @var \Drupal\Core\File\FileSystem
+   */
+  protected $fileSystem;
+
+  /**
+   * Key Repository.
+   *
+   * @var \Drupal\key\KeyRepositoryInterface;
+   */
+  protected $keyRepository;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(array $values, $entity_type) {
     parent::__construct($values, $entity_type);
 
+    // Not possible to use dependency injection in entities, so the services
+    // are getting set here.
     $this->key_value_expirable_store = \Drupal::keyValueExpirable('brightcove_access_token');
+    $this->fileSystem = \Drupal::service('file_system');
+    $this->keyRepository = \Drupal::service('key.repository');
+
+    $key = !empty($this->getSecretKeyId()) ? $this->keyRepository->getKey($this->getSecretKeyId()) : NULL;
+    $this->secret_key = !empty($key) ? $key->getKeyValue() : NULL;
   }
 
   /**
@@ -295,7 +347,7 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
       }
       // Otherwise get a new access token.
       else {
-        $client = Client::authorize($this->client_id, $this->secret_key);
+        $client = Client::authorize($this->getClientID(), $this->getSecretKey());
 
         // Update access information. This will ensure that in the current
         // session we will get the correct access data.
@@ -337,5 +389,100 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
     }
 
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function save() {
+    // Save secret key if it's changed.
+    if (!empty($this->key_config)) {
+      $key_id = "brightcove_secret_{$this->id()}";
+      $key_file_location = "{$this->key_config['key_folder']}/{$key_id}.key";
+
+      // Store secret key in file and create a new one if not exists.
+      if ($this->key_config['key_provider'] == 'file') {
+        // Try to create the folder.
+        $folder = $this->fileSystem->realpath($this->key_config['key_folder']);
+        if (!empty($folder) && !is_dir($folder) && $this->fileSystem->mkdir($folder, NULL, TRUE));
+        else if (!is_writable($this->key_config['key_folder'])) {
+          throw new \Exception(strtr('Unable to create the secret key file. The @folder folder is not writable.', ['@folder' => $this->key_config['key_folder']]));
+        }
+
+        // Try to create the secret key file.
+        $secret_key_file = $this->fileSystem->realpath($key_file_location);
+        if (file_put_contents($secret_key_file, $this->secret_key) === FALSE) {
+          throw new \Exception(strtr('Unable to create the secret key file: @file', ['@file' => $secret_key_file]));
+        }
+      }
+
+      // Key configuration.
+      $config = [
+        'key_provider' => $this->key_config['key_provider'],
+      ];
+      if ($this->key_config['key_provider'] == 'file') {
+        $config['key_provider_settings'] = [
+          'file_location' => $key_file_location,
+        ];
+      }
+      else {
+        $config['key_provider_settings'] = [
+          'key_value' => $this->secret_key,
+        ];
+      }
+
+      // Create new key in the key repository if not exists.
+      if (($key = $this->keyRepository->getKey($this->getSecretKeyId())) == NULL) {
+        $config += [
+          'id' => $key_id,
+          'label' => "Brightcove ({$this->getLabel()})",
+          'description' => 'Brightcove API Secret key.',
+          'key_type' => 'authentication',
+        ];
+
+        $key = new Key($config, 'key');
+        $key->save();
+
+        $this->setSecretKeyId($key->id());
+      }
+      // Update the existing key settings.
+      else {
+        // Clean-up file if we switched from file provider to configuration or if
+        // the file's location is changed.
+        $provider = $key->getKeyProvider();
+        $key_provider_config = $provider->getConfiguration();
+        if ($provider->getPluginId() == 'file' && (($this->key_config['key_provider'] == 'config' && is_file($this->fileSystem->realpath($key_provider_config['file_location']))) || ($this->key_config['key_provider'] == $provider->getPluginId() && $key_provider_config['file_location'] != $key_file_location && is_file($this->fileSystem->realpath($key_provider_config['file_location']))))) {
+          $this->fileSystem->unlink($key_provider_config['file_location']);
+        }
+
+        foreach ($config as $property_name => $value) {
+          $key->set($property_name, $value);
+        }
+        $key->save();
+      }
+    }
+
+    return parent::save();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delete() {
+    parent::delete();
+
+    $key = $this->keyRepository->getKey($this->getSecretKeyId());
+    if (!empty($key)) {
+      $provider = $key->getKeyProvider();
+      $config = $provider->getConfiguration();
+
+      // Delete secret key file.
+      if ($provider->getPluginId() == 'file' && is_file($this->fileSystem->realpath($config['file_location']))) {
+        $this->fileSystem->unlink($config['file_location']);
+      }
+
+      // Delete key provider.
+      $key->delete();
+    }
   }
 }
