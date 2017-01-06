@@ -3,6 +3,7 @@
 namespace Drupal\media_entity_brightcove\Plugin\MediaEntity\Type;
 
 use Drupal\brightcove\BrightcoveUtil;
+use Drupal\media_entity\MediaBundleInterface;
 use Drupal\media_entity\MediaInterface;
 use Drupal\media_entity\MediaTypeBase;
 
@@ -163,6 +164,50 @@ class BrightcoveVideo extends MediaTypeBase {
    */
   public function getDefaultName(MediaInterface $media) {
     return $this->getField($media, 'name');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getSourceFieldName() {
+    // Must be implemented to return something that fits into the 32 characters
+    // limit for a field name.
+    // @TODO: Check if this needs to be unique.
+    // @see \Drupal\media_entity\MediaTypeBase::getSourceFieldName()
+    return 'brightcove_video';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  function createSourceFieldStorage() {
+    return $this->entityTypeManager
+      ->getStorage('field_storage_config')
+      ->create([
+        'entity_type' => 'media',
+        'field_name' => $this->getSourceFieldName(),
+        'type' => 'entity_reference',
+        'settings' => [
+          'target_type' => 'brightcove_video',
+        ],
+      ]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  function createSourceField(MediaBundleInterface $bundle) {
+    return $this->entityTypeManager
+      ->getStorage('field_config')
+      ->create([
+        'field_storage' => $this->getSourceFieldStorage(),
+        'bundle' => $bundle->id(),
+        'required' => TRUE,
+        'label' => 'Brightcove Video',
+        'settings' => [
+          'handler' => 'default:brightcove_video',
+        ],
+      ]);
   }
 
 }
