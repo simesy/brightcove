@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcovePlaylistHtmlRouteProvider.
- */
-
 namespace Drupal\brightcove;
 
 use Drupal\Core\Entity\EntityTypeInterface;

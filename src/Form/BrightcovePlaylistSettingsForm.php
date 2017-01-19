@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Form\BrightcovePlaylistSettingsForm.
- */
-
 namespace Drupal\brightcove\Form;
 
 use Drupal\Core\Form\FormBase;

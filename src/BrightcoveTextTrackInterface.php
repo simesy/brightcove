@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcoveTextTrackInterface.
- */
-
 namespace Drupal\brightcove;
 
 use Drupal\Core\Entity\ContentEntityInterface;

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcoveAPIClientInterface.
- */
-
 namespace Drupal\brightcove;
 
 use Drupal\Core\Config\Entity\ConfigEntityInterface;

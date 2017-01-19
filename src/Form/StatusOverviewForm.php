@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Form\StatusOverviewForm.
- */
-
 namespace Drupal\brightcove\Form;
 
 use Drupal\brightcove\BrightcoveUtil;

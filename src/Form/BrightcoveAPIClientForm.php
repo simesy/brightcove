@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Form\BrightcoveAPIClientForm.
- */
-
 namespace Drupal\brightcove\Form;
 
 use Brightcove\API\Exception\APIException;

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Form\BrightcovePlaylistDeleteForm.
- */
-
 namespace Drupal\brightcove\Form;
 
 use Drupal\Core\Entity\ContentEntityDeleteForm;

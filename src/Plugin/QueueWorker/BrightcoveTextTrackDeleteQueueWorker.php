@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Plugin\QueueWorker\BrightcoveTextTrackDeleteQueueWorker.
- */
-
 namespace Drupal\brightcove\Plugin\QueueWorker;
 
 use Drupal\brightcove\Entity\BrightcoveTextTrack;

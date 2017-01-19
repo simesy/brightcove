@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Entity\BrightcoveAPIClient.
- */
-
 namespace Drupal\brightcove\Entity;
 
 use Brightcove\API\CMS;

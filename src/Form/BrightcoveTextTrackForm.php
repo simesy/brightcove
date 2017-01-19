@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Form\BrightcoveTextTrackForm.
- */
-
 namespace Drupal\brightcove\Form;
 
 use Drupal\Core\Entity\ContentEntityForm;

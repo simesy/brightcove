@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Entity\BrightcovePlaylist.
- */
-
 namespace Drupal\brightcove\Entity;
 
 use Drupal\views\EntityViewsData;

@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\brightcove\Entity\BrightcoveCustomField.
- */
 
 namespace Drupal\brightcove\Entity;
 

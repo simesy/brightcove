@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcovePlayerInterface.
- */
 
 namespace Drupal\brightcove;
 

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcoveTextTrackAccessControlHandler.
- */
-
 namespace Drupal\brightcove\Access;
 
 use Drupal\Core\Entity\EntityAccessControlHandler;

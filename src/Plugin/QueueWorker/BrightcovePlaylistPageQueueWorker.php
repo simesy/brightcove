@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Plugin\QueueWorker\BrightcovePlaylistPageQueueWorker.
- */
-
 namespace Drupal\brightcove\Plugin\QueueWorker;
 
 use Drupal\brightcove\BrightcoveUtil;

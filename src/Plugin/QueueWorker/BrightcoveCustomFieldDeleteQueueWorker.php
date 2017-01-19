@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\brightcove\Plugin\QueueWorker\BrightcoveCustomFieldDeleteQueueWorker.
- */
 
 namespace Drupal\brightcove\Plugin\QueueWorker;
 

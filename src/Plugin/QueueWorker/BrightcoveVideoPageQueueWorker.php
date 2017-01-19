@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Plugin\QueueWorker\BrightcoveVideoPageQueueWorker.
- */
-
 namespace Drupal\brightcove\Plugin\QueueWorker;
 
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;

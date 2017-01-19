@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Plugin\QueueWorker\BrightcovePlaylistLocalDeleteQueueWorker.
- */
-
 namespace Drupal\brightcove\Plugin\QueueWorker;
 
 use Drupal\Core\Entity\EntityStorageInterface;

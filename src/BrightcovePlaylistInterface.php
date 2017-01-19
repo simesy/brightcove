@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcovePlaylistInterface.
- */
-
 namespace Drupal\brightcove;
 
 /**

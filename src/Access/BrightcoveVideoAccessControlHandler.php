@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Access\BrightcoveVideoAccessControlHandler.
- */
-
 namespace Drupal\brightcove\Access;
 
 use Drupal\Core\Entity\EntityAccessControlHandler;

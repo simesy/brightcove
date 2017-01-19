@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Entity\BrightcoveVideoViewsData.
- */
-
 namespace Drupal\brightcove\Entity;
 
 use Drupal\views\EntityViewsData;

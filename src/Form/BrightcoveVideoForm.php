@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Form\BrightcoveVideoForm.
- */
-
 namespace Drupal\brightcove\Form;
 
 use Brightcove\API\Exception\APIException;

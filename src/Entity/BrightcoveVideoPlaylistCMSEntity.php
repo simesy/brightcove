@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\brightcove\Entity\BrightcoveCMSEntity.
- */
 
 namespace Drupal\brightcove\Entity;
 

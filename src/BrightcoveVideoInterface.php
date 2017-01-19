@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcoveVideoInterface.
- */
-
 namespace Drupal\brightcove;
 
 /**

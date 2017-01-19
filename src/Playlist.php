@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\brightcove\Playlist.
- */
 
 namespace Drupal\brightcove;
 

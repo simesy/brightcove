@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcoveVideoListBuilder.
- */
-
 namespace Drupal\brightcove;
 
 use Drupal\Core\Datetime\DateFormatter;

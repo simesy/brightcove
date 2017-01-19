@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\Entity\BrightcoveTextTrack.
- */
-
 namespace Drupal\brightcove\Entity;
 
 use Brightcove\Object\Video\TextTrack;

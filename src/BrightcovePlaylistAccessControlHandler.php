@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcovePlaylistAccessControlHandler.
- */
-
 namespace Drupal\brightcove;
 
 use Drupal\Core\Entity\EntityAccessControlHandler;

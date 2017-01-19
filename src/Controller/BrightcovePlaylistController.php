@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\brightcove\Controller\BrightcoveVideo.
- */
 
 namespace Drupal\brightcove\Controller;
 

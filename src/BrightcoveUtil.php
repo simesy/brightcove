@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcoveUtil.
- */
 
 namespace Drupal\brightcove;
 

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcoveAPIClientListBuilder.
- */
-
 namespace Drupal\brightcove;
 
 use Drupal\brightcove\Entity\BrightcovePlayer;

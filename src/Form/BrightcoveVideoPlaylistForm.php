@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcoveVideoPlaylistForm.
- */
 
 namespace Drupal\brightcove\Form;
 

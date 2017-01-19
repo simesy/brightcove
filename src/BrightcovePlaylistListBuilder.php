@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\brightcove\BrightcovePlaylistListBuilder.
- */
-
 namespace Drupal\brightcove;
 
 use Drupal\Core\Datetime\DateFormatter;
