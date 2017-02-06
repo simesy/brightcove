@@ -18,8 +18,8 @@ interface BrightcoveVideoPlaylistCMSEntityInterface extends BrightcoveCMSEntityI
   /**
    * Sets the player.
    *
-   * @param string $player
-   *   The player's Brightcove ID.
+   * @param int $player
+   *   The Brightcove Player's entity ID.
    *
    * @return \Drupal\brightcove\BrightcoveVideoPlaylistCMSEntityInterface
    *   The called Brightcove Video or Playlist.

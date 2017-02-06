@@ -166,8 +166,11 @@ function brightcove_brightcove_video_view(array &$build, EntityInterface $entity
       $api_client = BrightcoveAPIClient::load($video_entity->getAPIClient());
 
       /** @var \Drupal\brightcove\Entity\BrightcovePlayer $player */
-      if (!empty($player = $video_entity->getPlayer())) {
+      if ($player = $video_entity->getPlayer()) {
         $player = BrightcovePlayer::load($player);
+      }
+      if (!$player) {
+        $player = BrightcovePlayer::loadByPlayerId($api_client->getDefaultPlayer());
       }
 
       $build['brightcove_video_player'] = [
@@ -219,8 +222,11 @@ function brightcove_brightcove_playlist_view(array &$build, EntityInterface $ent
       $api_client = BrightcoveUtil::getAPIClient($playlist_entity->getAPIClient());
 
       /** @var \Drupal\brightcove\Entity\BrightcovePlayer $player */
-      if (!empty($player = $playlist_entity->getPlayer())) {
+      if ($player = $playlist_entity->getPlayer()) {
         $player = BrightcovePlayer::load($player);
+      }
+      if (!$player) {
+        $player = BrightcovePlayer::loadByPlayerId($api_client->getDefaultPlayer());
       }
 
       $build['brightcove_playlist_video_player'] = [
