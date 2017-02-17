@@ -135,126 +135,143 @@ class BrightcoveVideoController extends ControllerBase {
         $video_entity = BrightcoveVideo::load($video_id);
 
         if (!is_null($video_entity)) {
-          // Basic semaphore to prevent race conditions, this is needed because
-          // Brightcove may call this callback again before the previous one
-          // would finish.
-          // @TODO: Is there a better way to do this?
-          while (TRUE) {
-            // Try to acquire semaphore.
-            while ($this->state()->get('brightcove_video_semaphore', FALSE) == TRUE) {
-              // Wait random time between 100 and 500 milliseconds on each try.
-              usleep(mt_rand(100000, 500000));
-            }
-
-            // Make sure that other processes have not acquired the semaphore
-            // while we waited.
-            if ($this->state()->get('brightcove_video_semaphore', FALSE) == FALSE) {
-              // Acquire semaphore as soon as we can.
-              $this->state()->set('brightcove_video_semaphore', TRUE);
-              break;
-            }
-          }
-
-          $cms = BrightcoveUtil::getCMSAPI($video_entity->getAPIClient());
-
-          switch ($content['entityType']) {
-            // Video.
-            case 'TITLE':
-              // Delete video file from the entity.
-              $video_entity->setVideoFile(NULL);
-              $video_entity->save();
-              break;
-
-            // Assets.
-            case 'ASSET':
-              // Check for Text Track ID format. There is no other way to
-              // determine whether the asset is a text track or something
-              // else...
-              if (preg_match('/^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/i', $content['entity'])) {
-                $text_tracks = $video_entity->getTextTracks();
-                foreach ($text_tracks as $key => $text_track) {
-                  if (!empty($text_track['target_id'])) {
-                    /** @var \Drupal\brightcove\Entity\BrightcoveTextTrack $text_track_entity */
-                    $text_track_entity = BrightcoveTextTrack::load($text_track['target_id']);
-
-                    if (!is_null($text_track_entity) && empty($text_track_entity->getTextTrackId())) {
-                      // Remove text track without Brightcove ID.
-                      $text_track_entity->delete();
-
-                      // Try to find the ingested text track on the video
-                      // object and recreate it.
-                      $cms = BrightcoveUtil::getCMSAPI($video_entity->getAPIClient());;
-                      $video = $cms->getVideo($video_entity->getVideoId());
-                      $api_text_tracks = $video->getTextTracks();
-                      $found_api_text_track = NULL;
-                      foreach ($api_text_tracks as $api_text_track) {
-                        if ($api_text_track->getId() == $content['entity']) {
-                          $found_api_text_track = $api_text_track;
-                          break;
-                        }
-                      }
-
-                      // Create new text track.
-                      if (!is_null($found_api_text_track)) {
-                        BrightcoveTextTrack::createOrUpdate($found_api_text_track,  $this->text_track_storage, $video_entity->id());
-                      }
-
-                      // We need to process only one per request.
-                      break;
-                    }
-                  }
-                }
-              }
-              // Try to figure out other assets.
-              else {
-                $client = BrightcoveUtil::getClient($video_entity->getAPIClient());
-                $api_client = BrightcoveUtil::getAPIClient($video_entity->getAPIClient());
-
-                // Check for each asset type by try-and-error, currently there is
-                // no other way to determine which asset is what...
-                $asset_types = [
-                  BrightcoveVideo::IMAGE_TYPE_THUMBNAIL,
-                  BrightcoveVideo::IMAGE_TYPE_POSTER,
-                ];
-                foreach ($asset_types as $type) {
-                  try {
-                    $client->request('GET', 'cms', $api_client->getAccountID(), '/videos/' . $video_entity->getVideoId() . '/assets/' . $type . '/' . $content['entity'], NULL);
-
-                    switch ($type) {
-                      case BrightcoveVideo::IMAGE_TYPE_THUMBNAIL:
-                      case BrightcoveVideo::IMAGE_TYPE_POSTER:
-                        $images = $cms->getVideoImages($video_entity->getVideoId());
-                        $function = ucfirst($type);
-
-                        // @TODO: Download the image only if truly different.
-                        // But this may not be possible without downloading the
-                        // image.
-                        $video_entity->saveImage($type, $images->{"get{$function}"}());
-                        break 2;
-                    }
-                  }
-                  catch (APIException $e) {
-                    // Do nothing here, just catch the exception to not generate
-                    // an error.
-                  }
-                }
+          try {
+            // Basic semaphore to prevent race conditions, this is needed because
+            // Brightcove may call this callback again before the previous one
+            // would finish.
+            //
+            // To make sure that the waiting doesn't run indefinitely limit the
+            // maximum iterations to 600 cycles, which in worst case scenario
+            // it means 5 minutes maximum wait time.
+            $limit = 600;
+            for ($i = 0; $i < $limit; $i++) {
+              // Try to acquire semaphore.
+              for (; $i < $limit && $this->state()->get('brightcove_video_semaphore', FALSE) == TRUE; $i++) {
+                // Wait random time between 100 and 500 milliseconds on each try.
+                usleep(mt_rand(100000, 500000));
               }
 
-              // @TODO: Do we have to do anything with the rest of the assets?
-              break;
+              // Make sure that other processes have not acquired the semaphore
+              // while we waited.
+              if ($this->state()->get('brightcove_video_semaphore', FALSE) == FALSE) {
+                // Acquire semaphore as soon as we can.
+                $this->state()->set('brightcove_video_semaphore', TRUE);
+                break;
+              }
+            }
 
-            // Don't do anything if we got something else.
-            default:
+            // If we couldn't acquire the semaphore in the given time, release
+            // the semaphore (finally block will do this), and return with an
+            // empty response.
+            if (600 <= $i) {
               return new Response();
+            }
+
+            $cms = BrightcoveUtil::getCMSAPI($video_entity->getAPIClient());
+
+            switch ($content['entityType']) {
+              // Video.
+              case 'TITLE':
+                // Delete video file from the entity.
+                $video_entity->setVideoFile(NULL);
+                $video_entity->save();
+                break;
+
+              // Assets.
+              case 'ASSET':
+                // Check for Text Track ID format. There is no other way to
+                // determine whether the asset is a text track or something
+                // else...
+                if (preg_match('/^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/i', $content['entity'])) {
+                  $text_tracks = $video_entity->getTextTracks();
+                  foreach ($text_tracks as $key => $text_track) {
+                    if (!empty($text_track['target_id'])) {
+                      /** @var \Drupal\brightcove\Entity\BrightcoveTextTrack $text_track_entity */
+                      $text_track_entity = BrightcoveTextTrack::load($text_track['target_id']);
+
+                      if (!is_null($text_track_entity) && empty($text_track_entity->getTextTrackId())) {
+                        // Remove text track without Brightcove ID.
+                        $text_track_entity->delete();
+
+                        // Try to find the ingested text track on the video
+                        // object and recreate it.
+                        $cms = BrightcoveUtil::getCMSAPI($video_entity->getAPIClient());;
+                        $video = $cms->getVideo($video_entity->getVideoId());
+                        $api_text_tracks = $video->getTextTracks();
+                        $found_api_text_track = NULL;
+                        foreach ($api_text_tracks as $api_text_track) {
+                          if ($api_text_track->getId() == $content['entity']) {
+                            $found_api_text_track = $api_text_track;
+                            break;
+                          }
+                        }
+
+                        // Create new text track.
+                        if (!is_null($found_api_text_track)) {
+                          BrightcoveTextTrack::createOrUpdate($found_api_text_track,  $this->text_track_storage, $video_entity->id());
+                        }
+
+                        // We need to process only one per request.
+                        break;
+                      }
+                    }
+                  }
+                }
+                // Try to figure out other assets.
+                else {
+                  $client = BrightcoveUtil::getClient($video_entity->getAPIClient());
+                  $api_client = BrightcoveUtil::getAPIClient($video_entity->getAPIClient());
+
+                  // Check for each asset type by try-and-error, currently there is
+                  // no other way to determine which asset is what...
+                  $asset_types = [
+                    BrightcoveVideo::IMAGE_TYPE_THUMBNAIL,
+                    BrightcoveVideo::IMAGE_TYPE_POSTER,
+                  ];
+                  foreach ($asset_types as $type) {
+                    try {
+                      $client->request('GET', 'cms', $api_client->getAccountID(), '/videos/' . $video_entity->getVideoId() . '/assets/' . $type . '/' . $content['entity'], NULL);
+
+                      switch ($type) {
+                        case BrightcoveVideo::IMAGE_TYPE_THUMBNAIL:
+                        case BrightcoveVideo::IMAGE_TYPE_POSTER:
+                          $images = $cms->getVideoImages($video_entity->getVideoId());
+                          $function = ucfirst($type);
+
+                          // @TODO: Download the image only if truly different.
+                          // But this may not be possible without downloading the
+                          // image.
+                          $video_entity->saveImage($type, $images->{"get{$function}"}());
+                          break 2;
+                      }
+                    }
+                    catch (APIException $e) {
+                      // Do nothing here, just catch the exception to not generate
+                      // an error.
+                    }
+                  }
+                }
+
+                // @TODO: Do we have to do anything with the rest of the assets?
+                break;
+
+              // Don't do anything if we got something else.
+              default:
+                return new Response();
+            }
+
+            // Update video entity with the latest update date.
+            $video = $cms->getVideo($video_entity->getVideoId());
+            $video_entity->setChangedTime(strtotime($video->getUpdatedAt()));
+            $video_entity->save();
           }
-
-          // Update video entity with the latest update date.
-          $video = $cms->getVideo($video_entity->getVideoId());
-          $video_entity->setChangedTime(strtotime($video->getUpdatedAt()));
-          $video_entity->save();
-
-          // Release semaphore.
-          $this->state()->set('brightcove_video_semaphore', FALSE);
+          catch (\Exception $e) {
+            watchdog_exception('brightcove', $e, 'An error happened while processing the ingestion callback.');
+          }
+          finally {
+            // Release semaphore.
+            $this->state()->set('brightcove_video_semaphore', FALSE);
+          }
         }
       }
     }
