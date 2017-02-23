@@ -4,7 +4,6 @@ namespace Drupal\brightcove_proxy\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 
 class BrightcoveProxyForm extends ConfigFormBase {
   /**
@@ -15,11 +14,7 @@ class BrightcoveProxyForm extends ConfigFormBase {
   }
 
   /**
-   * Gets the configuration names that will be editable.
-   *
-   * @return array
-   *   An array of configuration object names that are editable if called in
-   *   conjunction with the trait's config() method.
+   * {@inheritdoc}
    */
   protected function getEditableConfigNames() {
     return [
