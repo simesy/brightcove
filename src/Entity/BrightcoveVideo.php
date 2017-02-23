@@ -1650,22 +1650,28 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $api_client_entity */
         $api_client_entity = BrightcoveAPIClient::load($api_client);
 
-        if (!is_null($api_client_entity)) {
-          $client = $api_client_entity->getClient();
-          $json = $client->request('GET', 'ingestion', $api_client_entity->getAccountID(), '/profiles', NULL);
+        try {
+          if (!is_null($api_client_entity)) {
+            $client = $api_client_entity->getClient();
+            $json = $client->request('GET', 'ingestion', $api_client_entity->getAccountID(), '/profiles', NULL);
 
-          foreach ($json as $profile) {
-            $profiles[$profile['id']] = $profile['name'];
+            foreach ($json as $profile) {
+              $profiles[$profile['id']] = $profile['name'];
+            }
+
+            // Order profiles by value.
+            asort($profiles);
+
+            // Save the results to cache.
+            \Drupal::cache()->set($cid, $profiles);
           }
-
-          // Order profiles by value.
-          asort($profiles);
-
-          // Save the results to cache.
-          \Drupal::cache()->set($cid, $profiles);
+          else {
+            $profiles[] = t('Error: unable to fetch the list');
+          }
         }
-        else {
+        catch (APIException $exception) {
           $profiles[] = t('Error: unable to fetch the list');
+          watchdog_exception('brightcove', $exception);
         }
       }
     }
