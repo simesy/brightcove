@@ -103,6 +103,8 @@ function _brightcove_configure_client() {
       \Brightcove\API\Client::$$property = $val;
     }
   }
+
+  \Brightcove\API\Client::$consumer = 'Drupal/' . VERSION . ' Brightcove/' . (system_get_info('module', 'brightcove')['version'] ?: 'dev');
 }
 
 /**
