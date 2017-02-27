@@ -76,10 +76,10 @@ function brightcove_init() {
     brightcove_load_lib();
   }
 
-  _brightcove_configure_proxy();
+  _brightcove_configure_client();
 }
 
-function _brightcove_configure_proxy() {
+function _brightcove_configure_client() {
   static $confmap = [
     'http_proxy_tunnel' => 'httpProxyTunnel',
     'proxy_auth' => 'proxyAuth',
@@ -87,18 +87,19 @@ function _brightcove_configure_proxy() {
     'proxy_type' => 'proxyType',
     'proxy' => 'proxy',
     'proxy_user_password' => 'proxyUserPassword',
+    'retry_ratelimited' => 'retry',
   ];
 
-  $loaded = FALSE;
+  brightcove_load_lib();
+
+  if (!class_exists('\Brightcove\API\Client')) {
+    drupal_set_message(t('Brightcove client is not found'), 'error');
+    return;
+  }
 
   foreach ($confmap as $name => $property) {
     $val = variable_get("brightcove_{$name}");
     if ($val) {
-      if (!$loaded) {
-        brightcove_load_lib();
-        $loaded = TRUE;
-      }
-
       \Brightcove\API\Client::$$property = $val;
     }
   }
