@@ -573,6 +573,32 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
   }
 
   /**
+   * Loads a Video based on the Brightcove Video ID and Account ID.
+   *
+   * @param $account_id
+   *   The ID of the account.
+   * @param $brightcove_video_id
+   *   The External ID of the Video.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface|static
+   *   The matching Brightcove Video.
+   */
+  public static function loadByBrightcoveVideoId($account_id, $brightcove_video_id) {
+    // Get API Client by Account ID.
+    $api_client_ids = \Drupal::entityQuery('brightcove_api_client')
+      ->condition('account_id', $account_id)
+      ->execute();
+
+    $entity_ids = \Drupal::entityQuery('brightcove_video')
+      ->condition('api_client', reset($api_client_ids))
+      ->condition('video_id', $brightcove_video_id)
+      ->condition('status', 1)
+      ->execute();
+
+    return self::load(reset($entity_ids));
+  }
+
+  /**
    * {@inheritdoc}
    *
    * @param bool $upload
