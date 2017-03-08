@@ -67,7 +67,7 @@ class BrightcoveUtil {
   /**
    * Gets BrightcoveAPIClient entity.
    *
-   * @param $entity_id
+   * @param string $entity_id
    *   The entity ID of the BrightcoveAPIClient.
    *
    * @return \Drupal\brightcove\Entity\BrightcoveAPIClient
@@ -85,7 +85,7 @@ class BrightcoveUtil {
   /**
    * Gets Brightcove client.
    *
-   * @param int $entity_id
+   * @param string $entity_id
    *   BrightcoveAPIClient entity ID.
    *
    * @return \Brightcove\API\Client
@@ -99,7 +99,7 @@ class BrightcoveUtil {
   /**
    * Gets Brightcove CMS API.
    *
-   * @param int $entity_id
+   * @param string $entity_id
    *   BrightcoveAPIClient entity ID.
    *
    * @return \Brightcove\API\CMS
@@ -118,7 +118,7 @@ class BrightcoveUtil {
   /**
    * Gets Brightcove DI API.
    *
-   * @param int $entity_id
+   * @param string $entity_id
    *   BrightcoveAPIClient entity ID.
    *
    * @return \Brightcove\API\DI
@@ -137,7 +137,7 @@ class BrightcoveUtil {
   /**
    * Gets Brightcove PM API.
    *
-   * @param int $entity_id
+   * @param string $entity_id
    *   BrightcoveAPIClient entity ID.
    *
    * @return \Brightcove\API\PM
