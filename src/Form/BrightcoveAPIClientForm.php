@@ -6,6 +6,7 @@ use Brightcove\API\Exception\APIException;
 use Brightcove\API\PM;
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\brightcove\Entity\BrightcovePlayer;
+use Drupal\brightcove\Entity\BrightcoveSubscription;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Entity\EntityForm;
@@ -13,6 +14,7 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface;
 use Drupal\Core\Queue\QueueInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\brightcove\Entity\BrightcoveAPIClient;
 use Brightcove\API\Exception\AuthenticationException;
@@ -54,6 +56,13 @@ class BrightcoveAPIClientForm extends EntityForm {
   protected $custom_field_queue;
 
   /**
+   * The subscriptions queue object.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $subscriptions_queue;
+
+  /**
    * Query factory.
    *
    * @var \Drupal\Core\Entity\Query\QueryFactory
@@ -78,17 +87,20 @@ class BrightcoveAPIClientForm extends EntityForm {
    *   Player queue.
    * @param \Drupal\Core\Queue\QueueInterface $custom_field_queue
    *   Custom field queue.
+   * @param \Drupal\Core\Queue\QueueInterface $subscriptions_queue
+   *   Custom field queue.
    * @param \Drupal\Core\Entity\Query\QueryFactory $query_factory
    *   Query factory.
    * @param \Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface $key_value_expirable_store
    *   Key/Value expirable store for "brightcove_access_token".
    */
-  public function __construct(Config $config, EntityStorageInterface $player_storage, QueueInterface $player_queue, QueueInterface $custom_field_queue, QueryFactory $query_factory, KeyValueStoreExpirableInterface $key_value_expirable_store) {
+  public function __construct(Config $config, EntityStorageInterface $player_storage, QueueInterface $player_queue, QueueInterface $custom_field_queue, QueueInterface $subscriptions_queue, QueryFactory $query_factory, KeyValueStoreExpirableInterface $key_value_expirable_store) {
     $this->config = $config;
     $this->player_storage = $player_storage;
     $this->player_queue = $player_queue;
-    $this->query_factory = $query_factory;
     $this->custom_field_queue = $custom_field_queue;
+    $this->subscriptions_queue = $subscriptions_queue;
+    $this->query_factory = $query_factory;
     $this->key_value_expirable_store = $key_value_expirable_store;
   }
 
@@ -101,6 +113,7 @@ class BrightcoveAPIClientForm extends EntityForm {
       $container->get('entity_type.manager')->getStorage('brightcove_player'),
       $container->get('queue')->get('brightcove_player_queue_worker'),
       $container->get('queue')->get('brightcove_custom_field_queue_worker'),
+      $container->get('queue')->get('brightcove_subscriptions_queue_worker'),
       $container->get('entity.query'),
       $container->get('keyvalue.expirable')->get('brightcove_access_token')
     );
@@ -284,6 +297,19 @@ class BrightcoveAPIClientForm extends EntityForm {
           'custom_field' => $custom_field,
         ]);
       }
+
+      // Create new default subscription.
+      BrightcoveSubscription::create([
+        'id' => "default_{$this->entity->id()}",
+        'status' => FALSE,
+        'default' => TRUE,
+        'api_client_id' => $this->entity->id(),
+        'endpoint' => Url::fromRoute('brightcove_notification_callback', [], ['absolute' => TRUE])->toString(),
+        'events' => ['video-change'],
+      ])->save(FALSE);
+
+      // Get Subscriptions the first time when the API client is being saved.
+      $this->subscriptions_queue->createItem($this->entity->id());
     }
   }
 
