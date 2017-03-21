@@ -78,9 +78,12 @@ class StatusOverviewForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $video_num = $this->entityTypeManager->getStorage('brightcove_video')->getQuery()->count()->execute();
     $playlist_num = $this->entityTypeManager->getStorage('brightcove_playlist')->getQuery()->count()->execute();
+    $subscription_num = $this->entityTypeManager->getStorage('brightcove_subscription')->getQuery()->count()->execute();
 
     $counts = [
       'client' => $this->entityTypeManager->getStorage('brightcove_api_client')->getQuery()->count()->execute(),
+      'subscription' => $subscription_num,
+      'subscription_delete' => $subscription_num,
       'video' => $video_num,
       'video_delete' => $video_num,
       'text_track' => $this->entityTypeManager->getStorage('brightcove_text_track')->getQuery()->count()->execute(),
@@ -89,8 +92,10 @@ class StatusOverviewForm extends FormBase {
       'player' => $this->entityTypeManager->getStorage('brightcove_player')->getQuery()->count()->execute(),
       'custom_field' => $this->entityTypeManager->getStorage('brightcove_custom_field')->getQuery()->count()->execute(),
     ];
+
     $queues = [
       'client' => $this->t('Client'),
+      'subscription' => $this->t('Subscription'),
       'player' => $this->t('Player'),
       'custom_field' => $this->t('Custom field'),
       'video' => $this->t('Video'),
@@ -98,6 +103,7 @@ class StatusOverviewForm extends FormBase {
       'playlist' => $this->t('Playlist'),
       'video_delete' => $this->t('Check deleted videos *'),
       'playlist_delete' => $this->t('Check deleted playlists *'),
+      'subscription_delete' => $this->t('Check deleted subscriptions'),
     ];
 
     // There is no form element (ie. widget) in the table, so it's safe to
@@ -182,6 +188,9 @@ class StatusOverviewForm extends FormBase {
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_playlist_queue_worker']];
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_video_delete_queue_worker']];
           $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_playlist_delete_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_subscriptions_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_subscription_queue_worker']];
+          $batch_operations[] = [[$util_class, 'runQueue'], ['brightcove_subscription_delete_queue_worker']];
           break;
 
         case 'clear':
@@ -200,8 +209,12 @@ class StatusOverviewForm extends FormBase {
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_playlist_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_video_delete_queue_worker']];
           $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_playlist_delete_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_subscriptions_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_subscription_queue_worker']];
+          $batch_operations[] = [[self::class, 'clearQueue'], ['brightcove_subscription_delete_queue_worker']];
           break;
       }
+
       if ($batch_operations) {
         // Reset expired items in the default queue implementation table. If
         // that's not used, this will simply be a no-op.
