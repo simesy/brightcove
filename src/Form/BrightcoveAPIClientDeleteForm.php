@@ -3,6 +3,7 @@
 namespace Drupal\brightcove\Form;
 
 use Drupal\brightcove\BrightcoveUtil;
+use Drupal\brightcove\Entity\BrightcoveSubscription;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityConfirmFormBase;
 use Drupal\Core\Entity\Query\QueryFactory;
@@ -65,6 +66,13 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
   protected $text_track_delete_queue;
 
   /**
+   * The subscription delete queue object.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $subscription_delete_queue;
+
+  /**
    * Constructs a new BrightcoveAPIClientDeleteForm.
    *
    * @param \Drupal\Core\Entity\Query\QueryFactory $query_factory
@@ -81,8 +89,10 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
    *   Custom field local delete queue worker.
    * @param \Drupal\Core\Queue\QueueInterface $text_track_delete_queue
    *   Text track delete queue object.
+   * @param \Drupal\Core\Queue\QueueInterface $subscription_delete_queue
+   *   Subscription delete queue object.
    */
-  public function __construct(QueryFactory $query_factory, Connection $connection, QueueInterface $playlist_local_delete_queue, QueueInterface $video_local_delete_queue, QueueInterface $player_delete_queue, QueueInterface $custom_field_delete_queue, QueueInterface $text_track_delete_queue) {
+  public function __construct(QueryFactory $query_factory, Connection $connection, QueueInterface $playlist_local_delete_queue, QueueInterface $video_local_delete_queue, QueueInterface $player_delete_queue, QueueInterface $custom_field_delete_queue, QueueInterface $text_track_delete_queue, QueueInterface $subscription_delete_queue) {
     $this->query_factory = $query_factory;
     $this->connection = $connection;
     $this->playlist_local_delete_queue = $playlist_local_delete_queue;
@@ -90,6 +100,7 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
     $this->player_delete_queue = $player_delete_queue;
     $this->custom_field_delete_queue = $custom_field_delete_queue;
     $this->text_track_delete_queue = $text_track_delete_queue;
+    $this->subscription_delete_queue = $subscription_delete_queue;
   }
 
   /**
@@ -103,7 +114,8 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
       $container->get('queue')->get('brightcove_video_local_delete_queue_worker'),
       $container->get('queue')->get('brightcove_player_delete_queue_worker'),
       $container->get('queue')->get('brightcove_custom_field_delete_queue_worker'),
-      $container->get('queue')->get('brightcove_text_track_delete_queue_worker')
+      $container->get('queue')->get('brightcove_text_track_delete_queue_worker'),
+      $container->get('queue')->get('brightcove_subscription_delete_queue_worker')
     );
   }
 
@@ -114,8 +126,11 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
     return $this->t('Are you sure you want to delete %name?', array('%name' => $this->entity->label()));
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getDescription() {
-    return parent::getDescription() . '<br>' . $this->t('Warning: By deleting API Client all of its local contents will be deleted too, including videos, playlists, players and custom fields.');
+    return parent::getDescription() . '<br>' . $this->t('Warning: By deleting API Client all of its local contents will be deleted too, including videos, playlists, players, custom fields and subscriptions.');
   }
 
   /**
@@ -182,6 +197,26 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
       $this->custom_field_delete_queue->createItem($custom_field);
     }
 
+    // Delete the default subscription first from Brightcove if active.
+    $default_subscription = BrightcoveSubscription::loadDefault($entity->id());
+    if ($default_subscription->isActive()) {
+      $default_subscription->delete();
+    }
+    else {
+      $default_subscription->delete(TRUE);
+    }
+
+    // Collect all subscriptions belonging for the api client.
+    $subscriptions = $this->query_factory->get('brightcove_subscription')
+      ->condition('api_client_id', $entity->id())
+      ->execute();
+    foreach ($subscriptions as $subscription) {
+      $this->subscription_delete_queue->createItem([
+        'subscription_id' => $subscription,
+        'local_only' => TRUE,
+      ]);
+    }
+
     // Initialize batch.
     batch_set([
       'operations' => [
@@ -190,6 +225,7 @@ class BrightcoveAPIClientDeleteForm extends EntityConfirmFormBase {
         [[BrightcoveUtil::class, 'runQueue'], ['brightcove_player_delete_queue_worker']],
         [[BrightcoveUtil::class, 'runQueue'], ['brightcove_custom_field_delete_queue_worker']],
         [[BrightcoveUtil::class, 'runQueue'], ['brightcove_text_track_delete_queue_worker']],
+        [[BrightcoveUtil::class, 'runQueue'], ['brightcove_subscription_delete_queue_worker']],
       ],
     ]);
 
