@@ -40,7 +40,7 @@ class BrightcoveCustomFieldDeleteQueueWorker extends QueueWorkerBase implements 
       /** @var \Drupal\brightcove\Entity\BrightcoveCustomField $custom_field_entity */
       $custom_field_entity = BrightcoveCustomField::load($data);
 
-      if (!is_null($data)) {
+      if (!is_null($custom_field_entity)) {
         $custom_field_entity->delete();
       }
     }
