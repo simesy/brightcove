@@ -4,10 +4,10 @@ namespace Drupal\brightcove\Entity;
 
 use Brightcove\API\CMS;
 use Brightcove\API\Exception\APIException;
+use Brightcove\API\Exception\AuthenticationException;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\brightcove\BrightcoveAPIClientInterface;
 use Brightcove\API\Client;
-use Brightcove\API\Exception\AuthenticationException;
 
 /**
  * Defines the Brightcove API Client entity.
@@ -279,7 +279,9 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
    * Authorize client with Brightcove API and store client on the entity.
    *
    * @return $this
-   * @throws \Brightcove\API\Exception\AuthenticationException
+   *
+   * @throws AuthenticationException|\Exception
+   *   Re-throw any exception to be able to handle them nicely.
    */
   public function authorizeClient() {
     try {
@@ -329,6 +331,14 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
       // error.
       $this->client_status = self::CLIENT_ERROR;
       $this->client_status_message = $e->getMessage();
+
+      // If we have already tried to re-authorize the client, throw the
+      // exception outside of this scope, to be able to catch this Exception
+      // for better error handling.
+      if (($e->getCode() != 401 && !$this->re_authorization_tried) || ($e->getCode() == 401 && $this->re_authorization_tried)) {
+        watchdog_exception('brightcove', $e, $e->getMessage());
+        throw $e;
+      }
     }
 
     return $this;
