@@ -249,9 +249,20 @@ class BrightcoveUtil {
         $handled_all = FALSE;
         break;
       }
+      catch(APIException $e) {
+        if ($e->getCode() == 401) {
+          $queue->deleteItem($item);
+          $handled_all = TRUE;
+        }
+        else {
+          watchdog_exception('brightcove', $e);
+          \Drupal::logger('brightcove')->error($e->getMessage());
+          $handled_all = FALSE;
+        }
+      }
       catch (\Exception $e) {
-        watchdog_exception(self::class, $e);
-        \Drupal::logger('brightcove')->notice($e->getMessage());
+        watchdog_exception('brightcove', $e);
+        \Drupal::logger('brightcove')->error($e->getMessage());
         $handled_all = FALSE;
       }
       $limit--;
