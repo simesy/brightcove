@@ -7,6 +7,7 @@ use Drupal\brightcove\BrightcoveSubscriptionInterface;
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
+use Drupal\Core\Url;
 
 /**
  * Defines the Brightcove Subscription entity.
@@ -243,6 +244,13 @@ class BrightcoveSubscription extends ConfigEntityBase implements BrightcoveSubsc
   public function saveDefaultToBrightcove() {
     if ($this->isDefault()) {
       $this->saveToBrightcove();
+
+      // Make sure that when the default is enabled, always use the correct URL.
+      $default_endpoint = Url::fromRoute('brightcove_notification_callback', [], ['absolute' => TRUE])->toString();
+      if ($this->endpoint != $default_endpoint) {
+        $this->setEndpoint($default_endpoint);
+      }
+
       $this->set('status', 1);
       $this->save(FALSE);
     }
