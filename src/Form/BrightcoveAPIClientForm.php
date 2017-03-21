@@ -331,6 +331,8 @@ class BrightcoveAPIClientForm extends EntityForm {
           'operations' => [
             [[BrightcoveUtil::class, 'runQueue'], ['brightcove_player_queue_worker']],
             [[BrightcoveUtil::class, 'runQueue'], ['brightcove_custom_field_queue_worker']],
+            [[BrightcoveUtil::class, 'runQueue'], ['brightcove_subscriptions_queue_worker']],
+            [[BrightcoveUtil::class, 'runQueue'], ['brightcove_subscription_queue_worker']],
           ],
         ]);
         break;
