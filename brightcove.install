@@ -3,7 +3,10 @@
  * @file
  * Brightcove install file.
  */
+use Drupal\brightcove\Entity\BrightcoveAPIClient;
+use Drupal\brightcove\Entity\BrightcoveSubscription;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Url;
 
 /**
  * Implements hook_requirements().
@@ -129,4 +132,25 @@ function brightcove_update_8104() {
 
   \Drupal::entityDefinitionUpdateManager()
     ->installFieldStorageDefinition('video_url', 'brightcove_video', 'brightcove_video', $storage_definition);
+}
+
+/**
+ * Clear caches and create default subscription for each available client.
+ */
+function brightcove_update_8105() {
+  drupal_flush_all_caches();
+
+  /** @var BrightcoveAPIClient[] $clients */
+  $clients = BrightcoveAPIClient::loadMultiple();
+  foreach ($clients as $client) {
+    // Create new default subscription.
+    BrightcoveSubscription::create([
+      'id' => "default_{$client->id()}",
+      'status' => FALSE,
+      'default' => TRUE,
+      'api_client_id' => $client->id(),
+      'endpoint' => Url::fromRoute('brightcove_notification_callback', [], ['absolute' => TRUE])->toString(),
+      'events' => ['video-change'],
+    ])->save(FALSE);
+  }
 }
