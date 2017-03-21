@@ -4,6 +4,7 @@
  * Brightcove module.
  */
 
+use Drupal\brightcove\Entity\BrightcoveSubscription;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
@@ -61,6 +62,9 @@ function _brightcove_initiate_sync() {
   $playlist_page_queue = \Drupal::queue('brightcove_playlist_page_queue_worker');
   $playlist_queue = \Drupal::queue('brightcove_playlist_queue_worker');
   $playlist_delete_queue = \Drupal::queue('brightcove_playlist_delete_queue_worker');
+  $subscriptions_queue = \Drupal::queue('brightcove_subscriptions_queue_worker');
+  $subscription_delete_queue = \Drupal::queue('brightcove_subscription_delete_queue_worker');
+  $subscription_queue = \Drupal::queue('brightcove_subscription_queue_worker');
 
   // Check whether the update/create queues are empty or not.
   $update_create_queues_empty = $client_queue->numberOfItems() == 0
@@ -111,6 +115,28 @@ function _brightcove_initiate_sync() {
     /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $api_client */
     foreach ($brightcove_api_clients as $api_client) {
       $client_queue->createItem($api_client->id());
+    }
+  }
+
+  // Start Subscription queue workers.
+  if ($update_create_queues_empty && $subscriptions_queue->numberOfItems() == 0 && $subscription_queue->numberOfItems() == 0 && $subscription_delete_queue->numberOfItems() == 0) {
+    // Check for new Subscriptions.
+    /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient[] $brightcove_api_clients */
+    $brightcove_api_clients = BrightcoveAPIClient::loadMultiple();
+    foreach ($brightcove_api_clients as $api_client) {
+      $subscriptions_queue->createItem($api_client->id());
+    }
+
+    // Remove non-existing Subscriptions.
+    /** @var BrightcoveSubscription[] $subscriptions */
+    $subscriptions = BrightcoveSubscription::loadMultiple();
+    foreach ($subscriptions as $subscription) {
+      if (!empty($api_client = $subscription->getAPIClient()) && strpos($subscription->id(), 'default_') === FALSE) {
+        $subscription_delete_queue->createItem([
+          'api_client_id' =>  $api_client->id(),
+          'subscription_id' => $subscription->id(),
+        ]);
+      }
     }
   }
 }
