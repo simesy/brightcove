@@ -114,14 +114,21 @@ class BrightcoveAPIClientForm extends EntityForm {
 
     /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $brightcove_api_client */
     $brightcove_api_client = $this->entity;
-    $brightcove_api_client->authorizeClient();
 
     // Don't even try reporting the status/error message of a new client.
     if (!$brightcove_api_client->isNew()) {
+      try {
+        $brightcove_api_client->authorizeClient();
+        $status = $brightcove_api_client->getClientStatus() ? $this->t('OK') : $this->t('Error');
+      }
+      catch (\Exception $e) {
+        $status = $this->t('Error');
+      }
+
       $form['status'] = array(
         '#type' => 'item',
         '#title' => t('Status'),
-        '#markup' => $brightcove_api_client->getClientStatus() ? $this->t('OK') : $this->t('Error'),
+        '#markup' => $status,
       );
 
       if ($brightcove_api_client->getClientStatus() == 0) {
