@@ -45,8 +45,6 @@ class BrightcoveAPIClientListBuilder extends ConfigEntityListBuilder {
    */
   public function buildRow(EntityInterface $entity) {
     /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $entity */
-    // Authorize client to get client status.
-    $entity->authorizeClient();
 
     $row['label'] = $entity->label();
     $row['id'] = $entity->id();
@@ -55,7 +53,16 @@ class BrightcoveAPIClientListBuilder extends ConfigEntityListBuilder {
     }
     $row['account_id'] = $entity->getAccountID();
     $row['default_player'] = BrightcovePlayer::getList($entity->id())[$entity->getDefaultPlayer()];
-    $row['client_status'] = $entity->getClientStatus() ? $this->t('OK') : $this->t('Error');
+
+    // Try to authorize client to get client status.
+    try {
+      $entity->authorizeClient();
+      $row['client_status'] = $entity->getClientStatus() ? $this->t('OK') : $this->t('Error');
+    }
+    catch (\Exception $e) {
+      $row['client_status'] = $this->t('Error');
+    }
+
     return $row + parent::buildRow($entity);
   }
 
