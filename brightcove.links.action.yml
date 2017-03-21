@@ -15,3 +15,9 @@ entity.brightcove_playlist.add_form:
   title: 'Add Brightcove Playlist'
   appears_on:
     - entity.brightcove_playlist.collection
+
+entity.brightcove_subscription.add_form:
+  route_name: entity.brightcove_subscription.add_form
+  title: 'Add subscription'
+  appears_on:
+    - entity.brightcove_subscription.collection
