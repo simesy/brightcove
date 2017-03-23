@@ -60,7 +60,7 @@ class BrightcoveSubscriptionListBuilder extends ConfigEntityListBuilder {
 
     $api_client = $entity->getAPIClient();
 
-    $row['endpoint'] = $entity->getEndpoint() . ($entity->isDefault() ? " ({$this->t('deafult')})" : '');
+    $row['endpoint'] = $entity->getEndpoint() . ($entity->isDefault() ? " ({$this->t('default')})" : '');
     $row['api_client'] = !empty($api_client) ? $this->linkGenerator->generate($api_client->label(), Url::fromRoute('entity.brightcove_api_client.edit_form', ['brightcove_api_client' => $api_client->id()])) : '';
 
     $row['events'] = implode(', ', array_filter($entity->getEvents(), function($value) {
