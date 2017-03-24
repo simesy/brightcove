@@ -90,7 +90,6 @@ class BrightcoveSubscriptionsQueueWorker extends QueueWorkerBase implements Cont
         watchdog_exception('brightcove', $e, 'Access denied for Notifications.', [], RfcLogLevel::WARNING);
       }
       else {
-        dbg($e);
         throw $e;
       }
     }
