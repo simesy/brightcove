@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\brightcove_proxy\EventSubscriber;
+namespace Drupal\brightcove\EventSubscriber;
 
 use Brightcove\API\Client;
 use Symfony\Component\HttpKernel\KernelEvents;
