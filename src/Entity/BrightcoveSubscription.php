@@ -243,13 +243,13 @@ class BrightcoveSubscription extends ConfigEntityBase implements BrightcoveSubsc
    */
   public function saveDefaultToBrightcove() {
     if ($this->isDefault()) {
-      $this->saveToBrightcove();
-
       // Make sure that when the default is enabled, always use the correct URL.
       $default_endpoint = Url::fromRoute('brightcove_notification_callback', [], ['absolute' => TRUE])->toString();
       if ($this->endpoint != $default_endpoint) {
         $this->setEndpoint($default_endpoint);
       }
+
+      $this->saveToBrightcove();
 
       $this->set('status', 1);
       $this->save(FALSE);
