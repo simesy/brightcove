@@ -134,23 +134,40 @@ function brightcove_update_8104() {
     ->installFieldStorageDefinition('video_url', 'brightcove_video', 'brightcove_video', $storage_definition);
 }
 
+
 /**
- * Clear caches and create default subscription for each available client.
+ * Update entity definitions.
  */
 function brightcove_update_8105() {
-  drupal_flush_all_caches();
+  \Drupal::entityDefinitionUpdateManager()->applyUpdates();
+}
 
+/**
+ * Create default subscription for each available client.
+ */
+function brightcove_update_8106() {
   /** @var BrightcoveAPIClient[] $clients */
   $clients = BrightcoveAPIClient::loadMultiple();
+  $messages = [];
   foreach ($clients as $client) {
-    // Create new default subscription.
-    BrightcoveSubscription::create([
-      'id' => "default_{$client->id()}",
-      'status' => FALSE,
-      'default' => TRUE,
-      'api_client_id' => $client->id(),
-      'endpoint' => Url::fromRoute('brightcove_notification_callback', [], ['absolute' => TRUE])->toString(),
-      'events' => ['video-change'],
-    ])->save(FALSE);
+    // Create new default subscription if not exist yet.
+    $id = "default_{$client->id()}";
+    $subscription = BrightcoveSubscription::load($id);
+
+    if (empty($subscription)) {
+      BrightcoveSubscription::create([
+        'id' => $id,
+        'status' => FALSE,
+        'default' => TRUE,
+        'api_client_id' => $client->id(),
+        'endpoint' => Url::fromRoute('brightcove_notification_callback', [], ['absolute' => TRUE])->toString(),
+        'events' => ['video-change'],
+      ])->save(FALSE);
+    }
+    else {
+      $messages[] = t('Default subscription for "@client" client already exist, skipping...', ['@client' => $client->label()]) . PHP_EOL;
+    }
   }
+
+  return implode(PHP_EOL, $messages);
 }
