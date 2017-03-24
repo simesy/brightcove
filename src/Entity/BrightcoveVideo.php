@@ -997,7 +997,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
 
     // Status field, tied together with the status of the entity.
     $fields['status'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Status'))
+      ->setLabel(t('Enabled'))
       ->setDescription(t('Determines whether the video is playable.'))
       //->setRevisionable(TRUE)
       ->setDefaultValue(TRUE)
