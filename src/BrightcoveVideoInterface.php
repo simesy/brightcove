@@ -49,6 +49,11 @@ interface BrightcoveVideoInterface {
   const STATE_INACTIVE = 'INACTIVE';
 
   /**
+   * Brightcove video tags vocabulary ID.
+   */
+  const TAGS_VID = 'brightcove_video_tags';
+
+  /**
    * Helper function to save the image for the entity.
    *
    * @param string $type

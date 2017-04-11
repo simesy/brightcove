@@ -5,6 +5,7 @@
  */
 
 use Drupal\brightcove\Entity\BrightcoveSubscription;
+use Drupal\brightcove\Entity\BrightcoveVideo;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
@@ -300,7 +301,7 @@ function brightcove_theme($existing, $type, $theme, $path) {
  */
 function brightcove_entity_access(EntityInterface $entity, $operation, AccountInterface $account) {
   // Disable editing/deleting video tags.
-  if (($entity instanceof TermInterface && $entity->getVocabularyId() == 'brightcove_video_tags' || $entity instanceof VocabularyInterface && $entity->id() == 'brightcove_video_tags') && ($operation == 'update' || $operation == 'delete')) {
+  if (($entity instanceof TermInterface && $entity->getVocabularyId() == BrightcoveVideo::TAGS_VID || $entity instanceof VocabularyInterface && $entity->id() == BrightcoveVideo::TAGS_VID) && ($operation == 'update' || $operation == 'delete')) {
     return AccessResult::forbidden();
   }
   return AccessResult::neutral();

@@ -568,7 +568,7 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setSettings([
         'target_type' => 'taxonomy_term',
         'handler_settings' => [
-          'target_bundles' => ['brightcove_video_tags' => 'brightcove_video_tags'],
+          'target_bundles' => [BrightcoveVideo::TAGS_VID => BrightcoveVideo::TAGS_VID],
           'auto_create' => TRUE,
         ],
       ])

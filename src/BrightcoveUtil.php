@@ -336,6 +336,7 @@ class BrightcoveUtil {
       $entity_tags = array_keys($entity_tags);
       foreach ($new_tags as $tag) {
         $existing_tags = \Drupal::entityQuery('taxonomy_term')
+          ->condition('vid', BrightcoveVideo::TAGS_VID)
           ->condition('name', $tag)
           ->execute();
 
@@ -343,7 +344,7 @@ class BrightcoveUtil {
         if (empty($existing_tags)) {
           $values = [
             'name' => $tag,
-            'vid' => 'brightcove_video_tags',
+            'vid' => BrightcoveVideo::TAGS_VID,
             'brightcove_api_client' => [
               'target_id' => $api_client_id,
             ],

@@ -1148,7 +1148,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->setSettings([
         'target_type' => 'taxonomy_term',
         'handler_settings' => [
-          'target_bundles' => ['brightcove_video_tags' => 'brightcove_video_tags'],
+          'target_bundles' => [self::TAGS_VID => self::TAGS_VID],
           'auto_create' => TRUE,
         ],
       ])
