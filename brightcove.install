@@ -5,6 +5,8 @@
  */
 use Drupal\brightcove\Entity\BrightcoveAPIClient;
 use Drupal\brightcove\Entity\BrightcoveSubscription;
+use Drupal\brightcove\Entity\BrightcoveVideo;
+use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Url;
 
@@ -170,4 +172,83 @@ function brightcove_update_8106() {
   }
 
   return implode(PHP_EOL, $messages);
+}
+
+/**
+ * Remove invalid poster, thumbnail image references from the BrightcoveVideo
+ * entity.
+ */
+function brightcove_update_8107(&$sandbox) {
+  // Condition videos which has at least either poster or thumbnail.
+  $condition = new Condition('OR');
+  $condition->condition('video.poster__target_id', NULL, 'IS NOT')
+    ->condition('video.thumbnail__target_id', NULL, 'IS NOT');
+
+  // Condition for managed files which does not exist.
+  $file_condition = new Condition('OR');
+  $file_condition->condition('poster.fid', NULL, 'IS')
+    ->condition('thumbnail.fid', NULL, 'IS');
+
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_bcvid'] = 0;
+
+    $query = \Drupal::database()->select('brightcove_video', 'video')
+      ->fields('video', ['bcvid']);
+    $query->leftJoin('file_managed', 'poster', '%alias.fid = video.poster__target_id');
+    $query->leftJoin('file_managed', 'thumbnail', '%alias.fid = video.thumbnail__target_id');
+    $sandbox['max'] = $query->condition($condition)
+      ->condition($file_condition)
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+  }
+
+  // Get video objects which has invalid poster or thumbnail image reference.
+  $query = \Drupal::database()->select('brightcove_video', 'video')
+    ->fields('video', ['bcvid']);
+  $query->leftJoin('file_managed', 'poster', '%alias.fid = video.poster__target_id');
+  $query->leftJoin('file_managed', 'thumbnail', '%alias.fid = video.thumbnail__target_id');
+  $results = $query->fields('poster', ['fid'])
+    ->fields('thumbnail', ['fid'])
+    ->condition('bcvid', $sandbox['current_bcvid'], '>')
+    ->condition($condition)
+    ->condition($file_condition)
+    ->range(0, 20)
+    ->orderBy('bcvid', 'ASC')
+    ->execute()
+    ->fetchAll();
+
+  foreach ($results as $result) {
+    $video = BrightcoveVideo::load($result->bcvid);
+    if (!empty($video)) {
+      $needs_save = FALSE;
+
+      // Set poster to null if the related file is not exist.
+      if (empty($result->fid)) {
+        $video->setPoster(NULL);
+        $needs_save = TRUE;
+      }
+
+      // Set thumbnail to null if the related file is not exist.
+      if (empty($result->thumbnail_fid)) {
+        $video->setThumbnail(NULL);
+        $needs_save = TRUE;
+      }
+
+      // Save video entity if needed.
+      if ($needs_save) {
+        // Change changed time to re-download the deleted image on the next
+        // sync.
+        $video->setChangedTime($video->getChangedTime() - 1);
+        $video->save();
+      }
+    }
+
+    // Update progress.
+    $sandbox['progress']++;
+    $sandbox['current_bcvid'] = $result->bcvid;
+  }
+
+  $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
 }
