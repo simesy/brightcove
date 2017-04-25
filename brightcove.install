@@ -202,6 +202,12 @@ function brightcove_update_8107(&$sandbox) {
       ->countQuery()
       ->execute()
       ->fetchField();
+
+    // Nothing to do, exit.
+    if ($sandbox['max'] == 0) {
+      $sandbox['#finished'] = 1;
+      return;
+    }
   }
 
   // Get video objects which has invalid poster or thumbnail image reference.
