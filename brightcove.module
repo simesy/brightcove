@@ -7,6 +7,7 @@
 use Drupal\brightcove\Entity\BrightcoveSubscription;
 use Drupal\brightcove\Entity\BrightcoveVideo;
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Database\Database;
@@ -305,4 +306,43 @@ function brightcove_entity_access(EntityInterface $entity, $operation, AccountIn
     return AccessResult::forbidden();
   }
   return AccessResult::neutral();
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete().
+ */
+function brightcove_file_delete(EntityInterface $entity) {
+  /** @var \Drupal\file\FileInterface $entity */
+
+  // Condition to check whether the poster or the thumbnail has reference to
+  // the deleted file.
+  $condition = new Condition('OR');
+  $condition->condition('poster__target_id', $entity->id())
+    ->condition('thumbnail__target_id', $entity->id());
+
+  // Check file usage on BrightcoveVideo entity.
+  $database = \Drupal::database();
+  $results = $database->select('brightcove_video', 'video')
+    ->fields('video', ['bcvid', 'poster__target_id', 'thumbnail__target_id'])
+    ->condition($condition)
+    ->execute()
+    ->fetchAll();
+
+  // If we got used files on the BrightcoveVideo entity that were deleted,
+  // update the entity to remove the reference to the deleted file(s).
+  foreach ($results as $result) {
+    $video = BrightcoveVideo::load($result->bcvid);
+
+    if (!empty($video)) {
+      // Unset poster image reference.
+      if ($result->poster__target_id == $entity->id()) {
+        $video->setPoster(NULL)->save();
+      }
+
+      // Unset thumbnail image reference.
+      if ($result->thumbnail__target_id == $entity->id()) {
+        $video->setThumbnail(NULL)->save();
+      }
+    }
+  }
 }
