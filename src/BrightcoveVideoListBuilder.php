@@ -125,7 +125,7 @@ class BrightcoveVideoListBuilder extends EntityListBuilder {
       $thumbnail_file = File::load($thumbnail['target_id']);
       /** @var \Drupal\image\Entity\ImageStyle $image_style */
       $image_style = ImageStyle::load('brightcove_videos_list_thumbnail');
-      if (!is_null($image_style)) {
+      if (!empty($thumbnail_file) && !is_null($image_style)) {
         $image_uri = $image_style->buildUrl($thumbnail_file->getFileUri());
         $thumbnail_image = "<img src='{$image_uri}' alt='{$entity->getName()}'>";
       }
