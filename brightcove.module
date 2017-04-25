@@ -334,14 +334,23 @@ function brightcove_file_delete(EntityInterface $entity) {
     $video = BrightcoveVideo::load($result->bcvid);
 
     if (!empty($video)) {
+      $needs_save = FALSE;
+
       // Unset poster image reference.
       if ($result->poster__target_id == $entity->id()) {
-        $video->setPoster(NULL)->save();
+        $video->setPoster(NULL);
+        $needs_save = TRUE;
       }
 
       // Unset thumbnail image reference.
       if ($result->thumbnail__target_id == $entity->id()) {
-        $video->setThumbnail(NULL)->save();
+        $video->setThumbnail(NULL);
+        $needs_save = TRUE;
+      }
+
+      // Save BrightcoveVideo if needed.
+      if ($needs_save) {
+        $video->save();
       }
     }
   }
