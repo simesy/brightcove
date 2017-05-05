@@ -102,9 +102,9 @@ class BrightcovePlaylistListBuilder extends EntityListBuilder {
       $name = $this->l(
         $entity->label(),
         new Url(
-          'entity.brightcove_playlist.canonical', array(
+          'entity.brightcove_playlist.canonical', [
             'brightcove_playlist' => $entity->id(),
-          )
+          ]
         )
       );
     }

@@ -15,11 +15,11 @@ class BrightcoveTextTrackViewsData extends EntityViewsData implements EntityView
   public function getViewsData() {
     $data = parent::getViewsData();
 
-    $data['brightcove_text_track']['table']['base'] = array(
+    $data['brightcove_text_track']['table']['base'] = [
       'field' => 'id',
       'title' => $this->t('Brightcove Text Track'),
       'help' => $this->t('The Brightcove Text Track ID.'),
-    );
+    ];
 
     return $data;
   }

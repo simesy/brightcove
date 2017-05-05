@@ -15,11 +15,11 @@ class BrightcoveVideoViewsData extends EntityViewsData implements EntityViewsDat
   public function getViewsData() {
     $data = parent::getViewsData();
 
-    $data['brightcove_video']['table']['base'] = array(
+    $data['brightcove_video']['table']['base'] = [
       'field' => 'bcvid',
       'title' => $this->t('Brightcove Video'),
       'help' => $this->t('The Brightcove Video ID.'),
-    );
+    ];
 
     return $data;
   }

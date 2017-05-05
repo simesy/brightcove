@@ -107,9 +107,9 @@ class BrightcoveVideoListBuilder extends EntityListBuilder {
       $name = $this->l(
         $entity->label(),
         new Url(
-          'entity.brightcove_video.canonical', array(
+          'entity.brightcove_video.canonical', [
             'brightcove_video' => $entity->id(),
-          )
+          ]
         )
       );
     }

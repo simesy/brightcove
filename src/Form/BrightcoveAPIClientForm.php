@@ -138,75 +138,74 @@ class BrightcoveAPIClientForm extends EntityForm {
         $status = $this->t('Error');
       }
 
-      $form['status'] = array(
+      $form['status'] = [
         '#type' => 'item',
         '#title' => t('Status'),
         '#markup' => $status,
-      );
+      ];
 
       if ($brightcove_api_client->getClientStatus() == 0) {
-        $form['status_message'] = array(
+        $form['status_message'] = [
           '#type' => 'item',
           '#title' => t('Error message'),
           '#markup' => $brightcove_api_client->getClientStatusMessage(),
-        );
+        ];
       }
     }
 
-    $form['label'] = array(
+    $form['label'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Label'),
       '#maxlength' => 255,
       '#default_value' => $brightcove_api_client->label(),
       '#description' => $this->t('A label to identify the API Client (authentication credentials).'),
       '#required' => TRUE,
-    );
+    ];
 
-    $form['id'] = array(
+    $form['id'] = [
       '#type' => 'machine_name',
       '#default_value' => $brightcove_api_client->id(),
-      '#machine_name' => array(
+      '#machine_name' => [
         'exists' => '\Drupal\brightcove\Entity\BrightcoveAPIClient::load',
-      ),
+      ],
       '#disabled' => !$brightcove_api_client->isNew(),
-    );
+    ];
 
-    $form['client_id'] = array(
+    $form['client_id'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Brightcove API Client ID'),
       '#description' => $this->t('The Client ID of the Brightcove API Authentication credentials, available <a href=":link" target="_blank">here</a>.', [':link' => 'https://studio.brightcove.com/products/videocloud/admin/oauthsettings']),
       '#maxlength' => 255,
       '#default_value' => $brightcove_api_client->getClientID(),
       '#required' => TRUE,
-    );
+    ];
 
-    $form['secret_key'] = array(
+    $form['secret_key'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Brightcove API Secret Key'),
-      '#description' => $this->t('The Secret Key associated with the Client ID above, only visible once when Registering New Application.
-'),
+      '#description' => $this->t('The Secret Key associated with the Client ID above, only visible once when Registering New Application.'),
       '#maxlength' => 255,
       '#default_value' => $brightcove_api_client->getSecretKey(),
       '#required' => TRUE,
-    );
+    ];
 
-    $form['account_id'] = array(
+    $form['account_id'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Brightcove Account ID'),
       '#description' => $this->t('The number of one of the Brightcove accounts "selected for authorization" with the API Client above.'),
       '#maxlength' => 255,
       '#default_value' => $brightcove_api_client->getAccountID(),
       '#required' => TRUE,
-    );
+    ];
 
 
-    $form['default_player'] = array(
+    $form['default_player'] = [
       '#type' => 'select',
       '#title' => $this->t('Default player'),
       '#options' => BrightcovePlayer::getList($brightcove_api_client->id()),
       '#default_value' => $brightcove_api_client->getDefaultPlayer() ? $brightcove_api_client->getDefaultPlayer() : BrightcoveAPIClient::DEFAULT_PLAYER,
       '#required' => TRUE,
-    );
+    ];
     if ($brightcove_api_client->isNew()) {
       $form['default_player']['#description'] = t('The rest of the players will be available after saving.');
     }

@@ -323,7 +323,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
     $value = $this->get('related_link')->getValue();
 
     if (empty($value[0])) {
-      return array();
+      return [];
     }
 
     // Original entity missing this array value, so to be consistent when
@@ -1152,13 +1152,13 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
           'auto_create' => TRUE,
         ],
       ])
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
         'weight' => ++$weight,
-        'settings' => array(
+        'settings' => [
           'autocomplete_type' => 'tags',
-        ),
-      ))
+        ],
+      ])
       ->setDisplayOptions('view', [
         'type' => 'entity_reference_label',
         'label' => 'above',

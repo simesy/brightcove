@@ -94,10 +94,10 @@ class BrightcoveVideoController extends ControllerBase {
 
     // Update video.
     $video = $cms->getVideo($video_entity->getVideoId());
-    $this->video_queue->createItem(array(
+    $this->video_queue->createItem([
       'api_client_id' => $video_entity->getAPIClient(),
       'video' => $video,
-    ));
+    ]);
 
     // Run batch.
     batch_set([

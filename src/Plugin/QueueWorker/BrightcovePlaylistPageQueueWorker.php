@@ -63,10 +63,10 @@ class BrightcovePlaylistPageQueueWorker extends QueueWorkerBase implements Conta
     // Get playlists.
     $playlists = $cms->listPlaylists(NULL, $data['items_per_page'], $data['page'] * $data['items_per_page']);
     foreach ($playlists as $playlist) {
-      $this->playlist_queue->createItem(array(
+      $this->playlist_queue->createItem([
         'api_client_id' => $data['api_client_id'],
         'playlist' => $playlist,
-      ));
+      ]);
     }
   }
 }

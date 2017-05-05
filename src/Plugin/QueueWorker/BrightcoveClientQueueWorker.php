@@ -166,11 +166,11 @@ class BrightcoveClientQueueWorker extends QueueWorkerBase implements ContainerFa
     $video_count = $cms->countVideos();
     $page = 0;
     while ($page * $items_per_page < $video_count) {
-      $this->video_page_queue->createItem(array(
+      $this->video_page_queue->createItem([
         'api_client_id' => $data,
         'page' => $page,
         'items_per_page' => $items_per_page,
-      ));
+      ]);
       $page++;
     }
 
@@ -178,11 +178,11 @@ class BrightcoveClientQueueWorker extends QueueWorkerBase implements ContainerFa
     $playlist_count = $cms->countPlaylists();
     $page = 0;
     while ($page * $items_per_page < $playlist_count) {
-      $this->playlist_page_queue->createItem(array(
+      $this->playlist_page_queue->createItem([
         'api_client_id' => $data,
         'page' => $page,
         'items_per_page' => $items_per_page,
-      ));
+      ]);
       $page++;
     }
   }

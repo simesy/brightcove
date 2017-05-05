@@ -306,7 +306,7 @@ class BrightcoveUtil {
    * @param array $tags
    *   The list of tags from brightcove.
    */
-  public static function saveOrUpdateTags(BrightcoveVideoPlaylistCMSEntityInterface $entity, $api_client_id, array $tags = array()) {
+  public static function saveOrUpdateTags(BrightcoveVideoPlaylistCMSEntityInterface $entity, $api_client_id, array $tags = []) {
     $entity_tags = [];
     $video_entity_tags = $entity->getTags();
     foreach ($video_entity_tags as $index => $tag) {

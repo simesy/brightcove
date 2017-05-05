@@ -367,39 +367,39 @@ class BrightcoveTextTrack extends ContentEntityBase implements BrightcoveTextTra
       //->setRevisionable(TRUE)
       ->setDescription(t('ISO-639-1 language code with optional ISO-3166 country name (en, en-US, de, de-DE).'))
       ->setRequired(TRUE)
-      ->setSettings(array(
+      ->setSettings([
         'max_length' => 10,
         'text_processing' => 0,
-      ))
-      ->setDisplayOptions('view', array(
+      ])
+      ->setDisplayOptions('view', [
         'label' => 'inline',
         'type' => 'string',
         'weight' => ++$weight,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => $weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Label'))
       ->setDescription(t('Title to be displayed in the player menu.'))
-      ->setSettings(array(
+      ->setSettings([
         'max_length' => 255,
         'text_processing' => 0,
-      ))
+      ])
       ->setDefaultValue('')
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
         'weight' => ++$weight,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => $weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -528,10 +528,10 @@ class BrightcoveTextTrack extends ContentEntityBase implements BrightcoveTextTra
     $fields['langcode'] = BaseFieldDefinition::create('language')
       ->setLabel(t('Language code'))
       ->setDescription(t('The language code for the Brightcove Text Track entity.'))
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'language_select',
         'weight' => ++$weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['created'] = BaseFieldDefinition::create('created')
@@ -681,10 +681,10 @@ class BrightcoveTextTrack extends ContentEntityBase implements BrightcoveTextTra
    */
   public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
     parent::preCreate($storage_controller, $values);
-    $values += array(
+    $values += [
       'uid' => \Drupal::currentUser()->id(),
       'name' => t('New text track'),
-    );
+    ];
   }
 
   /**

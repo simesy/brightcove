@@ -20,10 +20,10 @@ class BrightcoveEntityDeleteForm extends ContentEntityDeleteForm {
       ]);
     }
 
-    return $this->t('The @entity-type %label has been deleted.', array(
+    return $this->t('The @entity-type %label has been deleted.', [
       '@entity-type' => $entity->getEntityType()->getLabel(),
       '%label' => $entity->label(),
-    ));
+    ]);
   }
 
   /**
@@ -34,16 +34,16 @@ class BrightcoveEntityDeleteForm extends ContentEntityDeleteForm {
     $entity = $this->getEntity();
 
     if (!$entity->isDefaultTranslation()) {
-      return $this->t('Are you sure you want to delete the @language translation of the @entity-type %label?', array(
+      return $this->t('Are you sure you want to delete the @language translation of the @entity-type %label?', [
         '@language' => $entity->language()->getName(),
         '@entity-type' => $this->getEntity()->getEntityType()->getLabel(),
         '%label' => $this->getEntity()->label(),
-      ));
+      ]);
     }
 
-    return $this->t('Are you sure you want to delete the @entity-type %label?', array(
+    return $this->t('Are you sure you want to delete the @entity-type %label?', [
       '@entity-type' => $this->getEntity()->getEntityType()->getLabel(),
       '%label' => $this->getEntity()->label(),
-    ));
+    ]);
   }
 }

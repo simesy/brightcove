@@ -391,15 +391,15 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setDescription(t('Brightcove API credentials (account) to use.'))
       ->setRequired(TRUE)
       ->setSetting('target_type', 'brightcove_api_client')
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'options_select',
         'weight' => ++$weight,
-      ))
-      ->setDisplayOptions('view', array(
+      ])
+      ->setDisplayOptions('view', [
         'type' => 'hidden',
         'label' => 'inline',
         'weight' => $weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -425,15 +425,15 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setRequired(TRUE)
       ->setDefaultValue('EXPLICIT')
       ->setSetting('allowed_values_function', [self::class, 'typeAllowedValues'])
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'options_select',
         'weight' => ++$weight,
-      ))
-      ->setDisplayOptions('view', array(
+      ])
+      ->setDisplayOptions('view', [
         'type' => 'list_default',
         'label' => 'inline',
         'weight' => $weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -442,29 +442,29 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setDescription(t('Title of the playlist.'))
 //      ->setRevisionable(TRUE)
       ->setRequired(TRUE)
-      ->setSettings(array(
+      ->setSettings([
         'max_length' => 250,
         'text_processing' => 0,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => ++$weight,
-      ))
-      ->setDisplayOptions('view', array(
+      ])
+      ->setDisplayOptions('view', [
         'type' => 'string',
         'label' => 'hidden',
         'weight' => $weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['langcode'] = BaseFieldDefinition::create('language')
       ->setLabel(t('Language code'))
       ->setDescription(t('The language code for the Brightcove Video.'))
 //      ->setRevisionable(TRUE)
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'language_select',
         'weight' => ++$weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     /**
@@ -486,22 +486,22 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setDescription(t('Whether playlist is in favorites list'))
 //      ->setRevisionable(TRUE)
       ->setDefaultValue(FALSE)
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'type' => 'string',
         'label' => 'inline',
         'weight' => ++$weight,
-      ))
+      ])
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['playlist_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Playlist ID'))
       ->setDescription(t('Unique Playlist ID assigned by Brightcove.'))
       ->setReadOnly(TRUE)
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'type' => 'string',
         'label' => 'inline',
         'weight' => ++$weight,
-      ))
+      ])
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['reference_id'] = BaseFieldDefinition::create('string')
@@ -509,19 +509,19 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->addConstraint('UniqueField')
       ->setDescription(t('Value specified must be unique'))
 //      ->setRevisionable(TRUE)
-      ->setSettings(array(
+      ->setSettings([
         'max_length' => 150,
         'text_processing' => 0,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => ++$weight,
-      ))
-      ->setDisplayOptions('view', array(
+      ])
+      ->setDisplayOptions('view', [
         'type' => 'string',
         'label' => 'inline',
         'weight' => $weight,
-      ))
+      ])
       ->setDefaultValueCallback(static::class . '::getDefaultReferenceId')
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -529,15 +529,15 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
     $fields['description'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Short description'))
 //      ->setRevisionable(TRUE)
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'string_textarea',
         'weight' => ++$weight,
-      ))
-      ->setDisplayOptions('view', array(
+      ])
+      ->setDisplayOptions('view', [
         'type' => 'basic_string',
         'label' => 'above',
         'weight' => $weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE)
       ->addPropertyConstraints('value', [
@@ -555,10 +555,10 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
         self::TAG_SEARCH_CONTAINS_ONE_OR_MORE => t('contains one or more'),
         self::TAG_SEARCH_CONTAINS_ALL => t('contains all'),
       ])
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'options_select',
         'weight' => ++$weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['tags'] = BaseFieldDefinition::create('entity_reference')
@@ -572,18 +572,18 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
           'auto_create' => TRUE,
         ],
       ])
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
         'weight' => ++$weight,
-        'settings' => array(
+        'settings' => [
           'autocomplete_type' => 'tags',
-        ),
-      ))
-      ->setDisplayOptions('view', array(
+        ],
+      ])
+      ->setDisplayOptions('view', [
         'type' => 'entity_reference_label',
         'label' => 'above',
         'weight' => $weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -604,15 +604,15 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
           ],
         ],
       ])
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
         'weight' => ++$weight,
-      ))
-      ->setDisplayOptions('view', array(
+      ])
+      ->setDisplayOptions('view', [
         'type' => 'string',
         'label' => 'above',
         'weight' => $weight,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -623,21 +623,21 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setSetting('target_type', 'user')
       ->setDefaultValueCallback('Drupal\brightcove\Entity\BrightcovePlaylist::getCurrentUserId')
       ->setTranslatable(TRUE)
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'hidden',
         'type' => 'author',
         'weight' => ++$weight,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
         'weight' => $weight,
-        'settings' => array(
+        'settings' => [
           'match_operator' => 'CONTAINS',
           'size' => '60',
           'autocomplete_type' => 'tags',
           'placeholder' => '',
-        ),
-      ))
+        ],
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -652,11 +652,11 @@ class BrightcovePlaylist extends BrightcoveVideoPlaylistCMSEntity implements Bri
       ->setDescription(t('The time that the Brightcove Playlist was created.'))
 //      ->setRevisionable(TRUE)
       ->setTranslatable(TRUE)
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'inline',
         'type' => 'timestamp',
         'weight' => ++$weight,
-      ))
+      ])
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['changed'] = BaseFieldDefinition::create('changed')

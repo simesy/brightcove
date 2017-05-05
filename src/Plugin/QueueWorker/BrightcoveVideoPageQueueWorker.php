@@ -64,10 +64,10 @@ class BrightcoveVideoPageQueueWorker extends QueueWorkerBase implements Containe
     // Get videos.
     $videos = $cms->listVideos(NULL, 'created_at', $data['items_per_page'], $data['page'] * $data['items_per_page']);
     foreach ($videos as $video) {
-      $this->video_queue->createItem(array(
+      $this->video_queue->createItem([
         'api_client_id' => $data['api_client_id'],
         'video' => $video,
-      ));
+      ]);
     }
   }
 }

@@ -154,7 +154,7 @@ function brightcove_cron() {
  * Implements hook_entity_extra_field_info().
  */
 function brightcove_entity_extra_field_info() {
-  $extra = array();
+  $extra = [];
 
   $extra['brightcove_video']['brightcove_video']['display']['brightcove_video_player'] = [
     'label' => t('Video'),

@@ -130,22 +130,22 @@ class StatusOverviewForm extends FormBase {
       '#markup' => '<em>* ' . $this->t('May run slowly with lots of items.') . '</em>',
     ];
 
-    $form['sync'] = array(
+    $form['sync'] = [
       '#name' => 'sync',
       '#type' => 'submit',
       '#value' => $this->t('Sync all'),
-    );
-    $form['run'] = array(
+    ];
+    $form['run'] = [
       '#name' => 'run',
       '#type' => 'submit',
       '#value' => $this->t('Run all queues'),
-    );
-    $form['clear'] = array(
+    ];
+    $form['clear'] = [
       '#name' => 'clear',
       '#type' => 'submit',
       '#value' => $this->t('Clear all queues'),
       '#description' => $this->t('Remove all items from all queues'),
-    );
+    ];
 
     return $form;
   }
@@ -220,9 +220,9 @@ class StatusOverviewForm extends FormBase {
         // that's not used, this will simply be a no-op.
         // @see system_cron()
         $this->connection->update('queue')
-          ->fields(array(
+          ->fields([
             'expire' => 0,
-          ))
+          ])
           ->condition('expire', 0, '<>')
           ->condition('expire', REQUEST_TIME, '<')
           ->condition('name', 'brightcove_%', 'LIKE')
