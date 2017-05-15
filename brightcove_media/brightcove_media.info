@@ -1,0 +1,17 @@
+name = Brightcove media integration
+description = Integrates brightcove videos with the media module
+core = 7.x
+package = Brightcove
+php = 5.6
+
+dependencies[] = brightcove (>=7.x-6.x)
+dependencies[] = media (>=7.x-2.x, <7.x-3.x)
+dependencies[] = brightcove
+dependencies[] = media_internet
+dependencies[] = file_entity
+
+files[] = includes/MediaBrightcoveVideoStreamWrapper.inc
+files[] = includes/MediaInternetBrightcoveHandler.inc
+files[] = includes/MediaBrowserBrightcoveVideo.inc
+files[] = includes/MediaBrightcovePlaylistStreamWrapper.inc
+files[] = includes/MediaBrowserBrightcovePlaylist.inc

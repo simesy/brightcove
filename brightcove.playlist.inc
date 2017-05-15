@@ -37,7 +37,8 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
     }
     $bcid = $playlist_entity->client->bcid;
     brightcove_try(function() use($playlist_entity, $bcid) {
-      list($cms,) = _brightcove_create_classes($playlist_entity->client);
+      /** @var \Brightcove\API\CMS $cms */
+      list($cms,) = brightcove_create_classes($playlist_entity->client);
       if (!empty($playlist_entity->bpid)) {
         field_attach_update('brightcove_playlist', $playlist_entity);
         $cms->updatePlaylist($playlist_entity->playlist);
@@ -105,9 +106,11 @@ class BrightcovePlaylistEntityController extends EntityAPIController {
       return;
     }
     foreach ($entities as $playlist_entity) {
+      /** @var \Brightcove\Object\Playlist $playlist */
       $playlist = $playlist_entity->playlist;
       brightcove_try(function () use($playlist, $playlist_entity) {
-        list($cms,) = _brightcove_create_classes($playlist_entity->client);
+        /** @var \Brightcove\API\CMS $cms */
+        list($cms,) = brightcove_create_classes($playlist_entity->client);
         $cms->deletePlaylist($playlist->getId());
 
         // deletePlaylist() fails silently in case the client has no permission to
@@ -334,9 +337,11 @@ function brightcove_get_playlists(Entity $client, $sort = NULL, $page = 0, $cach
     return $cache;
   }
 
-  $playlists = FALSE;
+  /** @var \Brightcove\Object\Playlist[] $playlists */
+  $playlists = [];
   brightcove_try(function() use(&$playlists, $client, $sort, $page) {
-    list($cms, ) = _brightcove_create_classes($client);
+    /** @var \Brightcove\API\CMS $cms */
+    list($cms, ) = brightcove_create_classes($client);
     $max_items = variable_get('brightcove_pager_max_items', 20);
     $offset = $max_items * $page;
 
@@ -347,7 +352,7 @@ function brightcove_get_playlists(Entity $client, $sort = NULL, $page = 0, $cach
     brightcove_cache_set($cid, $playlists);
   }
 
-  return $playlists;
+  return $playlists ?: FALSE;
 }
 
 /**
@@ -504,6 +509,7 @@ function brightcove_playlist_form_ajax_callback($form, &$form_state) {
  */
 function brightcove_playlist_form_submit($form, &$form_state) {
   $playlist_entity = $form['#entity'];
+  /** @var \Brightcove\Object\Playlist $playlist */
   $playlist = $playlist_entity->playlist;
   $playlist->setName($form_state['values']['name']);
   $playlist->setDescription($form_state['values']['description']);
@@ -555,7 +561,8 @@ function brightcove_playlist_delete_form($form, &$form_state, $client, $playlist
 
   $playlist = NULL;
   brightcove_try(function () use($client, &$playlist, $playlist_id) {
-    list($cms,) = _brightcove_create_classes($client);
+    /** @var \Brightcove\API\CMS $cms */
+    list($cms,) = brightcove_create_classes($client);
     $playlist = $cms->getPlaylist($playlist_id);
   });
 
@@ -667,7 +674,7 @@ function brightcove_load_playlist($playlist_id, $bcid, $reset = FALSE) {
   $client = brightcove_client_load($bcid);
 
   brightcove_try(function() use($client, &$playlist, $playlist_id) {
-    list($cms, ) = _brightcove_create_classes($client);
+    list($cms, ) = brightcove_create_classes($client);
     $playlist = $cms->getPlaylist($playlist_id);
   });
 

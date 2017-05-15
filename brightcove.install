@@ -508,3 +508,12 @@ function brightcove_update_7601() {
   db_drop_primary_key('brightcove_callback');
   db_add_primary_key('brightcove_callback', ['hash']);
 }
+
+/**
+ * Cleans up possible leftovers from the old brightcove_field module.
+ */
+function brightcove_update_7602() {
+  db_delete('system')
+    ->condition('name', 'brightcove_field')
+    ->execute();
+}

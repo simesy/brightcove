@@ -90,10 +90,16 @@ function _brightcove_configure_client() {
     'retry_ratelimited' => 'retry',
   ];
 
-  brightcove_load_lib();
+  brightcove_load_lib(TRUE);
 
   if (!class_exists('\Brightcove\API\Client')) {
-    drupal_set_message(t('Brightcove client is not found'), 'error');
+    $msg = t('Brightcove client is not found');
+    if (function_exists('drush_log')) {
+      drush_log($msg, 'warning');
+    }
+    else {
+      drupal_set_message($msg, 'error');
+    }
     return;
   }
 
@@ -148,15 +154,6 @@ function brightcove_menu() {
     'access arguments' => ['administer brightcove settings'],
     'weight' => -1,
   ];
-
-  // TODO: Integrations page has been temporarily removed.
-  //$items["{$base}/integrations"] = [
-  //  'title' => 'Integrations',
-  //  'type' => MENU_LOCAL_TASK,
-  //  'page callback' => 'brightcove_integrations_page',
-  //  'access arguments' => ['administer brightcove settings'],
-  //  'file' => 'brightcove.admin.inc',
-  //];
 
   // bc object type, entity type, field name
   $items['brightcove_field/autocomplete/video/%/%/%/%brightcove_client'] = [
@@ -380,6 +377,10 @@ function brightcove_field_formatter_info() {
       'width' => BRIGHTCOVE_DEFAULT_VIDEO_WIDTH,
       'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
     ],
+  ];
+  $formatters['brightcove_iframe'] = [
+    'label' => t('Iframe video player'),
+    'field types' => ['brightcove_field'],
   ];
   $formatters['brightcove_image'] = [
     'label' => t('Brightcove Image'),
@@ -825,7 +826,8 @@ function brightcove_field_browser_video_validate($element, &$form_state) {
       // Didn't match ID, try looking up the video text at BC.
       $result = [];
       brightcove_try(function () use (&$result, $client, $value) {
-        list($cms,) = _brightcove_create_classes($client);
+        /** @var \Brightcove\API\CMS $cms */
+        list($cms,) = brightcove_create_classes($client);
         $result = $cms->listVideos($value, '-created_at');
       }, function () use (&$element) {
         form_error($element, t('There was a problem accessing Brightcove. Please try again'));
@@ -1103,7 +1105,7 @@ function brightcove_field_theme_callback() {
  * @param $delta
  *   Field delta.
  *
- * @return array
+ * @return string
  */
 function brightcove_field_player($type, $entity_type, $entity_id, $field_name, $delta) {
   module_load_include('inc', 'brightcove', 'theme');
@@ -1383,6 +1385,10 @@ function brightcove_field_formatter_view($entity_type, $entity, $field, $instanc
     $theme = 'brightcove_field_formatter_default';
   }
 
+  if ($display['type'] === 'brightcove_iframe') {
+    $theme = 'brightcove_field_formatter_iframe';
+  }
+
   if ($display['type'] === 'brightcove_image') {
     $theme = 'brightcove_field_image';
     $variables['#brightcove_image_style'] = $settings['brightcove_image_style'];
@@ -1619,7 +1625,8 @@ function brightcove_field_refresh_video_entity_link($entity_type, $entity, $item
         foreach ($video_ids as $bcid => $video_id) {
           $client = brightcove_client_load($bcid);
           brightcove_try(function () use (&$videos, $client, $video_id) {
-            list($cms,) = _brightcove_create_classes($client);
+            /** @var \Brightcove\API\CMS $cms */
+            list($cms,) = brightcove_create_classes($client);
             $videos = $cms->listVideos('reference_id:' . implode(' ', $video_id));
           });
         }
@@ -2001,12 +2008,19 @@ function brightcove_libraries_info() {
 
 /**
  * Load brightcove php wrapper library.
+ *
+ * @param bool $fail_silently
  */
-function brightcove_load_lib() {
+function brightcove_load_lib($fail_silently = FALSE) {
   $loaded = &drupal_static(__FUNCTION__);
   if ($loaded) {
     return;
   }
+
+  if ($fail_silently === TRUE && !function_exists('libraries_load')) {
+    return;
+  }
+
   libraries_load('PHP-API-Wrapper');
   $loaded = TRUE;
 }
@@ -2080,7 +2094,8 @@ function brightcove_autocomplete_videos($client, $videos_typed) {
   $videos_typed = drupal_explode_tags($videos_typed);
   $video_last = drupal_strtolower(array_pop($videos_typed));
   brightcove_try(function () use (&$result, $client, $video_last) {
-    list($cms,) = _brightcove_create_classes($client);
+    /** @var \Brightcove\API\CMS $cms */
+    list($cms,) = brightcove_create_classes($client);
     $result = $cms->listVideos($video_last);
   });
 
@@ -2144,7 +2159,8 @@ function brightcove_load_video($video_id, Entity $client_entity, $reset = FALSE)
   else {
     $video = NULL;
     brightcove_try(function () use ($client_entity, $video_id, &$video) {
-      list($cms,) = _brightcove_create_classes($client_entity);
+      /** @var \Brightcove\API\CMS $cms */
+      list($cms,) = brightcove_create_classes($client_entity);
       $video = $cms->getVideo($video_id);
     });
     if ($video) {
@@ -2238,6 +2254,16 @@ function brightcove_theme() {
       ],
       'file' => 'brightcove_field.formatters.inc',
     ],
+    'brightcove_field_formatter_iframe' => [
+      'variables' => [
+        'type' => 'brightcove',
+        'element' => NULL,
+        'instance' => [],
+        'width' => BRIGHTCOVE_DEFAULT_VIDEO_WIDTH,
+        'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
+      ],
+      'file' => 'brightcove_field.formatters.inc',
+    ],
     'brightcove_field_dialog' => [
       'variables' => [
         'output' => NULL,
@@ -2292,6 +2318,15 @@ function brightcove_theme() {
         'embed' => 'default',
       ],
       'template' => 'brightcove-field-embed',
+      'file' => 'theme.inc',
+    ],
+    'brightcove_field_embed_iframe' => [
+      'variables' => [
+        'iframe_url' => NULL,
+        'width' => BRIGHTCOVE_DEFAULT_VIDEO_WIDTH,
+        'height' => BRIGHTCOVE_DEFAULT_VIDEO_HEIGHT,
+      ],
+      'template' => 'brightcove-field-embed-iframe',
       'file' => 'theme.inc',
     ],
     'brightcove_integration' => [
@@ -2361,7 +2396,7 @@ function _brightcove_create_client(Entity $client_entity) {
  * @param Entity $client_entity
  * @return array
  */
-function _brightcove_create_classes(Entity $client_entity) {
+function brightcove_create_classes(Entity $client_entity) {
   $client = NULL;
   $retry = 5;
   while ($client === NULL && $retry) {
@@ -2389,12 +2424,19 @@ function _brightcove_create_classes(Entity $client_entity) {
  * @param $url
  * @param $profile
  * @param $hash
+ * @param $parent_entity_type
+ * @param $parent_bundle_name
+ * @param $parent_field_name
  * @param null|callable $metadata_callback
+ * @param null|array $form_state
+ *
  * @return \Brightcove\Object\Video\Video
  */
 function brightcove_upload_and_ingest($client_entity, $url, $profile, $hash, $parent_entity_type, $parent_bundle_name, $parent_field_name, callable $metadata_callback = NULL, $form_state = NULL) {
   brightcove_load_lib();
-  list($cms, $di) = _brightcove_create_classes($client_entity);
+  /** @var \Brightcove\API\CMS $cms */
+  /** @var \Brightcove\API\DI $di */
+  list($cms, $di) = brightcove_create_classes($client_entity);
 
   $video = new \Brightcove\Object\Video\Video();
   $ingest_callback = NULL;
@@ -2602,7 +2644,8 @@ function brightcove_player_load_all($client_id = NULL) {
     $client = brightcove_client_load($client_id);
     $players = [];
     brightcove_try(function() use(&$players, $client) {
-      list(, , $pm) = _brightcove_create_classes($client);
+      /** @var \Brightcove\API\PM $pm */
+      list(, , $pm) = brightcove_create_classes($client);
       $players = $pm->listPlayers()->getItems();
     });
     if ($players) {
@@ -2616,8 +2659,7 @@ function brightcove_player_load_all($client_id = NULL) {
 /**
  * Get players list.
  *
- * @param array $instance
- *   Entity specific instance.
+ * @param null|string $client_id
  *
  * @return array
  */
@@ -2682,7 +2724,8 @@ function _brightcove_schedule_start_end_date_pre_render($elements) {
  *
  * @param $form
  * @param $form_state
- * @return bool|StdClass
+ *
+ * @return bool|stdClass
  */
 function _brightcove_upload_form_callback(&$form, $form_state) {
   $validators = [
@@ -2736,10 +2779,12 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
   brightcove_try(function () use (&$video_id, $file, $form, &$form_state, $video_entity, $poster, $thumbnail, $captions) {
     $client = $video_entity->client;
     $hash = hash('sha512', mt_rand());
-    $parent_entity_type = $form['#parent_entity_type'];
-    $parent_bundle_name = $form['#parent_bundle_name'];
-    $parent_field_name = $form['#parent_field_name'];
+    $parent_entity_type = isset($form['#parent_entity_type']) ? $form['#parent_entity_type'] : '';
+    $parent_bundle_name = isset($form['#parent_bundle_name']) ? $form['#parent_bundle_name'] : '';
+    $parent_field_name = isset($form['#parent_field_name']) ? $form['#parent_field_name'] : '';
     $video = brightcove_upload_and_ingest($client, file_create_url($file->uri), $form_state['values']['profile'], $hash, $parent_entity_type, $parent_bundle_name, $parent_field_name, function ($video, $cms) use ($form_state, $poster, $thumbnail, $captions) {
+      /** @var \Brightcove\Object\Video\Video $video */
+      /** @var \Brightcove\API\CMS $cms */
       // Generate a reference id if the user left it empty.
       $reference_id = (!empty($form_state['values']['reference_id']) ? $form_state['values']['reference_id'] : brightcove_generate_reference());
 
@@ -2771,8 +2816,10 @@ function _brightcove_upload_form_callback(&$form, $form_state) {
         $video->setSchedule($video_schedule);
       }
 
+      /** @var \Brightcove\Object\CustomFields $fields */
       $fields = $cms->getVideoFields();
       $ids = array_map(function ($field) {
+        /** @var \Brightcove\Object\CustomField $field */
         return $field->getId();
       }, $fields->getCustomFields());
       $custom_fields = [];
@@ -2854,7 +2901,8 @@ function _brightcove_edit_form_callback($form, $form_state) {
 
   $custom_field_definitions = [];
   brightcove_try(function() use(&$custom_field_definitions, $client) {
-    list($cms,) = _brightcove_create_classes($client);
+    /** @var \Brightcove\API\CMS $cms */
+    list($cms,) = brightcove_create_classes($client);
     $custom_field_definitions = $cms->getVideoFields()->getCustomFields();
   });
 
@@ -3062,28 +3110,6 @@ function brightcove_get_experiences_js_url() {
 }
 
 /**
- * Returns the appropriate URL to the Brightcove viewer.
- *
- * The calling function should append appropriate query strings to this URL to
- * control the video and player.
- *
- * @return string
- *  Brightcove viewer path.
- *
- * @todo Find out how to detect this URL in a nice way;
- */
-function brightcove_get_viewer_url() {
-  global $is_https;
-
-  $path = 'http://c.brightcove.com/services/viewer/federated_f9';
-  if ($is_https) {
-    $path = 'https://secure.brightcove.com/services/viewer/federated_f9';
-  }
-
-  return $path;
-}
-
-/**
  * Helper function to be able to add the closing "/" character, if it doesn't exist.
  *
  * @param $location
@@ -3128,7 +3154,8 @@ function brightcove_exit($destination = NULL) {
 function brightcove_try(callable $try, callable $catch = NULL, $logtype = NULL) {
   brightcove_load_lib();
   try {
-    $try();
+    $result = $try();
+    return $result;
   } catch (\Brightcove\API\Exception\APIException $ex) {
     drupal_set_message(t('Brightcove API call failed: %message', [
       '%message' => _brightcove_try_json_message($ex->getResponseBody()),
@@ -3144,6 +3171,43 @@ function brightcove_try(callable $try, callable $catch = NULL, $logtype = NULL) 
       $catch($ex);
     }
   }
+}
+
+function brightcove_try_client($account_id, callable $try, callable $catch = NULL, $logtype = NULL) {
+  brightcove_load_lib();
+  $account_candidates = entity_load('brightcove_client', FALSE, [
+    'account_id' => $account_id,
+  ]);
+
+  if (!$account_candidates) {
+    return FALSE;
+  }
+
+  foreach ($account_candidates as $client) {
+    try {
+      $result = $try($client);
+      return $result;
+    } catch (\Brightcove\API\Exception\APIException $ex) {
+      if ($ex->getCode() === 401) {
+        continue;
+      }
+      drupal_set_message(t('Brightcove API call failed: %message', [
+        '%message' => _brightcove_try_json_message($ex->getResponseBody()),
+      ]), 'error');
+      watchdog_exception($logtype ?: 'brightcove_api', $ex);
+      if ($catch) {
+        $catch($ex);
+      }
+    } catch (\Brightcove\API\Exception\AuthenticationException $ex) {
+      drupal_set_message(t('Failed to authorize with Brightcove'), 'error');
+      watchdog_exception($logtype ?: 'brightcove_auth', $ex);
+      if ($catch) {
+        $catch($ex);
+      }
+    }
+  }
+
+  return NULL;
 }
 
 function _brightcove_try_json_message($post) {
@@ -3179,7 +3243,8 @@ function _brightcove_playlist_items_total(Entity $client, $cache_reset = FALSE) 
   }
 
   $playlist_count = 0;
-  list($cms, ) = _brightcove_create_classes($client);
+  /** @var \Brightcove\API\CMS $cms */
+  list($cms, ) = brightcove_create_classes($client);
   brightcove_try(function() use(&$playlist_count, $cms) {
     $playlist_count = $cms->countPlaylists();
   });
@@ -3198,4 +3263,22 @@ function _brightcove_video_form_add_caption($form, $form_state) {
 function _brightcove_video_form_add_caption_submit($form, &$form_state) {
   $form_state['caption_num']++;
   $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * Constructs an embed url for the iframe.
+ *
+ * @param string $account_id
+ * @param string $player_id
+ * @param string $embed
+ * @param string $brightcove_id
+ * @param string $type
+ *
+ * @return string
+ */
+function brightcove_embed_iframe_url($account_id, $player_id, $embed, $brightcove_id, $type = BRIGHTCOVE_EMBED_TYPE_VIDEO) {
+  $target = $type === BRIGHTCOVE_EMBED_TYPE_PLAYLIST ?
+    'playlistId' : 'videoId';
+
+  return "//players.brightcove.net/{$account_id}/{$player_id}_{$embed}/index.html?{$target}={$brightcove_id}";
 }

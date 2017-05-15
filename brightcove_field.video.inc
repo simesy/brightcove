@@ -274,7 +274,8 @@ function _brightcove_field_video_browse($client) {
   $params['page_size'] = $items_per_page;
   $params['page_number'] = $page;
 
-  $result = NULL;
+  /** @var \Brightcove\Object\Video\Video[] $result */
+  $result = [];
 
   // Try to load the data from cache.
   $cid = "brightcove:video:list:search:$search";
@@ -287,7 +288,8 @@ function _brightcove_field_video_browse($client) {
   // If no cached data is available.
   if (!$content) {
     brightcove_try(function() use(&$result, $client, $search, $items_per_page, $page, &$pager_total) {
-      list($cms,) = _brightcove_create_classes($client);
+      /** @var \Brightcove\API\CMS $cms */
+      list($cms,) = brightcove_create_classes($client);
       $result = $cms->listVideos($search, NULL, $items_per_page, $items_per_page * $page);
       $pager_total[0] = ceil($cms->countVideos($search) / $items_per_page);
     });
@@ -305,11 +307,11 @@ function _brightcove_field_video_browse($client) {
         $item['brightcove_id'] = $video->getId();
         $video_images = $video->getImages();
         if (!empty($video_images) && !empty($video_images['thumbnail'])) {
-          $image_vars = ['path' => $video_images['thumbnail']->getSrc(), 'alt' => '', 'title' => '', 'attributes' => ''];
+          $image_vars = ['path' => $video_images['thumbnail']->getSrc(), 'alt' => '', 'title' => '', 'attributes' => []];
           $item['thumbnail'] = theme('image', $image_vars);
         }
         else {
-          $image_vars = ['path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attributes' => '','width' => '120', 'height' => '90'];
+          $image_vars = ['path' => brightcove_get_default_image(), 'alt' => '', 'title' => '', 'attributes' => [], 'width' => '120', 'height' => '90'];
           $item['thumbnail'] = theme('image', $image_vars);
         }
         $items[] = $item;

@@ -10,9 +10,10 @@
  *
  * @see brightcove_field_menu()
  *
- * @param $type
- * $param Entity $client
- *   The brightcove client entity to display the videos for.
+ * @param string $entity_type
+ * @param string $field_name
+ * @param string $entity_id_or_bundle
+ * @param Entity $client
  *
  * @return string A list of available videos that can be attached to a field.
  */
@@ -64,7 +65,8 @@ function brightcove_field_autocomplete($type, $field_name, $client, $string = ''
   switch ($type) {
     case 'video':
       brightcove_try(function() use(&$result, $client, $string) {
-        list($cms,) = _brightcove_create_classes($client);
+        /** @var \Brightcove\API\CMS $cms */
+        list($cms,) = brightcove_create_classes($client);
         $result = $cms->listVideos($string);
       });
       break;

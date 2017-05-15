@@ -9,10 +9,9 @@
  * Theme callback for Brightcove field formatter.
  * Returns an embedded player with default site player.
  *
- * @param $element
- *   Element with the Video ID.
- * @return
- *   Player HTML code.
+ * @param $variables
+ *
+ * @return null|string Player HTML code.
  */
 function theme_brightcove_field_formatter_default($variables) {
   $output = NULL;
@@ -31,6 +30,32 @@ function theme_brightcove_field_formatter_default($variables) {
       'account_id' => $client->account_id,
       'width' => $variables['width'],
       'height' => $variables['height'],
+    ]);
+
+    $vidcount++;
+  }
+
+  return $output;
+}
+
+function theme_brightcove_field_formatter_iframe($variables) {
+  $output = NULL;
+
+  if (isset($variables['element']['brightcove_id'])) {
+    $vidcount = &drupal_static(__FUNCTION__, 1);
+    if ($vidcount == 1) {
+      $path = brightcove_get_experiences_js_url();
+      drupal_add_js($path, ['type' => 'external', 'defer' => FALSE, 'async' => TRUE]);
+    }
+    $client = brightcove_client_load_or_default($variables['element']['bcid']);
+    $output = theme('brightcove_field_embed_iframe', [
+      'iframe_url' => brightcove_embed_iframe_url(
+        $client->account_id,
+        $variables['element']['player'] ?: brightcove_get_default_player($client->bcid),
+        'default',
+        $variables['element']['brightcove_id'],
+        $variables['type']
+      ),
     ]);
 
     $vidcount++;

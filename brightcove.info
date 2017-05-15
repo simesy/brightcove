@@ -1,8 +1,9 @@
 name = Brightcove Video Connect
 description = Integration module for Brightcove Video Cloud
 core = 7.x
-
+package = Brightcove
 configure = admin/config/media/brightcove
+php = 5.6
 
 dependencies[] = ctools
 dependencies[] = entity

@@ -1,0 +1,843 @@
+<?php
+
+/**
+ * @file
+ * This module provide the hook implementations for the integration with
+ * Media module.
+ */
+
+define('BRIGHTCOVE_MEDIA_SESSION_VALUE_NAME_UPLOADED', 'video_just_uploaded');
+define('BRIGHTCOVE_MEDIA_SESSION_VALUE_NAME_SELECTED', 'selected_video');
+
+/**
+ * Implements hook_menu().
+ */
+function brightcove_media_menu() {
+  $items = [];
+
+  $items['brightcove/media/list'] = [
+    'title' => '',
+    'page callback' => 'brightcove_media_list',
+    'access arguments' => ['browse videos'],
+    'type' => MENU_CALLBACK,
+  ];
+
+  $items['brightcove/media/playlist/list'] = [
+    'title' => 'Available playlist',
+    'description' => 'This menu return the available playlist in JSON.',
+    'type' => MENU_CALLBACK,
+    'access arguments' => ['browse playlists'],
+    'page callback' => 'brightcove_media_playlist_list',
+  ];
+
+  return $items;
+}
+
+/**
+ * Implements hook_stream_wrappers().
+ */
+function brightcove_media_stream_wrappers() {
+  return [
+    'brightcove' => [
+      'name' => t('Brightcove videos'),
+      'class' => 'MediaBrightcoveVideoStreamWrapper',
+      'description' => t('Videos provided by Brightcove.'),
+      'type' => STREAM_WRAPPERS_READ_VISIBLE,
+    ],
+    'brightcove-playlist' => [
+      'name' => t('Brightcove playlist'),
+      'class' => 'MediaBrightcovePlaylistStreamWrapper',
+      'description' => t('Playlists provided by Brightcove'),
+      'type' => STREAM_WRAPPERS_READ_VISIBLE,
+    ],
+  ];
+}
+
+/**
+ * Implements hook_media_internet_providers().
+ */
+function brightcove_media_internet_providers() {
+  return [
+    'MediaInternetBrightcoveHandler' => [
+      'title' => 'brightcove',
+      'image' => 'http://img.brightcove.com/logo-corporate-new.png',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_media_parse().
+ */
+function brightcove_media_media_parse($embed_code) {
+  $handler = new MediaInternetBrightcoveHandler($embed_code);
+  return $handler->parse($embed_code);
+}
+
+/**
+ * Implements hook_file_mimetype_mapping_alter().
+ */
+function brightcove_media_file_mimetype_mapping_alter(&$mapping) {
+  $mapping['mimetypes'][] = 'video/brightcove';
+}
+
+/**
+ * Implements hook_file_formatter_info().
+ */
+function brightcove_media_file_formatter_info() {
+  $formatters = [];
+
+  $formatters['brightcove_media_video'] = [
+    'label' => t('Brightcove Video'),
+    'file types' => ['video'],
+    'default settings' => [],
+    'view callback' => 'brightcove_media_file_formatter_video_view',
+    'settings callback' => 'brightcove_media_file_formatter_video_settings',
+    'mime types' => ['video/brightcove'],
+  ];
+
+  $formatters['brightcove_media_playlist'] = [
+    'label' => t('Brightcove Playlist'),
+    'file types' => ['video'],
+    'default settings' => [],
+    'view callback' => 'brightcove_media_file_formatter_playlist_view',
+    'settings callback' => 'brightcove_media_file_formatter_video_settings',
+    'mime types' => ['video/brightcove'],
+  ];
+
+  $formatters['brightcove_media_image'] = [
+    'label' => t('Brightcove Preview Image'),
+    'file types' => ['video'],
+    'default settings' => [
+      'image_style' => '',
+    ],
+    'view callback' => 'brightcove_media_file_formatter_image_view',
+    'settings callback' => 'brightcove_media_file_formatter_image_settings',
+    'mime types' => ['video/brightcove'],
+  ];
+
+  return $formatters;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function brightcove_media_theme($existing, $type, $theme, $path) {
+  return [
+    'brightcove_media_browser_filter_form' => [
+      'render element' => 'form',
+    ],
+    'brightcove_media_playlist_browser_form' => [
+      'render element' => 'form',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_media_browser_plugin_info().
+ */
+function brightcove_media_media_browser_plugin_info() {
+  $info = [];
+
+  $info['brightcove'] = [
+    'title' => t('Brightcove'),
+    'weight' => 0,
+    'class' => 'MediaBrowserBrightcoveVideo',
+  ];
+
+  $info['brightcove_playlist'] = [
+    'title' => t('Brightcove Playlist'),
+    'weight' => 2,
+    'class' => 'MediaBrowserBrightcovePlaylist',
+  ];
+
+  return $info;
+}
+
+/**
+ * Implements hook_ctools_plugin_api().
+ */
+function brightcove_media_ctools_plugin_api($owner, $api) {
+  static $api_versions = [
+    'file_entity' => [
+      'file_default_displays' => 1,
+    ],
+  ];
+
+  return isset($api_versions[$owner][$api]) ? [
+    'version' => $api_versions[$owner][$api]
+  ] : NULL;
+}
+
+/**
+ * Implements hook_file_type_alter().
+ */
+function brightcove_media_file_type_alter(&$types, $file) {
+  if (strpos($file->filemime, 'brightcove')) {
+    $types = ['video'];
+  }
+}
+
+/**
+ * The brightcove_media_video_file_formatter view callback.
+ */
+function brightcove_media_file_formatter_video_view($file, $display, $langcode) {
+  $scheme = file_uri_scheme($file->uri);
+  // WYSIWYG does not yet support video inside a running editor instance.
+  if ($scheme === BRIGHTCOVE_EMBED_TYPE_VIDEO) {
+    $wrapper = _brightcove_media_get_wrapper($file->uri);
+
+    $element = [
+      '#theme' => 'brightcove_field_embed_iframe',
+      '#iframe_url' => $wrapper ? $wrapper->interpolateUrl() : 'about:blank',
+      '#attached' => [
+        'js' => [
+          brightcove_get_experiences_js_url() => [
+            'type' => 'external',
+          ],
+        ],
+      ],
+    ];
+
+    // add player override
+    if (isset($display['settings']['player']) && $display['settings']['player']) {
+      $element['#player'] = $display['settings']['player'];
+    }
+    foreach (['width', 'height'] as $setting) {
+      if (isset($display['settings'][$setting]) && $display['settings'][$setting]) {
+        $element['#' . $setting] = $display['settings'][$setting];
+      }
+    }
+
+    return $element;
+  }
+
+  return NULL;
+}
+
+/**
+ * The brightcove_media_playlist_file_formatter view callback.
+ */
+function brightcove_media_file_formatter_playlist_view($file, $display, $langcode) {
+  $scheme = file_uri_scheme($file->uri);
+  // WYSIWYG does not yet support video inside a running editor instance.
+  if ($scheme === BRIGHTCOVE_EMBED_TYPE_PLAYLIST && empty($file->override['wysiwyg'])) {
+    $wrapper = _brightcove_media_get_wrapper($file->uri);
+
+    $element = [
+      '#theme' => 'brightcove_field_embed_iframe',
+      '#iframe_url' => $wrapper ? $wrapper->interpolateUrl() : 'about:blank',
+      '#attached' => [
+        'js' => [
+          brightcove_get_experiences_js_url() => [
+            'type' => 'external',
+          ],
+        ],
+      ],
+    ];
+    // add player override
+    if (isset($display['settings']['player']) && $display['settings']['player']) {
+      $element['#player'] = $display['settings']['player'];
+    }
+    foreach (['width', 'height'] as $setting) {
+      if (isset($display['settings'][$setting]) && $display['settings'][$setting]) {
+        $element['#' . $setting] = $display['settings'][$setting];
+      }
+    }
+
+    return $element;
+  }
+
+  return NULL;
+}
+
+/**
+ * The brightcove_media_image file formatter view callback.
+ */
+function brightcove_media_file_formatter_image_view($file, $display, $langcode) {
+  $scheme = file_uri_scheme($file->uri);
+  if ($scheme === BRIGHTCOVE_EMBED_TYPE_VIDEO || $scheme === BRIGHTCOVE_EMBED_TYPE_PLAYLIST) {
+    $video = NULL;
+    $items = brightcove_media_parse_uri($file->uri, TRUE);
+    $account = $items['account'];
+    $id = $items['id'];
+
+    $path = brightcove_try_client($account, function ($client) use($id, $scheme) {
+      /** @var $cms \Brightcove\API\CMS */
+      list($cms) = brightcove_create_classes($client);
+
+      switch ($scheme) {
+        case BRIGHTCOVE_EMBED_TYPE_VIDEO:
+          $video = $cms->getVideo($id);
+          $images = $video->getImages();
+          if (isset($images['thumbnail'])) {
+            return $images['thumbnail']->getSrc();
+          }
+          break;
+        case BRIGHTCOVE_EMBED_TYPE_PLAYLIST:
+          $videos = $cms->getVideosInPlaylist($id);
+          foreach ($videos as $video_id) {
+            $video = $cms->getVideo($video_id);
+            $images = $video->getImages();
+            if (isset($images['thumbnail'])) {
+              return $images['thumbnail']->getSrc();
+            }
+          }
+          break;
+      }
+
+      return NULL;
+    }) ?: brightcove_get_default_image();
+
+    if (empty($display['settings']['image_style'])) {
+      $element = [
+        '#theme' => 'image',
+        '#path' => $path,
+      ];
+    }
+    else {
+      $styled_path = image_style_path($display['settings']['image_style'], $path);
+      $style = image_style_load($display['settings']['image_style']);
+      image_style_create_derivative($style, $path, $styled_path);
+
+      $element = [
+        '#theme' => 'image_style',
+        '#path' => $path,
+        '#style_name' => $display['settings']['image_style'],
+      ];
+    }
+
+    return $element;
+  }
+
+  return NULL;
+}
+
+/**
+ * The brightcove_media_video file formatter settings callback.
+ */
+function brightcove_media_file_formatter_video_settings($form, $form_state, $settings) {
+  $element = [];
+  $element['player'] = [
+    '#title' => t('Player'),
+    '#type' => 'radios',
+    '#options' => brightcove_player_list(),
+    '#default_value' => isset($settings['player']) ? $settings['player'] : '',
+  ];
+  $element['width'] = [
+    '#title' => t('Player Width'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['width']) ? $settings['width'] : '',
+  ];
+  $element['height'] = [
+    '#title' => t('Player Height'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['height']) ? $settings['height'] : '',
+  ];
+  return $element;
+}
+
+/**
+ * The brightcove_media_image file formatter settings callback.
+ */
+function brightcove_media_file_formatter_image_settings($form, $form_state, $settings) {
+  $element = [];
+  $element['image_style'] = [
+    '#title' => t('Image style'),
+    '#type' => 'select',
+    '#options' => image_style_options(FALSE),
+    '#default_value' => isset($settings['image_style']) ? $settings['image_style'] : '',
+    '#empty_option' => t('None (original image)'),
+  ];
+  return $element;
+}
+
+/**
+ * Upload form for brightcove media.
+ */
+function brightcove_media_upload_form($form, &$form_state) {
+  module_load_include('video.inc', 'brightcove');
+
+  $form['uploadform'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Upload video'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('It takes several minutes (depending on processing time in Brightcove cloud), until video is available after upload. Clicking \'Upload and attach\' uploads video to Brightcove then closes the dialog and attaches the video.'),
+  ];
+
+  $client = brightcove_client_load_or_default();
+
+  $form['uploadform'] += _brightcove_upload_form($form_state, entity_create('brightcove_video', [
+    'type' => 'brightcove_video',
+    'account_id' => $client->account_id,
+    'client' => $client,
+  ]));
+
+  $form['uploadform']['submit'] = [
+    '#type' => 'button',
+    '#name' => 'upload',
+    '#value' => t('Upload and attach'),
+    '#ajax' => [
+      'callback' => 'ajax_brightcove_media_upload_callback',
+      'wrapper' => 'bc-upload-form',
+    ],
+  ];
+
+  $form['#prefix'] = '<div id="bc-upload-form">';
+  $form['#suffix'] = '</div>';
+
+  return $form;
+}
+
+/**
+ * Filter form for brightcove media video browser.
+ */
+function brightcove_media_browser_filter_form($form, &$form_state) {
+  $form['searchform'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Filter videos'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  ];
+  $form['searchform']['keywords'] = [
+    '#type' => 'textfield',
+    '#title' => t('Keywords'),
+    '#size' => 25,
+    '#default_value' => '',
+    '#description' => t('Keyword search in Brightcove. See the <a href="http://docs.brightcove.com/en/video-cloud/cms-api/guides/search-videos.html#combinesearchcriteria" target="_blank">documentation</a> for more information.'),
+  ];
+  $form['searchform']['filter'] = [
+    '#type' => 'button',
+    '#name' => 'filter',
+    '#value' => t('Filter'),
+  ];
+  $form['searchform']['reset'] = [
+    '#type' => 'button',
+    '#name' => 'reset',
+    '#value' => t('Reset'),
+  ];
+  $form['#prefix'] = '<div id="bc-filter-form">';
+  $form['#suffix'] = '</div>';
+
+  $form['submitted-video'] = [
+    '#type' => 'hidden',
+    '#default_value' => FALSE,
+  ];
+  $form['actions'] = ['#type' => 'actions'];
+  $form['actions']['submit'] = [
+    '#type' => 'submit',
+    '#submit' => ['brightcove_media_browser_form_submit'],
+    '#value' => t('Submit'),
+  ];
+
+  return $form;
+}
+
+/**
+ * The brightcove_media_browser_filter_form form theme function.
+ *
+ * @param $variables
+ * @return string
+ */
+function theme_brightcove_media_browser_filter_form(&$variables) {
+  $form = $variables['form'];
+
+  $searchform = drupal_render($form['searchform']);
+  $actions = drupal_render($form['actions']);
+  $children = drupal_render_children($form);
+
+  return "
+    {$searchform}
+    {$actions}
+    <ul id=\"media-browser-library-list\" class=\"media-list-thumbnails\"></ul>
+    <div id=\"status\"></div>
+    {$children}
+  ";
+}
+
+/**
+ * The media browser playlist tab theme function.
+ *
+ * @param $variables
+ * @return string
+ */
+function theme_brightcove_media_playlist_browser_form(&$variables) {
+  $form = $variables['form'];
+
+  $actions = drupal_render($form['actions']);
+  $children = drupal_render_children($form);
+
+  return "
+    <div id=\"container\">
+      {$actions}
+      <div id=\"scrollbox\">
+         <ul id=\"media-browser-library-list\" class=\"media-list-thumbnails\"></ul>
+         <div id=\"status\"></div>
+      </div>
+    </div>
+    {$children}
+  ";
+}
+
+
+/**
+ * The brightcove_media_browser_filter_form submit callback function.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function brightcove_media_browser_form_submit($form, &$form_state) {
+  $uri = $form_state['values']['submitted-video'];
+  try {
+    // Save the remote file
+    $file = file_uri_to_object($uri, TRUE);
+    file_save($file);
+  }
+  catch (Exception $e) {
+    form_set_error('url', $e->getMessage());
+    return;
+  }
+
+  if (!$file->fid) {
+    form_set_error('url', t('The file %file could not be saved. An unknown error has occurred.', ['%file' => $uri]));
+    return;
+  }
+  else {
+    $form_state['file'] = $file;
+    $form_state['redirect'] = ['media/browser', ['query' => ['render' => 'media-popup', 'fid' => $file->fid]]];
+  }
+}
+
+/**
+ * Prints the avaliable videos from brightcove.
+ */
+function brightcove_media_list() {
+  module_load_include('browser.inc', 'media', 'includes/media');
+
+  $default_items_per_page = 50;
+
+  $params = drupal_get_query_parameters();
+
+  $limit = isset($params['limit']) ? $params['limit'] : $default_items_per_page;
+  $offset = isset($params['start']) ? $params['start'] : 0;
+
+  $keywords = isset($params['filter']['keywords']) ? $params['filter']['keywords'] : '';
+
+  /** @var \Brightcove\Object\Video\Video[] $videos */
+  $videos = [];
+  brightcove_try(function() use(&$videos, $keywords, $limit, $offset) {
+    $client = brightcove_client_load_or_default();
+    /** @var \Brightcove\API\CMS $cms */
+    list($cms) = brightcove_create_classes($client);
+
+    $videos = $cms->listVideos($keywords, '-updated_at', $limit, $offset);
+  });
+
+  $media = [];
+  $files = [];
+
+  if (is_array($videos) && count($videos)) {
+    foreach ($videos as $video) {
+      $uri = file_stream_wrapper_uri_normalize("brightcove://v/{$video->getId()}/a/{$video->getAccountId()}");
+      $file = file_uri_to_object($uri);
+      $file->filename = $video->getName();
+      $file->type = 'video';
+      if (!isset($file->fid)) {
+        $file->fid = 0;
+      }
+      media_browser_build_media_item($file);
+      $file->preview = l($file->preview, 'media/browser', [
+        'html' => TRUE,
+        'attributes' => [
+          'data-uri' => $uri,
+        ],
+        'query' => ['render' => 'media-popup', 'uri' => $uri],
+      ]);
+      $files[$uri] = $file;
+      $media[] = $file;
+    }
+  }
+
+  drupal_add_js(['brightcove' => ['files' => $files]], 'setting');
+  drupal_json_output($media);
+}
+
+/**
+ * Ajax callback for upload form
+ *
+ * @param $form
+ * @param $form_state
+ * @return array|bool|stdClass
+ *   Validated form with messages
+ */
+function ajax_brightcove_media_upload_callback($form, $form_state) {
+  // Make sure it is not set, might be needed if a user changes mind after
+  // upload and wants to upload another.
+  _brightcove_media_session_value_set(BRIGHTCOVE_MEDIA_SESSION_VALUE_NAME_UPLOADED, NULL);
+
+  $video_id = _brightcove_upload_form_callback($form['uploadform'], $form_state);
+  if (empty($video_id) || is_bool($video_id) || !is_scalar($video_id)) {
+    return $video_id;
+  }
+
+  $client_id = $form_state['values']['client'];
+  $client = brightcove_client_load_or_default($client_id);
+  /** @var \Brightcove\Object\Video\Video|null $video */
+  $video = NULL;
+  brightcove_try(function() use($client, &$video, $video_id) {
+    /** @var \Brightcove\API\CMS $cms */
+    list($cms) = brightcove_create_classes($client);
+    $video = $cms->getVideo($video_id);
+  });
+  $uri = file_stream_wrapper_uri_normalize("brightcove://v/{$video_id}/a/{$client->account_id}");
+  $file = file_uri_to_object($uri);
+  $file->filename = $video->getName();
+  $file->filemime = 'media/brightcove';
+  $file->type = 'video';
+  if (!isset($file->fid)) {
+   $file->fid = 0;
+  }
+  media_browser_build_media_item($file);
+
+  _brightcove_media_session_value_set(BRIGHTCOVE_MEDIA_SESSION_VALUE_NAME_UPLOADED, $file);
+
+  return ['#type' => 'ajax', '#commands' => [
+    ajax_command_brightcove_media_upload($file),
+  ]];
+}
+
+/**
+ * @param $data
+ * @param null $settings
+ * @return array
+ */
+function ajax_command_brightcove_media_upload($data, $settings = NULL) {
+  return [
+    'command' => 'brightcove_media_upload',
+    'data' => $data,
+    'settings' => $settings,
+  ];
+}
+
+/**
+ * Helper function MediaInternetBrightcoveHandler class getFileObject method.
+ *
+ * @param $uri
+ * @param bool $use_existing
+ * @return mixed|StdClass
+ */
+function brightcove_media_file_uri_to_object($uri, $use_existing = FALSE) {
+  if ($use_existing) {
+    $query = db_select('file_managed', 'f')
+      ->fields('f', ['fid'])
+      ->condition('uri', $uri)
+      ->execute()
+      ->fetchCol();
+    if (!empty($query)) {
+      $file = file_load(array_shift($query));
+    }
+  }
+  if (!isset($file)) {
+    $uri = file_stream_wrapper_uri_normalize($uri);
+    $file = new StdClass;
+    // This is gagged because some uris will not support it.
+    $file->filesize = @filesize($uri);
+    $file->timestamp = REQUEST_TIME;
+    $file->status = FILE_STATUS_PERMANENT;
+    $file->is_new = TRUE;
+    $file->uri = $uri;
+    $file->filemime = file_get_mimetype($uri);
+    $file->uid = $GLOBALS['user']->uid;
+    if ($uploaded_video = _brightcove_media_session_value_get(BRIGHTCOVE_MEDIA_SESSION_VALUE_NAME_UPLOADED)) {
+      $file->filename = $uploaded_video->filename;
+      _brightcove_media_session_value_set(BRIGHTCOVE_MEDIA_SESSION_VALUE_NAME_UPLOADED, NULL);
+    }
+    else {
+      if ($selected_video = _brightcove_media_session_value_get(BRIGHTCOVE_MEDIA_SESSION_VALUE_NAME_SELECTED)) {
+        $file->filename = $selected_video->name;
+        _brightcove_media_session_value_set(BRIGHTCOVE_MEDIA_SESSION_VALUE_NAME_SELECTED, NULL);
+      }
+      else {
+        $parsed = brightcove_media_parse_uri($uri, TRUE);
+        brightcove_try_client($parsed['account'], function($client_entity) use($parsed, $file) {
+          /** @var \Brightcove\API\CMS $cms */
+          list($cms) = brightcove_create_classes($client_entity);
+          $video = $cms->getVideo($parsed['id']);
+          $file->filename = $video->getName();
+        });
+      }
+    }
+  }
+  return $file;
+}
+
+/**
+ * Media browser brightcove playlist form.
+ *
+ * @param array $form
+ * @param array $form_state
+ * @return array $form
+ */
+function brightcove_media_playlist_browser_form($form, &$form_state) {
+  $form['submitted-video'] = [
+    '#type' => 'hidden',
+    '#default_value' => FALSE,
+  ];
+
+  $form['actions'] = ['#type' => 'actions'];
+  $form['actions']['submit'] = [
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#submit' => ['brightcove_media_browser_form_submit'],
+  ];
+
+  return $form;
+}
+
+/**
+ * brightcove/media/playlist/list menu callback function.
+ */
+function brightcove_media_playlist_list() {
+  module_load_include('browser.inc', 'media', 'includes/media');
+  $media = [];
+  $files = [];
+  $default_items_per_page = 20;
+
+  $params = drupal_get_query_parameters();
+
+  $limit = isset($params['limit']) ? $params['limit'] : $default_items_per_page;
+  $page = isset($params['start']) ? ceil($params['start'] / $limit) : 0;
+
+  $client = brightcove_client_load_or_default();
+  /** @var \Brightcove\Object\Playlist[] $playlists */
+  $playlists = brightcove_get_playlists($client, 'name', $page);
+
+  if (is_array($playlists) && count($playlists)) {
+    foreach ($playlists as $playlist) {
+      $uri = file_stream_wrapper_uri_normalize("brightcove-playlist://{$playlist->getId()}");
+      $file = file_uri_to_object($uri);
+      $file->filename = $playlist->getName();
+      $file->type = 'video';
+      if (!isset($file->fid)) {
+        $file->fid = 0;
+      }
+      media_browser_build_media_item($file);
+      $file->preview = l($file->preview, 'media/browser', [
+        'html' => TRUE,
+        'attributes' => [
+          'data-uri' => $uri,
+        ],
+        'query' => ['render' => 'media-popup', 'uri' => $uri],
+      ]);
+      $files[$uri] = $file;
+      $media[] = $file;
+    }
+  }
+
+  drupal_add_js(['brightcove_playlist' => ['files' => $files]], 'setting');
+  drupal_json_output($media);
+}
+
+/**
+ * Helper function to retrieve a value from the session.
+ *
+ * TODO: This function should be removed and replaced with another storage
+ * method that does not rely on the session. This is only a shim at this point
+ * to support existing code.
+ *
+ * @param string $name
+ *   The name of the value to retrieve from the session.
+ *
+ * @return mixed
+ *   The value stored in the session, or NULL if not found.
+ */
+function _brightcove_media_session_value_get($name) {
+  $name = _brightcove_media_session_value_name_personalize($name);
+  return isset($_SESSION['brightcove_media'][$name])
+    ? $_SESSION['brightcove_media'][$name] : NULL;
+}
+
+/**
+ * Helper function to set a value to the current session.
+ *
+ * TODO: This function should be removed and replaced with another storage
+ * method that does not rely on the session. This is only a shim at this point
+ * to support existing code.
+ *
+ * @param string $name
+ *   The name of the value to store in the session.
+ * @param mixed $value
+ *   The value to store in the session.
+ */
+function _brightcove_media_session_value_set($name, $value) {
+  $name = _brightcove_media_session_value_name_personalize($name);
+  // If value is NULL, assume the implementer would like to unset the value.
+  if ($value === NULL) {
+    unset($_SESSION['brightcove_media'][$name]);
+  }
+  else {
+    $_SESSION['brightcove_media'][$name] = $value;
+  }
+}
+
+/**
+ * Helper function to personalize a session value's name.
+ *
+ * @param string $name
+ *   The name of the session value to personalize.
+ *
+ * @return string
+ *   The personalized name.
+ *
+ * @throws Exception
+ *   When the global user object is not set.
+ */
+function _brightcove_media_session_value_name_personalize($name) {
+  if (!isset($GLOBALS['user']->uid)) {
+    throw new Exception('Unable to personalize the session value name.');
+  }
+  return $name . '_' . $GLOBALS['user']->uid;
+}
+
+/**
+ * Createsa stream wrapper class for a brightcove:// or brightcove-playlist:// uri.
+ *
+ * @param string $uri
+ *
+ * @return MediaBrightcoveVideoStreamWrapper|null
+ */
+function _brightcove_media_get_wrapper($uri) {
+  static $wrapper_classes = [
+    BRIGHTCOVE_EMBED_TYPE_VIDEO => MediaBrightcoveVideoStreamWrapper::class,
+    BRIGHTCOVE_EMBED_TYPE_PLAYLIST => MediaBrightcovePlaylistStreamWrapper::class,
+  ];
+
+  $scheme = parse_url($uri, PHP_URL_SCHEME);
+  if (isset($wrapper_classes[$scheme])) {
+    $class = $wrapper_classes[$scheme];
+    /** @var MediaBrightcoveVideoStreamWrapper $wrapper */
+    $wrapper = new $class();
+    $wrapper->setUri($uri);
+
+    return $wrapper;
+  }
+
+  return NULL;
+}
+
+/**
+ * Parses components from a brightcove:// or brightcove-playlist:// uri.
+ *
+ * @see MediaBrightcoveVideoStreamWrapper::brightcoveValues()
+ *
+ * @param string $uri
+ * @param bool $ensure
+ *
+ * @return array|bool
+ */
+function brightcove_media_parse_uri($uri, $ensure = FALSE) {
+  return (($wrapper = _brightcove_media_get_wrapper($uri))) ?
+    $wrapper->brightcoveValues($ensure) :
+    FALSE;
+}
+
