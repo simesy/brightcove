@@ -548,7 +548,7 @@ function brightcove_field_formatter_settings_form($field, $instance, $view_mode,
         '#title' => t('Image type'),
         '#type' => 'select',
         '#default_value' => $settings['brightcove_image_type'],
-        '#empty_option' => $image_types[0],
+        '#empty_option' => t('Default'),
         '#options' => $image_types,
       ];
     }
