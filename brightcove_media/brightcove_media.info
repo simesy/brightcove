@@ -6,7 +6,6 @@ php = 5.6
 
 dependencies[] = brightcove (>=7.x-6.x)
 dependencies[] = media (>=7.x-2.x, <7.x-3.x)
-dependencies[] = brightcove
 dependencies[] = media_internet
 dependencies[] = file_entity
 

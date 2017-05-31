@@ -82,12 +82,17 @@ function theme_brightcove_field_image($variables) {
   $entity = (isset($elements['#entity'])) ? $elements['#entity'] : NULL;
   $entity_info = (isset($elements['#entity_type'])) ? entity_get_info($entity_type) : NULL;
   $entity_id = is_null($entity) ? NULL : $entity->{$entity_info['entity keys']['id']};
+  $image_type = empty($elements['#brightcove_image_type']) ? 'thumbnail' : $elements['#brightcove_image_type'];
 
   $type = ($elements['#brightcove_widget_type'] == BRIGHTCOVE_VIDEO_WIDGET) ? 'video' : 'playlist';
 
-  if ($elements["#{$type}"]) {
-    $images = $type === 'video' ? $elements["#{$type}"]->getImages() : [];
-    if (empty($images[$elements['#brightcove_image_type']])) {
+  if (!empty($elements["#{$type}"])) {
+    /** @var \Brightcove\Object\Video\Video|\Brightcove\Object\Playlist $media */
+    $media = $elements["#{$type}"];
+    /** @var \Brightcove\Object\Video\Image[] $images */
+    $images = $type === 'video' ? $media->getImages() : [];
+
+    if (empty($images[$image_type])) {
       $path = brightcove_get_default_image();
       $image_variables = [
         'path' => $path,
@@ -105,16 +110,22 @@ function theme_brightcove_field_image($variables) {
       $image = theme('image', $image_variables);
     }
     else {
-      $cid = "brightcove:video:{$elements["#{$type}"]->getId()}:{$elements['#element']['bcid']}:{$elements['#brightcove_image_type']}";
+      $cid = "brightcove:video:{$media->getId()}:{$elements['#element']['bcid']}:{$image_type}";
       $cache = brightcove_cache_get($cid);
       if (!empty($cache)) {
         $remote_file = $cache;
       }
       else {
-        $image_src = $images[$elements['#brightcove_image_type']]->getSrc();
+        $image_src = $images[$image_type]->getSrc();
         $parse = parse_url($image_src);
         $path = pathinfo($parse['path']);
-        $remote_file = system_retrieve_file($image_src, file_build_uri('brightcove_thumbnail/' . $path['basename']), FALSE, FILE_EXISTS_REPLACE);
+        $directory = file_build_uri('brightcove_thumbnail');
+        if (!file_exists($directory)) {
+          if (!mkdir($directory, 0755, TRUE)) {
+            drupal_set_message(t('Failed to create directory %directory', ['%directory' => drupal_realpath($directory)]), 'error');
+          }
+        }
+        $remote_file = system_retrieve_file($image_src, "{$directory}/{{$path['basename']}", FALSE, FILE_EXISTS_REPLACE);
         if ($remote_file) {
           brightcove_cache_set($cid, $remote_file);
         }
@@ -134,30 +145,29 @@ function theme_brightcove_field_image($variables) {
     if (($elements['#brightcove_image_link'] == 'none') || (empty($elements['#brightcove_image_link']))) {
       return $image;
     }
-
     elseif ($elements['#brightcove_image_link'] == 'dialog') {
       $destination = "brightcove_dialog/nojs/{$type}/{$dialog_width}/{$dialog_height}/{$entity_type}/{$entity_id}/{$field['field_name']}/{$delta}";
       $output = l($image, $destination, [
         'attributes' => [
           'rel' => $field['field_name'],
           'class' => [$field['field_name'], 'use-ajax'],
-          'title' => $elements["#{$type}"] ? check_plain(!empty($elements["#{$type}"]) ? $elements["#{$type}"]->getName() : '') : '',
+          'title' => $elements["#{$type}"] ? check_plain($media->getName()) : '',
         ],
         'html' => TRUE,
       ]);
     }
-
     elseif ($elements['#brightcove_image_link'] == 'entity' && !is_null($entity_info)) {
       $uri = $entity_info['uri callback']($entity);
       $output = l($image, $uri['path'], [
         'attributes' => [
           'class' => [$field['field_name']],
-          'title' => $elements["#{$type}"] ? check_plain(!empty($elements["#{$type}"]) ? $elements["#{$type}"]->getName() : '') : '',
+          'title' => $elements["#{$type}"] ? check_plain($media->getName()) : '',
         ],
         'html' => TRUE,
       ]);
     }
   }
+
   return $output;
 }
 
