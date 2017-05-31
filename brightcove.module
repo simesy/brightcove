@@ -2179,16 +2179,23 @@ function brightcove_load_video($video_id, Entity $client_entity, $reset = FALSE)
  *
  * @return string|bool
  *   Returns FALSE if image doesn't exist, cannot be saved or is not image (based on extension).
- *   Returns $file object if image already exists or was saved correctly.
+ *   Returns $file path if image already exists or was saved correctly.
  */
 function brightcove_remote_image($url) {
   $parse = parse_url($url);
   $path = pathinfo($parse['path']);
-  $fullpath = drupal_realpath(file_default_scheme() . '://brightcove_thumbnail');
+  $thumbnail_directory = 'brightcove_thumbnail';
+  $fullpath = drupal_realpath(file_default_scheme() . '://' . $thumbnail_directory);
   $final_file = $fullpath . '/' . $path['basename'];
 
+  if (!file_exists($fullpath)) {
+    if (!mkdir($fullpath, 0755, TRUE)) {
+      drupal_set_message(t('Failed to create directory %directory', ['%directory' => drupal_realpath($fullpath)]), 'error');
+    }
+  }
+
   if (file_exists($final_file)) {
-    return file_build_uri('brightcove_thumbnail/' . $path['basename']);
+    return file_build_uri("{$thumbnail_directory}/{$path['basename']}");
   }
 
   // Perform basic extension check.
@@ -2206,19 +2213,7 @@ function brightcove_remote_image($url) {
     return FALSE;
   }
 
-  $ch = curl_init();
-  curl_setopt($ch, CURLOPT_URL, $url);
-  curl_setopt($ch, CURLOPT_HEADER, FALSE);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-  // Causes a warning if PHP safe mode is on.
-  @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
-  $rawdata = curl_exec($ch);
-  if (($fp = @fopen($final_file, 'x'))) {
-    fwrite($fp, $rawdata);
-    fclose($fp);
-  }
-
-  return file_build_uri('brightcove_thumbnail/' . $path['basename']);
+  return system_retrieve_file($url, $fullpath, FALSE, FILE_EXISTS_REPLACE);
 }
 
 /**

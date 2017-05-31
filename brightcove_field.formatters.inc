@@ -117,15 +117,7 @@ function theme_brightcove_field_image($variables) {
       }
       else {
         $image_src = $images[$image_type]->getSrc();
-        $parse = parse_url($image_src);
-        $path = pathinfo($parse['path']);
-        $directory = file_build_uri('brightcove_thumbnail');
-        if (!file_exists($directory)) {
-          if (!mkdir($directory, 0755, TRUE)) {
-            drupal_set_message(t('Failed to create directory %directory', ['%directory' => drupal_realpath($directory)]), 'error');
-          }
-        }
-        $remote_file = system_retrieve_file($image_src, "{$directory}/{{$path['basename']}", FALSE, FILE_EXISTS_REPLACE);
+        $remote_file = brightcove_remote_image($image_src);
         if ($remote_file) {
           brightcove_cache_set($cid, $remote_file);
         }
