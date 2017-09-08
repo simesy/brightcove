@@ -303,7 +303,6 @@ class BrightcoveAPIClient extends ConfigEntityBase implements BrightcoveAPIClien
         // could be larger than the Brightcove's expire date causing to always
         // get a new access token.
         $this->setAccessToken($client->getAccessToken(), intval($client->getExpiresIn()) - 30);
-        $this->save();
 
         // Create new client.
         $this->setClient(new Client($this->getAccessToken()));
