@@ -82,6 +82,13 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
   protected $ingestRequest = NULL;
 
   /**
+   * Brightcove API Video object.
+   *
+   * @var \Brightcove\Object\ObjectBase\Video;
+   */
+  protected $video = NULL;
+
+  /**
    * Create or get an existing ingestion request object.
    *
    * @return \Brightcove\API\Request\IngestRequest
@@ -378,6 +385,20 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
   public function setEconomics($economics) {
     $this->set('economics', $economics);
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getVideo() {
+    return $this->video;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setVideo($video) {
+    $this->video = $video;
   }
 
   /**
@@ -796,6 +817,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
         case SAVED_NEW:
           // Create new video on Brightcove.
           $saved_video = $cms->createVideo($video);
+          $this->setVideo($saved_video);
 
           // Set the rest of the fields on BrightcoveVideo entity.
           $this->setVideoId($saved_video->getId());
@@ -1801,6 +1823,7 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       $video_entity = self::create($values);
       $needs_save = TRUE;
     }
+    $video_entity->setVideo($video);
 
     // Save entity only if it is being created or updated.
     if ($needs_save) {
