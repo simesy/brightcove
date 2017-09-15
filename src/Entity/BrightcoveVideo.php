@@ -595,7 +595,12 @@ class BrightcoveVideo extends BrightcoveVideoPlaylistCMSEntity implements Bright
       ->condition('status', 1)
       ->execute();
 
-    return self::load(reset($entity_ids));
+    if ($entity_ids) {
+      return self::load(reset($entity_ids));
+    }
+    else {
+      return NULL;
+    }
   }
 
   /**

@@ -5,6 +5,7 @@ namespace Drupal\brightcove\Controller;
 use Drupal\brightcove\BrightcoveUtil;
 use Drupal\brightcove\Entity\BrightcoveSubscription;
 use Drupal\brightcove\Entity\BrightcoveVideo;
+use Drupal\brightcove\Entity\BrightcoveAPIClient;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\Entity\Query\Query;
 use Drupal\Core\Controller\ControllerBase;
@@ -63,19 +64,35 @@ class BrightcoveSubscriptionController extends ControllerBase {
    */
   public function notificationCallback(Request $request) {
     $content = Json::decode($request->getContent());
+    $lock = \Drupal::lock();
+    $lock_key = 'brightcove_' . $content['video'];
 
-    switch ($content['event']) {
-      case 'video-change':
-        /** @var \Drupal\brightcove\Entity\BrightcoveVideo $video_entity */
-        $video_entity = BrightcoveVideo::loadByBrightcoveVideoId($content['account_id'], $content['video']);
+    if ($lock->acquire($lock_key)) {
+      switch ($content['event']) {
+        case 'video-change':
+          /** @var \Drupal\brightcove\Entity\BrightcoveVideo $video_entity */
+          if ($video_entity = BrightcoveVideo::loadByBrightcoveVideoId($content['account_id'], $content['video'])) {
 
-        // Get CMS API.
-        $cms = BrightcoveUtil::getCMSAPI($video_entity->getAPIClient());
+            // Update video.
+            $cms = BrightcoveUtil::getCMSAPI($video_entity->getAPIClient());
+            $video = $cms->getVideo($video_entity->getVideoId());
+            BrightcoveVideo::createOrUpdate($video, $this->video_storage, $video_entity->getAPIClient());
+          }
+          elseif ($content['video']) {
 
-        // Update video.
-        $video = $cms->getVideo($video_entity->getVideoId());
-        BrightcoveVideo::createOrUpdate($video, $this->video_storage, $video_entity->getAPIClient());
+            // Create new video.
+            $brightcove_api_clients = BrightcoveAPIClient::loadMultiple();
+            /** @var \Drupal\brightcove\Entity\BrightcoveAPIClient $api_client */
+
+            foreach ($brightcove_api_clients as $api_client) {
+              $cms = BrightcoveUtil::getCMSAPI($api_client->id());
+              $video = $cms->getVideo($content['video']);
+              BrightcoveVideo::createOrUpdate($video, $this->video_storage, $api_client->id());
+            }
+          }
         break;
+      }
+      $lock->release($lock_key);
     }
 
     return new Response();
